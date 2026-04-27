@@ -78,32 +78,36 @@ class LissajousTrajectory(Trajectory):
         
         return TrajectoryReference(pos, vel, acc, yaw)
 
-class WaypointTrajectory(Trajectory):
+class LineTrajectory(Trajectory):
     """
-    Interpolación lineal entre waypoints con tiempos asociados.
+    Interpolación entre waypoints usando smoothstep cúbico (C1 continuo).
+    Asegura velocidad cero en los waypoints.
     """
     def __init__(self, waypoints: np.ndarray, times: np.ndarray, yaw_rad: float = 0.0):
-        self.waypoints = waypoints # [N, 3]
-        self.times = times # [N]
+        self.waypoints = np.array(waypoints).astype(float)
+        self.times = np.array(times).astype(float)
         self.yaw = yaw_rad
         
     def get_reference(self, time_s: float) -> TrajectoryReference:
-        # Clamp al inicio o fin
         if time_s <= self.times[0]:
             return TrajectoryReference(self.waypoints[0].copy(), np.zeros(3), np.zeros(3), self.yaw)
         if time_s >= self.times[-1]:
             return TrajectoryReference(self.waypoints[-1].copy(), np.zeros(3), np.zeros(3), self.yaw)
             
-        # Buscar el intervalo
         idx = np.searchsorted(self.times, time_s) - 1
         t0, t1 = self.times[idx], self.times[idx+1]
         p0, p1 = self.waypoints[idx], self.waypoints[idx+1]
         
-        # Factor de interpolación
-        alpha = (time_s - t0) / (t1 - t0)
+        dt = t1 - t0
+        tau = (time_s - t0) / dt
         
-        pos = p0 + alpha * (p1 - p0)
-        vel = (p1 - p0) / (t1 - t0)
-        acc = np.zeros(3) # Aceleración infinita en waypoints, 0 en tramos
+        # Smoothstep cúbico: s(tau) = 3*tau^2 - 2*tau^3
+        s = 3*tau**2 - 2*tau**3
+        ds = 6*tau - 6*tau**2
+        dds = 6 - 12*tau
+        
+        pos = p0 + s * (p1 - p0)
+        vel = (ds / dt) * (p1 - p0)
+        acc = (dds / dt**2) * (p1 - p0)
         
         return TrajectoryReference(pos, vel, acc, self.yaw)

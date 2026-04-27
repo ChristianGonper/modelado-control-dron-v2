@@ -1,5 +1,5 @@
 import numpy as np
-from simulador_quad.trajectories.analytic import HoldTrajectory, CircleTrajectory, LissajousTrajectory, WaypointTrajectory
+from simulador_quad.trajectories.analytic import HoldTrajectory, CircleTrajectory, LissajousTrajectory, LineTrajectory
 
 def test_hold_trajectory():
     pos = np.array([1.0, 2.0, 3.0])
@@ -41,24 +41,25 @@ def test_lissajous_trajectory():
     assert np.allclose(ref1.position_W_m, [0.0, 2.0, 5.0])
     assert np.allclose(ref1.velocity_W_m_s, [-1.0*np.pi, 0.0, 0.0])
 
-def test_waypoint_trajectory():
+def test_line_trajectory():
     pts = np.array([
         [0.0, 0.0, 0.0],
         [1.0, 0.0, 0.0],
         [1.0, 1.0, 0.0]
     ])
     times = np.array([0.0, 1.0, 2.0])
-    traj = WaypointTrajectory(pts, times, yaw_rad=0.0)
+    traj = LineTrajectory(pts, times, yaw_rad=0.0)
     
     # t = 0.5 (medio camino entre p0 y p1)
+    # tau = 0.5 -> s = 0.5 (posición mitad), ds/dtau = 1.5
     ref = traj.get_reference(0.5)
     assert np.allclose(ref.position_W_m, [0.5, 0.0, 0.0])
-    assert np.allclose(ref.velocity_W_m_s, [1.0, 0.0, 0.0])
+    assert np.allclose(ref.velocity_W_m_s, [1.5, 0.0, 0.0])
     
     # t = 1.5 (medio camino entre p1 y p2)
     ref2 = traj.get_reference(1.5)
     assert np.allclose(ref2.position_W_m, [1.0, 0.5, 0.0])
-    assert np.allclose(ref2.velocity_W_m_s, [0.0, 1.0, 0.0])
+    assert np.allclose(ref2.velocity_W_m_s, [0.0, 1.5, 0.0])
     
     # Fuera de límites
     ref3 = traj.get_reference(-1.0)
