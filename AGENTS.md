@@ -1,5 +1,8 @@
 # AGENTS.md
 
+##  Flujo de trabajo
+Ejecuta commits pequeños mientras completas fases de desarrollo.
+
 ## Mapa del repositorio
 
 Los documentos normativos del TFG están en `docs/`:
