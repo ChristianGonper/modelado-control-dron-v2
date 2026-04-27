@@ -7,16 +7,16 @@ from simulador_quad.dynamics.perturbations import WindModel, ObservationNoise
 from simulador_quad.core.frames import get_level_quaternion
 
 def create_x_config_rotors():
-    # Configuración en X clásica
+    # Configuración en X clásica (FR, FL, BR, BL)
     L = 0.25
     return [
-        RotorParameters(np.array([L, L, 0]), -1, 1.0, 0.1, 100.0, 0.0),
-        RotorParameters(np.array([L, -L, 0]), 1, 1.0, 0.1, 100.0, 0.0),
-        RotorParameters(np.array([-L, L, 0]), 1, 1.0, 0.1, 100.0, 0.0),
-        RotorParameters(np.array([-L, -L, 0]), -1, 1.0, 0.1, 100.0, 0.0),
+        RotorParameters(np.array([L, L, 0]), 1, 1.0, 0.1, 100.0, 0.0),
+        RotorParameters(np.array([L, -L, 0]), -1, 1.0, 0.1, 100.0, 0.0),
+        RotorParameters(np.array([-L, L, 0]), -1, 1.0, 0.1, 100.0, 0.0),
+        RotorParameters(np.array([-L, -L, 0]), 1, 1.0, 0.1, 100.0, 0.0),
     ]
 
-def setup_runner(max_dur=1.0):
+def setup_runner(max_dur=1.0, max_sat=1.0):
     rotors = create_x_config_rotors()
     v_params = VehicleParameters(
         mass_kg=1.0,
@@ -40,13 +40,13 @@ def setup_runner(max_dur=1.0):
         wind_model=wind,
         observation_noise=noise,
         max_duration_s=max_dur,
-        z_min_m=-1.0
+        z_min_m=-1.0,
+        max_saturation_duration_s=max_sat
     )
 
 def test_runner_multi_rate():
     runner = setup_runner(max_dur=0.5)
     
-    from simulador_quad.core.frames import get_level_quaternion
     initial_state = VehicleState(
         position_W_m=np.array([0.0, 0.0, 10.0]),
         velocity_W_m_s=np.zeros(3),
@@ -75,6 +75,8 @@ def test_runner_multi_rate():
     # Telemetría en 0.0, 0.1, 0.2, 0.3, 0.4. (5 steps)
     assert len(result["telemetry"]) == 5
     assert result["termination_reason"] == "Time limit reached"
+    # Verificar que la observación se guardó
+    assert np.allclose(result["telemetry"][0].observation.position_W_m, initial_state.position_W_m)
 
 def test_termination_z_min():
     runner = setup_runner(max_dur=10.0)
@@ -100,3 +102,37 @@ def test_termination_z_min():
         
     result = runner.run(initial_state, zero_thrust, traj)
     assert "Crash: Z_W < z_min_m" in result["termination_reason"]
+
+def test_termination_saturation():
+    # max_sat = 0.1s (10 pasos de física)
+    runner = setup_runner(max_dur=10.0, max_sat=0.1)
+    # Reducir omega_max para que no acelere tanto
+    for r in runner.mixer.rotors:
+        r.omega_max_rad_s = 10.0 # T_max_total = 400N
+    
+    runner.max_position_m = 1000.0 
+    runner.max_velocity_m_s = 1000.0
+    
+    initial_state = VehicleState(
+        position_W_m=np.array([0.0, 0.0, 10.0]),
+        velocity_W_m_s=np.zeros(3),
+        orientation_WB=get_level_quaternion(0.0),
+        angular_velocity_B_rad_s=np.zeros(3),
+        time_s=0.0
+    )
+    
+    class DummyTraj:
+        def get_reference(self, time_s):
+            from simulador_quad.core.contracts import TrajectoryReference
+            return TrajectoryReference(np.zeros(3), np.zeros(3), np.zeros(3), 0.0)
+            
+    traj = DummyTraj()
+        
+    def extreme_thrust_controller(t, obs, ref):
+        # Pedir empuje imposible (1000N) para forzar degradación
+        return ControlCommand(1000.0, np.zeros(3))
+        
+    result = runner.run(initial_state, extreme_thrust_controller, traj)
+    assert "Persistent actuator saturation" in result["termination_reason"]
+    # Debería haber terminado alrededor de 0.1s
+    assert result["final_state"].time_s < 0.2

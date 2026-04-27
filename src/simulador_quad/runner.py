@@ -22,7 +22,8 @@ class SimulationRunner:
         z_min_m: float = 0.0,
         max_position_m: float = 100.0,
         max_velocity_m_s: float = 50.0,
-        max_attitude_angle_rad: float = np.pi/2.5 # ~72 deg
+        max_attitude_angle_rad: float = np.pi/2.5, # ~72 deg
+        max_saturation_duration_s: float = 1.0
     ):
         self.physics_dt_s = physics_dt_s
         self.control_dt_s = control_dt_s
@@ -39,8 +40,19 @@ class SimulationRunner:
         self.max_position_m = max_position_m
         self.max_velocity_m_s = max_velocity_m_s
         self.max_attitude_angle_rad = max_attitude_angle_rad
+        self.max_saturation_duration_s = max_saturation_duration_s
+        self.saturation_timer_s = 0.0
         
-    def _check_termination(self, state: VehicleState) -> Tuple[bool, str]:
+    def _check_termination(self, state: VehicleState, is_saturated: bool) -> Tuple[bool, str]:
+        # Acumular saturación
+        if is_saturated:
+            self.saturation_timer_s += self.physics_dt_s
+        else:
+            self.saturation_timer_s = 0.0
+            
+        if self.saturation_timer_s >= self.max_saturation_duration_s:
+            return True, "Persistent actuator saturation"
+
         # Valores finitos
         if not (np.all(np.isfinite(state.position_W_m)) and 
                 np.all(np.isfinite(state.velocity_W_m_s)) and 
@@ -82,7 +94,6 @@ class SimulationRunner:
             return True, "Time limit reached"
             
         return False, ""
-        
     def run(self, initial_state: VehicleState, controller_func: Callable, trajectory) -> Dict[str, Any]:
         """
         Ejecuta la simulación.
@@ -107,15 +118,31 @@ class SimulationRunner:
         last_telemetry_time = time_s - self.telemetry_dt_s - 1e-6
         
         current_control = ControlCommand(0.0, np.zeros(3))
-        current_target_omega = np.zeros(self.mixer.num_rotors)
+        # Inicialización de objetos de contrato
+        current_rotor_cmd = RotorCommand(
+            target_thrust_N=np.zeros(self.mixer.num_rotors),
+            target_omega_rad_s=np.zeros(self.mixer.num_rotors)
+        )
+        current_applied = RotorAppliedState(
+            applied_omega_rad_s=np.zeros(self.mixer.num_rotors),
+            applied_thrust_N=np.zeros(self.mixer.num_rotors),
+            applied_torque_Nm=np.zeros(self.mixer.num_rotors),
+            rotor_speed_rpm=np.zeros(self.mixer.num_rotors),
+            saturation_flags=np.zeros(self.mixer.num_rotors, dtype=bool)
+        )
+        current_obs = state # Inicialmente coincide
         
         termination_reason = ""
         
         while True:
             # Comprobar fin
-            term, reason = self._check_termination(state)
+            is_saturated = np.any(current_applied.saturation_flags) or current_rotor_cmd.degraded_collective_thrust
+            term, reason = self._check_termination(state, is_saturated)
             if term:
                 termination_reason = reason
+                # Actualizar última muestra con la causa si existe
+                if telemetry:
+                    telemetry[-1].termination_cause = reason
                 break
             
             # Referencia actual
@@ -125,7 +152,7 @@ class SimulationRunner:
             if time_s - last_control_time >= self.control_dt_s - 1e-6:
                 # Observación con ruido
                 obs_pos, obs_vel = self.noise.apply_noise(state.position_W_m, state.velocity_W_m_s)
-                obs_state = VehicleState(
+                current_obs = VehicleState(
                     position_W_m=obs_pos,
                     velocity_W_m_s=obs_vel,
                     orientation_WB=state.orientation_WB.copy(),
@@ -134,10 +161,10 @@ class SimulationRunner:
                 )
                 
                 # Ejecutar controlador
-                current_control = controller_func(time_s, obs_state, current_ref)
+                current_control = controller_func(time_s, current_obs, current_ref)
                 
                 # Mezclador
-                current_target_omega = self.mixer.compute_rotor_commands(
+                current_rotor_cmd = self.mixer.compute_rotor_commands(
                     current_control.collective_thrust_N, 
                     current_control.body_moments_Nm
                 )
@@ -145,18 +172,12 @@ class SimulationRunner:
                 last_control_time = time_s
             
             # 2. Actuadores (calculamos las fuerzas aplicadas con el comando actual)
-            app_omega, app_thrust, app_torque_s, total_torque_B, total_thrust_B = \
-                self.actuators.compute_applied_forces(current_target_omega)
+            current_applied, total_torque_B, total_thrust_B = \
+                self.actuators.compute_applied_forces(current_rotor_cmd.target_omega_rad_s)
             
-            current_applied = RotorAppliedState(
-                applied_omega_rad_s=app_omega.copy(),
-                applied_thrust_N=app_thrust.copy(),
-                applied_torque_Nm=app_torque_s.copy()
-            )
-
             # 3. Telemetría (guardamos el estado ANTES del paso de física pero CON el comando actual)
             if time_s - last_telemetry_time >= self.telemetry_dt_s - 1e-6:
-                from simulador_quad.core.contracts import TelemetrySample, RotorCommand
+                from simulador_quad.core.contracts import TelemetrySample
                 sample = TelemetrySample(
                     time_s=time_s,
                     state=VehicleState(
@@ -166,12 +187,13 @@ class SimulationRunner:
                         angular_velocity_B_rad_s=state.angular_velocity_B_rad_s.copy(),
                         time_s=time_s
                     ),
+                    observation=current_obs,
                     reference=current_ref,
                     control_command=ControlCommand(
                         collective_thrust_N=current_control.collective_thrust_N,
                         body_moments_Nm=current_control.body_moments_Nm.copy()
                     ),
-                    rotor_command=RotorCommand(target_omega_rad_s=current_target_omega.copy()),
+                    rotor_command=current_rotor_cmd,
                     rotor_applied=current_applied
                 )
                 telemetry.append(sample)
