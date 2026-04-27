@@ -47,9 +47,9 @@ def run_simulation(scenario_path: str):
     
     # Métricas
     metadata = {
-        "scenario": config['name'],
-        "controller": config['controller']['type'],
-        "seed": config.get('seed', 42)
+        "scenario_name": config['name'],
+        "seed": config.get('seed', 42),
+        "config": config  # Guardamos todo para máxima trazabilidad
     }
     metrics = compute_metrics(telemetry, reason, metadata)
     
