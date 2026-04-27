@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.python-version
+.venv/
+.uv/
+.uv-cache/
+
+# Project specific
+results/
+scratch/
+.tmp_cli_test/
+
+# OS
+.DS_Store
+Thumbs.db
