@@ -24,6 +24,12 @@ def export_telemetry_json(telemetry: List[TelemetrySample], filepath: str):
                 "orientation_WB": s.state.orientation_WB,
                 "angular_velocity_B_rad_s": s.state.angular_velocity_B_rad_s,
             },
+            "observation": {
+                "position_W_m": s.observation.position_W_m,
+                "velocity_W_m_s": s.observation.velocity_W_m_s,
+                "orientation_WB": s.observation.orientation_WB,
+                "angular_velocity_B_rad_s": s.observation.angular_velocity_B_rad_s,
+            },
             "reference": {
                 "position_W_m": s.reference.position_W_m,
                 "velocity_W_m_s": s.reference.velocity_W_m_s,
@@ -35,9 +41,16 @@ def export_telemetry_json(telemetry: List[TelemetrySample], filepath: str):
                 "body_moments_Nm": s.control_command.body_moments_Nm,
             },
             "rotors": {
+                "target_thrust_N": s.rotor_command.target_thrust_N,
                 "target_omega_rad_s": s.rotor_command.target_omega_rad_s,
+                "degraded_collective_thrust": s.rotor_command.degraded_collective_thrust,
+                "applied_thrust_N": s.rotor_applied.applied_thrust_N,
                 "applied_omega_rad_s": s.rotor_applied.applied_omega_rad_s,
-            }
+                "applied_torque_Nm": s.rotor_applied.applied_torque_Nm,
+                "rotor_speed_rpm": s.rotor_applied.rotor_speed_rpm,
+                "saturation_flags": s.rotor_applied.saturation_flags,
+            },
+            "termination_cause": s.termination_cause
         })
         
     with open(filepath, 'w') as f:

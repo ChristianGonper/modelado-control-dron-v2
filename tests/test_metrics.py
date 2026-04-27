@@ -4,34 +4,42 @@ from simulador_quad.metrics.report import compute_metrics
 from simulador_quad.telemetry.export import export_telemetry_json, export_metrics_json
 from simulador_quad.core.contracts import TelemetrySample, VehicleState, TrajectoryReference, ControlCommand, RotorCommand, RotorAppliedState
 
+def create_sample(time, pos, ref_pos, thrust, omega):
+    state = VehicleState(pos, np.zeros(3), np.array([1,0,0,0]), np.zeros(3), time)
+    ref = TrajectoryReference(ref_pos, np.zeros(3), np.zeros(3), 0.0)
+    ctrl = ControlCommand(thrust, np.zeros(3))
+    rcmd = RotorCommand(
+        target_thrust_N=np.array([thrust/4.0]*4),
+        target_omega_rad_s=np.array([omega]*4),
+        degraded_collective_thrust=False
+    )
+    rapp = RotorAppliedState(
+        applied_omega_rad_s=np.array([omega]*4),
+        applied_thrust_N=np.array([thrust/4.0]*4),
+        applied_torque_Nm=np.zeros(4),
+        rotor_speed_rpm=np.array([omega * 60 / (2*np.pi)]*4),
+        saturation_flags=np.zeros(4, dtype=bool)
+    )
+    return TelemetrySample(
+        time_s=time,
+        state=state,
+        observation=state,
+        reference=ref,
+        control_command=ctrl,
+        rotor_command=rcmd,
+        rotor_applied=rapp
+    )
+
 def test_metrics_computation():
-    telemetry = []
-    
     # 2 muestras sintéticas
-    s1 = TelemetrySample(
-        time_s=0.0,
-        state=VehicleState(np.zeros(3), np.zeros(3), np.array([1,0,0,0]), np.zeros(3), 0.0),
-        reference=TrajectoryReference(np.array([1.0, 0.0, 0.0]), np.zeros(3), np.zeros(3), 0.0),
-        control_command=ControlCommand(10.0, np.zeros(3)),
-        rotor_command=RotorCommand(np.array([10.0]*4)),
-        rotor_applied=RotorAppliedState(np.array([10.0]*4), np.zeros(4), np.zeros(4))
-    )
-    
-    s2 = TelemetrySample(
-        time_s=1.0,
-        state=VehicleState(np.array([0.5, 0.0, 0.0]), np.zeros(3), np.array([1,0,0,0]), np.zeros(3), 1.0),
-        reference=TrajectoryReference(np.array([1.0, 0.0, 0.0]), np.zeros(3), np.zeros(3), 0.0),
-        control_command=ControlCommand(20.0, np.zeros(3)),
-        rotor_command=RotorCommand(np.array([20.0]*4)),
-        rotor_applied=RotorAppliedState(np.array([20.0]*4), np.zeros(4), np.zeros(4))
-    )
+    s1 = create_sample(0.0, np.zeros(3), np.array([1.0, 0.0, 0.0]), 10.0, 10.0)
+    s2 = create_sample(1.0, np.array([0.5, 0.0, 0.0]), np.array([1.0, 0.0, 0.0]), 20.0, 20.0)
     
     telemetry = [s1, s2]
-    
     metrics = compute_metrics(telemetry, "Success")
     
     # Error s1: 1.0, Error s2: 0.5
-    # MSE = (1.0^2 + 0.5^2) / 2 = 1.25 / 2 = 0.625
+    # MSE = (1.0^2 + 0.5^2) / 2 = 0.625
     # RMSE = sqrt(0.625) ~ 0.7905
     assert np.isclose(metrics["position_rmse_m"], np.sqrt(0.625))
     assert np.isclose(metrics["position_mae_m"], 0.75)
@@ -41,14 +49,7 @@ def test_metrics_computation():
     assert metrics["duration_s"] == 1.0
     
 def test_exports(tmp_path):
-    s1 = TelemetrySample(
-        time_s=0.0,
-        state=VehicleState(np.zeros(3), np.zeros(3), np.array([1,0,0,0]), np.zeros(3), 0.0),
-        reference=TrajectoryReference(np.array([1.0, 0.0, 0.0]), np.zeros(3), np.zeros(3), 0.0),
-        control_command=ControlCommand(10.0, np.zeros(3)),
-        rotor_command=RotorCommand(np.array([10.0]*4)),
-        rotor_applied=RotorAppliedState(np.array([10.0]*4), np.zeros(4), np.zeros(4))
-    )
+    s1 = create_sample(0.0, np.zeros(3), np.array([1.0, 0.0, 0.0]), 10.0, 10.0)
     tel_file = os.path.join(tmp_path, "tel.json")
     met_file = os.path.join(tmp_path, "met.json")
     

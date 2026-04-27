@@ -9,12 +9,13 @@ def compute_metrics(telemetry: List[TelemetrySample], termination_reason: str, m
     pos_errors = []
     control_efforts = []
     max_omegas = []
-    sat_steps = 0
+    max_rpms = []
+    sat_samples = 0
+    degraded_samples = 0
     
-    # Supongamos que la velocidad máxima del rotor está en el primer rotor.
-    # No tenemos acceso directo a omega_max en TelemetrySample, 
-    # pero podemos contar como saturación si alguna omega_cmd > omega_applied.
-    # O si omega_applied coincide con un valor límite (que asumimos constante).
+    dt_telemetry = 0.1 # Valor por defecto si no se puede calcular
+    if len(telemetry) > 1:
+        dt_telemetry = telemetry[1].time_s - telemetry[0].time_s
     
     for sample in telemetry:
         # Error de posición
@@ -25,25 +26,31 @@ def compute_metrics(telemetry: List[TelemetrySample], termination_reason: str, m
         c_eff = np.abs(sample.control_command.collective_thrust_N) + np.linalg.norm(sample.control_command.body_moments_Nm)
         control_efforts.append(c_eff)
         
-        # Max omega
+        # Max omega y RPM
         max_omega_step = np.max(sample.rotor_applied.applied_omega_rad_s)
         max_omegas.append(max_omega_step)
+        max_rpms.append(np.max(sample.rotor_applied.rotor_speed_rpm))
         
-        # Saturación aproximada: si el comando objetivo es diferente del aplicado
-        if not np.allclose(sample.rotor_command.target_omega_rad_s, sample.rotor_applied.applied_omega_rad_s, atol=1e-3):
-            # El filtro de lag también hace que sean diferentes.
-            # Una mejor métrica de saturación requeriría saber omega_max.
-            # Lo dejamos simple por ahora.
-            pass
+        # Saturación y degradación
+        if np.any(sample.rotor_applied.saturation_flags):
+            sat_samples += 1
+        if sample.rotor_command.degraded_collective_thrust:
+            degraded_samples += 1
             
     pos_errors = np.array(pos_errors)
+    control_efforts = np.array(control_efforts)
     
     metrics = {
         "position_rmse_m": float(np.sqrt(np.mean(pos_errors**2))),
         "position_mae_m": float(np.mean(pos_errors)),
         "position_max_err_m": float(np.max(pos_errors)),
+        "position_std_err_m": float(np.std(pos_errors)),
         "control_effort_mean": float(np.mean(control_efforts)),
+        "control_effort_std": float(np.std(control_efforts)),
         "max_rotor_speed_rad_s": float(np.max(max_omegas)),
+        "max_rotor_speed_rpm": float(np.max(max_rpms)),
+        "saturation_duration_s": float(sat_samples * dt_telemetry),
+        "degradation_duration_s": float(degraded_samples * dt_telemetry),
         "termination_reason": termination_reason,
         "duration_s": float(telemetry[-1].time_s - telemetry[0].time_s),
     }
