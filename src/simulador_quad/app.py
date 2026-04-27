@@ -1,11 +1,10 @@
 import argparse
 import os
-import sys
-import numpy as np
 from simulador_quad.scenarios.loader import load_scenario, instantiate_scenario
 from simulador_quad.runner import SimulationRunner
 from simulador_quad.metrics.report import compute_metrics
 from simulador_quad.telemetry.export import export_telemetry_json, export_metrics_json
+from simulador_quad.visualization.plots import plot_telemetry
 
 def run_simulation(scenario_path: str):
     print(f"Cargando escenario: {scenario_path}")
@@ -76,11 +75,21 @@ def main():
     
     run_parser = subparsers.add_parser("run", help="Ejecutar un escenario")
     run_parser.add_argument("scenario", help="Ruta al archivo YAML del escenario")
+
+    plot_parser = subparsers.add_parser("plot", help="Generar figuras desde telemetría JSON")
+    plot_parser.add_argument("telemetry", help="Ruta al telemetry.json exportado por el simulador")
+    plot_parser.add_argument("--metrics", help="Ruta opcional al metrics.json asociado")
+    plot_parser.add_argument("--out", required=True, help="Directorio donde se escribirán las figuras PNG")
     
     args = parser.parse_args()
     
     if args.command == "run":
         run_simulation(args.scenario)
+    elif args.command == "plot":
+        paths = plot_telemetry(args.telemetry, args.out, args.metrics)
+        print("Figuras generadas:")
+        for path in paths:
+            print(f"  {path}")
     else:
         parser.print_help()
 
