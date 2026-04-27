@@ -17,8 +17,9 @@ class ClassicCascadeController(Controller):
         self.Kp_att = np.array([50.0, 50.0, 10.0])
         self.Kd_att = np.array([15.0, 15.0, 5.0])
         
-        self.max_thrust = mass_kg * gravity_m_s2 * 2.0
+        self.max_thrust = mass_kg * gravity_m_s2 * 2.5
         self.min_thrust = 0.0
+        self.max_moments_Nm = np.array([10.0, 10.0, 2.0])
         
     def compute_control(self, time_s: float, obs_state: VehicleState, reference: TrajectoryReference) -> ControlCommand:
         # 1. Bucle externo: Posición -> Fuerza deseada en ENU
@@ -94,6 +95,9 @@ class ClassicCascadeController(Controller):
         gyro_ff = np.cross(obs_state.angular_velocity_B_rad_s, self.inertia @ obs_state.angular_velocity_B_rad_s)
         
         tau_B += gyro_ff
+        
+        # Saturar momentos
+        tau_B = np.clip(tau_B, -self.max_moments_Nm, self.max_moments_Nm)
         
         return ControlCommand(collective_thrust_N=thrust_N, body_moments_Nm=tau_B)
 
