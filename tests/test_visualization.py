@@ -2,6 +2,7 @@ import json
 import os
 
 from simulador_quad.visualization.plots import plot_telemetry
+from simulador_quad.visualization.three_d import export_trajectory_viewer_html
 
 
 def test_plot_telemetry_generates_standard_figures(tmp_path):
@@ -65,3 +66,43 @@ def test_plot_telemetry_generates_standard_figures(tmp_path):
     assert {os.path.basename(path) for path in generated} == expected_names
     for path in generated:
         assert os.path.getsize(path) > 0
+
+
+def test_export_trajectory_viewer_html_creates_file(tmp_path):
+    telemetry = [
+        {
+            "time_s": 0.0,
+            "state": {"position_W_m": [0.0, 0.0, 0.0]},
+            "reference": {"position_W_m": [0.0, 0.0, 0.0]},
+        },
+        {
+            "time_s": 1.0,
+            "state": {"position_W_m": [1.0, 1.0, 1.0]},
+            "reference": {"position_W_m": [1.0, 1.0, 1.0]},
+        },
+    ]
+
+    telemetry_path = tmp_path / "telemetry.json"
+    output_path = tmp_path / "visualization_3d.html"
+    metrics_path = tmp_path / "metrics.json"
+
+    telemetry_path.write_text(json.dumps(telemetry), encoding="utf-8")
+    metrics_path.write_text(
+        json.dumps(
+            {
+                "position_rmse_m": 0.0,
+                "termination_reason": "Test",
+                "duration_s": 1.0,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    path = export_trajectory_viewer_html(telemetry_path, output_path, metrics_path)
+
+    assert os.path.exists(path)
+    assert os.path.getsize(path) > 0
+    with open(path, "r", encoding="utf-8") as f:
+        content = f.read()
+        assert "plotly" in content.lower()
+        assert "Visor de Trayectoria 3D" in content
