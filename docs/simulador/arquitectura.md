@@ -17,6 +17,7 @@ El simulador esta organizado como codigo cientifico simple. Las carpetas separan
    - avanza el estado con RK4 usando `physics_dt_s`.
 5. El episodio termina por limite de tiempo o por una condicion de seguridad/validez.
 6. Se exportan `telemetry.json` y `metrics.json`.
+7. Se generan automáticamente figuras PNG y el visor interactivo `visualization_3d.html`.
 
 ## Modulos principales
 
@@ -33,6 +34,7 @@ El simulador esta organizado como codigo cientifico simple. Las carpetas separan
 - `telemetry/export.py`: exportacion JSON.
 - `metrics/report.py`: metricas agregadas.
 - `visualization/plots.py`: figuras PNG a partir de `telemetry.json`.
+- `visualization/three_d.py`: visor interactivo HTML 3D basado en Plotly.
 
 ## Contratos de datos
 
@@ -73,7 +75,7 @@ Cada muestra de `telemetry.json` contiene:
 - causa de terminacion y duracion;
 - metadatos completos del escenario.
 
-Las metricas no sustituyen a la inspeccion de telemetria. Para explicar un resultado en la memoria, conviene combinar `metrics.json` con las figuras generadas por `simulador-quad plot`.
+Las métricas no sustituyen a la inspección de telemetría. Para explicar un resultado en la memoria, conviene combinar `metrics.json` con las figuras generadas automáticamente y el visor 3D interactivo.
 
 ## Limites actuales
 
@@ -82,5 +84,5 @@ Las metricas no sustituyen a la inspeccion de telemetria. Para explicar un resul
 - El viento es constante.
 - El ruido de observacion afecta solo a posicion y velocidad.
 - El CLI no carga limites de posicion o velocidad desde YAML.
-- La visualizacion es postproceso: no modifica ni valida la simulacion.
+- La visualización es postproceso y automática tras cada ejecución exitosa.
 

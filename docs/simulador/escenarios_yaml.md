@@ -18,6 +18,8 @@ termination: {}
 output: {}
 ```
 
+Al ejecutar un escenario con `uv run simulador-quad run <fichero.yaml>`, se generan automáticamente la telemetría, las métricas, figuras PNG y un visor 3D interactivo, a menos que se use `--no-visualization`.
+
 ## Convenciones fisicas
 
 - Mundo `W`: ENU, con `X_W` Este, `Y_W` Norte y `Z_W` arriba.
@@ -239,6 +241,16 @@ output:
 - `dir`: directorio de salida.
 - `telemetry_file`: nombre del JSON de telemetria.
 - `metrics_file`: nombre del JSON de metricas.
+
+## Escenarios de ejemplo disponibles
+
+Para probar los distintos tipos de trayectorias, se proporcionan los siguientes archivos listos para usar en `scenarios/`:
+
+- `hover_clean.yaml`: Vuelo estacionario (`hold`) a 2m, sin perturbaciones.
+- `circle_drag.yaml`: Trayectoria circular (`circle`) con rozamiento lineal activo.
+- `circle_noisy_wind.yaml`: Círculo con viento constante y ruido en sensores.
+- `lissajous_clean.yaml`: Trayectoria en curva de Lissajous (`lissajous`) 3D.
+- `waypoint_clean.yaml`: Seguimiento de una lista de puntos (`waypoint` / `line`) con paradas suaves.
 
 ## Ejemplo minimo de hover
 
