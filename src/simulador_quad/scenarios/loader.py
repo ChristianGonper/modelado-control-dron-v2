@@ -71,6 +71,10 @@ def instantiate_scenario(config: Dict[str, Any]) -> Tuple[Any, Any, Any, Any, An
         trajectory = LissajousTrajectory(
             np.array(t_cfg['center_W_m']).astype(float), np.array(t_cfg['amplitudes']).astype(float), np.array(t_cfg['omegas']).astype(float)
         )
+    elif t_type == 'waypoint':
+        trajectory = WaypointTrajectory(
+            np.array(t_cfg['waypoints']).astype(float), np.array(t_cfg['times']).astype(float), float(t_cfg.get('yaw_rad', 0.0))
+        )
     else:
         raise ValueError(f"Unknown trajectory type: {t_type}")
         

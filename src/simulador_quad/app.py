@@ -29,7 +29,8 @@ def run_simulation(scenario_path: str):
         observation_noise=noise,
         max_duration_s=term_cfg['max_duration_s'],
         z_min_m=term_cfg['z_min_m'],
-        max_attitude_angle_rad=term_cfg.get('max_attitude_angle_rad', 1.256)
+        max_attitude_angle_rad=term_cfg.get('max_attitude_angle_rad', 1.256),
+        max_saturation_duration_s=term_cfg.get('max_saturation_duration_s', 1.0)
     )
     
     # Función control para el runner (adaptador)
