@@ -18,6 +18,11 @@ def test_first_order_lag():
     assert val2 > val1
     assert val3 > val2
     assert val3 < 1.0
+    
+    # Verificar valor concreto con alpha = 1 - exp(-dt/tau)
+    alpha = 1.0 - np.exp(-dt / tau)
+    expected_val1 = 0.0 + alpha * (1.0 - 0.0)
+    assert np.isclose(val1, expected_val1)
 
 def test_pure_delay():
     dt = 0.1
@@ -34,6 +39,7 @@ def test_pure_delay():
 
 def test_actuator_system_forces():
     # Un solo rotor para probar
+    # turning_direction = 1 (CCW) -> Reacción CW -> +Z en FRD
     rotor = RotorParameters(
         position_B_m=np.array([1.0, 0.0, 0.0]),
         turning_direction=1,
@@ -47,21 +53,24 @@ def test_actuator_system_forces():
     sys = ActuatorSystem([rotor], dt_s=0.1)
     target_omega = np.array([5.0])
     
-    app_omega, app_thrust, app_torque_s, total_torque, total_thrust = sys.compute_applied_forces(target_omega)
+    res, total_torque, total_thrust = sys.compute_applied_forces(target_omega)
     
-    assert np.isclose(app_omega[0], 5.0)
-    # T = k_f * omega^2
-    assert np.isclose(app_thrust[0], 25.0)
-    # Q = turning_direction * k_m * omega^2
-    assert np.isclose(app_torque_s[0], 2.5)
+    assert np.isclose(res.applied_omega_rad_s[0], 5.0)
+    # T = k_f * omega^2 = 1.0 * 25.0 = 25.0
+    assert np.isclose(res.applied_thrust_N[0], 25.0)
+    # Q = s * k_m * omega^2 = 1 * 0.1 * 25.0 = 2.5
+    assert np.isclose(res.applied_torque_Nm[0], 2.5)
+    # RPM = 5.0 * 60 / (2*pi) = 300 / 6.28 = 47.74
+    assert np.isclose(res.rotor_speed_rpm[0], 5.0 * 60.0 / (2.0 * np.pi))
+    assert res.saturation_flags[0] == False
     
     # Thrust en B es [0, 0, -T]
     assert np.allclose(total_thrust, [0.0, 0.0, -25.0])
     
     # Torque:
     # torque_pos = r x F = [1, 0, 0] x [0, 0, -25] = [0, 25, 0]
-    # torque_drag = [0, 0, -1 * 0.1 * 25] = [0, 0, -2.5]
-    assert np.allclose(total_torque, [0.0, 25.0, -2.5])
+    # torque_drag = [0, 0, 2.5]
+    assert np.allclose(total_torque, [0.0, 25.0, 2.5])
 
 def test_saturation():
     rotor = RotorParameters(
@@ -77,6 +86,7 @@ def test_saturation():
     
     # Pedir omega mayor que max
     target_omega = np.array([20.0])
-    app_omega, _, _, _, _ = sys.compute_applied_forces(target_omega)
+    res, _, _ = sys.compute_applied_forces(target_omega)
     
-    assert np.isclose(app_omega[0], 10.0)
+    assert np.isclose(res.applied_omega_rad_s[0], 10.0)
+    assert res.saturation_flags[0] == True
