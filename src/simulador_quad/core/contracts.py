@@ -42,19 +42,25 @@ class ControlCommand:
 
 @dataclass
 class RotorCommand:
+    target_thrust_N: np.ndarray  # [num_rotors,]
     target_omega_rad_s: np.ndarray  # [num_rotors,]
+    degraded_collective_thrust: bool = False
 
 @dataclass
 class RotorAppliedState:
     applied_omega_rad_s: np.ndarray  # [num_rotors,]
     applied_thrust_N: np.ndarray  # [num_rotors,]
-    applied_torque_Nm: np.ndarray  # [num_rotors,]
-
+    applied_torque_Nm: np.ndarray  # [num_rotors,] (reacción aerodinámica)
+    rotor_speed_rpm: np.ndarray  # [num_rotors,]
+    saturation_flags: np.ndarray  # [num_rotors,] boolean
+    
 @dataclass
 class TelemetrySample:
     time_s: float
     state: VehicleState
+    observation: VehicleState  # Estado tal cual lo vio el controlador (con ruido/retraso si aplica)
     reference: TrajectoryReference
     control_command: ControlCommand
     rotor_command: RotorCommand
     rotor_applied: RotorAppliedState
+    termination_cause: str = ""
