@@ -4,7 +4,7 @@ from simulador_quad.core.contracts import VehicleState, TrajectoryReference, Con
 from simulador_quad.core.attitude import world_to_body, quaternion_error, quaternion_to_rotation_matrix
 
 class ClassicCascadeController(Controller):
-    def __init__(self, mass_kg: float, gravity_m_s2: float, inertia_B_kg_m2: np.ndarray):
+    def __init__(self, mass_kg: float, gravity_m_s2: float, inertia_B_kg_m2: np.ndarray, max_body_moments_Nm: np.ndarray = None):
         self.mass = mass_kg
         self.gravity = gravity_m_s2
         self.inertia = inertia_B_kg_m2
@@ -14,12 +14,15 @@ class ClassicCascadeController(Controller):
         self.Kd_pos = np.array([1.0, 1.0, 2.0])
         
         # Ganancias Actitud (Roll, Pitch, Yaw)
-        self.Kp_att = np.array([50.0, 50.0, 10.0])
-        self.Kd_att = np.array([15.0, 15.0, 5.0])
+        self.Kp_att = np.array([4.0, 4.0, 1.0])
+        self.Kd_att = np.array([1.5, 1.5, 0.5])
         
         self.max_thrust = mass_kg * gravity_m_s2 * 2.5
         self.min_thrust = 0.0
-        self.max_moments_Nm = np.array([10.0, 10.0, 2.0])
+        if max_body_moments_Nm is not None:
+            self.max_moments_Nm = np.array(max_body_moments_Nm).astype(float)
+        else:
+            self.max_moments_Nm = np.array([10.0, 10.0, 2.0])
         
     def compute_control(self, time_s: float, obs_state: VehicleState, reference: TrajectoryReference) -> ControlCommand:
         # 1. Bucle externo: Posición -> Fuerza deseada en ENU
