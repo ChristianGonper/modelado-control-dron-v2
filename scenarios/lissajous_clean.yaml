@@ -1,0 +1,46 @@
+name: "Lissajous Clean"
+seed: 42
+
+vehicle:
+  mass_kg: 1.0
+  inertia_B_kg_m2: [[0.05, 0, 0], [0, 0.05, 0], [0, 0, 0.1]]
+  linear_drag_coefficient: [0, 0, 0]
+  rotors:
+    - {position_B_m: [0.17, 0.17, 0], turning_direction: -1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 1000, time_constant_s: 0.0}
+    - {position_B_m: [0.17, -0.17, 0], turning_direction: 1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 1000, time_constant_s: 0.0}
+    - {position_B_m: [-0.17, 0.17, 0], turning_direction: 1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 1000, time_constant_s: 0.0}
+    - {position_B_m: [-0.17, -0.17, 0], turning_direction: -1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 1000, time_constant_s: 0.0}
+
+initial_state:
+  position_W_m: [0, 0, 2]
+  velocity_W_m_s: [0, 0, 0]
+  orientation_WB: null
+  angular_velocity_B_rad_s: [0, 0, 0]
+
+trajectory:
+  type: "lissajous"
+  center_W_m: [0, 0, 2]
+  amplitudes: [2.0, 1.0, 0.5]
+  omegas: [0.5, 1.0, 0.2]
+
+controller:
+  type: "classic"
+
+perturbations:
+  constant_wind_W_m_s: [0, 0, 0]
+  pos_std_m: 0.0
+  vel_std_m_s: 0.0
+
+timing:
+  physics_dt_s: 0.01
+  control_dt_s: 0.02
+  telemetry_dt_s: 0.1
+
+termination:
+  max_duration_s: 15.0
+  z_min_m: 0.0
+
+output:
+  dir: "results/lissajous_clean"
+  telemetry_file: "telemetry.json"
+  metrics_file: "metrics.json"
