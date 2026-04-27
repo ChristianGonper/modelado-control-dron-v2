@@ -1,6 +1,7 @@
 import numpy as np
 from typing import Callable, Optional, Dict, Any, Tuple
 from simulador_quad.core.contracts import VehicleState, VehicleParameters, ControlCommand, RotorCommand, RotorAppliedState
+from simulador_quad.core.attitude import body_to_world
 from simulador_quad.dynamics.rigid_body import rk4_step
 from simulador_quad.dynamics.actuators import ActuatorSystem
 from simulador_quad.dynamics.mixer import QuadcopterMixer
@@ -82,10 +83,11 @@ class SimulationRunner:
             
         return False, ""
         
-    def run(self, initial_state: VehicleState, controller_func: Callable) -> Dict[str, Any]:
+    def run(self, initial_state: VehicleState, controller_func: Callable, trajectory) -> Dict[str, Any]:
         """
         Ejecuta la simulación.
-        controller_func: (time_s, observation_state) -> ControlCommand
+        controller_func: (time_s, observation_state, reference) -> ControlCommand
+        trajectory: objeto con get_reference(time_s)
         Devuelve el estado final, la causa de terminación y la telemetría.
         """
         state = VehicleState(
@@ -109,9 +111,6 @@ class SimulationRunner:
         
         termination_reason = ""
         
-        # Guardar telemetría inicial
-        # ... Para simplificar, la telemetría se guarda al principio del bucle si toca
-        
         while True:
             # Comprobar fin
             term, reason = self._check_termination(state)
@@ -119,15 +118,40 @@ class SimulationRunner:
                 termination_reason = reason
                 break
                 
+            # Actuadores (calculamos las fuerzas aplicadas ahora para tenerlas listas para la física y la telemetría)
+            app_omega, app_thrust, app_torque_s, total_torque_B, total_thrust_B = \
+                self.actuators.compute_applied_forces(current_target_omega)
+            
+            current_applied = RotorAppliedState(
+                applied_omega_rad_s=app_omega.copy(),
+                applied_thrust_N=app_thrust.copy(),
+                applied_torque_Nm=app_torque_s.copy()
+            )
+            
+            # Referencia actual
+            current_ref = trajectory.get_reference(time_s)
+                
             # 1. Telemetry
             if time_s - last_telemetry_time >= self.telemetry_dt_s - 1e-6:
-                telemetry.append({
-                    "time_s": time_s,
-                    "position_W_m": state.position_W_m.copy(),
-                    "velocity_W_m_s": state.velocity_W_m_s.copy(),
-                    "orientation_WB": state.orientation_WB.copy(),
-                    "angular_velocity_B_rad_s": state.angular_velocity_B_rad_s.copy()
-                })
+                from simulador_quad.core.contracts import TelemetrySample, RotorCommand
+                sample = TelemetrySample(
+                    time_s=time_s,
+                    state=VehicleState(
+                        position_W_m=state.position_W_m.copy(),
+                        velocity_W_m_s=state.velocity_W_m_s.copy(),
+                        orientation_WB=state.orientation_WB.copy(),
+                        angular_velocity_B_rad_s=state.angular_velocity_B_rad_s.copy(),
+                        time_s=time_s
+                    ),
+                    reference=current_ref,
+                    control_command=ControlCommand(
+                        collective_thrust_N=current_control.collective_thrust_N,
+                        body_moments_Nm=current_control.body_moments_Nm.copy()
+                    ),
+                    rotor_command=RotorCommand(target_omega_rad_s=current_target_omega.copy()),
+                    rotor_applied=current_applied
+                )
+                telemetry.append(sample)
                 last_telemetry_time = time_s
                 
             # 2. Control (ZOH)
@@ -143,7 +167,7 @@ class SimulationRunner:
                 )
                 
                 # Ejecutar controlador
-                current_control = controller_func(time_s, obs_state)
+                current_control = controller_func(time_s, obs_state, current_ref)
                 
                 # Mezclador
                 current_target_omega = self.mixer.compute_rotor_commands(
@@ -160,13 +184,6 @@ class SimulationRunner:
                 state.velocity_W_m_s, v_wind, state.orientation_WB, 
                 self.vehicle_params.linear_drag_coefficient
             )
-            
-            # Actuadores
-            app_omega, app_thrust, app_torque_s, total_torque_B, total_thrust_B = \
-                self.actuators.compute_applied_forces(current_target_omega)
-                
-            # total_thrust_B está en cuerpo, pasarlo a mundo
-            from simulador_quad.core.attitude import body_to_world
             total_thrust_W = body_to_world(state.orientation_WB, total_thrust_B)
             
             # Fuerza total externa (el RK4 añade la gravedad internamente)

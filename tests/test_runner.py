@@ -57,11 +57,18 @@ def test_runner_multi_rate():
     
     control_calls = []
     
-    def dummy_controller(t, obs):
+    class DummyTraj:
+        def get_reference(self, time_s):
+            from simulador_quad.core.contracts import TrajectoryReference
+            return TrajectoryReference(np.zeros(3), np.zeros(3), np.zeros(3), 0.0)
+            
+    traj = DummyTraj()
+        
+    def dummy_controller(t, obs, ref):
         control_calls.append(t)
         return ControlCommand(collective_thrust_N=9.81, body_moments_Nm=np.zeros(3))
         
-    result = runner.run(initial_state, dummy_controller)
+    result = runner.run(initial_state, dummy_controller, traj)
     
     # 0.5s duration. Physics dt = 0.01 (50 steps). Control dt = 0.05 (10 steps). Telemetry dt = 0.1 (5 steps)
     assert len(control_calls) == 10
@@ -81,8 +88,15 @@ def test_termination_z_min():
         time_s=0.0
     )
     
-    def zero_thrust(t, obs):
+    class DummyTraj:
+        def get_reference(self, time_s):
+            from simulador_quad.core.contracts import TrajectoryReference
+            return TrajectoryReference(np.zeros(3), np.zeros(3), np.zeros(3), 0.0)
+            
+    traj = DummyTraj()
+        
+    def zero_thrust(t, obs, ref):
         return ControlCommand(0.0, np.zeros(3))
         
-    result = runner.run(initial_state, zero_thrust)
+    result = runner.run(initial_state, zero_thrust, traj)
     assert "Crash: Z_W < z_min_m" in result["termination_reason"]
