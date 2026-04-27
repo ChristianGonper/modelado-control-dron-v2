@@ -1,0 +1,339 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{geometry}
+\geometry{margin=2.2cm}
+\usepackage{amsmath,amssymb}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds, calc}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{blue}\bfseries,
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\lstset{style=mystyle}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!70!black,
+    urlcolor=blue!80!black
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\setlength{\headheight}{15pt}
+\fancyhead[L]{Ingeniería de Software -- Simulador Multirotor}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\titleformat{\section}{\Large\bfseries\color{blue!70!black}}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries\color{blue!50!black}}{\thesubsection}{1em}{}
+
+\title{\textbf{Informe de Ingeniería de Software}\\[0.3cm]
+\large Arquitectura, Implementación y Diseño del Simulador Multirotor}
+\author{Análisis del repositorio \texttt{github.com/ChristianGonper/modelado-control-dron}}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Este informe analiza el repositorio desde la perspectiva de la \textbf{Ingeniería de Software}. Se describe la arquitectura modular, los contratos de datos, la implementación de los modelos físicos, el sistema de control (clásico y neuronal), 
+el pipeline de entrenamiento, la orquestación y las decisiones de diseño que permiten la extensibilidad y la reproducibilidad del simulador.
+\end{abstract}
+
+\newpage
+\tableofcontents
+\newpage
+
+\section{Visión General de la Arquitectura}
+
+El simulador sigue una arquitectura \textbf{en capas} con alta separación de responsabilidades:
+
+\begin{center}
+\begin{tikzpicture}[
+    node distance=0.8cm,
+    box/.style={draw, rounded corners, minimum width=8cm, minimum height=1cm, align=center, font=\small},
+    layer1/.style={box, fill=blue!10},
+    layer2/.style={box, fill=green!10},
+    layer3/.style={box, fill=orange!10},
+    layer4/.style={box, fill=purple!10},
+]
+\node[layer1] (app) {Application Layer -- \texttt{app.py}, \texttt{runner.py}, CLI};
+\node[layer2, below=of app] (control) {Control Layer -- \texttt{control/} (PD, MLP, GRU, LSTM)};
+\node[layer3, below=of control] (dynamics) {Dynamics \& Physics Layer -- \texttt{dynamics/}, \texttt{core/}};
+\node[layer4, below=of dynamics] (data) {Data \& Dataset Layer -- \texttt{dataset/}, telemetry, scenarios};
+\end{tikzpicture}
+\end{center}
+
+\textbf{Principios clave}:
+\begin{itemize}
+    \item \textbf{Contrato primero}: todo se comunica a través de dataclasses inmutables (\texttt{VehicleState}, \texttt{VehicleIntent}, \texttt{VehicleCommand}).
+    \item \textbf{Intercambiabilidad}: cualquier controlador que implemente \texttt{ControllerContract} puede usarse sin cambiar el runner.
+    \item \textbf{Reproducibilidad}: semillas, normalización train-only, y logging completo.
+\end{itemize}
+
+\section{Estructura de Paquetes y Módulos}
+
+\begin{lstlisting}[language=Python, caption=Estructura principal del paquete]
+src/simulador_multirotor/
+|-- __init__.py
+|-- app.py                  # CLI y punto de entrada
+|-- runner.py               # Orquestador principal
+|-- benchmark.py
+|-- control/
+|   |-- __init__.py
+|   |-- contract.py         # ControllerContract (Protocol)
+|   |-- cascade.py          # Control PD en cascada
+|   |-- mlp.py              # MLP + entrenamiento
+|   `-- recurrent.py        # GRU/LSTM + entrenamiento
+|-- core/
+|   |-- contracts.py        # VehicleState, RotorGeometry, VehicleIntent...
+|   `-- attitude.py         # Cuaterniones y helpers matematicos
+|-- dynamics/
+|   |-- rigid_body.py       # 6DOF + actuadores + mixer
+|   `-- aerodynamics.py     # Drag, viento OU
+|-- dataset/                # Ventanas, splits, features
+|-- telemetry/
+|-- trajectories/
+|-- scenarios/
+|-- metrics/
+`-- visualization/
+\end{lstlisting}
+
+\section{Contratos de Datos (core/contracts.py)}
+
+El corazón del diseño son las \textbf{dataclasses inmutables} con validación estricta en \texttt{\_\_post\_init\_\_}:
+
+\begin{itemize}
+    \item \texttt{VehicleState}: estado físico completo (posición, cuaternión, velocidades).
+    \item \texttt{RotorGeometry}: parámetros físicos de cada rotor.
+    \item \texttt{VehicleIntent}: alto nivel (empuje colectivo + torque cuerpo).
+    \item \texttt{VehicleCommand}: lo que se aplica a la planta.
+    \item \texttt{TrajectoryReference}: referencia de trayectoria.
+\end{itemize}
+
+\textbf{Ventaja}: inmutabilidad + validación temprana evita errores en tiempo de ejecución y facilita el razonamiento.
+
+\section{Implementación de la Física}
+
+\subsection{Matemáticas de Actitud (\texttt{core/attitude.py})}
+
+Se implementan todas las operaciones de cuaterniones de forma vectorizada y numéricamente estable:
+
+\begin{itemize}
+    \item \texttt{quaternion\_multiply}
+    \item \texttt{quaternion\_derivative} (usado en RK4)
+    \item \texttt{quaternion\_error\_vector}
+    \item \texttt{quaternion\_from\_thrust\_direction\_and\_yaw}
+\end{itemize}
+
+\subsection{Dinámica Rígida y Actuadores (\texttt{dynamics/rigid\_body.py})}
+
+\begin{itemize}
+    \item \texttt{RotorActuatorState.advance()} --- modelo de primer orden con saturación.
+    \item \texttt{RotorMixer} --- pseudo-inversa + saturación por rotor.
+    \item Integración RK4 del estado 6DOF.
+\end{itemize}
+
+\textbf{Nota de diseño}: el mixer y los actuadores están desacoplados del integrador, permitiendo cambiar la tasa de control independientemente de la física.
+
+\section{Sistema de Control}
+
+\subsection{Interfaz Común}
+
+\texttt{ControllerContract} es un \texttt{Protocol} (duck typing estructural). Esto permite:
+
+\begin{itemize}
+    \item PD clásico (\texttt{cascade.py})
+    \item MLP, GRU, LSTM
+    \item Controladores externos o adaptados
+\end{itemize}
+
+Todos devuelven exactamente el mismo \texttt{VehicleCommand}.
+
+\subsection{Control PD en Cascada}
+
+Implementación limpia de dos bucles con feedforward y saturación por eje. Las ganancias están parametrizadas y validadas.
+
+\subsection{Controladores Neuronales}
+
+\begin{itemize}
+    \item \texttt{MLPTrainingConfig} + \texttt{MLPArchitectureConfig}
+    \item \texttt{RecurrentTrainingConfig}
+    \item Guardado de \texttt{FeatureNormalizationStats} junto con los pesos.
+    \item Inferencia idéntica a entrenamiento gracias al checkpoint completo.
+\end{itemize}
+
+\section{Pipeline de Datos y Entrenamiento}
+
+\begin{center}
+\resizebox{\textwidth}{!}{
+\begin{tikzpicture}[
+    node distance=0.6cm,
+    box/.style={draw, rounded corners, minimum width=2.8cm, minimum height=0.9cm, align=center, font=\footnotesize},
+    arrow/.style={-{Stealth[length=2mm]}}
+]
+\node[box, fill=blue!15] (raw) {Raw Telemetry};
+\node[box, fill=green!15, right=of raw] (episodes) {Episodes};
+\node[box, fill=orange!15, right=of episodes] (windows) {Windows};
+\node[box, fill=purple!15, right=of windows] (train) {Train / Val Split};
+\node[box, fill=red!15, right=of train] (model) {Model Training};
+\node[box, fill=teal!15, right=of model] (ckpt) {Checkpoint};
+
+\draw[arrow] (raw) -- (episodes);
+\draw[arrow] (episodes) -- (windows);
+\draw[arrow] (windows) -- (train);
+\draw[arrow] (train) -- (model);
+\draw[arrow] (model) -- (ckpt);
+\end{tikzpicture}
+}
+\end{center}
+
+\textbf{Características clave}:
+\begin{itemize}
+    \item Ventanas deslizantes con \texttt{stride}.
+    \item Dos modos de features: \texttt{raw\_observation} y \texttt{observation\_plus\_tracking\_errors}.
+    \item Normalización \textbf{solo con estadísticas de train}.
+    \item Reproducibilidad total con semillas.
+\end{itemize}
+
+\section{Orquestación y Runner}
+
+El \texttt{SimulationRunner} es el componente central:
+
+\begin{itemize}
+    \item Separa claramente \texttt{physics\_dt}, \texttt{control\_dt} y \texttt{telemetry\_dt}.
+    \item Mantiene el estado de actuadores entre pasos de control.
+    \item Registra metadatos completos (comando aplicado vs. comando deseado).
+    \item Soporta escenarios externos JSON.
+\end{itemize}
+
+Esto permite experimentos de robustez y benchmark sin modificar controladores.
+
+\section{Telemetría, Métricas y Escenarios}
+
+\begin{itemize}
+    \item \texttt{telemetry/export.py}: exporta historia completa a JSON.
+    \item \texttt{metrics/report.py}: calcula RMSE de posición, velocidad, empuje, etc.
+    \item \texttt{scenarios/}: generadores de escenarios mínimos y de referencia.
+    \item \texttt{visualization/}: renderizado 2D/3D estático desde telemetría.
+\end{itemize}
+
+\section{Decisiones de Diseño y Patrones Aplicados}
+
+\begin{enumerate}
+    \item \textbf{Dataclasses frozen + slots}: inmutabilidad + bajo consumo de memoria.
+    \item \textbf{Protocol-based design}: duck typing para controladores (sin herencia rígida).
+    \item \textbf{Separación de tasas}: física, control y telemetría independientes.
+    \item \textbf{Checkpointing rico}: arquitectura + normalización + pesos.
+    \item \textbf{Reproducibilidad por defecto}: semillas en todos los componentes.
+    \item \textbf{Validación temprana}: \texttt{\_\_post\_init\_\_} en todos los contratos.
+\end{enumerate}
+
+\section{Diagrama de Clases Principal (Resumen)}
+
+\begin{center}
+\begin{tikzpicture}[
+    node distance=0.5cm,
+    class/.style={draw, rectangle, minimum width=3.2cm, minimum height=2.8cm, align=left, font=\scriptsize},
+    arrow/.style={-{Stealth[length=2mm]}, thick}
+]
+% Core
+\node[class, fill=blue!8] (state) at (0,0) {
+    \textbf{VehicleState}\\
+    position\_m\\
+    orientation\_wxyz\\
+    linear\_velocity\_m\_s\\
+    angular\_velocity\_rad\_s
+};
+
+\node[class, fill=green!8] (intent) at (5,0) {
+    \textbf{VehicleIntent}\\
+    collective\_thrust\_newton\\
+    body\_torque\_nm
+};
+
+\node[class, fill=orange!8] (command) at (10,0) {
+    \textbf{VehicleCommand}\\
+    intent: VehicleIntent
+};
+
+% Control
+\node[class, fill=purple!8] (controller) at (5,-4) {
+    \textbf{ControllerContract}\\
+    +compute\_action()\\
+    (Protocol)
+};
+
+\node[class, fill=red!8] (cascade) at (0,-4) {
+    \textbf{CascadeController}\\
+    PositionLoop\\
+    AttitudeLoop
+};
+
+\node[class, fill=teal!8] (mlp) at (10,-4) {
+    \textbf{MLPController}\\
+    model: nn.Module\\
+    norm\_stats
+};
+
+\draw[arrow] (controller) -- (cascade);
+\draw[arrow] (controller) -- (mlp);
+\draw[arrow] (state) -- (controller);
+\draw[arrow] (intent) -- (command);
+\end{tikzpicture}
+\end{center}
+
+\section{Conclusiones de Ingeniería de Software}
+
+El repositorio demuestra una \textbf{excelente práctica de ingeniería de software} para un proyecto de investigación:
+
+\begin{itemize}
+    \item Alta cohesión y bajo acoplamiento gracias a los contratos inmutables.
+    \item Extensibilidad real: añadir un nuevo controlador neuronal es cuestión de implementar \texttt{compute\_action}.
+    \item Reproducibilidad y trazabilidad completas.
+    \item Separación clara entre física y software que facilita tanto el mantenimiento como la experimentación.
+\end{itemize}
+
+Este diseño permite pasar de un controlador PD clásico a modelos neuronales (MLP/GRU/LSTM) sin tocar ni una línea del runner ni de la planta física.
+
+\vspace{1cm}
+\begin{center}
+\textit{Informe generado a partir del análisis del repositorio}\\
+\texttt{https://github.com/ChristianGonper/modelado-control-dron}\\
+\textit{Fecha: \today}
+\end{center}
+
+\end{document}
