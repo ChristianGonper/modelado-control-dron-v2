@@ -10,8 +10,10 @@ def compute_state_derivative(
     mass_kg: float,
     inertia_B_kg_m2: np.ndarray,
     gravity_m_s2: float,
-    force_W_N: np.ndarray,
-    torque_B_Nm: np.ndarray
+    force_B_N: np.ndarray,  # Cambiado a cuerpo
+    torque_B_Nm: np.ndarray,
+    wind_W_m_s: np.ndarray = np.zeros(3),
+    drag_coeff: np.ndarray = np.zeros(3)
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Calcula la derivada del estado del cuerpo rígido.
@@ -21,19 +23,25 @@ def compute_state_derivative(
     dot_p = velocity_W_m_s
     
     # Velocidad
+    # Rotar fuerza de cuerpo a mundo
+    force_W_N = body_to_world(orientation_WB, force_B_N)
+    
+    # Drag (opcionalmente aquí o fuera)
+    # Por simplicidad y precisión, el drag debería depender de la velocidad actual en el paso RK4
+    v_rel_W = velocity_W_m_s - wind_W_m_s
+    v_rel_B = body_to_world(np.array([orientation_WB[0], -orientation_WB[1], -orientation_WB[2], -orientation_WB[3]]), v_rel_W)
+    drag_B = -drag_coeff * v_rel_B
+    drag_W = body_to_world(orientation_WB, drag_B)
+    
     gravity_force_W = np.array([0.0, 0.0, -mass_kg * gravity_m_s2])
-    total_force_W = force_W_N + gravity_force_W
+    total_force_W = force_W_N + drag_W + gravity_force_W
     dot_v = total_force_W / mass_kg
     
     # Actitud
-    # dot_q = 1/2 q otimes [0, omega]
     q_omega = np.array([0.0, angular_velocity_B_rad_s[0], angular_velocity_B_rad_s[1], angular_velocity_B_rad_s[2]])
     dot_q = 0.5 * quaternion_multiply(orientation_WB, q_omega)
     
     # Velocidad angular
-    # I * dot_omega + omega x (I * omega) = torque
-    # dot_omega = I^-1 * (torque - omega x (I * omega))
-    # Asumiendo inercia diagonal
     I_inv = np.linalg.inv(inertia_B_kg_m2)
     angular_momentum = inertia_B_kg_m2 @ angular_velocity_B_rad_s
     cross_term = np.cross(angular_velocity_B_rad_s, angular_momentum)
@@ -50,18 +58,18 @@ def rk4_step(
     inertia_B_kg_m2: np.ndarray,
     gravity_m_s2: float,
     dt_s: float,
-    force_W_N: np.ndarray,
-    torque_B_Nm: np.ndarray
+    force_B_N: np.ndarray,
+    torque_B_Nm: np.ndarray,
+    wind_W_m_s: np.ndarray = np.zeros(3),
+    drag_coeff: np.ndarray = np.zeros(3)
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Realiza un paso de integración RK4.
     """
-    # Función auxiliar para la derivada
     def f(p, v, q, w):
-        # q debe estar normalizado para las operaciones
         q_norm = normalize_quaternion(q)
         return compute_state_derivative(
-            p, v, q_norm, w, mass_kg, inertia_B_kg_m2, gravity_m_s2, force_W_N, torque_B_Nm
+            p, v, q_norm, w, mass_kg, inertia_B_kg_m2, gravity_m_s2, force_B_N, torque_B_Nm, wind_W_m_s, drag_coeff
         )
     
     p0, v0, q0, w0 = position_W_m, velocity_W_m_s, orientation_WB, angular_velocity_B_rad_s

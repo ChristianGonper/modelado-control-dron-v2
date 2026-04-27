@@ -61,10 +61,10 @@ def test_position_error_force_sign():
     # Si queremos ir a X=1 (Este), necesitamos una aceleración en X.
     # El controlador calculará a_des_x > 0.
     # F_des_W tendrá componente X positiva.
-    # Esto significa que el dron debe inclinarse.
-    # Con Front=Norte (Y) y Right=Este (X), inclinarse hacia X significa un roll positivo (Right down).
+    # Con Front=Norte (Y) y Right=Este (X), para tener fuerza en X (Este)
+    # necesitamos que el dron se incline hacia el Este (Right DOWN).
+    # Right DOWN es un roll POSITIVO en FRD.
     # Así que el torque_x (roll) debe ser positivo.
-    # Comprobamos el signo de body_moments_Nm[0]
     assert cmd.body_moments_Nm[0] > 0.0
     # No queremos cabeceo (pitch, Y) ni guiñada (yaw, Z)
     assert np.isclose(cmd.body_moments_Nm[1], 0.0)

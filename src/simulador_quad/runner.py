@@ -180,27 +180,19 @@ class SimulationRunner:
             # 3. Física
             # Perturbaciones
             v_wind = self.wind.get_wind(time_s)
-            F_drag_W = compute_linear_drag(
-                state.velocity_W_m_s, v_wind, state.orientation_WB, 
-                self.vehicle_params.linear_drag_coefficient
-            )
-            total_thrust_W = body_to_world(state.orientation_WB, total_thrust_B)
             
-            # Fuerza total externa (el RK4 añade la gravedad internamente)
-            force_W = total_thrust_W + F_drag_W
-            torque_B = total_torque_B
-            
-            # RK4 Step
-            p_new, v_new, q_new, w_new = rk4_step(
+            # Integrar un paso (ahora pasamos la fuerza de empuje en cuerpo y el viento)
+            p, v, q, w = rk4_step(
                 state.position_W_m, state.velocity_W_m_s, state.orientation_WB, state.angular_velocity_B_rad_s,
                 self.vehicle_params.mass_kg, self.vehicle_params.inertia_B_kg_m2, self.vehicle_params.gravity_m_s2,
-                self.physics_dt_s, force_W, torque_B
+                self.physics_dt_s, total_thrust_B, total_torque_B,
+                v_wind, self.vehicle_params.linear_drag_coefficient
             )
             
-            state.position_W_m = p_new
-            state.velocity_W_m_s = v_new
-            state.orientation_WB = q_new
-            state.angular_velocity_B_rad_s = w_new
+            state.position_W_m = p
+            state.velocity_W_m_s = v
+            state.orientation_WB = q
+            state.angular_velocity_B_rad_s = w
             
             time_s += self.physics_dt_s
             state.time_s = time_s

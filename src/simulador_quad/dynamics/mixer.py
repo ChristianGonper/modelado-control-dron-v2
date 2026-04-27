@@ -28,8 +28,8 @@ class QuadcopterMixer:
             x, y, _ = r.position_B_m
             # Columna i:
             M[0, i] = 1.0                           # Empuje colectivo
-            M[1, i] = y                             # Momento de alabeo (roll)
-            M[2, i] = -x                            # Momento de cabeceo (pitch)
+            M[1, i] = -y                            # Momento de alabeo (roll)
+            M[2, i] = x                             # Momento de cabeceo (pitch)
             M[3, i] = -r.turning_direction * (r.k_m / r.k_f) # Momento de guiñada (yaw)
             
         self.M = M
@@ -55,22 +55,37 @@ class QuadcopterMixer:
         # Límite inferior por rotor (no pueden tirar)
         T_min = np.zeros(4)
         
-        # Preservar actitud: 
-        # T_req = T_req_thrust + T_req_moments
-        # T_req_thrust = M_inv @ [thrust, 0, 0, 0]^T
-        # T_req_moments = M_inv @ [0, tau_x, tau_y, tau_z]^T
+        # Priorizar momentos frente al empuje
+        # T_req = T_thrust_part + T_moment_part
+        T_moment_part = self.M_inv @ np.array([0.0, moments_Nm[0], moments_Nm[1], moments_Nm[2]])
         
-        # En la práctica simple, si un rotor excede el límite, desplazamos todos 
-        # sumando o restando un offset de empuje para mantener las diferencias (los momentos).
-        max_violation = np.max(T_req - T_max)
-        min_violation = np.min(T_req - T_min)
+        # Cada rotor i debe cumplir: 0 <= T_thrust_i + T_moment_part_i <= T_max_i
+        # Como T_thrust_i = thrust_N / 4 (para un quad simétrico), buscamos el mejor thrust_N
+        # Pero para ser más generales (no asumir simetría perfecta en M_inv):
+        # T_thrust_part = self.M_inv @ [thrust_N, 0, 0, 0]^T
         
-        if max_violation > 0:
-            T_req -= max_violation
-        if min_violation < 0:
-            T_req -= min_violation
+        # Simplificación robusta: Calculamos los márgenes permitidos para el componente de empuje colectivo
+        # en cada rotor una vez restado el componente de momento.
+        T_thrust_part_req = self.M_inv @ np.array([thrust_N, 0.0, 0.0, 0.0])
+        
+        # Ajustamos T_thrust_part_req para que T_req esté en [T_min, T_max]
+        # Para cada rotor i: T_min_i - T_moment_part_i <= T_thrust_part_i <= T_max_i - T_moment_part_i
+        T_thrust_min_allowed = T_min - T_moment_part
+        T_thrust_max_allowed = T_max - T_moment_part
+        
+        # Si T_thrust_max_allowed < T_thrust_min_allowed para algún rotor, los momentos son físicamente
+        # imposibles de alcanzar con esos límites. En ese caso, saturamos momentos.
+        if np.any(T_thrust_max_allowed < T_thrust_min_allowed):
+            # Escalar momentos hacia abajo para que quepan (provisional)
+            # Por ahora, simplemente clipamos T_req al final.
+            pass
             
-        # Saturación estricta al final por seguridad
+        # Clipamos la parte de empuje rotor a rotor
+        T_thrust_part_actual = np.clip(T_thrust_part_req, T_thrust_min_allowed, T_thrust_max_allowed)
+        
+        T_req = T_thrust_part_actual + T_moment_part
+        
+        # Saturación estricta final por errores numéricos
         T_req = np.clip(T_req, T_min, T_max)
         
         # Convertir a omega

@@ -10,12 +10,12 @@ class ClassicCascadeController(Controller):
         self.inertia = inertia_B_kg_m2
         
         # Ganancias PID posición (ENU)
-        self.Kp_pos = np.array([2.0, 2.0, 5.0])
-        self.Kd_pos = np.array([1.5, 1.5, 3.0])
+        self.Kp_pos = np.array([5.0, 5.0, 10.0])
+        self.Kd_pos = np.array([3.0, 3.0, 6.0])
         
-        # Ganancias PID actitud (FRD)
-        self.Kp_att = np.array([50.0, 50.0, 10.0])
-        self.Kd_att = np.array([10.0, 10.0, 5.0])
+        # Ganancias Actitud (Roll, Pitch, Yaw)
+        self.Kp_att = np.array([100.0, 100.0, 20.0])
+        self.Kd_att = np.array([20.0, 20.0, 5.0])
         
         self.max_thrust = mass_kg * gravity_m_s2 * 2.0
         self.min_thrust = 0.0
