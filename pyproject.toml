@@ -1,0 +1,23 @@
+[project]
+name = "simulador-quad"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Christian", email = "cgonzp08@estudiantes.unileon.es" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "matplotlib>=3.10.9",
+    "numpy>=2.4.4",
+    "pytest>=9.0.3",
+    "pyyaml>=6.0.3",
+    "scipy>=1.17.1",
+]
+
+[project.scripts]
+simulador-quad = "simulador_quad:main"
+
+[build-system]
+requires = ["uv_build>=0.9.20,<0.10.0"]
+build-backend = "uv_build"
