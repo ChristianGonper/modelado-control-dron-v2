@@ -5,7 +5,7 @@ from simulador_quad.core.contracts import VehicleParameters, RotorParameters, Ve
 from simulador_quad.dynamics.actuators import ActuatorSystem
 from simulador_quad.dynamics.mixer import QuadcopterMixer
 from simulador_quad.dynamics.perturbations import WindModel, ObservationNoise
-from simulador_quad.trajectories.analytic import HoldTrajectory, CircleTrajectory, LissajousTrajectory
+from simulador_quad.trajectories.analytic import HoldTrajectory, CircleTrajectory, LissajousTrajectory, LineTrajectory
 from simulador_quad.control.classic import ClassicCascadeController
 from simulador_quad.core.frames import get_level_quaternion
 
@@ -71,8 +71,8 @@ def instantiate_scenario(config: Dict[str, Any]) -> Tuple[Any, Any, Any, Any, An
         trajectory = LissajousTrajectory(
             np.array(t_cfg['center_W_m']).astype(float), np.array(t_cfg['amplitudes']).astype(float), np.array(t_cfg['omegas']).astype(float)
         )
-    elif t_type == 'waypoint':
-        trajectory = WaypointTrajectory(
+    elif t_type == 'line' or t_type == 'waypoint':
+        trajectory = LineTrajectory(
             np.array(t_cfg['waypoints']).astype(float), np.array(t_cfg['times']).astype(float), float(t_cfg.get('yaw_rad', 0.0))
         )
     else:
@@ -81,7 +81,11 @@ def instantiate_scenario(config: Dict[str, Any]) -> Tuple[Any, Any, Any, Any, An
     # 4. Controller
     c_cfg = config['controller']
     if c_cfg['type'] == 'classic':
-        controller = ClassicCascadeController(v_params.mass_kg, v_params.gravity_m_s2, v_params.inertia_B_kg_m2)
+        max_moments = c_cfg.get('max_body_moments_Nm')
+        controller = ClassicCascadeController(
+            v_params.mass_kg, v_params.gravity_m_s2, v_params.inertia_B_kg_m2,
+            max_body_moments_Nm=max_moments
+        )
     else:
         raise ValueError(f"Unknown controller type: {c_cfg['type']}")
         
