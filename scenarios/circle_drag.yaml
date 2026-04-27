@@ -27,6 +27,7 @@ trajectory:
 
 controller:
   type: "classic"
+  max_body_moments_Nm: [2.0, 2.0, 0.5]
 
 perturbations:
   constant_wind_W_m_s: [0, 0, 0]
@@ -40,6 +41,7 @@ termination:
   max_duration_s: 15.0
   z_min_m: 0.0
   max_attitude_angle_rad: 3.14
+  max_saturation_duration_s: 5.0
 
 output:
   dir: "results/circle_drag"
