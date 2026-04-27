@@ -1,0 +1,47 @@
+name: "Circle Noisy Wind"
+seed: 123
+
+vehicle:
+  mass_kg: 1.0
+  inertia_B_kg_m2: [[0.01, 0, 0], [0, 0.01, 0], [0, 0, 0.02]]
+  linear_drag_coefficient: [0.1, 0.1, 0.05]
+  rotors:
+    - {position_B_m: [0.17, 0.17, 0], turning_direction: -1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 1500, time_constant_s: 0.05, delay_s: 0.01}
+    - {position_B_m: [0.17, -0.17, 0], turning_direction: 1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 1500, time_constant_s: 0.05, delay_s: 0.01}
+    - {position_B_m: [-0.17, 0.17, 0], turning_direction: 1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 1500, time_constant_s: 0.05, delay_s: 0.01}
+    - {position_B_m: [-0.17, -0.17, 0], turning_direction: -1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 1500, time_constant_s: 0.05, delay_s: 0.01}
+
+initial_state:
+  position_W_m: [2, 0, 5]
+  velocity_W_m_s: [0, 0, 0]
+  orientation_WB: null
+  angular_velocity_B_rad_s: [0, 0, 0]
+
+trajectory:
+  type: "circle"
+  center_W_m: [0, 0, 5]
+  radius_m: 2.0
+  omega_rad_s: 0.628
+  yaw_mode: "forward"
+
+controller:
+  type: "classic"
+
+perturbations:
+  constant_wind_W_m_s: [2.0, 1.0, 0.0] # Viento de 2.2 m/s
+  pos_std_m: 0.02
+  vel_std_m_s: 0.05
+
+timing:
+  physics_dt_s: 0.01
+  control_dt_s: 0.02
+  telemetry_dt_s: 0.1
+
+termination:
+  max_duration_s: 10.0
+  z_min_m: 0.0
+
+output:
+  dir: "results/circle_noisy_wind"
+  telemetry_file: "telemetry.json"
+  metrics_file: "metrics.json"
