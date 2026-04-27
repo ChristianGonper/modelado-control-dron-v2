@@ -10,12 +10,12 @@ class ClassicCascadeController(Controller):
         self.inertia = inertia_B_kg_m2
         
         # Ganancias PID posición (ENU)
-        self.Kp_pos = np.array([5.0, 5.0, 10.0])
-        self.Kd_pos = np.array([3.0, 3.0, 6.0])
+        self.Kp_pos = np.array([2.0, 2.0, 5.0])
+        self.Kd_pos = np.array([1.0, 1.0, 2.0])
         
         # Ganancias Actitud (Roll, Pitch, Yaw)
-        self.Kp_att = np.array([100.0, 100.0, 20.0])
-        self.Kd_att = np.array([20.0, 20.0, 5.0])
+        self.Kp_att = np.array([50.0, 50.0, 10.0])
+        self.Kd_att = np.array([15.0, 15.0, 5.0])
         
         self.max_thrust = mass_kg * gravity_m_s2 * 2.0
         self.min_thrust = 0.0
@@ -98,34 +98,6 @@ class ClassicCascadeController(Controller):
         return ControlCommand(collective_thrust_N=thrust_N, body_moments_Nm=tau_B)
 
     def rotation_matrix_to_quaternion(self, R: np.ndarray) -> np.ndarray:
-        m00, m01, m02 = R[0,0], R[0,1], R[0,2]
-        m10, m11, m12 = R[1,0], R[1,1], R[1,2]
-        m20, m21, m22 = R[2,0], R[2,1], R[2,2]
-        
-        tr = m00 + m11 + m22
-        if tr > 0:
-            S = np.sqrt(tr + 1.0) * 2
-            qw = 0.25 * S
-            qx = (m21 - m12) / S
-            qy = (m02 - m20) / S
-            qz = (m10 - m01) / S
-        elif (m00 > m11) and (m00 > m22):
-            S = np.sqrt(1.0 + m00 - m11 - m22) * 2
-            qw = (m21 - m12) / S
-            qx = 0.25 * S
-            qy = (m01 + m10) / S
-            qz = (m02 + m20) / S
-        elif m11 > m22:
-            S = np.sqrt(1.0 + m11 - m00 - m22) * 2
-            qw = (m02 - m20) / S
-            qx = (m01 + m10) / S
-            qy = 0.25 * S
-            qz = (m12 + m21) / S
-        else:
-            S = np.sqrt(1.0 + m22 - m00 - m11) * 2
-            qw = (m10 - m01) / S
-            qx = (m02 + m20) / S
-            qy = (m12 + m21) / S
-            qz = 0.25 * S
-            
-        return np.array([qw, qx, qy, qz])
+        from scipy.spatial.transform import Rotation
+        # SciPy devuelve [x, y, z, w] por defecto. Queremos [w, x, y, z].
+        return Rotation.from_matrix(R).as_quat(scalar_first=True)

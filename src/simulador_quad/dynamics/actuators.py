@@ -85,11 +85,10 @@ class ActuatorSystem:
             # El vector de torque de resistencia (drag torque) es en Z.
             # Ojo: si turning_direction es CW (1, o sea que gira en Z positivo FRD),
             # el torque sobre el dron es CCW (-Z).
-            # Entonces: torque_z_drag = - turning_direction * k_m * omega^2
-            # Wait, turning_direction indicates the rotation direction.
-            # If Q_i is the torque applied to the drone, Q_i = - s_i * k_m * omega^2
-            # Let's define the convention: Q_i is the Z torque on the body.
-            torque_drag_B = np.array([0.0, 0.0, -rotor.turning_direction * rotor.k_m * curr_omega**2])
+            # F_z = k_f * w^2. Tau_z = turning_dir * k_m * w^2.
+            # M[3, i] = turning_dir * (k_m / k_f)
+            # Si turning_dir = 1 (CW), reacción es CCW (Positivo en Z_B si Z_B es Down)
+            torque_drag_B = np.array([0.0, 0.0, rotor.turning_direction * rotor.k_m * curr_omega**2])
             
             total_torque_B += torque_pos_B + torque_drag_B
             

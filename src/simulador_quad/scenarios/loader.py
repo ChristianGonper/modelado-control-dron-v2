@@ -22,39 +22,39 @@ def instantiate_scenario(config: Dict[str, Any]) -> Tuple[Any, Any, Any, Any, An
     rotors = []
     for r in v_cfg['rotors']:
         rotors.append(RotorParameters(
-            position_B_m=np.array(r['position_B_m']),
+            position_B_m=np.array(r['position_B_m']).astype(float),
             turning_direction=r['turning_direction'],
-            k_f=r['k_f'],
-            k_m=r['k_m'],
-            omega_max_rad_s=r['omega_max_rad_s'],
-            time_constant_s=r['time_constant_s'],
-            delay_s=r.get('delay_s', 0.0)
+            k_f=float(r['k_f']),
+            k_m=float(r['k_m']),
+            omega_max_rad_s=float(r['omega_max_rad_s']),
+            time_constant_s=float(r['time_constant_s']),
+            delay_s=float(r.get('delay_s', 0.0))
         ))
         
     v_params = VehicleParameters(
-        mass_kg=v_cfg['mass_kg'],
-        inertia_B_kg_m2=np.array(v_cfg['inertia_B_kg_m2']),
-        gravity_m_s2=v_cfg.get('gravity_m_s2', 9.81),
-        linear_drag_coefficient=np.array(v_cfg['linear_drag_coefficient']),
+        mass_kg=float(v_cfg['mass_kg']),
+        inertia_B_kg_m2=np.array(v_cfg['inertia_B_kg_m2']).astype(float),
+        gravity_m_s2=float(v_cfg.get('gravity_m_s2', 9.81)),
+        linear_drag_coefficient=np.array(v_cfg['linear_drag_coefficient']).astype(float),
         rotors=rotors
     )
     
     mixer = QuadcopterMixer(rotors)
-    actuators = ActuatorSystem(rotors, dt_s=config['timing']['physics_dt_s'])
+    actuators = ActuatorSystem(rotors, dt_s=float(config['timing']['physics_dt_s']))
     
     # 2. Initial State
     is_cfg = config['initial_state']
     # Si orientation_WB es nulo, usamos get_level_quaternion
     if is_cfg.get('orientation_WB') is None:
-        q0 = get_level_quaternion(is_cfg.get('yaw_rad', 0.0))
+        q0 = get_level_quaternion(float(is_cfg.get('yaw_rad', 0.0)))
     else:
-        q0 = np.array(is_cfg['orientation_WB'])
+        q0 = np.array(is_cfg['orientation_WB']).astype(float)
         
     initial_state = VehicleState(
-        position_W_m=np.array(is_cfg['position_W_m']),
-        velocity_W_m_s=np.array(is_cfg['velocity_W_m_s']),
+        position_W_m=np.array(is_cfg['position_W_m']).astype(float),
+        velocity_W_m_s=np.array(is_cfg['velocity_W_m_s']).astype(float),
         orientation_WB=q0,
-        angular_velocity_B_rad_s=np.array(is_cfg['angular_velocity_B_rad_s']),
+        angular_velocity_B_rad_s=np.array(is_cfg['angular_velocity_B_rad_s']).astype(float),
         time_s=0.0
     )
     
@@ -62,14 +62,14 @@ def instantiate_scenario(config: Dict[str, Any]) -> Tuple[Any, Any, Any, Any, An
     t_cfg = config['trajectory']
     t_type = t_cfg['type']
     if t_type == 'hold':
-        trajectory = HoldTrajectory(np.array(t_cfg['position_W_m']), t_cfg.get('yaw_rad', 0.0))
+        trajectory = HoldTrajectory(np.array(t_cfg['position_W_m']).astype(float), float(t_cfg.get('yaw_rad', 0.0)))
     elif t_type == 'circle':
         trajectory = CircleTrajectory(
-            np.array(t_cfg['center_W_m']), t_cfg['radius_m'], t_cfg['omega_rad_s'], t_cfg.get('yaw_mode', 'forward')
+            np.array(t_cfg['center_W_m']).astype(float), float(t_cfg['radius_m']), float(t_cfg['omega_rad_s']), t_cfg.get('yaw_mode', 'forward')
         )
     elif t_type == 'lissajous':
         trajectory = LissajousTrajectory(
-            np.array(t_cfg['center_W_m']), np.array(t_cfg['amplitudes']), np.array(t_cfg['omegas'])
+            np.array(t_cfg['center_W_m']).astype(float), np.array(t_cfg['amplitudes']).astype(float), np.array(t_cfg['omegas']).astype(float)
         )
     else:
         raise ValueError(f"Unknown trajectory type: {t_type}")
@@ -78,16 +78,15 @@ def instantiate_scenario(config: Dict[str, Any]) -> Tuple[Any, Any, Any, Any, An
     c_cfg = config['controller']
     if c_cfg['type'] == 'classic':
         controller = ClassicCascadeController(v_params.mass_kg, v_params.gravity_m_s2, v_params.inertia_B_kg_m2)
-        # Opcionalmente sobreescribir ganancias si están en el YAML
     else:
         raise ValueError(f"Unknown controller type: {c_cfg['type']}")
         
     # 5. Perturbations
     p_cfg = config['perturbations']
-    wind = WindModel(np.array(p_cfg['constant_wind_W_m_s']))
+    wind = WindModel(np.array(p_cfg['constant_wind_W_m_s']).astype(float))
     noise = ObservationNoise(
-        pos_std_m=p_cfg.get('pos_std_m', 0.0),
-        vel_std_m_s=p_cfg.get('vel_std_m_s', 0.0),
+        pos_std_m=float(p_cfg.get('pos_std_m', 0.0)),
+        vel_std_m_s=float(p_cfg.get('vel_std_m_s', 0.0)),
         seed=seed
     )
     

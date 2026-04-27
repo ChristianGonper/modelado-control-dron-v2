@@ -48,13 +48,7 @@ class CircleTrajectory(Trajectory):
         
         # Yaw
         if self.yaw_mode == "forward":
-            # Apuntar en dirección de la velocidad. En ENU, yaw=0 es Y_W (Norte)?
-            # Wait, yaw definition: yaw = 0 implies Front = Y_W (North)?
-            # If Front = East (X_W), yaw is -pi/2.
-            # Usually yaw is angle from X axis or Y axis depending on convention.
-            # Let's say yaw=0 -> Front = X_W. So atan2(vy, vx) gives angle from X axis.
-            # ENU: X=East, Y=North. Angle from East is typical math angle.
-            yaw = np.arctan2(vel[1], vel[0])
+            yaw = np.arctan2(-vel[0], vel[1])
         else:
             yaw = 0.0
             

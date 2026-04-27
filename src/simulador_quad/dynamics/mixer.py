@@ -30,7 +30,9 @@ class QuadcopterMixer:
             M[0, i] = 1.0                           # Empuje colectivo
             M[1, i] = -y                            # Momento de alabeo (roll)
             M[2, i] = x                             # Momento de cabeceo (pitch)
-            M[3, i] = -r.turning_direction * (r.k_m / r.k_f) # Momento de guiñada (yaw)
+            # F_z = k_f * w^2. Tau_z = s_i * k_m * w^2.
+            # M[3, i] = s_i * (k_m / k_f)
+            M[3, i] = r.turning_direction * (r.k_m / r.k_f) # Momento de guiñada (yaw)
             
         self.M = M
         try:
