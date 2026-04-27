@@ -39,6 +39,7 @@ termination:
   max_duration_s: 5.0
   z_min_m: 0.0
   max_attitude_angle_rad: 1.256
+  max_saturation_duration_s: 1.0
 
 output:
   dir: "results/hover_clean"
