@@ -5,8 +5,9 @@ from simulador_quad.runner import SimulationRunner
 from simulador_quad.metrics.report import compute_metrics
 from simulador_quad.telemetry.export import export_telemetry_json, export_metrics_json
 from simulador_quad.visualization.plots import plot_telemetry
+from simulador_quad.visualization.three_d import export_trajectory_viewer_html
 
-def run_simulation(scenario_path: str):
+def run_simulation(scenario_path: str, visualization: bool = True):
     print(f"Cargando escenario: {scenario_path}")
     config = load_scenario(scenario_path)
     
@@ -68,6 +69,16 @@ def run_simulation(scenario_path: str):
     print("Métricas clave:")
     print(f"  RMSE Posición: {metrics['position_rmse_m']:.4f} m")
     print(f"  Duración: {metrics['duration_s']:.2f} s")
+    
+    if visualization:
+        print("Generando visualizaciones...")
+        figures_dir = os.path.join(out_cfg['dir'], "figures")
+        plot_telemetry(tel_path, figures_dir, met_path)
+        
+        viz_3d_path = os.path.join(out_cfg['dir'], "visualization_3d.html")
+        export_trajectory_viewer_html(tel_path, viz_3d_path, met_path)
+        print(f"  Visualización 3D: {viz_3d_path}")
+        print(f"  Figuras PNG: {figures_dir}")
 
 def main():
     parser = argparse.ArgumentParser(description="Simulador Quadcopter 6DOF")
@@ -75,6 +86,8 @@ def main():
     
     run_parser = subparsers.add_parser("run", help="Ejecutar un escenario")
     run_parser.add_argument("scenario", help="Ruta al archivo YAML del escenario")
+    run_parser.add_argument("--no-visualization", action="store_false", dest="visualization", default=True,
+                            help="No generar figuras ni visualización 3D")
 
     plot_parser = subparsers.add_parser("plot", help="Generar figuras desde telemetría JSON")
     plot_parser.add_argument("telemetry", help="Ruta al telemetry.json exportado por el simulador")
@@ -84,7 +97,7 @@ def main():
     args = parser.parse_args()
     
     if args.command == "run":
-        run_simulation(args.scenario)
+        run_simulation(args.scenario, visualization=args.visualization)
     elif args.command == "plot":
         paths = plot_telemetry(args.telemetry, args.out, args.metrics)
         print("Figuras generadas:")
