@@ -117,44 +117,11 @@ class SimulationRunner:
             if term:
                 termination_reason = reason
                 break
-                
-            # Actuadores (calculamos las fuerzas aplicadas ahora para tenerlas listas para la física y la telemetría)
-            app_omega, app_thrust, app_torque_s, total_torque_B, total_thrust_B = \
-                self.actuators.compute_applied_forces(current_target_omega)
-            
-            current_applied = RotorAppliedState(
-                applied_omega_rad_s=app_omega.copy(),
-                applied_thrust_N=app_thrust.copy(),
-                applied_torque_Nm=app_torque_s.copy()
-            )
             
             # Referencia actual
             current_ref = trajectory.get_reference(time_s)
-                
-            # 1. Telemetry
-            if time_s - last_telemetry_time >= self.telemetry_dt_s - 1e-6:
-                from simulador_quad.core.contracts import TelemetrySample, RotorCommand
-                sample = TelemetrySample(
-                    time_s=time_s,
-                    state=VehicleState(
-                        position_W_m=state.position_W_m.copy(),
-                        velocity_W_m_s=state.velocity_W_m_s.copy(),
-                        orientation_WB=state.orientation_WB.copy(),
-                        angular_velocity_B_rad_s=state.angular_velocity_B_rad_s.copy(),
-                        time_s=time_s
-                    ),
-                    reference=current_ref,
-                    control_command=ControlCommand(
-                        collective_thrust_N=current_control.collective_thrust_N,
-                        body_moments_Nm=current_control.body_moments_Nm.copy()
-                    ),
-                    rotor_command=RotorCommand(target_omega_rad_s=current_target_omega.copy()),
-                    rotor_applied=current_applied
-                )
-                telemetry.append(sample)
-                last_telemetry_time = time_s
-                
-            # 2. Control (ZOH)
+
+            # 1. Control (ZOH)
             if time_s - last_control_time >= self.control_dt_s - 1e-6:
                 # Observación con ruido
                 obs_pos, obs_vel = self.noise.apply_noise(state.position_W_m, state.velocity_W_m_s)
@@ -176,12 +143,43 @@ class SimulationRunner:
                 )
                 
                 last_control_time = time_s
-                
-            # 3. Física
-            # Perturbaciones
+            
+            # 2. Actuadores (calculamos las fuerzas aplicadas con el comando actual)
+            app_omega, app_thrust, app_torque_s, total_torque_B, total_thrust_B = \
+                self.actuators.compute_applied_forces(current_target_omega)
+            
+            current_applied = RotorAppliedState(
+                applied_omega_rad_s=app_omega.copy(),
+                applied_thrust_N=app_thrust.copy(),
+                applied_torque_Nm=app_torque_s.copy()
+            )
+
+            # 3. Telemetría (guardamos el estado ANTES del paso de física pero CON el comando actual)
+            if time_s - last_telemetry_time >= self.telemetry_dt_s - 1e-6:
+                from simulador_quad.core.contracts import TelemetrySample, RotorCommand
+                sample = TelemetrySample(
+                    time_s=time_s,
+                    state=VehicleState(
+                        position_W_m=state.position_W_m.copy(),
+                        velocity_W_m_s=state.velocity_W_m_s.copy(),
+                        orientation_WB=state.orientation_WB.copy(),
+                        angular_velocity_B_rad_s=state.angular_velocity_B_rad_s.copy(),
+                        time_s=time_s
+                    ),
+                    reference=current_ref,
+                    control_command=ControlCommand(
+                        collective_thrust_N=current_control.collective_thrust_N,
+                        body_moments_Nm=current_control.body_moments_Nm.copy()
+                    ),
+                    rotor_command=RotorCommand(target_omega_rad_s=current_target_omega.copy()),
+                    rotor_applied=current_applied
+                )
+                telemetry.append(sample)
+                last_telemetry_time = time_s
+
+            # 4. Física
             v_wind = self.wind.get_wind(time_s)
             
-            # Integrar un paso (ahora pasamos la fuerza de empuje en cuerpo y el viento)
             p, v, q, w = rk4_step(
                 state.position_W_m, state.velocity_W_m_s, state.orientation_WB, state.angular_velocity_B_rad_s,
                 self.vehicle_params.mass_kg, self.vehicle_params.inertia_B_kg_m2, self.vehicle_params.gravity_m_s2,
