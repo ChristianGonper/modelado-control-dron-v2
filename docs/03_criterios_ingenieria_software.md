@@ -59,7 +59,7 @@ El flujo básico de una simulación deberá documentarse y mantenerse estable:
 4. Se obtiene una observación, posiblemente perturbada.
 5. El controlador calcula un comando.
 6. El modelo de actuadores transforma el comando solicitado en comando aplicado.
-7. La dinámica avanza el estado con RK4.
+7. La dinámica avanza el estado con RK4 usando el comando retenido por ZOH entre ciclos de control.
 8. Se registra telemetría.
 9. Se calculan métricas al finalizar.
 
@@ -97,9 +97,13 @@ Ejemplos:
 - Paso RK4.
 - Mezclador de control.
 - Aplicación de saturaciones.
+- Conversión empuje de rotor a `omega`/RPM y aplicación de la ley cuadrática.
+- Aplicación de retardo puro y lag de primer orden.
+- Cálculo del drag lineal.
 - Generación de observaciones perturbadas.
 - Cálculo del comando del controlador clásico.
 - Inferencia del controlador neuronal.
+- Evaluación de condiciones de fin de episodio.
 - Cálculo de métricas.
 - Exportación de telemetría.
 
@@ -120,6 +124,7 @@ Los nombres deberán favorecer la interpretación física:
 - Indicar marco de referencia cuando sea relevante: `_W` para mundo y `_B` para cuerpo, o nombres equivalentes en el estilo del código.
 - Evitar abreviaturas ambiguas.
 - Usar nombres distintos para comando solicitado y comando aplicado.
+- Nombrar explícitamente las frecuencias o pasos de física, control y telemetría.
 
 Ejemplos recomendados:
 
@@ -130,6 +135,11 @@ angular_velocity_B_rad_s
 collective_thrust_newton
 body_torque_nm
 applied_rotor_thrusts_newton
+rotor_speed_rad_s
+rotor_speed_rpm
+physics_dt_s
+control_dt_s
+telemetry_dt_s
 ```
 
 ## 9. Política de dependencias
@@ -140,6 +150,7 @@ Se permiten como base:
 - SciPy cuando esté justificado.
 - Matplotlib.
 - PyTorch.
+- PyYAML para leer escenarios YAML declarativos.
 
 El gestor de paquetes y entornos será `uv`.
 
@@ -176,7 +187,9 @@ No se aceptará una comparación basada únicamente en pérdida de entrenamiento
 
 ## 11. Escenarios y configuración
 
-Los escenarios deberán ser declarativos siempre que sea razonable. Un escenario debe permitir reconstruir:
+Los escenarios deberán ser declarativos y se escribirán preferentemente en YAML. El uso de YAML queda justificado por legibilidad, soporte de comentarios y capacidad de expresar configuraciones jerárquicas sin mezclar código ejecutable con parámetros.
+
+Un escenario debe permitir reconstruir:
 
 - Vehículo.
 - Condición inicial.
@@ -184,10 +197,13 @@ Los escenarios deberán ser declarativos siempre que sea razonable. Un escenario
 - Perturbaciones.
 - Controlador.
 - Duración.
-- Paso temporal.
+- `physics_dt_s`, `control_dt_s` y `telemetry_dt_s`.
 - Semilla.
+- Condiciones de fin de episodio.
 
 El objetivo es que los experimentos puedan repetirse sin depender de cambios manuales en el código.
+
+Las trayectorias de v1 deberán declararse como formas analíticas suaves o referencias filtradas. Los waypoints con suavizado polinómico se reservarán para una extensión posterior.
 
 ## 12. Telemetría y resultados
 
@@ -199,7 +215,9 @@ La telemetría deberá registrar, como mínimo:
 - Referencia.
 - Comando solicitado.
 - Comando aplicado.
+- Velocidades de rotor en `rad/s` y, si se usa para análisis, en RPM.
 - Indicadores de saturación o fallo si existen.
+- Causa de terminación anticipada del episodio si existe.
 
 Los resultados deberán vincularse con el escenario y el controlador que los generaron. Esta relación es obligatoria para mantener trazabilidad.
 
@@ -211,6 +229,10 @@ Las pruebas deberán cubrir especialmente los elementos con impacto físico o ex
 - Signo del empuje en convención ENU/FRD.
 - Paso RK4 en casos simples conocidos.
 - Saturación de actuadores.
+- Conversión `omega^2` a empuje y par de rotor.
+- Separación multi-rate y ZOH.
+- Drag lineal con signo disipativo.
+- Terminación de episodio por altura, actitud o valores no finitos.
 - Registro correcto de telemetría.
 - Cálculo de métricas.
 - Ejecución mínima de un escenario con controlador clásico.

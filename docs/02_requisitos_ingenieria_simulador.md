@@ -13,17 +13,19 @@ La primera versión incluirá:
 - Cuerpo rígido 6DOF.
 - Orientación mediante cuaterniones unitarios.
 - Integración numérica RK4.
-- Actuadores de rotor con saturación y retardo o lag de primer orden.
-- Perturbaciones simples: ruido de observación, viento externo simplificado y retardo o lag de actuadores.
+- Simulación multi-rate con paso de física, control y telemetría separados.
+- Actuadores de rotor con velocidad de giro, saturación, retardo puro opcional y lag de primer orden.
+- Relación cuadrática entre velocidad de rotor y empuje/par.
+- Perturbaciones simples: ruido de observación, viento externo simplificado, retardo o lag de actuadores y drag lineal.
 - Control clásico de referencia.
 - Control neuronal por imitación.
 - Registro de telemetría y métricas.
 
 La primera versión no incluirá:
 
-- Aerodinámica formal detallada.
+- Aerodinámica formal detallada más allá del drag lineal simplificado.
 - Flapping de rotores.
-- Arrastre parásito como modelo obligatorio.
+- Arrastre parásito cuadrático o modelo aerodinámico identificado.
 - Pérdidas inducidas.
 - Dinámica de batería.
 - Contacto con el suelo.
@@ -69,6 +71,12 @@ La fuerza en mundo se obtendrá mediante la matriz de rotación asociada al cuat
 F_thrust_W = R_WB(q) F_thrust_B
 ```
 
+### 3.4 Origen del sistema cuerpo
+
+El origen del sistema cuerpo se asumirá coincidente con el centro de gravedad del cuadricóptero. Esta hipótesis permite usar directamente las ecuaciones de Newton-Euler para un cuerpo rígido con dinámica rotacional alrededor del CG.
+
+Si en una versión futura el origen geométrico del vehículo y el centro de gravedad no coinciden, deberán añadirse los términos de acoplamiento correspondientes y documentarse el uso del teorema de ejes paralelos.
+
 ## 4. Estado del vehículo
 
 El estado físico mínimo del vehículo será:
@@ -113,7 +121,7 @@ La dinámica translacional se expresará en Sistema mundo:
 ```
 
 ```math
-m \dot{v}_W = F_{thrust,W} + F_{g,W} + F_{pert,W}
+m \dot{v}_W = F_{thrust,W} + F_{g,W} + F_{wind,W} + F_{drag,W}
 ```
 
 donde:
@@ -121,9 +129,26 @@ donde:
 - `m` es la masa del vehículo.
 - `F_thrust,W` es la fuerza de empuje transformada al Sistema mundo.
 - `F_g,W = [0, 0, -mg]` en ENU.
-- `F_pert,W` agrupa perturbaciones externas simplificadas.
+- `F_wind,W` representa perturbaciones externas simplificadas asociadas al viento.
+- `F_drag,W` representa un drag lineal simple.
 
-En la primera versión, `F_pert,W` podrá representar viento simple o fuerzas externas equivalentes, pero no se documentará como modelo aerodinámico detallado.
+El drag lineal se calculará como amortiguamiento proporcional a la velocidad relativa respecto al aire. En marco cuerpo:
+
+```math
+v_{rel,B} = R_{BW}(q)(v_W - v_{wind,W})
+```
+
+```math
+F_{drag,B} = -D_B v_{rel,B}
+```
+
+donde `D_B` será una matriz diagonal positiva o semidefinida positiva con unidades de `N/(m/s)`. La fuerza se transformará al marco mundo mediante:
+
+```math
+F_{drag,W} = R_{WB}(q)F_{drag,B}
+```
+
+Este término se considera un modelo de amortiguamiento lineal simplificado. No deberá presentarse como aerodinámica formal ni como arrastre identificado experimentalmente.
 
 ## 7. Dinámica rotacional
 
@@ -141,24 +166,46 @@ donde:
 
 La primera versión podrá asumir tensor de inercia diagonal si esta hipótesis se declara en el escenario y en la documentación.
 
+La ecuación anterior asume que el origen del sistema cuerpo coincide con el centro de gravedad. Bajo esta hipótesis, los momentos `tau_B` se aplican alrededor del CG.
+
 ## 8. Modelo de actuadores
 
 El simulador deberá distinguir entre:
 
-- Comando solicitado por el controlador.
-- Comando efectivamente aplicado por los actuadores.
+- Intención solicitada por el controlador: empuje colectivo y momentos.
+- Empuje objetivo por rotor tras el mezclador.
+- Velocidad objetivo de rotor.
+- Velocidad de rotor efectivamente aplicada tras retardo, lag y saturación.
+- Empuje y par realmente aplicados.
 
 Cada rotor tendrá al menos:
 
 - Posición en Sistema cuerpo.
 - Sentido de giro.
-- Empuje máximo.
+- Coeficiente de empuje `k_f`, en `N/(rad/s)^2`.
+- Coeficiente de par `k_m`, en `Nm/(rad/s)^2`.
+- Velocidad máxima `omega_max`, en `rad/s`.
 - Constante de tiempo o modelo de lag de primer orden.
+- Retardo puro opcional, expresado como tiempo o número de pasos de control.
+
+El mezclador calculará un empuje objetivo por rotor `T_{cmd,i}`. A partir de ese empuje se obtendrá una velocidad angular objetivo:
+
+```math
+\omega_{cmd,i} = \sqrt{\max(T_{cmd,i}, 0)/k_f}
+```
+
+La velocidad objetivo se saturará en:
+
+```math
+0 \leq \omega_{cmd,i} \leq \omega_{max,i}
+```
+
+El lag de primer orden se aplicará sobre la velocidad angular del rotor, no directamente sobre el empuje:
 
 Se usará un modelo de lag de actuador discreto de primer orden:
 
 ```math
-u_{k+1} = u_k + \alpha (u_{cmd,k} - u_k)
+\omega_{k+1} = \omega_k + \alpha (\omega_{cmd,k} - \omega_k)
 ```
 
 con:
@@ -167,7 +214,23 @@ con:
 \alpha = 1 - e^{-\Delta t / \tau}
 ```
 
-El valor aplicado debe registrarse en telemetría para medir esfuerzo real de control y saturaciones.
+El empuje y el par aplicados por cada rotor serán:
+
+```math
+T_i = k_f \omega_i^2
+```
+
+```math
+Q_i = s_i k_m \omega_i^2
+```
+
+donde `s_i` es el sentido de giro del rotor. Si se registra la velocidad en RPM, se usará únicamente como magnitud de telemetría o visualización:
+
+```math
+RPM_i = \omega_i \frac{60}{2\pi}
+```
+
+El valor solicitado, objetivo y aplicado debe registrarse en telemetría para medir esfuerzo real de control, saturaciones y efecto de los retardos.
 
 ## 9. Mezclador de control
 
@@ -186,9 +249,19 @@ El mezclador convertirá esa intención en comandos de rotor. La matriz de asign
 
 Cuando el número de rotores o la geometría lo requiera, podrá resolverse mediante mínimos cuadrados o pseudoinversa, siempre que la formulación quede documentada.
 
+La estrategia de saturación deberá quedar fijada. En la primera versión se priorizará mantener los momentos de actitud frente al empuje colectivo cuando no sea posible satisfacer simultáneamente todos los comandos. Si una demanda requiere superar `omega_max`, el mezclador deberá reducir o redistribuir el empuje colectivo antes de aceptar una pérdida severa de autoridad en roll o pitch. Las saturaciones y cualquier degradación de comando deberán registrarse en telemetría.
+
 ## 10. Integración numérica
 
 El integrador oficial será Runge-Kutta de cuarto orden (RK4).
+
+La simulación tendrá tres escalas temporales explícitas:
+
+- `physics_dt_s`: paso del integrador RK4.
+- `control_dt_s`: periodo de actualización del controlador y de la observación usada por este.
+- `telemetry_dt_s`: periodo de guardado de muestras de telemetría.
+
+El integrador podrá ejecutar varios subpasos de física por cada paso de control. Entre dos actualizaciones del controlador, el comando aplicado al modelo físico se mantendrá mediante un retenedor de orden cero (ZOH). Esta separación permite estudiar efectos de muestreo y retardo sin cambiar el integrador oficial.
 
 Para una ecuación diferencial:
 
@@ -237,9 +310,22 @@ El controlador podrá recibir una observación distinta del estado verdadero. El
 
 El comando aplicado podrá retrasarse o filtrarse respecto al comando calculado por el controlador. Deberá registrarse tanto el comando solicitado como el aplicado.
 
+El retardo puro y el lag de primer orden se tratarán como fenómenos distintos:
+
+- Retardo puro: `u_aplicado(t) = u_solicitado(t - t_delay)`.
+- Lag de primer orden: respuesta dinámica suave del rotor sobre `omega`.
+
+El retardo puro podrá implementarse como una cola de `N` pasos de control. Si está desactivado, deberá indicarse explícitamente en el escenario.
+
 ### 11.3 Viento simple
 
 El viento podrá modelarse como perturbación externa simplificada. En la primera versión no deberá presentarse como aerodinámica completa. Deberá documentarse si actúa como velocidad externa, fuerza equivalente o perturbación directa.
+
+### 11.4 Drag lineal
+
+El drag lineal será parte del modelo base de la primera versión. Su objetivo es evitar dinámicas translacionales no acotadas en maniobras sostenidas y representar una disipación mínima del movimiento relativo con el aire.
+
+Este término deberá parametrizarse por escenario mediante `D_B` o coeficientes equivalentes por eje. No se considerará una identificación aerodinámica real del fuselaje.
 
 ## 12. Control clásico
 
@@ -285,35 +371,54 @@ Cada escenario deberá definir:
 - Parámetros de control.
 - Perturbaciones activadas.
 - Duración.
-- Paso de integración.
+- `physics_dt_s`, `control_dt_s` y `telemetry_dt_s`.
 - Semilla aleatoria si aplica.
 
 Los escenarios deberán ser suficientemente claros para comparar ambos controladores bajo las mismas condiciones.
 
-## 15. Métricas obligatorias
+El formato recomendado para escenarios será YAML, por legibilidad, soporte de comentarios y facilidad para declarar configuraciones jerárquicas. Un escenario deberá separar, como mínimo, las secciones de vehículo, condiciones iniciales, trayectoria, controlador, perturbaciones, tiempos de simulación y salida de resultados.
+
+Las trayectorias de la primera versión deberán ser analíticas y suaves, o referencias explícitamente filtradas, de forma que incluyan posición y, cuando aplique, velocidad y aceleración de referencia. No se usarán escalones de posición crudos como referencia principal para entrenamiento o comparación. Las trayectorias por waypoints con suavizado polinómico, minimum jerk o minimum snap quedan como extensión posterior.
+
+## 15. Condiciones de fin de episodio
+
+Aunque la primera versión no modele contacto con el suelo, el simulador deberá detener un episodio y marcarlo como fallo si se cumplen condiciones de seguridad o validez.
+
+Condiciones mínimas:
+
+- Altura no válida: `Z_W < 0`.
+- Actitud excesiva: roll o pitch por encima de un umbral documentado.
+- Divergencia de posición o velocidad fuera de límites del escenario.
+- Saturación persistente de actuadores durante un intervalo definido.
+- Valores no finitos en estado, comandos o métricas.
+
+Cada terminación anticipada deberá registrarse en telemetría con una causa explícita.
+
+## 16. Métricas obligatorias
 
 La comparación entre control clásico y control neuronal deberá incluir, como mínimo:
 
 - Error de seguimiento: RMSE, MAE y error máximo de posición.
-- Esfuerzo de control: magnitud media y máxima de empuje y momentos, o comandos de rotor si están disponibles.
+- Esfuerzo de control: magnitud media y máxima de empuje, momentos, velocidades de rotor y saturaciones.
 - Estabilidad: detección de divergencia, vuelco, pérdida de seguimiento o saturación persistente.
+- Terminación de episodio: causa, instante y estado asociado si se produce fallo.
 - Trazabilidad: identificación del escenario, controlador, parámetros y semilla usados.
 
 Las métricas deberán presentarse junto con las condiciones experimentales que las generan.
 
-## 16. Límites de validez
+## 17. Límites de validez
 
 Los resultados del simulador serán válidos dentro del marco de hipótesis documentado:
 
 - Cuerpo rígido.
 - Parámetros físicos definidos por escenario.
-- Sin aerodinámica formal en la primera versión.
+- Sin aerodinámica formal más allá de drag lineal simplificado.
 - Perturbaciones simplificadas.
 - Ausencia de sensores reales y estimador onboard completo.
 
 El TFG deberá evitar extrapolar conclusiones a vuelo real si no se ha validado contra datos experimentales.
 
-## 17. Trazabilidad mínima
+## 18. Trazabilidad mínima
 
 Cada requisito de ingeniería deberá poder vincularse con:
 
@@ -332,7 +437,7 @@ Prueba: conservación de norma del cuaternión.
 Resultado: simulaciones sin singularidad de orientación.
 ```
 
-## 18. Referencias iniciales
+## 19. Referencias iniciales
 
 - Stevens, B. L., Lewis, F. L., & Johnson, E. N. (2015). *Aircraft Control and Simulation: Dynamics, Controls Design, and Autonomous Systems*. Wiley.
 - Beard, R. W., & McLain, T. W. (2012). *Small Unmanned Aircraft: Theory and Practice*. Princeton University Press.

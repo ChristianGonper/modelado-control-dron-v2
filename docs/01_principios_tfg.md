@@ -83,13 +83,14 @@ La primera versión del TFG incluirá:
 - Integración numérica mediante RK4.
 - Control clásico de referencia.
 - Control neuronal por imitación.
-- Perturbaciones simples: ruido de observación, retardo o lag de actuadores y viento externo simplificado.
+- Actuadores con velocidad de giro, saturación, lag de primer orden y relación cuadrática empuje-velocidad.
+- Perturbaciones simples: ruido de observación, retardo o lag de actuadores, viento externo simplificado y drag lineal.
 - Métricas de seguimiento, esfuerzo de control y estabilidad.
 
-La primera versión no incluirá aerodinámica formal detallada. Quedan fuera del alcance inicial:
+La primera versión no incluirá aerodinámica formal detallada más allá de un término de amortiguamiento lineal sencillo. Quedan fuera del alcance inicial:
 
 - Flapping de rotores.
-- Arrastre aerodinámico detallado.
+- Arrastre aerodinámico detallado o identificación experimental de coeficientes aerodinámicos.
 - Pérdidas inducidas.
 - Modelo de batería.
 - Modelo de sensores realista.
