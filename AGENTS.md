@@ -1,27 +1,26 @@
 # AGENTS.md
 
-##  Flujo de trabajo
-Ejecuta commits pequeños mientras completas fases de desarrollo.
+## Proposito del repo
 
-## Mapa del repositorio
+Este repositorio contiene el TFG de un simulador 6DOF de cuadricoptero para comparar control clasico y, en una fase posterior, control neuronal por imitacion. El estado actual se centra en consolidar el simulador clasico.
 
-Los documentos normativos del TFG están en `docs/`:
+## Fuentes de verdad
 
-- `docs/01_principios_tfg.md`: principios generales del trabajo, trazabilidad, alcance y criterios académicos.
-- `docs/02_requisitos_ingenieria_simulador.md`: requisitos físicos y de ingeniería del simulador cuadricóptero.
-- `docs/03_criterios_ingenieria_software.md`: criterios de ingeniería de software, documentación, configuración, pruebas y reproducibilidad.
+- `docs/01_principios_tfg.md`: alcance, trazabilidad y criterios academicos.
+- `docs/02_requisitos_ingenieria_simulador.md`: requisitos fisicos y de ingenieria del simulador.
+- `docs/03_criterios_ingenieria_software.md`: criterios de software cientifico, pruebas y reproducibilidad.
+- `docs/simulador/`: documentacion viva del estado actual implementado.
+- `README.md`: entrada principal del repositorio.
 
-Estos tres documentos son la fuente principal de decisiones. Cualquier cambio posterior debe respetarlos o actualizar explícitamente el documento afectado.
+Si cambia el comportamiento, el alcance, los comandos, los escenarios, la telemetria, las metricas o la arquitectura del simulador, actualiza tambien `README.md` y los documentos afectados en `docs/simulador/`.
 
-## Otros documentos
+## Planes y revisiones
 
-- `docs/reviews/`: revisiones de los documentos normativos.
-- `docs/plans/`: planes de trabajo generados durante la definición del proyecto.
+- `docs/plans/`: specs y planes vigentes.
+- `docs/plans/archived/`: planes historicos no vigentes.
+- `docs/reviews/`: auditorias y revisiones tecnicas.
 
-## Instrucciones para agentes
+## Reglas de trabajo
 
-- Mantener el enfoque del TFG: simulador 6DOF de cuadricóptero para comparar control clásico y control neuronal por imitación.
-- Priorizar documentación, trazabilidad, reproducibilidad y claridad para ingeniería aeroespacial.
-- No introducir cambios de alcance sin reflejarlos en los documentos normativos.
-- Usar `uv` para gestión de dependencias Python.
-- Tratar la parte software como código científico simple: evitar sobreingeniería y documentar módulos, funciones importantes, unidades y sistemas de referencia.
+- Mantén codigo cientifico simple: nombres fisicos claros, unidades y marcos de referencia explicitos, pocas abstracciones.
+- No introduzcas cambios de alcance sin actualizar los documentos normativos afectados.
