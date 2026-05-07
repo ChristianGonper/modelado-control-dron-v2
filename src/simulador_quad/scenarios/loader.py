@@ -8,13 +8,16 @@ from simulador_quad.dynamics.perturbations import WindModel, ObservationNoise
 from simulador_quad.trajectories.analytic import HoldTrajectory, CircleTrajectory, LissajousTrajectory, LineTrajectory
 from simulador_quad.control.classic import ClassicCascadeController
 from simulador_quad.core.frames import get_level_quaternion
+from simulador_quad.scenarios.schema import validate_scenario_config
 
 def load_scenario(path: str) -> Dict[str, Any]:
     with open(path, 'r') as f:
         config = yaml.safe_load(f)
+    validate_scenario_config(config)
     return config
 
 def instantiate_scenario(config: Dict[str, Any]) -> Tuple[Any, Any, Any, Any, Any, Any, Any]:
+    validate_scenario_config(config)
     seed = config.get('seed', 42)
     
     # 1. Vehicle
