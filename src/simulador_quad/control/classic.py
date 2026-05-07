@@ -4,18 +4,21 @@ from simulador_quad.core.contracts import VehicleState, TrajectoryReference, Con
 from simulador_quad.core.attitude import world_to_body, quaternion_error, rotation_matrix_to_quaternion
 
 class ClassicCascadeController(Controller):
-    def __init__(self, mass_kg: float, gravity_m_s2: float, inertia_B_kg_m2: np.ndarray, max_body_moments_Nm: np.ndarray = None):
+    def __init__(self, mass_kg: float, gravity_m_s2: float, inertia_B_kg_m2: np.ndarray, 
+                 Kp_pos: np.ndarray = None, Kd_pos: np.ndarray = None,
+                 Kp_att: np.ndarray = None, Kd_att: np.ndarray = None,
+                 max_body_moments_Nm: np.ndarray = None):
         self.mass = mass_kg
         self.gravity = gravity_m_s2
         self.inertia = inertia_B_kg_m2
         
         # Ganancias posición
-        self.Kp_pos = np.array([2.0, 2.0, 5.0])
-        self.Kd_pos = np.array([1.0, 1.0, 2.0])
+        self.Kp_pos = np.array(Kp_pos) if Kp_pos is not None else np.array([2.0, 2.0, 5.0])
+        self.Kd_pos = np.array(Kd_pos) if Kd_pos is not None else np.array([1.0, 1.0, 2.0])
         
         # Ganancias actitud
-        self.Kp_att = np.array([4.0, 4.0, 1.0])
-        self.Kd_att = np.array([1.5, 1.5, 0.5])
+        self.Kp_att = np.array(Kp_att) if Kp_att is not None else np.array([4.0, 4.0, 1.0])
+        self.Kd_att = np.array(Kd_att) if Kd_att is not None else np.array([1.5, 1.5, 0.5])
         
         self.max_thrust = mass_kg * gravity_m_s2 * 2.5
         self.min_thrust = 0.0

@@ -126,6 +126,20 @@ def _validate_initial_state(config: Mapping[str, Any]) -> None:
         raise _invalid("initial_state.orientation_WB", "unit quaternion [w, x, y, z] or null", orientation)
 
 
+def _validate_controller(config: Mapping[str, Any]) -> None:
+    controller = _require_mapping(config, "controller")
+    if controller.get("type") == "classic":
+        for field in ("Kp_pos", "Kd_pos", "Kp_att", "Kd_att"):
+            if field in controller:
+                _as_array(f"controller.{field}", controller.get(field), (3,))
+                if np.any(_as_array(f"controller.{field}", controller.get(field)) < 0.0):
+                    raise _invalid(f"controller.{field}", "non-negative vector", controller.get(field))
+        if "max_body_moments_Nm" in controller:
+            _as_array("controller.max_body_moments_Nm", controller.get("max_body_moments_Nm"), (3,))
+            if np.any(_as_array("controller.max_body_moments_Nm", controller.get("max_body_moments_Nm")) < 0.0):
+                raise _invalid("controller.max_body_moments_Nm", "non-negative vector", controller.get("max_body_moments_Nm"))
+
+
 def validate_scenario_config(config: Mapping[str, Any]) -> None:
     """Validate the physical fields that can invalidate a simulation result."""
     if not isinstance(config, Mapping):
@@ -134,3 +148,4 @@ def validate_scenario_config(config: Mapping[str, Any]) -> None:
     _validate_vehicle(config)
     _validate_timing(config)
     _validate_initial_state(config)
+    _validate_controller(config)

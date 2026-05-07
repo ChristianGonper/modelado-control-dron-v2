@@ -84,8 +84,14 @@ def instantiate_scenario(config: Dict[str, Any]) -> Tuple[Any, Any, Any, Any, An
     c_cfg = config['controller']
     if c_cfg['type'] == 'classic':
         max_moments = c_cfg.get('max_body_moments_Nm')
+        kp_pos = c_cfg.get('Kp_pos')
+        kd_pos = c_cfg.get('Kd_pos')
+        kp_att = c_cfg.get('Kp_att')
+        kd_att = c_cfg.get('Kd_att')
+        
         controller = ClassicCascadeController(
             v_params.mass_kg, v_params.gravity_m_s2, v_params.inertia_B_kg_m2,
+            Kp_pos=kp_pos, Kd_pos=kd_pos, Kp_att=kp_att, Kd_att=kd_att,
             max_body_moments_Nm=max_moments
         )
     else:
