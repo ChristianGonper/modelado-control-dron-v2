@@ -32,7 +32,7 @@ El simulador esta organizado como codigo cientifico simple. Las carpetas separan
 - `control/classic.py`: controlador clasico en cascada.
 - `runner.py`: orquestacion multi-rate, ZOH, telemetria y terminacion.
 - `telemetry/export.py`: exportacion JSON.
-- `metrics/report.py`: metricas agregadas.
+- `metrics/report.py`: metricas agregadas con magnitudes fisicas separadas por unidades.
 - `visualization/plots.py`: figuras PNG a partir de `telemetry.json`.
 - `visualization/three_d.py`: visor interactivo HTML 3D basado en Plotly.
 
@@ -68,14 +68,16 @@ Cada muestra de `telemetry.json` contiene:
 `metrics.json` resume:
 
 - error de posicion: RMSE, MAE, maximo y desviacion tipica;
-- esfuerzo de control medio, maximo y desviacion tipica;
+- empuje colectivo solicitado por el controlador en N: media, maximo, minimo y desviacion tipica;
+- norma de momentos de cuerpo solicitados en Nm: media, maximo y desviacion tipica;
+- indice heuristico de esfuerzo `|T| + ||tau||`, conservado por compatibilidad y solo apto para diagnostico;
 - maxima velocidad de rotor en `rad/s` y RPM;
 - tiempo y porcentaje de saturacion;
 - tiempo y porcentaje de degradacion de empuje colectivo;
 - causa de terminacion y duracion;
 - metadatos de reproducibilidad: escenario, semilla, controlador, comando, version del paquete, Python/plataforma, estado Git, hashes de escenario/`uv.lock`, configuracion original y configuracion efectiva con defaults.
 
-Las métricas no sustituyen a la inspección de telemetría. Para explicar un resultado en la memoria, conviene combinar `metrics.json` con las figuras generadas automáticamente y el visor 3D interactivo.
+Las metricas no sustituyen a la inspeccion de telemetria. Para explicar un resultado en la memoria, conviene combinar `metrics.json` con las figuras generadas automaticamente y el visor 3D interactivo. Las comparaciones fisicas deben apoyarse en campos con unidades explicitas; el indice heuristico no debe presentarse como esfuerzo fisico total porque suma N y Nm.
 
 ## Limites actuales
 

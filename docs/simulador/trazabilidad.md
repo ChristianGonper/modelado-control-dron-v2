@@ -28,7 +28,7 @@ Estados usados:
 | Trayectorias analiticas o suavizadas | Dar referencias reproducibles con posicion, velocidad y aceleracion. | `src/simulador_quad/trajectories/analytic.py`, `src/simulador_quad/scenarios/loader.py` | `tests/test_trajectories.py` | `hover_clean`, `circle_drag`, `lissajous_clean`, `waypoint_clean` | Error de seguimiento por escenario. | Implementado |
 | Escenarios YAML reproducibles | Separar parametros experimentales del codigo. | `src/simulador_quad/scenarios/loader.py`, `scenarios/*.yaml` | `tests/test_runner.py`, pruebas manuales CLI | Todos los escenarios YAML | `metrics.metadata.config`. | Parcial |
 | Telemetria JSON | Registrar estado, observacion, referencia, comando y rotores. | `src/simulador_quad/core/contracts.py`, `src/simulador_quad/telemetry/export.py` | `tests/test_metrics.py`, `tests/test_visualization.py` | Todos los escenarios YAML | `telemetry.json`. | Implementado |
-| Metricas JSON | Resumir seguimiento, esfuerzo, saturacion, degradacion y terminacion. | `src/simulador_quad/metrics/report.py` | `tests/test_metrics.py` | Todos los escenarios YAML | `metrics.json`. | Parcial |
+| Metricas JSON | Resumir seguimiento, empuje, momentos, saturacion, degradacion y terminacion con unidades explicitas. | `src/simulador_quad/metrics/report.py` | `tests/test_metrics.py` | Todos los escenarios YAML | `position_rmse_m`, `collective_thrust_*_N`, `body_moment_norm_*_Nm`, `saturation_percentage`, `degradation_percentage`, `termination_reason`. | Implementado |
 | Terminacion de episodio | Marcar fallos por altura, actitud, limites, no finitos o saturacion persistente. | `src/simulador_quad/runner.py` | `tests/test_runner.py` | Escenarios nominales y futuros escenarios de fallo | `termination_reason`, `termination_cause`. | Parcial |
 | Visualizacion postproceso | Generar figuras y visor 3D para inspeccion de resultados. | `src/simulador_quad/visualization/plots.py`, `src/simulador_quad/visualization/three_d.py` | `tests/test_visualization.py` | Resultados de cualquier escenario | Figuras PNG y `visualization_3d.html`. | Implementado |
 | Reproducibilidad fuerte de ejecucion | Vincular resultados con codigo, entorno y comando exacto. | `src/simulador_quad/app.py`, `src/simulador_quad/metrics/report.py` | `tests/test_app_metadata.py` | Todos los escenarios oficiales | Metadata de commit, entorno, comando, hashes y configuracion efectiva. | Implementado |
@@ -47,7 +47,7 @@ Para auditar un resultado concreto:
 ## Deudas documentadas
 
 - Reforzar validacion de parametros fisicos de escenarios.
-- Separar metricas de esfuerzo por unidades fisicas antes de usarlas como argumento fuerte.
+- Mantener la lectura de metricas por unidades fisicas; `control_effort_heuristic_*` queda solo como diagnostico heredado.
 - Revisar que la metadata de entorno y commit se conserva en todos los resultados finales de memoria.
 - Reforzar pruebas de convenciones ENU/FRD con actitudes no triviales.
 - Mantener control neuronal como fase futura hasta que exista evaluacion en bucle cerrado.

@@ -67,7 +67,13 @@ Para usar un resultado en memoria:
 Cada escenario usado en la memoria debe conservar:
 
 - YAML versionado en `scenarios/`.
-- `metrics.json`.
+- `metrics.json`, con al menos:
+  - `position_rmse_m`, `position_mae_m` y `position_max_err_m`;
+  - `collective_thrust_mean_N` y `collective_thrust_max_N`;
+  - `body_moment_norm_mean_Nm` y `body_moment_norm_max_Nm`;
+  - `saturation_percentage` y `degradation_percentage`;
+  - `termination_reason`;
+  - `metadata`.
 - `telemetry.json`.
 - Figuras estandar:
   - `trajectory_xy.png`
@@ -101,6 +107,7 @@ Esta fase define validacion documental. La automatizacion futura debera:
 - comprobar `termination_reason`;
 - verificar RMSE, saturacion, degradacion y ausencia de no finitos;
 - validar esquema minimo de `metrics.json` y `telemetry.json`;
+- comparar magnitudes de control por unidades fisicas, no mediante el indice heuristico heredado;
 - evitar usar `results/` historico como oraculo unico.
 
 ## Limites de validez

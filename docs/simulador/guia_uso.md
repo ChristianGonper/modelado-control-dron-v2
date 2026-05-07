@@ -56,7 +56,7 @@ Figuras generadas (tanto en `run` automático como en `plot` manual):
 - `position_time.png`: componentes `X_W`, `Y_W`, `Z_W` frente al tiempo.
 - `tracking_error.png`: norma del error de posición `||p_ref - p||`.
 - `rotor_speeds.png`: velocidades de rotor aplicadas en `rad/s`.
-- `control_effort.png`: empuje colectivo, momentos de cuerpo y esfuerzo agregado.
+- `control_effort.png`: empuje colectivo, momentos de cuerpo y un indice heuristico agregado para diagnostico visual.
 
 ### Visor 3D Interactivo
 
@@ -81,12 +81,19 @@ Campos principales de `metrics.json`:
 - `position_rmse_m`: raiz del error cuadratico medio de posicion.
 - `position_mae_m`: error absoluto medio de posicion.
 - `position_max_err_m`: maximo error de posicion.
-- `control_effort_mean` y `control_effort_max`: magnitud agregada de empuje y momentos.
+- `collective_thrust_mean_N`, `collective_thrust_max_N`, `collective_thrust_min_N` y `collective_thrust_std_N`: estadisticos del empuje colectivo solicitado por el controlador.
+- `body_moment_norm_mean_Nm`, `body_moment_norm_max_Nm` y `body_moment_norm_std_Nm`: estadisticos de la norma de momentos de cuerpo solicitados.
+- `control_effort_heuristic_mean`, `control_effort_heuristic_max` y `control_effort_heuristic_std`: indice diagnostico heredado `|T| + ||tau||`. Mezcla N y Nm; no debe usarse como metrica fisica principal.
+- `control_effort_mean`, `control_effort_max` y `control_effort_std`: alias de compatibilidad del indice heuristico anterior.
 - `max_rotor_speed_rad_s` y `max_rotor_speed_rpm`: maxima velocidad aplicada.
 - `saturation_duration_s` y `saturation_percentage`: tiempo con algun rotor saturado.
 - `degradation_duration_s` y `degradation_percentage`: tiempo con empuje colectivo degradado por el mezclador.
 - `termination_reason`: causa final del episodio.
 - `metadata`: nombre y ruta del escenario, semilla, controlador, comando, version del paquete, Python/plataforma, estado Git, hashes de escenario/`uv.lock`, configuracion original y configuracion efectiva con defaults.
+
+Para comparar escenarios en la memoria, usar primero metricas con unidades explicitas: error de posicion en m, empuje colectivo en N, momentos en Nm, velocidad de rotor en rad/s y porcentajes de saturacion/degradacion. El indice `control_effort_heuristic_*` solo sirve para detectar tendencias de mando en una figura, no para justificar una conclusion fisica.
+
+En `metadata.controller.parameters` quedan registradas las ganancias efectivas del controlador clasico (`Kp_pos`, `Kd_pos`, `Kp_att`, `Kd_att`) y sus limites principales (`min_thrust`, `max_thrust`, `max_moments_Nm`). Esto permite tratar el controlador clasico como baseline reproducible, no como caja negra.
 
 ## Flujo recomendado para un alumno
 

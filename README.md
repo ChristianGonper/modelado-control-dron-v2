@@ -14,7 +14,7 @@ Implementado:
 - Controlador clasico en cascada.
 - Mixer de cuadricoptero, actuadores con saturacion, retardo puro opcional y lag de primer orden sobre `omega`.
 - Drag lineal simplificado, viento constante y ruido gaussiano de observacion en posicion/velocidad.
-- Escenarios YAML, telemetria JSON, metricas JSON, figuras PNG y visor 3D HTML.
+- Escenarios YAML, telemetria JSON, metricas JSON con unidades fisicas explicitas, figuras PNG y visor 3D HTML.
 
 Fuera de alcance actual:
 

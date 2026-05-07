@@ -18,7 +18,7 @@ Implementado:
 - Mezclador de cuadricoptero con empuje colectivo y momentos de cuerpo.
 - Actuadores con saturacion, retardo puro opcional y lag de primer orden sobre `omega`.
 - Drag lineal simplificado, viento constante y ruido gaussiano de observacion en posicion/velocidad.
-- Escenarios YAML, telemetria JSON, metricas JSON y figuras PNG reproducibles.
+- Escenarios YAML, telemetria JSON, metricas JSON con unidades fisicas explicitas y figuras PNG reproducibles.
 
 No implementado todavia:
 
