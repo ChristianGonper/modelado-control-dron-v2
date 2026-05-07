@@ -42,3 +42,16 @@ def test_thrust_sign_enu_frd():
     assert np.isclose(F_thrust_W[2], T)
 
 
+def test_level_enu_frd_axes_yaw_zero():
+    from simulador_quad.core.frames import get_level_quaternion
+
+    q_level = get_level_quaternion(yaw_rad=0.0)
+
+    x_front_B = np.array([1.0, 0.0, 0.0])
+    y_right_B = np.array([0.0, 1.0, 0.0])
+    z_down_B = np.array([0.0, 0.0, 1.0])
+
+    assert np.allclose(body_to_world(q_level, x_front_B), [0.0, 1.0, 0.0])
+    assert np.allclose(body_to_world(q_level, y_right_B), [1.0, 0.0, 0.0])
+    assert np.allclose(body_to_world(q_level, z_down_B), [0.0, 0.0, -1.0])
+

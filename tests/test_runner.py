@@ -5,19 +5,20 @@ from simulador_quad.dynamics.actuators import ActuatorSystem
 from simulador_quad.dynamics.mixer import QuadcopterMixer
 from simulador_quad.dynamics.perturbations import WindModel, ObservationNoise
 from simulador_quad.core.frames import get_level_quaternion
+from simulador_quad.core.attitude import quaternion_multiply
 
-def create_x_config_rotors():
+def create_x_config_rotors(time_constant_s=0.0):
     # Configuración en X clásica (FR, FL, BR, BL)
     L = 0.25
     return [
-        RotorParameters(np.array([L, L, 0]), 1, 1.0, 0.1, 100.0, 0.0),
-        RotorParameters(np.array([L, -L, 0]), -1, 1.0, 0.1, 100.0, 0.0),
-        RotorParameters(np.array([-L, L, 0]), -1, 1.0, 0.1, 100.0, 0.0),
-        RotorParameters(np.array([-L, -L, 0]), 1, 1.0, 0.1, 100.0, 0.0),
+        RotorParameters(np.array([L, L, 0]), 1, 1.0, 0.1, 100.0, time_constant_s),
+        RotorParameters(np.array([L, -L, 0]), -1, 1.0, 0.1, 100.0, time_constant_s),
+        RotorParameters(np.array([-L, L, 0]), -1, 1.0, 0.1, 100.0, time_constant_s),
+        RotorParameters(np.array([-L, -L, 0]), 1, 1.0, 0.1, 100.0, time_constant_s),
     ]
 
-def setup_runner(max_dur=1.0, max_sat=1.0):
-    rotors = create_x_config_rotors()
+def setup_runner(max_dur=1.0, max_sat=1.0, physics_dt_s=0.01, control_dt_s=0.05, telemetry_dt_s=0.1, rotor_time_constant_s=0.0):
+    rotors = create_x_config_rotors(time_constant_s=rotor_time_constant_s)
     v_params = VehicleParameters(
         mass_kg=1.0,
         inertia_B_kg_m2=np.eye(3)*0.01,
@@ -26,14 +27,14 @@ def setup_runner(max_dur=1.0, max_sat=1.0):
         rotors=rotors
     )
     mixer = QuadcopterMixer(rotors)
-    actuators = ActuatorSystem(rotors, dt_s=0.01)
+    actuators = ActuatorSystem(rotors, dt_s=physics_dt_s)
     wind = WindModel(np.zeros(3))
     noise = ObservationNoise()
     
     return SimulationRunner(
-        physics_dt_s=0.01,
-        control_dt_s=0.05,
-        telemetry_dt_s=0.1,
+        physics_dt_s=physics_dt_s,
+        control_dt_s=control_dt_s,
+        telemetry_dt_s=telemetry_dt_s,
         vehicle_params=v_params,
         mixer=mixer,
         actuators=actuators,
@@ -77,6 +78,47 @@ def test_runner_multi_rate():
     assert result["termination_reason"] == "Time limit reached"
     # Verificar que la observación se guardó
     assert np.allclose(result["telemetry"][0].observation.position_W_m, initial_state.position_W_m)
+
+
+def test_zoh_keeps_control_command_while_actuators_evolve_at_physics_dt():
+    runner = setup_runner(
+        max_dur=0.06,
+        physics_dt_s=0.01,
+        control_dt_s=0.1,
+        telemetry_dt_s=0.01,
+        rotor_time_constant_s=0.05,
+    )
+
+    initial_state = VehicleState(
+        position_W_m=np.array([0.0, 0.0, 10.0]),
+        velocity_W_m_s=np.zeros(3),
+        orientation_WB=get_level_quaternion(0.0),
+        angular_velocity_B_rad_s=np.zeros(3),
+        time_s=0.0
+    )
+
+    class DummyTraj:
+        def get_reference(self, time_s):
+            from simulador_quad.core.contracts import TrajectoryReference
+            return TrajectoryReference(np.zeros(3), np.zeros(3), np.zeros(3), 0.0)
+
+    control_calls = []
+
+    def constant_controller(t, obs, ref):
+        control_calls.append(t)
+        return ControlCommand(collective_thrust_N=100.0, body_moments_Nm=np.zeros(3))
+
+    result = runner.run(initial_state, constant_controller, DummyTraj())
+    applied_omega_rad_s = np.array(
+        [sample.rotor_applied.applied_omega_rad_s[0] for sample in result["telemetry"]]
+    )
+    commanded_thrust_N = np.array(
+        [sample.control_command.collective_thrust_N for sample in result["telemetry"]]
+    )
+
+    assert len(control_calls) == 1
+    assert np.allclose(commanded_thrust_N, 100.0)
+    assert np.all(np.diff(applied_omega_rad_s) > 0.0)
 
 def test_termination_z_min():
     runner = setup_runner(max_dur=10.0)
@@ -136,3 +178,58 @@ def test_termination_saturation():
     assert "Persistent actuator saturation" in result["termination_reason"]
     # Debería haber terminado alrededor de 0.1s
     assert result["final_state"].time_s < 0.2
+
+
+def test_termination_position_velocity_non_finite_and_attitude_limits():
+    runner = setup_runner(max_dur=10.0)
+    level_orientation = get_level_quaternion(0.0)
+
+    base_state = VehicleState(
+        position_W_m=np.array([0.0, 0.0, 10.0]),
+        velocity_W_m_s=np.zeros(3),
+        orientation_WB=level_orientation,
+        angular_velocity_B_rad_s=np.zeros(3),
+        time_s=0.0
+    )
+
+    out_of_position = VehicleState(
+        position_W_m=np.array([runner.max_position_m + 1.0, 0.0, 10.0]),
+        velocity_W_m_s=base_state.velocity_W_m_s,
+        orientation_WB=base_state.orientation_WB,
+        angular_velocity_B_rad_s=base_state.angular_velocity_B_rad_s,
+        time_s=0.0
+    )
+    assert runner._check_termination(out_of_position, False) == (True, "Out of position bounds")
+
+    out_of_velocity = VehicleState(
+        position_W_m=base_state.position_W_m,
+        velocity_W_m_s=np.array([runner.max_velocity_m_s + 1.0, 0.0, 0.0]),
+        orientation_WB=base_state.orientation_WB,
+        angular_velocity_B_rad_s=base_state.angular_velocity_B_rad_s,
+        time_s=0.0
+    )
+    assert runner._check_termination(out_of_velocity, False) == (True, "Out of velocity bounds")
+
+    non_finite = VehicleState(
+        position_W_m=np.array([0.0, np.nan, 10.0]),
+        velocity_W_m_s=base_state.velocity_W_m_s,
+        orientation_WB=base_state.orientation_WB,
+        angular_velocity_B_rad_s=base_state.angular_velocity_B_rad_s,
+        time_s=0.0
+    )
+    assert runner._check_termination(non_finite, False) == (True, "Non-finite values in state")
+
+    runner.max_attitude_angle_rad = 0.2
+    roll_rad = 1.0
+    roll_quaternion = np.array([np.cos(roll_rad / 2.0), np.sin(roll_rad / 2.0), 0.0, 0.0])
+    tilted_orientation = quaternion_multiply(level_orientation, roll_quaternion)
+    tilted = VehicleState(
+        position_W_m=base_state.position_W_m,
+        velocity_W_m_s=base_state.velocity_W_m_s,
+        orientation_WB=tilted_orientation,
+        angular_velocity_B_rad_s=base_state.angular_velocity_B_rad_s,
+        time_s=0.0
+    )
+    terminated, reason = runner._check_termination(tilted, False)
+    assert terminated
+    assert "Attitude angle exceeded limit" in reason

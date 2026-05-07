@@ -1,5 +1,6 @@
 import numpy as np
 from simulador_quad.dynamics.rigid_body import rk4_step
+from simulador_quad.core.frames import get_level_quaternion
 
 def test_free_fall():
     mass = 1.0
@@ -88,3 +89,33 @@ def test_rk4_simple_rotation():
     
     assert np.allclose(w1, w0)
     assert np.allclose(q1, expected_q)
+
+
+def test_rk4_preserves_quaternion_norm_over_long_run():
+    mass_kg = 1.0
+    inertia_B_kg_m2 = np.diag([0.02, 0.03, 0.04])
+    gravity_m_s2 = 0.0
+    dt_s = 0.01
+
+    position_W_m = np.zeros(3)
+    velocity_W_m_s = np.zeros(3)
+    orientation_WB = get_level_quaternion(0.4)
+    angular_velocity_B_rad_s = np.array([0.3, -0.2, 0.1])
+    force_B_N = np.zeros(3)
+    torque_B_Nm = np.zeros(3)
+
+    for _ in range(1000):
+        position_W_m, velocity_W_m_s, orientation_WB, angular_velocity_B_rad_s = rk4_step(
+            position_W_m,
+            velocity_W_m_s,
+            orientation_WB,
+            angular_velocity_B_rad_s,
+            mass_kg,
+            inertia_B_kg_m2,
+            gravity_m_s2,
+            dt_s,
+            force_B_N,
+            torque_B_Nm,
+        )
+
+    assert np.isclose(np.linalg.norm(orientation_WB), 1.0, atol=1e-12)

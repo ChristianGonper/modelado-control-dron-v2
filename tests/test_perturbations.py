@@ -1,5 +1,6 @@
 import numpy as np
 from simulador_quad.dynamics.perturbations import compute_linear_drag, ObservationNoise
+from simulador_quad.core.frames import get_level_quaternion
 
 def test_linear_drag():
     q_id = np.array([1.0, 0.0, 0.0, 0.0])
@@ -36,3 +37,20 @@ def test_observation_noise_reproducibility():
     
     # Comprobar que no es exactamente cero (aunque con semilla 123 es muy poco probable)
     assert not np.allclose(p1_noisy, p0)
+
+
+def test_linear_drag_is_dissipative_with_yawed_level_orientation():
+    orientation_WB = get_level_quaternion(yaw_rad=np.pi / 2.0)
+    velocity_W_m_s = np.array([3.0, -4.0, 0.5])
+    wind_velocity_W_m_s = np.array([-1.0, 0.5, 0.0])
+    drag_coeff = np.array([0.2, 0.1, 0.05])
+
+    force_drag_W_N = compute_linear_drag(
+        velocity_W_m_s,
+        wind_velocity_W_m_s,
+        orientation_WB,
+        drag_coeff,
+    )
+
+    relative_velocity_W_m_s = velocity_W_m_s - wind_velocity_W_m_s
+    assert np.dot(force_drag_W_N, relative_velocity_W_m_s) < 0.0
