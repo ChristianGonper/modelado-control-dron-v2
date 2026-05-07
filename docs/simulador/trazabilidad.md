@@ -26,7 +26,7 @@ Estados usados:
 | Viento constante y ruido de observacion | Evaluar perturbaciones simples sin sensores realistas. | `src/simulador_quad/dynamics/perturbations.py`, `src/simulador_quad/runner.py` | `tests/test_perturbations.py`, `tests/test_runner.py` | `scenarios/circle_noisy_wind.yaml` | Metadata de semilla y observacion exportada. | Parcial |
 | Controlador clasico en cascada | Baseline interpretable para seguimiento y futura imitacion. | `src/simulador_quad/control/classic.py`, `src/simulador_quad/control/contract.py` | `tests/test_control.py` | Todos los escenarios actuales | RMSE, MAE, error maximo y esfuerzo. | Parcial |
 | Trayectorias analiticas o suavizadas | Dar referencias reproducibles con posicion, velocidad y aceleracion. | `src/simulador_quad/trajectories/analytic.py`, `src/simulador_quad/scenarios/loader.py` | `tests/test_trajectories.py` | `hover_clean`, `circle_drag`, `lissajous_clean`, `waypoint_clean` | Error de seguimiento por escenario. | Implementado |
-| Escenarios YAML reproducibles | Separar parametros experimentales del codigo. | `src/simulador_quad/scenarios/loader.py`, `scenarios/*.yaml` | `tests/test_runner.py`, pruebas manuales CLI | Todos los escenarios YAML | `metrics.metadata.config`. | Parcial |
+| Escenarios YAML reproducibles | Separar parametros experimentales del codigo y rechazar configuraciones fisicamente invalidas antes de simular. | `src/simulador_quad/scenarios/loader.py`, `src/simulador_quad/scenarios/schema.py`, `scenarios/*.yaml` | `tests/test_scenarios.py`, `tests/test_runner.py` | Todos los escenarios YAML | `metrics.metadata.config`, errores con ruta de campo. | Implementado |
 | Telemetria JSON | Registrar estado, observacion, referencia, comando y rotores. | `src/simulador_quad/core/contracts.py`, `src/simulador_quad/telemetry/export.py` | `tests/test_metrics.py`, `tests/test_visualization.py` | Todos los escenarios YAML | `telemetry.json`. | Implementado |
 | Metricas JSON | Resumir seguimiento, empuje, momentos, saturacion, degradacion y terminacion con unidades explicitas. | `src/simulador_quad/metrics/report.py` | `tests/test_metrics.py` | Todos los escenarios YAML | `position_rmse_m`, `collective_thrust_*_N`, `body_moment_norm_*_Nm`, `saturation_percentage`, `degradation_percentage`, `termination_reason`. | Implementado |
 | Terminacion de episodio | Marcar fallos por altura, actitud, limites, no finitos o saturacion persistente. | `src/simulador_quad/runner.py` | `tests/test_runner.py` | Escenarios nominales y futuros escenarios de fallo | `termination_reason`, `termination_cause`. | Parcial |
@@ -46,7 +46,7 @@ Para auditar un resultado concreto:
 
 ## Deudas documentadas
 
-- Reforzar validacion de parametros fisicos de escenarios.
+- Ampliar validacion de trayectorias y perturbaciones cuando cambie su alcance.
 - Mantener la lectura de metricas por unidades fisicas; `control_effort_heuristic_*` queda solo como diagnostico heredado.
 - Revisar que la metadata de entorno y commit se conserva en todos los resultados finales de memoria.
 - Reforzar pruebas de convenciones ENU/FRD con actitudes no triviales.

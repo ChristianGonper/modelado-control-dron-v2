@@ -5,7 +5,7 @@ El simulador esta organizado como codigo cientifico simple. Las carpetas separan
 ## Flujo de simulacion
 
 1. `app.py` recibe `simulador-quad run <escenario.yaml>`.
-2. `scenarios.loader` lee el YAML e instancia vehiculo, rotores, estado inicial, trayectoria, controlador, viento y ruido.
+2. `scenarios.loader` lee y valida el YAML; despues instancia vehiculo, rotores, estado inicial, trayectoria, controlador, viento y ruido.
 3. `SimulationRunner` inicializa tiempos de fisica, control y telemetria.
 4. En cada ciclo:
    - obtiene la referencia de trayectoria para `time_s`;
@@ -28,6 +28,7 @@ El simulador esta organizado como codigo cientifico simple. Las carpetas separan
 - `dynamics/actuators.py`: retardo, lag, saturacion, empuje y par aplicado por rotores.
 - `dynamics/mixer.py`: asignacion de empuje colectivo y momentos a empujes de rotor.
 - `dynamics/perturbations.py`: drag lineal, viento constante y ruido de observacion.
+- `scenarios/schema.py`: validacion fisica simple de YAML antes de simular.
 - `trajectories/analytic.py`: referencias `hold`, `circle`, `lissajous` y `line`.
 - `control/classic.py`: controlador clasico en cascada.
 - `runner.py`: orquestacion multi-rate, ZOH, telemetria y terminacion.
@@ -63,6 +64,12 @@ Cada muestra de `telemetry.json` contiene:
 
 `state` es el estado verdadero del simulador. `observation` es lo que vio el controlador; puede diferir por ruido. `reference` es la trayectoria deseada. `control` es la salida del controlador. `rotors` separa objetivo y aplicado.
 
+## Validacion de escenarios
+
+Antes de ejecutar o instanciar un escenario, `validate_scenario_config` comprueba los parametros fisicos que afectan directamente a la validez del resultado: masa, gravedad, inercia, drag, rotores, tiempos y estado inicial. Los errores incluyen la ruta del campo, por ejemplo `vehicle.rotors[0].omega_max_rad_s`.
+
+Si `initial_state.orientation_WB` es `null`, el cargador genera una actitud nivelada a partir de `yaw_rad`. Si se proporciona un cuaternion, debe ser finito y unitario; la validacion lo rechaza en lugar de normalizarlo silenciosamente.
+
 ## Metricas
 
 `metrics.json` resume:
@@ -85,5 +92,4 @@ Las metricas no sustituyen a la inspeccion de telemetria. Para explicar un resul
 - Las ganancias del controlador clasico estan fijadas en codigo.
 - El viento es constante.
 - El ruido de observacion afecta solo a posicion y velocidad.
-- El CLI no carga limites de posicion o velocidad desde YAML.
 - La visualización es postproceso y automática tras cada ejecución exitosa.

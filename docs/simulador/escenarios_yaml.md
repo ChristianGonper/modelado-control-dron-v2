@@ -18,7 +18,7 @@ termination: {}
 output: {}
 ```
 
-Al ejecutar un escenario con `uv run simulador-quad run <fichero.yaml>`, se generan automáticamente la telemetría, las métricas, figuras PNG y un visor 3D interactivo, a menos que se use `--no-visualization`.
+Al ejecutar un escenario con `uv run simulador-quad run <fichero.yaml>`, el YAML se valida antes de instanciar la simulacion. Si un parametro fisico es invalido, el cargador falla temprano con un `ValueError` que indica el campo afectado. Si la configuracion es valida, se generan automaticamente la telemetria, las metricas, figuras PNG y un visor 3D interactivo, a menos que se use `--no-visualization`.
 
 ## Convenciones fisicas
 
@@ -54,21 +54,21 @@ vehicle:
     - {position_B_m: [-0.17, -0.17, 0], turning_direction: -1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 1500, time_constant_s: 0.05, delay_s: 0.01}
 ```
 
-- `mass_kg`: masa del vehiculo.
-- `inertia_B_kg_m2`: matriz de inercia respecto al centro de gravedad, expresada en FRD.
-- `gravity_m_s2`: gravedad positiva en magnitud. Si falta, se usa `9.81`.
-- `linear_drag_coefficient`: coeficientes de drag lineal por eje de cuerpo, en `N/(m/s)`.
+- `mass_kg`: masa del vehiculo. Debe ser positiva.
+- `inertia_B_kg_m2`: matriz de inercia respecto al centro de gravedad, expresada en FRD. Debe ser 3x3, finita, simetrica y definida positiva.
+- `gravity_m_s2`: gravedad positiva en magnitud. Si falta, se usa `9.81`; si se proporciona, debe ser positiva.
+- `linear_drag_coefficient`: coeficientes de drag lineal por eje de cuerpo, en `N/(m/s)`. Puede ser escalar o vector de tres componentes; todos los valores deben ser finitos y no negativos.
 - `rotors`: lista de cuatro rotores. El mezclador actual exige exactamente cuatro.
 
 Campos de cada rotor:
 
-- `position_B_m`: posicion del rotor en cuerpo FRD respecto al centro de gravedad.
+- `position_B_m`: posicion del rotor en cuerpo FRD respecto al centro de gravedad. Debe tener tres componentes finitas.
 - `turning_direction`: signo `1` o `-1` para el par de reaccion de yaw.
-- `k_f`: coeficiente de empuje, `N/(rad/s)^2`.
-- `k_m`: coeficiente de par, `Nm/(rad/s)^2`.
-- `omega_max_rad_s`: velocidad angular maxima del rotor.
-- `time_constant_s`: constante de tiempo del lag de primer orden aplicado sobre `omega`.
-- `delay_s`: retardo puro antes del lag. Si falta, se usa `0.0`.
+- `k_f`: coeficiente de empuje, `N/(rad/s)^2`. Debe ser positivo.
+- `k_m`: coeficiente de par, `Nm/(rad/s)^2`. Debe ser finito y no negativo.
+- `omega_max_rad_s`: velocidad angular maxima del rotor. Debe ser positiva.
+- `time_constant_s`: constante de tiempo del lag de primer orden aplicado sobre `omega`. Debe ser finita y no negativa.
+- `delay_s`: retardo puro antes del lag. Si falta, se usa `0.0`; si se proporciona, debe ser finito y no negativo.
 
 ## `initial_state`
 
@@ -81,11 +81,11 @@ initial_state:
   angular_velocity_B_rad_s: [0, 0, 0]
 ```
 
-- `position_W_m`: posicion inicial en mundo ENU.
-- `velocity_W_m_s`: velocidad inicial en mundo ENU.
-- `orientation_WB`: cuaternion inicial `[w, x, y, z]`. Si es `null`, se genera una actitud nivelada.
+- `position_W_m`: posicion inicial en mundo ENU. Debe tener tres componentes finitas.
+- `velocity_W_m_s`: velocidad inicial en mundo ENU. Debe tener tres componentes finitas.
+- `orientation_WB`: cuaternion inicial `[w, x, y, z]`. Si es `null`, se genera una actitud nivelada. Si se proporciona, debe ser finito y unitario dentro de una tolerancia pequena; el cargador no normaliza cuaterniones iniciales invalidos.
 - `yaw_rad`: guiñada usada solo cuando `orientation_WB: null`. `yaw_rad = 0` significa que el frente del dron apunta al Norte (`Y_W`).
-- `angular_velocity_B_rad_s`: velocidad angular inicial en cuerpo FRD.
+- `angular_velocity_B_rad_s`: velocidad angular inicial en cuerpo FRD. Debe tener tres componentes finitas.
 
 ## `trajectory`
 
@@ -210,7 +210,7 @@ timing:
 - `control_dt_s`: periodo de actualizacion del controlador.
 - `telemetry_dt_s`: periodo de guardado de muestras.
 
-Entre actualizaciones del controlador se mantiene el ultimo comando mediante ZOH.
+Los tres tiempos deben ser positivos. Entre actualizaciones del controlador se mantiene el ultimo comando mediante ZOH.
 
 ## `termination`
 
@@ -222,12 +222,30 @@ termination:
   max_saturation_duration_s: 5.0
 ```
 
-- `max_duration_s`: duracion maxima del episodio.
-- `z_min_m`: limite inferior de altura en mundo ENU.
-- `max_attitude_angle_rad`: inclinacion maxima permitida. Si falta, se usa `1.256`.
-- `max_saturation_duration_s`: tiempo maximo con saturacion persistente. Si falta, se usa `1.0`.
+- `max_duration_s`: duracion maxima del episodio. Debe ser positiva.
+- `z_min_m`: limite inferior de altura en mundo ENU. Debe ser finito.
+- `max_attitude_angle_rad`: inclinacion maxima permitida. Si falta, se usa `1.256`; si se proporciona, debe ser positiva.
+- `max_saturation_duration_s`: tiempo maximo con saturacion persistente. Si falta, se usa `1.0`; si se proporciona, debe ser positivo.
 
 El runner tambien tiene limites internos de posicion y velocidad, pero el CLI actual no los carga desde YAML.
+
+## Validacion fisica v1
+
+La validacion implementada en `src/simulador_quad/scenarios/schema.py` cubre parametros que pueden invalidar un resultado del TFG antes de simular:
+
+- masa y gravedad positivas;
+- inercia 3x3 finita, simetrica y definida positiva;
+- drag escalar o vector `[3]`, finito y no negativo;
+- exactamente cuatro rotores;
+- posicion de rotor `[3]`, `turning_direction` en `{-1, 1}`, `k_f > 0`, `k_m >= 0`, `omega_max_rad_s > 0`, `time_constant_s >= 0` y `delay_s >= 0`;
+- tiempos `physics_dt_s`, `control_dt_s`, `telemetry_dt_s` y `max_duration_s` positivos;
+- estado inicial con vectores `[3]` finitos y cuaternion `orientation_WB` nulo o unitario.
+
+Ejemplo de error:
+
+```text
+Invalid vehicle.mass_kg: expected positive kg value, got -1.0
+```
 
 ## `output`
 

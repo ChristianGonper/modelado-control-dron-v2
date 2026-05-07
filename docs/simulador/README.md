@@ -19,6 +19,7 @@ Implementado:
 - Actuadores con saturacion, retardo puro opcional y lag de primer orden sobre `omega`.
 - Drag lineal simplificado, viento constante y ruido gaussiano de observacion en posicion/velocidad.
 - Escenarios YAML, telemetria JSON, metricas JSON con unidades fisicas explicitas y figuras PNG reproducibles.
+- Validacion fisica basica de escenarios antes de ejecutar.
 
 No implementado todavia:
 

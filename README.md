@@ -15,6 +15,7 @@ Implementado:
 - Mixer de cuadricoptero, actuadores con saturacion, retardo puro opcional y lag de primer orden sobre `omega`.
 - Drag lineal simplificado, viento constante y ruido gaussiano de observacion en posicion/velocidad.
 - Escenarios YAML, telemetria JSON, metricas JSON con unidades fisicas explicitas, figuras PNG y visor 3D HTML.
+- Validacion fisica basica de escenarios antes de ejecutar.
 
 Fuera de alcance actual:
 

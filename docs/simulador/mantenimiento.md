@@ -18,7 +18,7 @@ Revisar:
 - `docs/simulador/escenarios_yaml.md`
 - ejemplos en `docs/simulador/guia_uso.md`
 
-Comprobar que cada campo documentado existe en `src/simulador_quad/scenarios/loader.py` o que se declara explicitamente como limite/futuro. No documentar campos aspiracionales como si ya estuvieran implementados.
+Comprobar que cada campo documentado existe en `src/simulador_quad/scenarios/loader.py` y, si afecta a validez fisica, en `src/simulador_quad/scenarios/schema.py`; si no existe, declararlo explicitamente como limite/futuro. No documentar campos aspiracionales como si ya estuvieran implementados.
 
 ## Cuando cambien trayectorias
 
@@ -73,5 +73,5 @@ Despues de ejecutar:
 - `telemetry.json` y `metrics.json` existen para los escenarios ejecutados.
 - Las cinco figuras PNG existen y tienen contenido.
 - La documentacion no contradice `loader.py`, `export.py`, `report.py` ni el CLI.
-- Los documentos normativos y preliminares no se han modificado salvo decision explicita.
-
+- La validacion de escenarios no contradice `schema.py`.
+- Los documentos normativos no se han modificado salvo decision explicita.
