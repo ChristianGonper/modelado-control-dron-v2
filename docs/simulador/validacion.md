@@ -51,7 +51,7 @@ Los directorios actuales en `results/` son utiles para inspeccion y comparacion 
 
 Motivos:
 
-- Los artefactos no registran todavia commit, estado del arbol, comando exacto ni hash de `uv.lock`.
+- Los artefactos generados antes de la metadata fuerte no registraban commit, estado del arbol, comando exacto ni hash de `uv.lock`.
 - Algunos resultados pueden proceder de versiones anteriores de escenarios o codigo.
 - Por ejemplo, el resultado historico de `results/waypoint_clean/metrics.json` registra una duracion de 60 s, mientras el YAML actual `scenarios/waypoint_clean.yaml` declara `max_duration_s: 15.0`.
 
@@ -59,7 +59,7 @@ Para usar un resultado en memoria:
 
 1. Ejecutar el YAML oficial desde el estado de codigo que se quiere defender.
 2. Guardar `metrics.json`, `telemetry.json`, figuras y visor 3D si aplica.
-3. Registrar manualmente, hasta que exista metadata automatica fuerte, el comando, fecha, commit, estado limpio/sucio y version de Python/uv.
+3. Comprobar en `metrics.metadata` el comando, commit, estado limpio/sucio, version de Python, hash de escenario y hash de `uv.lock`.
 4. Referenciar el escenario y los criterios de este documento.
 
 ## Evidencias minimas por escenario

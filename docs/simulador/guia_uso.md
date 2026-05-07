@@ -86,7 +86,7 @@ Campos principales de `metrics.json`:
 - `saturation_duration_s` y `saturation_percentage`: tiempo con algun rotor saturado.
 - `degradation_duration_s` y `degradation_percentage`: tiempo con empuje colectivo degradado por el mezclador.
 - `termination_reason`: causa final del episodio.
-- `metadata`: escenario completo, nombre y semilla usados.
+- `metadata`: nombre y ruta del escenario, semilla, controlador, comando, version del paquete, Python/plataforma, estado Git, hashes de escenario/`uv.lock`, configuracion original y configuracion efectiva con defaults.
 
 ## Flujo recomendado para un alumno
 
@@ -98,5 +98,6 @@ Campos principales de `metrics.json`:
 6. Guardar resultados en un subdirectorio distinto dentro de `results/`.
 7. Comparar métricas y figuras con el escenario base.
 
-Este flujo mantiene trazabilidad: el `metrics.json` conserva el YAML usado dentro de `metadata.config`, y las figuras se generan directamente desde la telemetria exportada.
+Este flujo mantiene trazabilidad: el `metrics.json` conserva el YAML usado dentro de `metadata.config`, los defaults efectivos dentro de `metadata.config_resolved`, el comando de ejecucion, hashes de escenario/`uv.lock` y datos de entorno. Las figuras se generan directamente desde la telemetria exportada.
 
+Para resultados destinados a la memoria, conservar siempre `metrics.json` junto con `telemetry.json` y las figuras. La metadata permite reconstruir la ejecucion incluso si posteriormente cambian el codigo o los escenarios.

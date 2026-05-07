@@ -73,7 +73,7 @@ Cada muestra de `telemetry.json` contiene:
 - tiempo y porcentaje de saturacion;
 - tiempo y porcentaje de degradacion de empuje colectivo;
 - causa de terminacion y duracion;
-- metadatos completos del escenario.
+- metadatos de reproducibilidad: escenario, semilla, controlador, comando, version del paquete, Python/plataforma, estado Git, hashes de escenario/`uv.lock`, configuracion original y configuracion efectiva con defaults.
 
 Las métricas no sustituyen a la inspección de telemetría. Para explicar un resultado en la memoria, conviene combinar `metrics.json` con las figuras generadas automáticamente y el visor 3D interactivo.
 
@@ -85,4 +85,3 @@ Las métricas no sustituyen a la inspección de telemetría. Para explicar un re
 - El ruido de observacion afecta solo a posicion y velocidad.
 - El CLI no carga limites de posicion o velocidad desde YAML.
 - La visualización es postproceso y automática tras cada ejecución exitosa.
-

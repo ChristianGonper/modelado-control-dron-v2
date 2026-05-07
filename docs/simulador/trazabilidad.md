@@ -31,7 +31,7 @@ Estados usados:
 | Metricas JSON | Resumir seguimiento, esfuerzo, saturacion, degradacion y terminacion. | `src/simulador_quad/metrics/report.py` | `tests/test_metrics.py` | Todos los escenarios YAML | `metrics.json`. | Parcial |
 | Terminacion de episodio | Marcar fallos por altura, actitud, limites, no finitos o saturacion persistente. | `src/simulador_quad/runner.py` | `tests/test_runner.py` | Escenarios nominales y futuros escenarios de fallo | `termination_reason`, `termination_cause`. | Parcial |
 | Visualizacion postproceso | Generar figuras y visor 3D para inspeccion de resultados. | `src/simulador_quad/visualization/plots.py`, `src/simulador_quad/visualization/three_d.py` | `tests/test_visualization.py` | Resultados de cualquier escenario | Figuras PNG y `visualization_3d.html`. | Implementado |
-| Reproducibilidad fuerte de ejecucion | Vincular resultados con codigo, entorno y comando exacto. | `src/simulador_quad/app.py`, `src/simulador_quad/metrics/report.py` | Pendiente | Todos los escenarios oficiales | Metadata de commit, entorno y comando. | Pendiente |
+| Reproducibilidad fuerte de ejecucion | Vincular resultados con codigo, entorno y comando exacto. | `src/simulador_quad/app.py`, `src/simulador_quad/metrics/report.py` | `tests/test_app_metadata.py` | Todos los escenarios oficiales | Metadata de commit, entorno, comando, hashes y configuracion efectiva. | Implementado |
 | Control neuronal por imitacion | Objetivo final de comparacion del TFG. | Pendiente | Pendiente | Pendiente | Dataset, entrenamiento y evaluacion cerrada. | Pendiente |
 
 ## Lectura recomendada
@@ -48,6 +48,6 @@ Para auditar un resultado concreto:
 
 - Reforzar validacion de parametros fisicos de escenarios.
 - Separar metricas de esfuerzo por unidades fisicas antes de usarlas como argumento fuerte.
-- Registrar metadata de entorno y commit para resultados finales de memoria.
+- Revisar que la metadata de entorno y commit se conserva en todos los resultados finales de memoria.
 - Reforzar pruebas de convenciones ENU/FRD con actitudes no triviales.
 - Mantener control neuronal como fase futura hasta que exista evaluacion en bucle cerrado.
