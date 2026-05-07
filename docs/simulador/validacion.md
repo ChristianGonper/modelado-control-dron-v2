@@ -33,7 +33,7 @@ Un escenario se considera valido como evidencia de la version clasica si cumple:
 - Las saturaciones y degradaciones se reportan, no se ocultan.
 - Las figuras se generan desde la telemetria exportada, no desde datos editados manualmente.
 
-Los umbrales numericos de RMSE y error maximo son iniciales. Deben revisarse cuando se implemente metadata reproducible fuerte y regresiones automaticas de escenarios.
+Los umbrales numericos de RMSE y error maximo son iniciales. Deben revisarse cuando cambie el modelo fisico, el controlador o la lista de escenarios oficiales.
 
 ## Escenarios oficiales
 
@@ -101,14 +101,16 @@ Los resultados historicos `results/stress_*` o `results/test_line` no son escena
 
 ## Relacion con pruebas automaticas
 
-Esta fase define validacion documental. La automatizacion futura debera:
+La suite actual ya incluye validaciones automaticas del modelo clasico:
 
-- ejecutar escenarios cortos en directorios temporales;
-- comprobar `termination_reason`;
-- verificar RMSE, saturacion, degradacion y ausencia de no finitos;
-- validar esquema minimo de `metrics.json` y `telemetry.json`;
-- comparar magnitudes de control por unidades fisicas, no mediante el indice heuristico heredado;
-- evitar usar `results/` historico como oraculo unico.
+- `tests/test_attitude.py`: convenciones ENU/FRD y signo del empuje.
+- `tests/test_dynamics.py`: casos analiticos de RK4 y conservacion de norma de cuaternion en una integracion larga.
+- `tests/test_perturbations.py`: drag disipativo, tambien con orientacion no trivial.
+- `tests/test_runner.py`: multi-rate, ZOH, evolucion de actuadores a `physics_dt_s` y terminaciones por altura, actitud, posicion, velocidad, no finitos y saturacion persistente.
+- `tests/test_scenarios.py`: escenarios oficiales validos y rechazo temprano de configuraciones fisicas invalidas.
+- `tests/test_model_regressions.py`: ejecucion corta de escenario en directorio temporal, sin depender de `results/`, comprobando `termination_reason`, metricas, esquema minimo de `metrics.json`/`telemetry.json` y valores finitos.
+
+Las regresiones automaticas no sustituyen a las ejecuciones oficiales completas para la memoria. Su papel es detectar roturas rapidas de contrato y evitar que `results/` historico actue como unico oraculo.
 
 ## Limites de validez
 

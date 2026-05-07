@@ -41,6 +41,8 @@ Revisar:
 
 Si se renombra un campo de `telemetry.json`, actualizar tambien la visualizacion. Si se añade una metrica nueva, explicar su significado fisico y sus unidades.
 
+Actualizar tambien `tests/test_model_regressions.py` si cambia el esquema minimo esperado de `metrics.json` o `telemetry.json`.
+
 ## Cuando cambie el modelo fisico
 
 Revisar:
