@@ -47,6 +47,7 @@ uv run simulador-quad run scenarios\waypoint_clean.yaml --no-visualization
 - `docs/03_criterios_ingenieria_software.md`: criterios de software cientifico, pruebas y reproducibilidad.
 - `docs/simulador/`: documentacion viva del estado implementado.
 - `docs/simulador/trazabilidad.md`: matriz requisito-modelo-codigo-prueba-escenario-metrica.
+- `docs/simulador/validacion.md`: clasificacion de escenarios y criterios de aceptacion.
 - `docs/plans/`: specs vigentes de saneamiento y trabajo futuro inmediato.
 - `docs/plans/archived/`: planes historicos no vigentes.
 - `docs/reviews/`: auditorias y revisiones tecnicas.

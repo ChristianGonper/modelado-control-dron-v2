@@ -252,6 +252,8 @@ Para probar los distintos tipos de trayectorias, se proporcionan los siguientes 
 - `lissajous_clean.yaml`: Trayectoria en curva de Lissajous (`lissajous`) 3D.
 - `waypoint_clean.yaml`: Seguimiento de una lista de puntos (`waypoint` / `line`) con paradas suaves.
 
+La clasificacion de estos escenarios como nominales, robustez o demostracion, junto con sus criterios de aceptacion, esta en `docs/simulador/validacion.md`.
+
 ## Ejemplo minimo de hover
 
 ```yaml
@@ -304,4 +306,3 @@ output:
   telemetry_file: "telemetry.json"
   metrics_file: "metrics.json"
 ```
-

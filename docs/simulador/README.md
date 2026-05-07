@@ -33,6 +33,7 @@ No implementado todavia:
 - [Referencia de escenarios YAML](escenarios_yaml.md): campos admitidos, unidades, marcos de referencia y ejemplos de trayectorias.
 - [Arquitectura actual](arquitectura.md): flujo de simulacion, modulos, contratos, telemetria y metricas.
 - [Trazabilidad](trazabilidad.md): matriz requisito-modelo-codigo-prueba-escenario-metrica del simulador clasico.
+- [Validacion](validacion.md): clasificacion de escenarios, criterios de aceptacion y evidencias para la memoria.
 - [Mantenimiento documental](mantenimiento.md): checklist para actualizar esta documentacion despues de cambios agresivos.
 
 ## Comandos minimos
