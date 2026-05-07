@@ -40,6 +40,12 @@ def test_execution_metadata_contains_reproducibility_fields():
     assert metadata["command"].endswith("--no-visualization")
     assert metadata["controller"]["type"] == "classic"
     assert "Kp_pos" in metadata["controller"]["parameters"]
+    assert "Kd_pos" in metadata["controller"]["parameters"]
+    assert "Kp_att" in metadata["controller"]["parameters"]
+    assert "Kd_att" in metadata["controller"]["parameters"]
+    assert "max_thrust" in metadata["controller"]["parameters"]
+    assert "min_thrust" in metadata["controller"]["parameters"]
+    assert "max_moments_Nm" in metadata["controller"]["parameters"]
     assert metadata["python_version"]
     assert metadata["package_version"]
     assert metadata["platform"]

@@ -2,11 +2,14 @@ import numpy as np
 from typing import List, Dict, Any
 from simulador_quad.core.contracts import TelemetrySample
 
+
 def compute_metrics(telemetry: List[TelemetrySample], termination_reason: str, metadata: Dict[str, Any] = None) -> Dict[str, Any]:
     if not telemetry:
         return {}
         
     pos_errors = []
+    collective_thrusts_N = []
+    body_moment_norms_Nm = []
     control_efforts = []
     max_omegas = []
     max_rpms = []
@@ -22,8 +25,15 @@ def compute_metrics(telemetry: List[TelemetrySample], termination_reason: str, m
         p_err = np.linalg.norm(sample.reference.position_W_m - sample.state.position_W_m)
         pos_errors.append(p_err)
         
-        # Esfuerzo de control (norma del comando)
-        c_eff = np.abs(sample.control_command.collective_thrust_N) + np.linalg.norm(sample.control_command.body_moments_Nm)
+        # Magnitudes de control separadas por unidad física.
+        collective_thrust_N = float(sample.control_command.collective_thrust_N)
+        body_moment_norm_Nm = float(np.linalg.norm(sample.control_command.body_moments_Nm))
+        collective_thrusts_N.append(collective_thrust_N)
+        body_moment_norms_Nm.append(body_moment_norm_Nm)
+
+        # Índice heurístico heredado: mezcla N y Nm, por tanto no debe usarse
+        # como argumento físico principal.
+        c_eff = np.abs(collective_thrust_N) + body_moment_norm_Nm
         control_efforts.append(c_eff)
         
         # Max omega y RPM
@@ -38,6 +48,8 @@ def compute_metrics(telemetry: List[TelemetrySample], termination_reason: str, m
             degraded_samples += 1
             
     pos_errors = np.array(pos_errors)
+    collective_thrusts_N = np.array(collective_thrusts_N)
+    body_moment_norms_Nm = np.array(body_moment_norms_Nm)
     control_efforts = np.array(control_efforts)
     
     metrics = {
@@ -45,6 +57,16 @@ def compute_metrics(telemetry: List[TelemetrySample], termination_reason: str, m
         "position_mae_m": float(np.mean(pos_errors)),
         "position_max_err_m": float(np.max(pos_errors)),
         "position_std_err_m": float(np.std(pos_errors)),
+        "collective_thrust_mean_N": float(np.mean(collective_thrusts_N)),
+        "collective_thrust_max_N": float(np.max(collective_thrusts_N)),
+        "collective_thrust_min_N": float(np.min(collective_thrusts_N)),
+        "collective_thrust_std_N": float(np.std(collective_thrusts_N)),
+        "body_moment_norm_mean_Nm": float(np.mean(body_moment_norms_Nm)),
+        "body_moment_norm_max_Nm": float(np.max(body_moment_norms_Nm)),
+        "body_moment_norm_std_Nm": float(np.std(body_moment_norms_Nm)),
+        "control_effort_heuristic_mean": float(np.mean(control_efforts)),
+        "control_effort_heuristic_max": float(np.max(control_efforts)),
+        "control_effort_heuristic_std": float(np.std(control_efforts)),
         "control_effort_mean": float(np.mean(control_efforts)),
         "control_effort_max": float(np.max(control_efforts)),
         "control_effort_std": float(np.std(control_efforts)),
