@@ -15,16 +15,18 @@ Implementado:
 - Actitud con cuaterniones `orientation_WB` en formato `[w, x, y, z]`.
 - Integracion RK4 con pasos separados de fisica, control y telemetria.
 - Controlador clasico en cascada.
+- Ganancias explicitas opcionales del controlador clasico desde YAML.
 - Mezclador de cuadricoptero con empuje colectivo y momentos de cuerpo.
 - Actuadores con saturacion, retardo puro opcional y lag de primer orden sobre `omega`.
 - Drag lineal simplificado, viento constante y ruido gaussiano de observacion en posicion/velocidad.
 - Escenarios YAML, telemetria JSON, metricas JSON con unidades fisicas explicitas y figuras PNG reproducibles.
 - Validacion fisica basica de escenarios antes de ejecutar.
+- Generacion de dataset clasico versionado con manifiesto CSV, escenarios YAML generados, PID por familia y resultados separados.
 
 No implementado todavia:
 
 - Controlador neuronal real por imitacion.
-- Entrenamiento, dataset y evaluacion neuronal en bucle cerrado.
+- Entrenamiento, loaders de ML y evaluacion neuronal en bucle cerrado.
 - Aerodinamica formal mas alla del drag lineal.
 - Modelo de bateria, sensores realistas, estimador onboard, contacto con suelo o datos experimentales.
 
@@ -35,6 +37,7 @@ No implementado todavia:
 - [Arquitectura actual](arquitectura.md): flujo de simulacion, modulos, contratos, telemetria y metricas.
 - [Trazabilidad](trazabilidad.md): matriz requisito-modelo-codigo-prueba-escenario-metrica del simulador clasico.
 - [Validacion](validacion.md): clasificacion de escenarios, criterios de aceptacion y evidencias para la memoria.
+- [Dataset clasico](dataset_clasico.md): comandos y artefactos de generacion de datos clasicos previos a la fase neuronal.
 - [Mantenimiento documental](mantenimiento.md): checklist para actualizar esta documentacion despues de cambios agresivos.
 
 ## Comandos minimos
@@ -44,6 +47,7 @@ uv run pytest
 uv run simulador-quad run scenarios\hover_clean.yaml
 uv run simulador-quad run scenarios\circle_drag.yaml
 uv run simulador-quad plot results\hover_clean\telemetry.json --metrics results\hover_clean\metrics.json --out results\hover_clean\figures
+uv run python tools\generate_classic_dataset.py --version v1 --out data\classic_dataset\v1
 ```
 
 Las figuras generadas tienen nombres estables:

@@ -52,6 +52,43 @@ uv run simulador-quad plot results\hover_clean\telemetry.json --metrics results\
 
 El argumento `--metrics` es opcional, pero permite anotar información como el RMSE.
 
+## Generar dataset clasico
+
+El repo incluye un flujo de datos clasicos previo a la fase neuronal. Genera escenarios YAML, PIDs por familia, manifiesto y resultados separados bajo `data/classic_dataset/<version>/`.
+
+Generar el dataset `v1`:
+
+```powershell
+uv run python tools\generate_classic_dataset.py --version v1 --out data\classic_dataset\v1
+```
+
+Este comando crea tambien PIDs iniciales por familia si no existen:
+
+- `pid_hold_v1.yaml`
+- `pid_circle_v1.yaml`
+- `pid_lissajous_v1.yaml`
+- `pid_waypoint_v1.yaml`
+
+Ejecutar el dataset completo sin visualizacion:
+
+```powershell
+uv run python tools\run_classic_dataset.py --dataset data\classic_dataset\v1 --no-visualization
+```
+
+Para pruebas rapidas:
+
+```powershell
+uv run python tools\run_classic_dataset.py --dataset data\classic_dataset\v1 --family hold --limit 1 --no-visualization
+```
+
+Resumir resultados:
+
+```powershell
+uv run python tools\summarize_classic_dataset.py --dataset data\classic_dataset\v1
+```
+
+El flujo completo esta descrito en `docs/simulador/dataset_clasico.md`.
+
 Figuras generadas (tanto en `run` automático como en `plot` manual):
 
 - `trajectory_xy.png`: trayectoria real y referencia en el plano horizontal ENU.

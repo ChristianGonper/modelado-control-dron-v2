@@ -174,13 +174,21 @@ Antes del primer tiempo mantiene el primer waypoint. Despues del ultimo mantiene
 ```yaml
 controller:
   type: "classic"
+  Kp_pos: [2.0, 2.0, 5.0]
+  Kd_pos: [1.0, 1.0, 2.0]
+  Kp_att: [4.0, 4.0, 1.0]
+  Kd_att: [1.5, 1.5, 0.5]
   max_body_moments_Nm: [2.0, 2.0, 0.5]
 ```
 
 - `type`: actualmente solo se acepta `"classic"`.
+- `Kp_pos`: ganancias proporcionales de posicion por eje ENU. Si falta, se usa `[2.0, 2.0, 5.0]`.
+- `Kd_pos`: ganancias derivativas de posicion por eje ENU. Si falta, se usa `[1.0, 1.0, 2.0]`.
+- `Kp_att`: ganancias proporcionales de actitud por eje de cuerpo FRD. Si falta, se usa `[4.0, 4.0, 1.0]`.
+- `Kd_att`: ganancias derivativas de actitud por eje de cuerpo FRD. Si falta, se usa `[1.5, 1.5, 0.5]`.
 - `max_body_moments_Nm`: limites de momentos `[tau_x, tau_y, tau_z]` en FRD. Si falta, el controlador usa `[10.0, 10.0, 2.0]`.
 
-El controlador clasico usa un bucle externo de posicion y un bucle interno de actitud. Sus ganancias estan fijadas en codigo en esta version.
+El controlador clasico usa un bucle externo de posicion y un bucle interno de actitud. Las ganancias declaradas en YAML permiten fijar PIDs por familia de trayectoria para datasets clasicos; si se omiten, se conservan los defaults del controlador.
 
 ## `perturbations`
 
@@ -239,7 +247,9 @@ La validacion implementada en `src/simulador_quad/scenarios/schema.py` cubre par
 - exactamente cuatro rotores;
 - posicion de rotor `[3]`, `turning_direction` en `{-1, 1}`, `k_f > 0`, `k_m >= 0`, `omega_max_rad_s > 0`, `time_constant_s >= 0` y `delay_s >= 0`;
 - tiempos `physics_dt_s`, `control_dt_s`, `telemetry_dt_s` y `max_duration_s` positivos;
-- estado inicial con vectores `[3]` finitos y cuaternion `orientation_WB` nulo o unitario.
+- estado inicial con vectores `[3]` finitos y cuaternion `orientation_WB` nulo o unitario;
+- controlador clasico con ganancias `Kp_pos`, `Kd_pos`, `Kp_att`, `Kd_att` opcionales como vectores `[3]` finitos y no negativos;
+- limites `controller.max_body_moments_Nm` opcionales como vector `[3]` finito y no negativo.
 
 Ejemplo de error:
 

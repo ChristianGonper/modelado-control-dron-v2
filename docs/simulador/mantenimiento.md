@@ -43,6 +43,23 @@ Si se renombra un campo de `telemetry.json`, actualizar tambien la visualizacion
 
 Actualizar tambien `tests/test_model_regressions.py` si cambia el esquema minimo esperado de `metrics.json` o `telemetry.json`.
 
+## Cuando cambie el dataset clasico
+
+Revisar:
+
+- `docs/simulador/dataset_clasico.md`
+- `docs/simulador/validacion.md`
+- `docs/simulador/trazabilidad.md`
+- `README.md`
+
+Actualizar familias, perfiles, conteos, splits, nombres de PID, campos de `manifest.csv`, comandos de `tools/` y criterios de validez. Si cambia el YAML generado, revisar tambien `docs/simulador/escenarios_yaml.md`.
+
+Ejecutar al menos:
+
+```powershell
+uv run pytest tests\test_classic_controller_config.py tests\test_classic_dataset_generation.py tests\test_classic_dataset_scripts.py tests\test_classic_pid_selection.py
+```
+
 ## Cuando cambie el modelo fisico
 
 Revisar:
@@ -68,6 +85,7 @@ uv run pytest
 uv run simulador-quad run scenarios\hover_clean.yaml
 uv run simulador-quad run scenarios\circle_drag.yaml
 uv run simulador-quad plot results\hover_clean\telemetry.json --metrics results\hover_clean\metrics.json --out results\hover_clean\figures
+uv run python tools\generate_classic_dataset.py --version test_v1 --out $env:TEMP\simulador_quad_dataset_test_v1 --overwrite
 ```
 
 Despues de ejecutar:
@@ -76,4 +94,5 @@ Despues de ejecutar:
 - Las siete figuras PNG estándar existen y tienen contenido.
 - La documentacion no contradice `loader.py`, `export.py`, `report.py` ni el CLI.
 - La validacion de escenarios no contradice `schema.py`.
+- La documentacion del dataset no contradice `src/simulador_quad/datasets/classic.py` ni los scripts en `tools/`.
 - Los documentos normativos no se han modificado salvo decision explicita.

@@ -31,11 +31,16 @@ El simulador esta organizado como codigo cientifico simple. Las carpetas separan
 - `scenarios/schema.py`: validacion fisica simple de YAML antes de simular.
 - `trajectories/analytic.py`: referencias `hold`, `circle`, `lissajous` y `line`.
 - `control/classic.py`: controlador clasico en cascada.
+- `datasets/classic.py`: definicion reproducible del dataset clasico, familias, perfiles, YAML generados, PID iniciales, manifiesto y filtros de aceptacion.
 - `runner.py`: orquestacion multi-rate, ZOH, telemetria y terminacion.
 - `telemetry/export.py`: exportacion JSON.
 - `metrics/report.py`: metricas agregadas con magnitudes fisicas separadas por unidades.
 - `visualization/plots.py`: figuras PNG a partir de `telemetry.json`.
 - `visualization/three_d.py`: visor interactivo HTML 3D basado en Plotly.
+- `tools/generate_classic_dataset.py`: genera estructura `data/classic_dataset/<version>/` con `manifest.csv`, `pids/` y escenarios YAML.
+- `tools/tune_classic_pid.py`: ajusta un PID clasico por familia en el perfil nominal con drag y actuadores.
+- `tools/run_classic_dataset.py`: ejecuta episodios del manifiesto y escribe `run_report.csv`.
+- `tools/summarize_classic_dataset.py`: resume resultados del dataset en `summary.csv`.
 
 ## Contratos de datos
 
@@ -70,6 +75,30 @@ Antes de ejecutar o instanciar un escenario, `validate_scenario_config` comprueb
 
 Si `initial_state.orientation_WB` es `null`, el cargador genera una actitud nivelada a partir de `yaw_rad`. Si se proporciona un cuaternion, debe ser finito y unitario; la validacion lo rechaza en lugar de normalizarlo silenciosamente.
 
+Para `controller.type: "classic"`, el YAML puede declarar `Kp_pos`, `Kd_pos`, `Kp_att`, `Kd_att` y `max_body_moments_Nm` como vectores de tres componentes no negativas. Si faltan ganancias, el controlador conserva sus defaults.
+
+## Dataset clasico
+
+La capa `datasets/classic.py` define el dataset clasico versionado previo a la fase neuronal. No entrena redes ni carga tensores de ML: genera escenarios YAML reproducibles para ejecutar el controlador clasico.
+
+La version `v1` contiene 150 episodios:
+
+- `hold`: 18 episodios.
+- `circle`: 48 episodios.
+- `lissajous`: 48 episodios.
+- `waypoint`: 36 episodios.
+
+Cada familia usa un PID congelado identificado como `pid_<family>_<version>`. El perfil nominal de ajuste incluye drag lineal y dinamica de actuadores; no incluye viento ni ruido. Las variantes del dataset cambian geometria, viento, ruido, drag y actuadores sin reajustar el PID.
+
+Artefactos generados:
+
+- `manifest.csv`: indice de escenarios, familia, geometria, perturbacion, PID, semilla, split, YAML y directorio de resultado.
+- `pids/*.yaml`: ganancias por familia. Si no existen, la generacion crea YAML iniciales con `source: default_initial`.
+- `scenarios/<family>/*.yaml`: escenarios ejecutables por el runner normal.
+- `results/<family>/<scenario_id>/`: salidas de simulacion.
+- `run_report.csv`: estado de ejecucion por escenario.
+- `summary.csv`: resumen de metricas y validez por filtros duros.
+
 ## Metricas
 
 `metrics.json` resume:
@@ -89,7 +118,8 @@ Las metricas no sustituyen a la inspeccion de telemetria. Para explicar un resul
 ## Limites actuales
 
 - Solo hay controlador clasico estable en la interfaz de escenarios.
-- Las ganancias del controlador clasico estan fijadas en codigo.
+- Las ganancias del controlador clasico pueden venir del YAML, pero el unico controlador operativo sigue siendo el clasico.
 - El viento es constante.
 - El ruido de observacion afecta solo a posicion y velocidad.
 - La visualización es postproceso y automática tras cada ejecución exitosa.
+- La generacion de dataset clasico no implementa entrenamiento neuronal, loaders de ML ni inferencia.

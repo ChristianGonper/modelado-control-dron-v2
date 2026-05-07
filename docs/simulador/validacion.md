@@ -22,6 +22,14 @@ Para generar figuras despues de una ejecucion:
 uv run simulador-quad plot results\hover_clean\telemetry.json --metrics results\hover_clean\metrics.json --out results\hover_clean\figures
 ```
 
+Para el dataset clasico versionado:
+
+```powershell
+uv run python tools\generate_classic_dataset.py --version v1 --out data\classic_dataset\v1
+uv run python tools\run_classic_dataset.py --dataset data\classic_dataset\v1 --no-visualization
+uv run python tools\summarize_classic_dataset.py --dataset data\classic_dataset\v1
+```
+
 ## Criterios generales
 
 Un escenario se considera valido como evidencia de la version clasica si cumple:
@@ -101,6 +109,27 @@ Los escenarios de estres o fallo esperado no deben mezclarse con escenarios nomi
 
 Los resultados historicos `results/stress_*` o `results/test_line` no son escenarios oficiales si no existe YAML reproducible correspondiente en `scenarios/`.
 
+## Dataset clasico v1
+
+El dataset clasico generado bajo `data/classic_dataset/v1/` es una evidencia distinta de los escenarios oficiales manuales. Sus YAML se generan a partir de `src/simulador_quad/datasets/classic.py` y se indexan en `manifest.csv`.
+
+La version `v1` contiene 150 episodios:
+
+- `hold`: 18.
+- `circle`: 48.
+- `lissajous`: 48.
+- `waypoint`: 36.
+
+Cada episodio queda identificado por familia, geometria, perturbacion, PID, semilla y split. Los resultados se consideran trazables si existen:
+
+- fila correspondiente en `manifest.csv`;
+- YAML generado en `scenarios/<family>/`;
+- `metrics.json` y `telemetry.json` en el `result_dir`;
+- `summary.csv` generado por `tools/summarize_classic_dataset.py`;
+- PID YAML correspondiente en `pids/`.
+
+Los filtros duros de validez del dataset estan implementados en `passes_hard_filters`: terminacion por limite de tiempo, metricas finitas, saturacion y degradacion no superiores al 2%, y error maximo por debajo del umbral de familia.
+
 ## Relacion con pruebas automaticas
 
 La suite actual ya incluye validaciones automaticas del modelo clasico:
@@ -111,6 +140,10 @@ La suite actual ya incluye validaciones automaticas del modelo clasico:
 - `tests/test_runner.py`: multi-rate, ZOH, evolucion de actuadores a `physics_dt_s` y terminaciones por altura, actitud, posicion, velocidad, no finitos y saturacion persistente.
 - `tests/test_scenarios.py`: escenarios oficiales validos y rechazo temprano de configuraciones fisicas invalidas.
 - `tests/test_model_regressions.py`: ejecucion corta de escenario en directorio temporal, sin depender de `results/`, comprobando `termination_reason`, metricas, esquema minimo de `metrics.json`/`telemetry.json` y valores finitos.
+- `tests/test_classic_controller_config.py`: ganancias explicitas del controlador desde YAML y validacion de vectores no negativos.
+- `tests/test_classic_dataset_generation.py`: manifiesto `v1`, conteos por familia, determinismo y YAML generados validos.
+- `tests/test_classic_dataset_scripts.py`: flujo CLI generacion, ejecucion limitada y resumen en directorio temporal.
+- `tests/test_classic_pid_selection.py`: filtros duros, finitud y score de seleccion PID.
 
 Las regresiones automaticas no sustituyen a las ejecuciones oficiales completas para la memoria. Su papel es detectar roturas rapidas de contrato y evitar que `results/` historico actue como unico oraculo.
 
