@@ -31,6 +31,36 @@ def quaternion_to_rotation_matrix(q: np.ndarray) -> np.ndarray:
         [2*(x*z - w*y),     2*(y*z + w*x),     1 - 2*(x**2 + y**2)]
     ])
 
+def rotation_matrix_to_quaternion(R: np.ndarray) -> np.ndarray:
+    """Convierte una matriz de rotación a cuaternión [w, x, y, z]."""
+    tr = np.trace(R)
+    if tr > 0:
+        S = np.sqrt(tr + 1.0) * 2.0
+        w = 0.25 * S
+        x = (R[2, 1] - R[1, 2]) / S
+        y = (R[0, 2] - R[2, 0]) / S
+        z = (R[1, 0] - R[0, 1]) / S
+    elif (R[0, 0] > R[1, 1]) and (R[0, 0] > R[2, 2]):
+        S = np.sqrt(1.0 + R[0, 0] - R[1, 1] - R[2, 2]) * 2.0
+        w = (R[2, 1] - R[1, 2]) / S
+        x = 0.25 * S
+        y = (R[0, 1] + R[1, 0]) / S
+        z = (R[0, 2] + R[2, 0]) / S
+    elif R[1, 1] > R[2, 2]:
+        S = np.sqrt(1.0 + R[1, 1] - R[0, 0] - R[2, 2]) * 2.0
+        w = (R[0, 2] - R[2, 0]) / S
+        x = (R[0, 1] + R[1, 0]) / S
+        y = 0.25 * S
+        z = (R[1, 2] + R[2, 1]) / S
+    else:
+        S = np.sqrt(1.0 + R[2, 2] - R[0, 0] - R[1, 1]) * 2.0
+        w = (R[1, 0] - R[0, 1]) / S
+        x = (R[0, 2] + R[2, 0]) / S
+        y = (R[1, 2] + R[2, 1]) / S
+        z = 0.25 * S
+
+    return normalize_quaternion(np.array([w, x, y, z]))
+
 def rotate_vector(q: np.ndarray, v: np.ndarray) -> np.ndarray:
     """Rota un vector v usando el cuaternión q. Equivalente a R(q) * v."""
     q_v = np.array([0.0, v[0], v[1], v[2]])
