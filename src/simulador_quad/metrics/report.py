@@ -25,14 +25,13 @@ def compute_metrics(telemetry: List[TelemetrySample], termination_reason: str, m
         p_err = np.linalg.norm(sample.reference.position_W_m - sample.state.position_W_m)
         pos_errors.append(p_err)
         
-        # Magnitudes de control separadas por unidad física.
+        # Magnitudes de control
         collective_thrust_N = float(sample.control_command.collective_thrust_N)
         body_moment_norm_Nm = float(np.linalg.norm(sample.control_command.body_moments_Nm))
         collective_thrusts_N.append(collective_thrust_N)
         body_moment_norms_Nm.append(body_moment_norm_Nm)
 
-        # Índice heurístico heredado: mezcla N y Nm, por tanto no debe usarse
-        # como argumento físico principal.
+        # Índice heurístico: mezcla de N y Nm, no usar como argumento físico principal.
         c_eff = np.abs(collective_thrust_N) + body_moment_norm_Nm
         control_efforts.append(c_eff)
         

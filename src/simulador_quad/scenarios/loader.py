@@ -47,7 +47,6 @@ def instantiate_scenario(config: Dict[str, Any]) -> Tuple[Any, Any, Any, Any, An
     
     # 2. Initial State
     is_cfg = config['initial_state']
-    # Si orientation_WB es nulo, usamos get_level_quaternion
     if is_cfg.get('orientation_WB') is None:
         q0 = get_level_quaternion(float(is_cfg.get('yaw_rad', 0.0)))
     else:

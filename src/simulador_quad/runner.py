@@ -73,16 +73,9 @@ class SimulationRunner:
             return True, "Out of velocity bounds"
             
         # Límite de roll/pitch
-        # Extraemos inclinación respecto a Z_W
         from simulador_quad.core.attitude import body_to_world
         z_B_W = body_to_world(state.orientation_WB, np.array([0.0, 0.0, 1.0]))
-        # angle to vertical: dot_product = cos(theta)
-        # z_B en hover FRD (si FRD es front, right, down) -> Z_B = [0,0,1]
-        # en ENU (X_E, Y_N, Z_U), Down is [0,0,-1].
-        # Wait, en FRD, Z_B apunta hacia abajo del dron. 
-        # Si dron está nivelado, Z_B = [0,0,-1] en mundo ENU.
         cos_theta = np.dot(z_B_W, np.array([0.0, 0.0, -1.0]))
-        # cos_theta can be > 1 due to numerical issues
         cos_theta = np.clip(cos_theta, -1.0, 1.0)
         tilt_angle = np.arccos(cos_theta)
         

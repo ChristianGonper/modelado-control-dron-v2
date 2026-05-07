@@ -20,7 +20,6 @@ class FirstOrderLagDelay:
         delayed_target = self.buffer.pop(0)
         
         if self.tau > 0.0:
-            # Alpha para discretización exacta de sistema de primer orden: 1 - exp(-dt/tau)
             alpha = 1.0 - np.exp(-self.dt / self.tau)
             self.state = self.state + alpha * (delayed_target - self.state)
         else:
@@ -61,32 +60,24 @@ class ActuatorSystem:
             curr_omega = f.step(cmd_omega)
             
             # Flags de saturación (si el filtro pide más de lo físicamente posible)
-            # En realidad aquí la saturación es del modelo de motor (omega_max)
-            # Marcaremos saturación si curr_omega está muy cerca del límite max.
             if curr_omega >= rotor.omega_max_rad_s - 1e-3:
                 saturation_flags[i] = True
             
-            # Saturar el estado por seguridad física
             curr_omega = np.clip(curr_omega, 0.0, rotor.omega_max_rad_s)
             applied_omega[i] = curr_omega
             applied_rpm[i] = curr_omega * 60.0 / (2.0 * np.pi)
             
-            # T = k_f * omega^2
             T_i = rotor.k_f * curr_omega**2
             applied_thrust[i] = T_i
             
-            # Fuerza en B (apunta hacia -Z en FRD: arriba)
             F_i_B = np.array([0.0, 0.0, -T_i])
             total_thrust_B += F_i_B
             
-            # Torque por empuje desplazado (r x F)
             torque_pos_B = np.cross(rotor.position_B_m, F_i_B)
             
-            # Torque por resistencia aerodinámica (Q = s * k_m * omega^2)
             Q_i = rotor.turning_direction * rotor.k_m * curr_omega**2
             applied_torque_scalar[i] = Q_i
             
-            # El vector de par de reacción es paralelo al eje Z del cuerpo
             torque_drag_B = np.array([0.0, 0.0, Q_i])
             
             total_torque_B += torque_pos_B + torque_drag_B

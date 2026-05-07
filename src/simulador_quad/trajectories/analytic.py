@@ -31,22 +31,18 @@ class CircleTrajectory(Trajectory):
     def get_reference(self, time_s: float) -> TrajectoryReference:
         t = time_s
         
-        # Posición
         pos = self.center.copy()
         pos[0] += self.R * np.cos(self.w * t)
         pos[1] += self.R * np.sin(self.w * t)
         
-        # Velocidad
         vel = np.zeros(3)
         vel[0] = -self.R * self.w * np.sin(self.w * t)
         vel[1] = self.R * self.w * np.cos(self.w * t)
         
-        # Aceleración
         acc = np.zeros(3)
         acc[0] = -self.R * self.w**2 * np.cos(self.w * t)
         acc[1] = -self.R * self.w**2 * np.sin(self.w * t)
         
-        # Yaw
         if self.yaw_mode == "forward":
             yaw = np.arctan2(-vel[0], vel[1])
         else:
@@ -56,7 +52,7 @@ class CircleTrajectory(Trajectory):
 
 class LissajousTrajectory(Trajectory):
     """
-    Trayectoria senoidal simple.
+    Trayectoria sinusoidal simple.
     x(t) = cx + A_x * sin(w_x * t)
     y(t) = cy + A_y * sin(w_y * t)
     z(t) = cz + A_z * sin(w_z * t)
@@ -73,7 +69,6 @@ class LissajousTrajectory(Trajectory):
         vel = self.A * self.w * np.cos(self.w * t)
         acc = -self.A * self.w**2 * np.sin(self.w * t)
         
-        # Yaw constante 0.0 por simplicidad en Lissajous
         yaw = 0.0
         
         return TrajectoryReference(pos, vel, acc, yaw)

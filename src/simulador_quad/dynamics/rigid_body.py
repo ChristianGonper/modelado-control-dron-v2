@@ -1,6 +1,6 @@
 import numpy as np
 from typing import Callable, Tuple
-from simulador_quad.core.attitude import normalize_quaternion, quaternion_multiply, body_to_world
+from simulador_quad.core.attitude import normalize_quaternion, quaternion_multiply, body_to_world, world_to_body
 
 def compute_state_derivative(
     position_W_m: np.ndarray,
@@ -10,7 +10,7 @@ def compute_state_derivative(
     mass_kg: float,
     inertia_B_kg_m2: np.ndarray,
     gravity_m_s2: float,
-    force_B_N: np.ndarray,  # Cambiado a cuerpo
+    force_B_N: np.ndarray,
     torque_B_Nm: np.ndarray,
     wind_W_m_s: np.ndarray = np.zeros(3),
     drag_coeff: np.ndarray = np.zeros(3)
@@ -23,13 +23,10 @@ def compute_state_derivative(
     dot_p = velocity_W_m_s
     
     # Velocidad
-    # Rotar fuerza de cuerpo a mundo
     force_W_N = body_to_world(orientation_WB, force_B_N)
     
-    # Drag (opcionalmente aquí o fuera)
-    # Por simplicidad y precisión, el drag debería depender de la velocidad actual en el paso RK4
     v_rel_W = velocity_W_m_s - wind_W_m_s
-    v_rel_B = body_to_world(np.array([orientation_WB[0], -orientation_WB[1], -orientation_WB[2], -orientation_WB[3]]), v_rel_W)
+    v_rel_B = world_to_body(orientation_WB, v_rel_W)
     drag_B = -drag_coeff * v_rel_B
     drag_W = body_to_world(orientation_WB, drag_B)
     
