@@ -56,6 +56,8 @@ Figuras generadas (tanto en `run` automático como en `plot` manual):
 
 - `trajectory_xy.png`: trayectoria real y referencia en el plano horizontal ENU.
 - `position_time.png`: componentes `X_W`, `Y_W`, `Z_W` frente al tiempo.
+- `attitude_time.png`: roll, pitch y yaw en grados, calculados desde `orientation_WB` con el convenio ENU/FRD del simulador.
+- `angular_velocity_time.png`: componentes `p`, `q`, `r` de `angular_velocity_B_rad_s` en `rad/s`.
 - `tracking_error.png`: norma del error de posición `||p_ref - p||`.
 - `rotor_speeds.png`: velocidades de rotor aplicadas en `rad/s`.
 - `control_effort.png`: empuje colectivo, momentos de cuerpo y un indice heuristico agregado para diagnostico visual.

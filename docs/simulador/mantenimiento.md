@@ -73,7 +73,7 @@ uv run simulador-quad plot results\hover_clean\telemetry.json --metrics results\
 Despues de ejecutar:
 
 - `telemetry.json` y `metrics.json` existen para los escenarios ejecutados.
-- Las cinco figuras PNG existen y tienen contenido.
+- Las siete figuras PNG estándar existen y tienen contenido.
 - La documentacion no contradice `loader.py`, `export.py`, `report.py` ni el CLI.
 - La validacion de escenarios no contradice `schema.py`.
 - Los documentos normativos no se han modificado salvo decision explicita.

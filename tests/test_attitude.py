@@ -3,7 +3,8 @@ from simulador_quad.core.attitude import (
     normalize_quaternion,
     body_to_world,
     world_to_body,
-    quaternion_to_rotation_matrix
+    quaternion_to_rotation_matrix,
+    quaternion_to_euler_enu_frd,
 )
 
 def test_quaternion_normalization():
@@ -55,3 +56,15 @@ def test_level_enu_frd_axes_yaw_zero():
     assert np.allclose(body_to_world(q_level, y_right_B), [1.0, 0.0, 0.0])
     assert np.allclose(body_to_world(q_level, z_down_B), [0.0, 0.0, -1.0])
 
+
+def test_euler_enu_frd_level_attitude_matches_repo_yaw():
+    from simulador_quad.core.frames import get_level_quaternion
+
+    for yaw_rad in (0.0, np.pi / 2.0, -np.pi / 2.0, 0.4):
+        roll_rad, pitch_rad, recovered_yaw_rad = quaternion_to_euler_enu_frd(
+            get_level_quaternion(yaw_rad)
+        )
+
+        assert np.isclose(roll_rad, 0.0)
+        assert np.isclose(pitch_rad, 0.0)
+        assert np.isclose(recovered_yaw_rad, yaw_rad)

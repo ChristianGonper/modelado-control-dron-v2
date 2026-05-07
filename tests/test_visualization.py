@@ -59,6 +59,8 @@ def test_plot_telemetry_generates_standard_figures(tmp_path):
     expected_names = {
         "trajectory_xy.png",
         "position_time.png",
+        "attitude_time.png",
+        "angular_velocity_time.png",
         "tracking_error.png",
         "rotor_speeds.png",
         "control_effort.png",

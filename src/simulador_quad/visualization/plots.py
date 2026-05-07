@@ -5,10 +5,10 @@ from pathlib import Path
 from typing import Any
 
 import matplotlib
-import matplotlib.pyplot as plt
 import numpy as np
 
 matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 
 from .common import as_array, load_json
 
@@ -134,6 +134,83 @@ def _plot_rotor_speeds(output_dir: Path, time_s: np.ndarray, applied_omega_rad_s
     return _save(fig, output_dir, "rotor_speeds.png")
 
 
+def _plot_attitude_time(
+    output_dir: Path,
+    time_s: np.ndarray,
+    orientation_WB: np.ndarray,
+) -> str:
+    """
+    Plot Roll, Pitch, and Yaw angles over time.
+    
+    Args:
+        output_dir: Directory to save the plot.
+        time_s: Time vector [s].
+        orientation_WB: Actual q_WB orientation quaternion [w, x, y, z].
+    """
+    from simulador_quad.core.attitude import quaternion_to_euler_enu_frd
+    
+    # Convert q_WB to aircraft angles consistent with the simulator ENU/FRD convention.
+    euler_angles_deg = np.array([
+        quaternion_to_euler_enu_frd(q) for q in orientation_WB
+    ]) * 180.0 / np.pi
+    
+    roll_deg = euler_angles_deg[:, 0]
+    pitch_deg = euler_angles_deg[:, 1]
+    yaw_deg = euler_angles_deg[:, 2]
+    
+    fig, axes = plt.subplots(3, 1, figsize=(9, 8), sharex=True)
+    
+    axes[0].plot(time_s, roll_deg, color="tab:blue", label="Roll")
+    axes[0].set_ylabel(r"Roll $\phi$ [deg]")
+    axes[0].set_title("Actitud del Vehículo (ENU/FRD)")
+    
+    axes[1].plot(time_s, pitch_deg, color="tab:orange", label="Pitch")
+    axes[1].set_ylabel(r"Pitch $\theta$ [deg]")
+    
+    axes[2].plot(time_s, yaw_deg, color="tab:green", label="Yaw")
+    axes[2].set_ylabel(r"Yaw $\psi$ [deg]")
+    axes[2].set_xlabel("Tiempo [s]")
+    
+    for ax in axes:
+        ax.grid(True, alpha=0.3, linestyle=":")
+        ax.legend(loc="best")
+        
+    return _save(fig, output_dir, "attitude_time.png")
+
+
+def _plot_angular_velocity_time(
+    output_dir: Path,
+    time_s: np.ndarray,
+    angular_velocity_B_rad_s: np.ndarray,
+) -> str:
+    """
+    Plot the body angular velocities (p, q, r) over time.
+    
+    Args:
+        output_dir: Directory to save the plot.
+        time_s: Time vector [s].
+        angular_velocity_B_rad_s: Angular velocity in Body frame [rad/s].
+    """
+    fig, axes = plt.subplots(3, 1, figsize=(9, 8), sharex=True)
+    
+    axes[0].plot(time_s, angular_velocity_B_rad_s[:, 0], color="tab:blue", label="p (Roll rate)")
+    axes[0].set_ylabel(r"$p$ [rad/s]")
+    axes[0].set_title("Velocidad Angular Absoluta del Vehículo (Cuerpo)")
+    
+    axes[1].plot(time_s, angular_velocity_B_rad_s[:, 1], color="tab:orange", label="q (Pitch rate)")
+    axes[1].set_ylabel(r"$q$ [rad/s]")
+    
+    axes[2].plot(time_s, angular_velocity_B_rad_s[:, 2], color="tab:green", label="r (Yaw rate)")
+    axes[2].set_ylabel(r"$r$ [rad/s]")
+    axes[2].set_xlabel("Tiempo [s]")
+    
+    for ax in axes:
+        ax.grid(True, alpha=0.3, linestyle=":")
+        ax.legend(loc="best")
+        
+    return _save(fig, output_dir, "angular_velocity_time.png")
+
+
 def _plot_control_effort(
     output_dir: Path,
     time_s: np.ndarray,
@@ -205,6 +282,9 @@ def plot_telemetry(
     body_moments_Nm = as_array(telemetry, "control", "body_moments_Nm")
     applied_omega_rad_s = as_array(telemetry, "rotors", "applied_omega_rad_s")
     
+    orientation_WB = as_array(telemetry, "state", "orientation_WB")
+    angular_velocity_B_rad_s = as_array(telemetry, "state", "angular_velocity_B_rad_s")
+    
     # Derived metrics
     position_error_m = np.linalg.norm(reference_W_m - position_W_m, axis=1)
 
@@ -212,6 +292,8 @@ def plot_telemetry(
     return [
         _plot_trajectory_xy(output, position_W_m, reference_W_m, metrics),
         _plot_position_time(output, time_s, position_W_m, reference_W_m),
+        _plot_attitude_time(output, time_s, orientation_WB),
+        _plot_angular_velocity_time(output, time_s, angular_velocity_B_rad_s),
         _plot_tracking_error(output, time_s, position_error_m),
         _plot_rotor_speeds(output, time_s, applied_omega_rad_s),
         _plot_control_effort(output, time_s, collective_thrust_N, body_moments_Nm),

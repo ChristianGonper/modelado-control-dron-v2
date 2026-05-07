@@ -83,3 +83,25 @@ def quaternion_error(q_des: np.ndarray, q_act: np.ndarray) -> np.ndarray:
     """
     q_act_inv = quaternion_conjugate(q_act)  # Asumiendo unitario
     return quaternion_multiply(q_act_inv, q_des)
+
+
+def quaternion_to_euler_enu_frd(q_WB: np.ndarray) -> np.ndarray:
+    """
+    Devuelve roll, pitch y yaw del dron para el convenio ENU/FRD del simulador.
+
+    El cuaternion del estado es q_WB: rota vectores de cuerpo FRD a mundo ENU.
+    Los angulos se calculan directamente desde la matriz R_ENU_B, manteniendo el
+    mundo ENU. Una actitud nivelada con yaw_rad=0 queda en [0, 0, 0], coherente
+    con `get_level_quaternion`.
+
+    Returns:
+        np.ndarray: [roll_rad, pitch_rad, yaw_rad] en radianes.
+    """
+    R_ENU_B = quaternion_to_rotation_matrix(q_WB)
+
+    # Columnas de R_ENU_B: ejes X_B, Y_B, Z_B expresados en mundo ENU.
+    roll_rad = np.arctan2(-R_ENU_B[2, 1], -R_ENU_B[2, 2])
+    pitch_rad = np.arcsin(np.clip(R_ENU_B[2, 0], -1.0, 1.0))
+    yaw_rad = np.arctan2(-R_ENU_B[0, 0], R_ENU_B[1, 0])
+
+    return np.array([roll_rad, pitch_rad, yaw_rad])
