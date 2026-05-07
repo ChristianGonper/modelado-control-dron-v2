@@ -1,5 +1,13 @@
 import argparse
+import hashlib
 import os
+import platform
+import subprocess
+import sys
+from importlib import metadata as importlib_metadata
+from pathlib import Path
+from typing import Any, Dict
+
 from simulador_quad.scenarios.loader import load_scenario, instantiate_scenario
 from simulador_quad.runner import SimulationRunner
 from simulador_quad.metrics.report import compute_metrics
@@ -7,7 +15,129 @@ from simulador_quad.telemetry.export import export_telemetry_json, export_metric
 from simulador_quad.visualization.plots import plot_telemetry
 from simulador_quad.visualization.three_d import export_trajectory_viewer_html
 
-def run_simulation(scenario_path: str, visualization: bool = True):
+
+def _package_version() -> str:
+    try:
+        return importlib_metadata.version("simulador-quad")
+    except importlib_metadata.PackageNotFoundError:
+        return "unknown"
+
+
+def _run_git_command(args: list[str], empty_value: str = "unknown") -> str:
+    try:
+        result = subprocess.run(
+            ["git", *args],
+            cwd=Path.cwd(),
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return "unknown"
+
+    value = result.stdout.strip()
+    return value if value else empty_value
+
+
+def _git_metadata() -> Dict[str, Any]:
+    commit = _run_git_command(["rev-parse", "HEAD"])
+    dirty_raw = _run_git_command(["status", "--porcelain"], empty_value="")
+
+    if dirty_raw == "unknown":
+        dirty: bool | str = "unknown"
+    else:
+        dirty = dirty_raw != ""
+
+    return {
+        "git_commit": commit,
+        "git_dirty": dirty,
+    }
+
+
+def _file_sha256(path: str) -> str:
+    file_path = Path(path)
+    if not file_path.exists():
+        return "unknown"
+
+    digest = hashlib.sha256()
+    with file_path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return f"sha256:{digest.hexdigest()}"
+
+
+def _controller_metadata(controller: Any, config: Dict[str, Any]) -> Dict[str, Any]:
+    controller_cfg = config.get("controller", {})
+    parameters: Dict[str, Any] = {
+        "config": controller_cfg,
+    }
+
+    for attr in ("Kp_pos", "Kd_pos", "Kp_att", "Kd_att", "max_thrust", "min_thrust", "max_moments_Nm"):
+        if hasattr(controller, attr):
+            parameters[attr] = getattr(controller, attr)
+
+    return {
+        "type": controller_cfg.get("type", controller.__class__.__name__),
+        "class": controller.__class__.__name__,
+        "parameters": parameters,
+    }
+
+
+def _resolved_config(config: Dict[str, Any], runner: SimulationRunner) -> Dict[str, Any]:
+    resolved = dict(config)
+    resolved["timing_effective"] = {
+        "physics_dt_s": runner.physics_dt_s,
+        "control_dt_s": runner.control_dt_s,
+        "telemetry_dt_s": runner.telemetry_dt_s,
+    }
+    resolved["termination_effective"] = {
+        "max_duration_s": runner.max_duration_s,
+        "z_min_m": runner.z_min_m,
+        "max_position_m": runner.max_position_m,
+        "max_velocity_m_s": runner.max_velocity_m_s,
+        "max_attitude_angle_rad": runner.max_attitude_angle_rad,
+        "max_saturation_duration_s": runner.max_saturation_duration_s,
+    }
+    return resolved
+
+
+def _default_run_command(scenario_path: str, visualization: bool) -> str:
+    command = f"uv run simulador-quad run {scenario_path}"
+    if not visualization:
+        command += " --no-visualization"
+    return command
+
+
+def build_execution_metadata(
+    config: Dict[str, Any],
+    scenario_path: str,
+    controller: Any,
+    runner: SimulationRunner,
+    visualization: bool,
+    command: str | None = None,
+) -> Dict[str, Any]:
+    metadata = {
+        "scenario_name": config["name"],
+        "scenario_path": scenario_path,
+        "scenario_file_hash": _file_sha256(scenario_path),
+        "seed": config.get("seed", 42),
+        "controller": _controller_metadata(controller, config),
+        "command": command or _default_run_command(scenario_path, visualization),
+        "visualization_requested": visualization,
+        "package_version": _package_version(),
+        "python_version": platform.python_version(),
+        "platform": platform.platform(),
+        "executable": sys.executable,
+        "uv_lock_hash": _file_sha256("uv.lock"),
+        "config": config,
+        "config_resolved": _resolved_config(config, runner),
+    }
+    metadata.update(_git_metadata())
+    return metadata
+
+
+def run_simulation(scenario_path: str, visualization: bool = True, command: str | None = None):
     print(f"Cargando escenario: {scenario_path}")
     config = load_scenario(scenario_path)
     
@@ -46,11 +176,14 @@ def run_simulation(scenario_path: str, visualization: bool = True):
     print(f"Simulación terminada. Razón: {reason}")
     
     # Métricas
-    metadata = {
-        "scenario_name": config['name'],
-        "seed": config.get('seed', 42),
-        "config": config  # Guardamos todo para máxima trazabilidad
-    }
+    metadata = build_execution_metadata(
+        config=config,
+        scenario_path=scenario_path,
+        controller=controller,
+        runner=runner,
+        visualization=visualization,
+        command=command,
+    )
     metrics = compute_metrics(telemetry, reason, metadata)
     
     # Exportar
@@ -97,7 +230,11 @@ def main():
     args = parser.parse_args()
     
     if args.command == "run":
-        run_simulation(args.scenario, visualization=args.visualization)
+        run_simulation(
+            args.scenario,
+            visualization=args.visualization,
+            command=_default_run_command(args.scenario, args.visualization),
+        )
     elif args.command == "plot":
         paths = plot_telemetry(args.telemetry, args.out, args.metrics)
         print("Figuras generadas:")
