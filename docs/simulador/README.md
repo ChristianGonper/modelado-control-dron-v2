@@ -32,6 +32,7 @@ No implementado todavia:
 - [Guia de uso](guia_uso.md): instalacion con `uv`, ejecucion de escenarios, resultados y visualizacion.
 - [Referencia de escenarios YAML](escenarios_yaml.md): campos admitidos, unidades, marcos de referencia y ejemplos de trayectorias.
 - [Arquitectura actual](arquitectura.md): flujo de simulacion, modulos, contratos, telemetria y metricas.
+- [Trazabilidad](trazabilidad.md): matriz requisito-modelo-codigo-prueba-escenario-metrica del simulador clasico.
 - [Mantenimiento documental](mantenimiento.md): checklist para actualizar esta documentacion despues de cambios agresivos.
 
 ## Comandos minimos
@@ -50,4 +51,3 @@ Las figuras generadas tienen nombres estables:
 - `tracking_error.png`
 - `rotor_speeds.png`
 - `control_effort.png`
-
