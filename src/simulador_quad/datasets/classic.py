@@ -160,14 +160,15 @@ def get_geometry_variants(family: str) -> List[Tuple[str, Dict[str, Any]]]:
         idx = 1
         # representation of the spec
         for z in altitudes:
-            for xy in [[0,0]]: # centered
-                variants.append((f"g{idx:02d}", {"type": "hold", "position_W_m": [float(xy[0]), float(xy[1]), z], "yaw_rad": 0.0}))
+            for xy in offsets[0:1]: # centered
+                variants.append((f"g{idx:02d}", {"type": "hold", "position_W_m": [float(xy[0]), float(xy[1]), z], "yaw_rad": float(yaws[0])}))
                 idx += 1
         # Add a yaw variant for centered hold
-        variants.append((f"g{idx:02d}", {"type": "hold", "position_W_m": [0.0, 0.0, 2.0], "yaw_rad": float(yaws[1])}))
-        idx += 1
-        for xy in [[1,0], [0,1]]:
-            variants.append((f"g{idx:02d}", {"type": "hold", "position_W_m": [float(xy[0]), float(xy[1]), 2.0], "yaw_rad": float(yaws[1])}))
+        for xy in offsets[0:1]:
+            variants.append((f"g{idx:02d}", {"type": "hold", "position_W_m": [float(xy[0]), float(xy[1]), altitudes[1]], "yaw_rad": float(yaws[1])}))
+            idx += 1
+        for xy in offsets[1:]:
+            variants.append((f"g{idx:02d}", {"type": "hold", "position_W_m": [float(xy[0]), float(xy[1]), altitudes[1]], "yaw_rad": float(yaws[1])}))
             idx += 1
         return variants[:6]
 
@@ -178,11 +179,13 @@ def get_geometry_variants(family: str) -> List[Tuple[str, Dict[str, Any]]]:
         omegas = [0.35, 0.5, 0.65]
         heights = [2.0, 3.0, 4.0]
         
-        # Combinations represent represent representative ones
+        # Representative configurations
         idx = 1
         combos = [
-            (1.5, 0.5, 2.0), (1.5, 0.35, 3.0), (2.0, 0.5, 3.0), (1.0, 0.65, 2.0),
-            (2.5, 0.35, 4.0), (1.0, 0.35, 2.0), (2.0, 0.65, 3.0), (1.5, 0.65, 4.0)
+            (radii[1], omegas[1], heights[0]), (radii[1], omegas[0], heights[1]),
+            (radii[2], omegas[1], heights[1]), (radii[0], omegas[2], heights[0]),
+            (radii[3], omegas[0], heights[2]), (radii[0], omegas[0], heights[0]),
+            (radii[2], omegas[2], heights[1]), (radii[1], omegas[2], heights[2])
         ]
         for r, w, h in combos:
             variants.append((f"g{idx:02d}", {
@@ -194,19 +197,22 @@ def get_geometry_variants(family: str) -> List[Tuple[str, Dict[str, Any]]]:
     elif family == "lissajous":
         # 8 geometry variants
         variants = []
-        idx = 1
-        combos = [
-            ([1.5, 1.5, 0.5], [0.5, 0.7, 0.3], [0,0,2.5]),
-            ([1.0, 2.0, 0.3], [0.4, 0.6, 0.2], [0,0,3.0]),
-            ([2.5, 1.0, 0.7], [0.3, 0.5, 0.4], [0,0,2.0]),
-            ([2.0, 2.0, 0.5], [0.5, 0.5, 0.5], [1,1,3.0]), # Freqs not identical usually, but let's see
-            ([1.2, 1.2, 0.2], [0.6, 0.8, 0.4], [0,0,2.5]),
-            ([0.8, 0.8, 0.8], [0.3, 0.3, 0.3], [0,0,3.5]),
-            ([2.0, 0.5, 0.4], [0.4, 0.9, 0.5], [0,0,2.2]),
-            ([1.5, 2.5, 0.6], [0.7, 0.4, 0.2], [0,0,2.8]),
+        amplitudes = [
+            [1.5, 1.5, 0.5], [1.0, 2.0, 0.3], [2.5, 1.0, 0.7], [2.0, 2.0, 0.5],
+            [1.2, 1.2, 0.2], [0.8, 0.8, 0.8], [2.0, 0.5, 0.4], [1.5, 2.5, 0.6]
         ]
+        omegas = [
+            [0.5, 0.7, 0.3], [0.4, 0.6, 0.2], [0.3, 0.5, 0.4], [0.5, 0.5, 0.5],
+            [0.6, 0.8, 0.4], [0.3, 0.3, 0.3], [0.4, 0.9, 0.5], [0.7, 0.4, 0.2]
+        ]
+        centers = [
+            [0, 0, 2.5], [0, 0, 3.0], [0, 0, 2.0], [1, 1, 3.0],
+            [0, 0, 2.5], [0, 0, 3.5], [0, 0, 2.2], [0, 0, 2.8]
+        ]
+        
+        idx = 1
         # Avoid identical frequencies to avoid degenerate paths
-        for amps, oms, center in combos:
+        for amps, oms, center in zip(amplitudes, omegas, centers):
             # Ensure omegas are not identical
             if oms[0] == oms[1]: oms[1] += 0.01
             variants.append((f"g{idx:02d}", {
@@ -217,16 +223,30 @@ def get_geometry_variants(family: str) -> List[Tuple[str, Dict[str, Any]]]:
 
     elif family == "waypoint":
         # 6 patterns
-        variants = [
-            ("square", {"type": "waypoint", "waypoints": [[0,0,2], [2,0,2], [2,2,2], [0,2,2], [0,0,2]], "times": [0, 4, 8, 12, 16]}),
-            ("rect", {"type": "waypoint", "waypoints": [[0,0,2], [3,0,2], [3,1,2], [0,1,2], [0,0,2]], "times": [0, 5, 7, 12, 14]}),
-            ("zigzag", {"type": "waypoint", "waypoints": [[0,0,2], [1,1,2], [2,0,2], [3,1,2], [4,0,2]], "times": [0, 3, 6, 9, 12]}),
-            ("stairs", {"type": "waypoint", "waypoints": [[0,0,1], [1,0,1.5], [2,0,2], [3,0,2.5], [4,0,3]], "times": [0, 3, 6, 9, 12]}),
-            ("diag3d", {"type": "waypoint", "waypoints": [[0,0,1], [2,2,3]], "times": [0, 10]}),
-            ("closed", {"type": "waypoint", "waypoints": [[0,0,2], [1,1,3], [0,2,2], [-1,1,3], [0,0,2]], "times": [0, 4, 8, 12, 16]})
+        names = ["square", "rect", "zigzag", "stairs", "diag3d", "closed"]
+        waypoints = [
+            [[0,0,2], [2,0,2], [2,2,2], [0,2,2], [0,0,2]],
+            [[0,0,2], [3,0,2], [3,1,2], [0,1,2], [0,0,2]],
+            [[0,0,2], [1,1,2], [2,0,2], [3,1,2], [4,0,2]],
+            [[0,0,1], [1,0,1.5], [2,0,2], [3,0,2.5], [4,0,3]],
+            [[0,0,1], [2,2,3]],
+            [[0,0,2], [1,1,3], [0,2,2], [-1,1,3], [0,0,2]]
         ]
-        # map to gXX id
-        return [(f"g{i+1:02d}", v[1]) for i, v in enumerate(variants)]
+        times = [
+            [0, 4, 8, 12, 16],
+            [0, 5, 7, 12, 14],
+            [0, 3, 6, 9, 12],
+            [0, 3, 6, 9, 12],
+            [0, 10],
+            [0, 4, 8, 12, 16]
+        ]
+        
+        variants = []
+        for i, (name, wp, ts) in enumerate(zip(names, waypoints, times)):
+            variants.append((f"g{i+1:02d}", {
+                "type": "waypoint", "waypoints": wp, "times": ts
+            }))
+        return variants
     
     return []
 
@@ -235,10 +255,6 @@ def get_dataset_manifest_data(version: str = "v1") -> List[Dict[str, Any]]:
     base_seed = 1042
     
     # Stratified splits per family to ensure balance
-    # Hold (18): 12 train, 3 val, 3 test
-    # Circle (48): 34 train, 7 val, 7 test
-    # Lissajous (48): 34 train, 7 val, 7 test
-    # Waypoint (36): 25 train, 5 val, 6 test (Total 105/22/23 = 150)
     family_splits = {
         "hold": ["train"] * 12 + ["val"] * 3 + ["test"] * 3,
         "circle": ["train"] * 34 + ["val"] * 7 + ["test"] * 7,
@@ -257,7 +273,6 @@ def get_dataset_manifest_data(version: str = "v1") -> List[Dict[str, Any]]:
         geometries = get_geometry_variants(family)
         
         if family == "hold":
-            # 6 geometries * 3 profiles (P0, P2, P5) = 18
             profiles_to_use = ["P0_nominal", "P2_wind_east", "P5_combined"]
         else:
             profiles_to_use = list(PROFILES.keys())
@@ -291,7 +306,6 @@ def write_dataset_files(version: str, output_root: str, overwrite: bool = False)
     os.makedirs(output_root, exist_ok=True)
     manifest_data = get_dataset_manifest_data(version=version)
     
-    # Ensure initial PID files exist with defaults if not present
     os.makedirs(os.path.join(output_root, "pids"), exist_ok=True)
     initial_pids = {
         "hold": {"Kp_pos": [2.0, 2.0, 5.0], "Kd_pos": [1.0, 1.0, 2.0], "Kp_att": [4.0, 4.0, 1.0], "Kd_att": [1.5, 1.5, 0.5]},
@@ -358,10 +372,6 @@ def write_dataset_files(version: str, output_root: str, overwrite: bool = False)
 # --- PID Selection / Scoring ---
 
 def attitude_rms_rad_from_telemetry(telemetry: List[Any]) -> float:
-    # telemetry is a list of TelemetrySample
-    # orientation_WB is [w, x, y, z]
-    # We want RMS of Euler angles or similar norm. Spec says:
-    # "RMS de la norma de roll/pitch/yaw calculados desde orientation_WB con convenio ENU/FRD"
     from simulador_quad.core.attitude import quaternion_to_euler_enu_frd
     rolls, pitches, yaws = [], [], []
     for sample in telemetry:
@@ -392,9 +402,8 @@ def pid_candidate_score(metrics: Dict[str, Any], telemetry: List[Any], family: s
     att_rms = attitude_rms_rad_from_telemetry(telemetry)
     
     # Normalized control effort
-    # Weight = mass * gravity
     weight_N = BASE_VEHICLE["mass_kg"] * BASE_VEHICLE["gravity_m_s2"]
-    moment_scale_Nm = 0.1 # Typical scale for quadcopter moments
+    moment_scale_Nm = 0.1
     
     effort_thrust = metrics["collective_thrust_mean_N"] / weight_N
     effort_moment = metrics["body_moment_norm_mean_Nm"] / moment_scale_Nm
