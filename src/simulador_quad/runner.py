@@ -95,7 +95,13 @@ class SimulationRunner:
         if state.time_s >= self.max_duration_s:
             return True, "Time limit reached"
             
-        # Trayectoria completada
+        # Trayectoria completada (vía método específico)
+        if hasattr(trajectory, "check_completion"):
+            term, reason = trajectory.check_completion(state.time_s, state, self.physics_dt_s)
+            if term:
+                return True, reason
+
+        # Fallback legacy para trayectorias basadas en tiempo fijo
         if hasattr(trajectory, "final_time_s") and hasattr(trajectory, "final_position_W_m"):
             # Solo consideramos terminada si el tiempo de referencia ha llegado al final
             if state.time_s >= trajectory.final_time_s:
@@ -135,6 +141,8 @@ class SimulationRunner:
         )
         
         self.actuators.reset(0.0)
+        if hasattr(trajectory, "reset"):
+            trajectory.reset()
         
         telemetry = []
         
@@ -170,7 +178,10 @@ class SimulationRunner:
                 break
 
             # Referencia actual
-            current_ref = trajectory.get_reference(time_s)
+            if hasattr(trajectory, "get_reference_for_state"):
+                current_ref = trajectory.get_reference_for_state(time_s, state)
+            else:
+                current_ref = trajectory.get_reference(time_s)
 
             # 1. Control (ZOH)
             if time_s - last_control_time >= self.control_dt_s - 1e-6:

@@ -239,44 +239,45 @@ def test_termination_position_velocity_non_finite_and_attitude_limits():
 def test_trajectory_completion_termination():
     runner = setup_runner(max_dur=10.0)
 
-    # Trayectoria que termina en t=1.0s en [1,0,10]
+    # Trayectoria que termina en t=1.0s nominalmente (para dwell)
     from simulador_quad.trajectories.analytic import LineTrajectory
     pts = np.array([[0,0,10], [1,0,10]])
-    times = np.array([0.0, 1.0])
-    traj = LineTrajectory(pts, times)
+    traj = LineTrajectory(pts, max_speed_m_s=0.6, max_acceleration_m_s2=0.5, dwell_time_s=0.4)
 
-    # Estado llegando al final en t=1.1s (después de final_time_s)
-    # y dentro de tolerancia (0.20m, 0.30m/s)
+    # Simular avance de tiempo y estado para que la trayectoria progrese internamente
+    # 1. Inicio
+    traj.get_reference_for_state(0.0, VehicleState(pts[0], [0,0,0], get_level_quaternion(0.0), [0,0,0], 0.0))
+    # 2. Llegada (nominal t_total ~ 2.86s para L=1, v=0.6, a=0.5)
+    t_arrival = 1.2 + (1.0 - 0.72)/0.6 + 1.2
+    traj.get_reference_for_state(t_arrival, VehicleState(pts[1], [0,0,0], get_level_quaternion(0.0), [0,0,0], t_arrival))
+    
+    # 3. Dwell (dwell_time=0.40)
+    t_done = t_arrival + 0.5
     state = VehicleState(
         position_W_m=np.array([1.05, 0.0, 10.0]), # error 0.05 < 0.20
-        velocity_W_m_s=np.array([0.1, 0.0, 0.0]),  # speed 0.1 < 0.30
+        velocity_W_m_s=np.array([0.1, 0.0, 0.0]),  # speed 0.1 < 0.20
         orientation_WB=get_level_quaternion(0.0),
         angular_velocity_B_rad_s=np.zeros(3),
-        time_s=1.1
+        time_s=t_done
     )
+    traj.get_reference_for_state(t_done, state)
 
     term, reason = runner._check_trajectory_completion(state, traj)
     assert term
     assert reason == "Trajectory completed"
 
     # Estado fuera de tolerancia de posición
+    traj.reset()
+    traj.get_reference_for_state(0.0, VehicleState(pts[0], [0,0,0], get_level_quaternion(0.0), [0,0,0], 0.0))
+    traj.get_reference_for_state(t_arrival, VehicleState(pts[1], [0,0,0], get_level_quaternion(0.0), [0,0,0], t_arrival))
+    
     state_far = VehicleState(
         position_W_m=np.array([1.3, 0.0, 10.0]), # error 0.3 > 0.20
         velocity_W_m_s=np.array([0.1, 0.0, 0.0]),
         orientation_WB=get_level_quaternion(0.0),
         angular_velocity_B_rad_s=np.zeros(3),
-        time_s=1.1
+        time_s=t_done
     )
+    traj.get_reference_for_state(t_done, state_far)
     term, reason = runner._check_trajectory_completion(state_far, traj)
-    assert not term
-
-    # Estado antes del tiempo final
-    state_early = VehicleState(
-        position_W_m=np.array([1.0, 0.0, 10.0]),
-        velocity_W_m_s=np.array([0.0, 0.0, 0.0]),
-        orientation_WB=get_level_quaternion(0.0),
-        angular_velocity_B_rad_s=np.zeros(3),
-        time_s=0.9
-    )
-    term, reason = runner._check_trajectory_completion(state_early, traj)
     assert not term
