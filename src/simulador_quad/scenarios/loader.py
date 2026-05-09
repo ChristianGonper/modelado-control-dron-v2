@@ -1,4 +1,4 @@
-﻿import yaml
+import yaml
 import numpy as np
 from typing import Dict, Any, Tuple
 from simulador_quad.core.contracts import VehicleParameters, RotorParameters, VehicleState
@@ -30,7 +30,14 @@ def instantiate_trajectory(t_cfg: Dict[str, Any]) -> Any:
         )
     elif t_type == 'line' or t_type == 'waypoint':
         return LineTrajectory(
-            np.array(t_cfg['waypoints']).astype(float), np.array(t_cfg['times']).astype(float), float(t_cfg.get('yaw_rad', 0.0))
+            waypoints=np.array(t_cfg['waypoints']).astype(float),
+            times=np.array(t_cfg['times']).astype(float) if 'times' in t_cfg else None,
+            yaw_rad=float(t_cfg.get('yaw_rad', 0.0)),
+            max_speed_m_s=float(t_cfg.get('max_speed_m_s', 0.6)),
+            max_acceleration_m_s2=float(t_cfg.get('max_acceleration_m_s2', 0.5)),
+            waypoint_tolerance_m=float(t_cfg.get('waypoint_tolerance_m', 0.20)),
+            waypoint_speed_tolerance_m_s=float(t_cfg.get('waypoint_speed_tolerance_m_s', 0.20)),
+            dwell_time_s=float(t_cfg.get('dwell_time_s', 0.40))
         )
     else:
         raise ValueError(f"Unknown trajectory type: {t_type}")

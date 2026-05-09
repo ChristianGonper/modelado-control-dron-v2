@@ -140,6 +140,35 @@ def _validate_controller(config: Mapping[str, Any]) -> None:
                 raise _invalid("controller.max_body_moments_Nm", "non-negative vector", controller.get("max_body_moments_Nm"))
 
 
+def _validate_trajectory(config: Mapping[str, Any]) -> None:
+    traj = _require_mapping(config, "trajectory")
+    t_type = traj.get("type")
+    if t_type not in ("hold", "circle", "lissajous", "line", "waypoint"):
+        raise _invalid("trajectory.type", "one of ('hold', 'circle', 'lissajous', 'line', 'waypoint')", t_type)
+
+    if t_type in ("line", "waypoint"):
+        wps = _require_sequence(traj, "waypoints")
+        if len(wps) == 0:
+            raise _invalid("trajectory.waypoints", "non-empty list", wps)
+        
+        for idx, wp in enumerate(wps):
+            _as_array(f"trajectory.waypoints[{idx}]", wp, (3,))
+
+        if "times" in traj:
+            times = _require_sequence(traj, "times")
+            if len(times) != len(wps):
+                raise _invalid("trajectory.times", f"list of same length as waypoints ({len(wps)})", len(times))
+            for idx, t in enumerate(times):
+                _non_negative(f"trajectory.times[{idx}]", t, "s value")
+
+        for field in ("max_speed_m_s", "max_acceleration_m_s2", "waypoint_tolerance_m"):
+            if field in traj:
+                _positive(f"trajectory.{field}", traj.get(field))
+        for field in ("waypoint_speed_tolerance_m_s", "dwell_time_s"):
+            if field in traj:
+                _non_negative(f"trajectory.{field}", traj.get(field))
+
+
 def validate_scenario_config(config: Mapping[str, Any]) -> None:
     """Validate the physical fields that can invalidate a simulation result."""
     if not isinstance(config, Mapping):
@@ -149,3 +178,4 @@ def validate_scenario_config(config: Mapping[str, Any]) -> None:
     _validate_timing(config)
     _validate_initial_state(config)
     _validate_controller(config)
+    _validate_trajectory(config)
