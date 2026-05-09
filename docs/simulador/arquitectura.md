@@ -90,6 +90,8 @@ La version `v1` contiene 150 episodios:
 
 Cada familia usa un PID congelado identificado como `pid_<family>_<version>`. El perfil nominal de ajuste incluye drag lineal y dinamica de actuadores; no incluye viento ni ruido. Las variantes del dataset cambian geometria, viento, ruido, drag y actuadores sin reajustar el PID.
 
+Los escenarios generados inicializan el estado desde la referencia de la trayectoria en `t = 0`: posicion y yaw coinciden con la referencia inicial, velocidad lineal y angular empiezan a cero y `orientation_WB` queda como `null` para que el cargador genere una actitud nivelada ENU/FRD. Asi el dataset mide seguimiento de trayectoria, no captura desde una posicion arbitrariamente alejada.
+
 Artefactos generados:
 
 - `manifest.csv`: indice de escenarios, familia, geometria, perturbacion, PID, semilla, split, YAML y directorio de resultado.

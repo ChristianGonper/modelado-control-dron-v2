@@ -37,6 +37,17 @@ En este repo, nominal significa:
 
 El mundo sigue siendo ENU y el cuerpo FRD. El viento se expresa como vector ENU.
 
+## Inicialización consistente
+
+A partir de la versión `v1`, todos los escenarios se inicializan de forma coherente con la trayectoria en `t = 0`. El estado inicial del dron se deriva de la referencia:
+
+- `initial_state.position_W_m = trajectory.get_reference(0.0).position_W_m`
+- `initial_state.yaw_rad = trajectory.get_reference(0.0).yaw_rad`
+- `initial_state.velocity_W_m_s = [0.0, 0.0, 0.0]`
+- El dron comienza nivelado (`orientation_WB = null` en el YAML).
+
+Esto asegura que el ajuste PID y las métricas del dataset midan el seguimiento de la trayectoria sin verse penalizados por un error de posición inicial artificial.
+
 ## Artefactos
 
 La estructura generada esperada es:

@@ -128,6 +128,8 @@ Cada episodio queda identificado por familia, geometria, perturbacion, PID, semi
 - `summary.csv` generado por `tools/summarize_classic_dataset.py`;
 - PID YAML correspondiente en `pids/`.
 
+Los escenarios de dataset `v1` empiezan en la referencia de la trayectoria en `t = 0`. Por tanto, sus metricas de error se interpretan como seguimiento desde condicion inicial consistente. No deben usarse para justificar capacidad de captura desde una posicion inicial lejana.
+
 Los filtros duros de validez del dataset estan implementados en `passes_hard_filters`: terminacion por limite de tiempo, metricas finitas, saturacion y degradacion no superiores al 2%, y error maximo por debajo del umbral de familia.
 
 ## Relacion con pruebas automaticas

@@ -28,6 +28,7 @@ Para cada familia se definira un escenario nominal de ajuste:
 - viento constante nulo: `constant_wind_W_m_s: [0, 0, 0]`;
 - ruido de observacion nulo: `pos_std_m: 0.0`, `vel_std_m_s: 0.0`;
 - misma masa, inercia, geometria de rotores y limites que el vehiculo base;
+- estado inicial coherente con la trayectoria en `t = 0`, para medir seguimiento y no captura inicial;
 - duracion suficiente para observar el regimen de la familia.
 
 El PID ajustado para una familia no se reajustara para variantes geometricas, viento, ruido, drag alto ni combinaciones. Cualquier cambio posterior de ganancias creara un nuevo identificador de PID, por ejemplo `pid_circle_v2`.
@@ -94,6 +95,20 @@ Valores numericos fijados para `v1`:
 En todos los escenarios del dataset `v1`, usar `omega_max_rad_s: 1500` para evitar que la saturacion sea el comportamiento dominante. La saturacion debe existir como metrica y criterio de rechazo, pero no debe definir el dataset base.
 
 Estos valores deben quedar exportados en cada YAML y en `metrics.metadata.config_resolved`.
+
+### Inicializacion de escenarios generados
+
+Los escenarios de tuning y dataset clasico deben empezar en la referencia de su trayectoria en `t = 0`:
+
+```text
+initial_state.position_W_m = trajectory.get_reference(0.0).position_W_m
+initial_state.yaw_rad = trajectory.get_reference(0.0).yaw_rad
+initial_state.velocity_W_m_s = [0.0, 0.0, 0.0]
+initial_state.orientation_WB = null
+initial_state.angular_velocity_B_rad_s = [0.0, 0.0, 0.0]
+```
+
+Esta decision evita que `position_rmse_m`, `position_max_err_m` y el score de seleccion PID queden dominados por un error inicial artificial. La evaluacion de captura desde una posicion lejana queda fuera de `v1` y debera definirse como escenario o familia separada si se necesita.
 
 ## Interfaces and Artifacts
 
@@ -185,6 +200,7 @@ Los scripts deben ser sencillos y trazables, con estilo de software cientifico: 
 - Cada `output.dir` es unico.
 - `manifest.csv` contiene exactamente 150 episodios.
 - Cada fila del manifiesto apunta a un YAML existente y a un directorio de resultado unico.
+- Cada YAML generado inicializa `initial_state.position_W_m` y `initial_state.yaw_rad` desde la referencia en `t = 0`.
 
 ### Controlador y metadata
 
