@@ -1,5 +1,7 @@
 import numpy as np
-from simulador_quad.core.contracts import TrajectoryReference
+from enum import Enum
+from typing import Tuple, Optional
+from simulador_quad.core.contracts import TrajectoryReference, VehicleState
 from simulador_quad.trajectories.contract import Trajectory
 
 class HoldTrajectory(Trajectory):
@@ -73,44 +75,190 @@ class LissajousTrajectory(Trajectory):
         
         return TrajectoryReference(pos, vel, acc, yaw)
 
+class WaypointPhase(Enum):
+    MOVE_TO_WAYPOINT = "MOVE_TO_WAYPOINT"
+    HOLD_AT_WAYPOINT = "HOLD_AT_WAYPOINT"
+
+def compute_trapezoidal_profile(t: float, L: float, v_max: float, a_max: float) -> Tuple[float, float, float]:
+    """
+    Genera un perfil trapezoidal (o triangular) de 1D para recorrer L metros.
+    Empieza y termina con velocidad cero.
+    Retorna (s, s_dot, s_ddot).
+    """
+    if L <= 0:
+        return 0.0, 0.0, 0.0
+        
+    # Tiempo para alcanzar v_max
+    t_acc = v_max / a_max
+    # Distancia recorrida en t_acc
+    d_acc = 0.5 * a_max * t_acc**2
+    
+    if 2 * d_acc <= L:
+        # Perfil trapezoidal
+        d_const = L - 2 * d_acc
+        t_const = d_const / v_max
+        t_total = 2 * t_acc + t_const
+        
+        if t <= 0:
+            return 0.0, 0.0, 0.0
+        elif t <= t_acc:
+            return 0.5 * a_max * t**2, a_max * t, a_max
+        elif t <= t_acc + t_const:
+            t_rel = t - t_acc
+            return d_acc + v_max * t_rel, v_max, 0.0
+        elif t <= t_total:
+            t_rel = t - (t_acc + t_const)
+            return L - d_acc + v_max * t_rel - 0.5 * a_max * t_rel**2, v_max - a_max * t_rel, -a_max
+        else:
+            return L, 0.0, 0.0
+    else:
+        # Perfil triangular (no se alcanza v_max)
+        t_acc_tri = np.sqrt(L / a_max)
+        v_peak = a_max * t_acc_tri
+        t_total = 2 * t_acc_tri
+        
+        if t <= 0:
+            return 0.0, 0.0, 0.0
+        elif t <= t_acc_tri:
+            return 0.5 * a_max * t**2, a_max * t, a_max
+        elif t <= t_total:
+            t_rel = t - t_acc_tri
+            return 0.5 * L + v_peak * t_rel - 0.5 * a_max * t_rel**2, v_peak - a_max * t_rel, -a_max
+        else:
+            return L, 0.0, 0.0
+
 class LineTrajectory(Trajectory):
     """
-    Interpolación entre waypoints usando smoothstep cúbico (C1 continuo).
-    Asegura velocidad cero en los waypoints.
+    Trayectoria de puntos con parada controlada en cada waypoint.
+    Sustituye a la interpolación temporal por una guía state-aware.
     """
-    def __init__(self, waypoints: np.ndarray, times: np.ndarray, yaw_rad: float = 0.0):
+    def __init__(
+        self, 
+        waypoints: np.ndarray, 
+        times: Optional[np.ndarray] = None, 
+        yaw_rad: float = 0.0,
+        max_speed_m_s: float = 0.6,
+        max_acceleration_m_s2: float = 0.5,
+        waypoint_tolerance_m: float = 0.20,
+        waypoint_speed_tolerance_m_s: float = 0.20,
+        dwell_time_s: float = 0.40
+    ):
         self.waypoints = np.array(waypoints).astype(float)
-        self.times = np.array(times).astype(float)
+        self.times = times # Deprecated, kept for compatibility
         self.yaw = yaw_rad
         
-    @property
-    def final_time_s(self) -> float:
-        return float(self.times[-1])
+        self.max_speed = max_speed_m_s
+        self.max_acc = max_acceleration_m_s2
+        self.tol_pos = waypoint_tolerance_m
+        self.tol_vel = waypoint_speed_tolerance_m_s
+        self.dwell_time = dwell_time_s
+        
+        self.reset()
 
-    @property
-    def final_position_W_m(self) -> np.ndarray:
-        return self.waypoints[-1].copy()
+    def reset(self) -> None:
+        self.active_target_index = 1
+        self.phase = WaypointPhase.MOVE_TO_WAYPOINT
+        self.phase_time_s = 0.0
+        self.dwell_timer_s = 0.0
+        self.completed = False
+        
+        if hasattr(self, "_last_time_s"):
+            delattr(self, "_last_time_s")
+
+        if len(self.waypoints) <= 1:
+            self.active_target_index = 0
+            self.phase = WaypointPhase.HOLD_AT_WAYPOINT
+
+    def get_reference_for_state(self, time_s: float, state: VehicleState) -> TrajectoryReference:
+        # La trayectoria avanza su tiempo interno independientemente del tiempo global
+        # pero reaccionando al estado para cambiar de fase/segmento.
+        # Nota: phase_time_s se incrementa en cada llamada? 
+        # En realidad necesitamos el dt_s para avanzar phase_time_s.
+        # Pero get_reference_for_state no recibe dt_s. 
+        # Sin embargo, SimulationRunner llama a esto en un bucle con dt_s fijo.
+        # Podriamos deducir dt_s del estado si es necesario, o pasarle dt_s.
+        # El contrato que defini arriba no tiene dt_s.
+        
+        # Como el runner llama a esto en cada paso, podemos usar la diferencia de tiempo
+        # entre llamadas si guardamos el ultimo time_s.
+        
+        if not hasattr(self, "_last_time_s"):
+            self._last_time_s = time_s
+        
+        dt = time_s - self._last_time_s
+        self._last_time_s = time_s
+        
+        if dt > 0:
+            self.phase_time_s += dt
+            if self.phase == WaypointPhase.HOLD_AT_WAYPOINT:
+                # Comprobar si estamos dentro de tolerancia para acumular dwell
+                p_target = self.waypoints[self.active_target_index]
+                pos_err = np.linalg.norm(state.position_W_m - p_target)
+                speed = np.linalg.norm(state.velocity_W_m_s)
+                
+                if pos_err <= self.tol_pos and speed <= self.tol_vel:
+                    self.dwell_timer_s += dt
+                else:
+                    self.dwell_timer_s = 0.0
+                
+                # Cambio de segmento
+                if self.dwell_timer_s >= self.dwell_time:
+                    if self.active_target_index < len(self.waypoints) - 1:
+                        self.active_target_index += 1
+                        self.phase = WaypointPhase.MOVE_TO_WAYPOINT
+                        self.phase_time_s = 0.0
+                        self.dwell_timer_s = 0.0
+                    else:
+                        self.completed = True
+
+        # Generar referencia según fase
+        if self.phase == WaypointPhase.MOVE_TO_WAYPOINT:
+            p0 = self.waypoints[self.active_target_index - 1]
+            p1 = self.waypoints[self.active_target_index]
+            d = p1 - p0
+            L = np.linalg.norm(d)
+            
+            if L < 1e-6:
+                s, s_dot, s_ddot = 0.0, 0.0, 0.0
+            else:
+                u = d / L
+                s, s_dot, s_ddot = compute_trapezoidal_profile(self.phase_time_s, L, self.max_speed, self.max_acc)
+            
+            pos = p0 + s * (d / L if L > 1e-6 else np.zeros(3))
+            vel = s_dot * (d / L if L > 1e-6 else np.zeros(3))
+            acc = s_ddot * (d / L if L > 1e-6 else np.zeros(3))
+            
+            # Si el perfil ha terminado, pasamos a HOLD_AT_WAYPOINT
+            # pero la referencia se queda en p1
+            # Calculamos t_total para saber si ha terminado
+            t_acc = self.max_speed / self.max_acc
+            d_acc = 0.5 * self.max_acc * t_acc**2
+            if 2 * d_acc <= L:
+                t_total = 2 * t_acc + (L - 2 * d_acc) / self.max_speed
+            else:
+                t_total = 2 * np.sqrt(L / self.max_acc)
+            
+            if self.phase_time_s >= t_total:
+                self.phase = WaypointPhase.HOLD_AT_WAYPOINT
+                self.phase_time_s = 0.0
+                
+            return TrajectoryReference(pos, vel, acc, self.yaw)
+            
+        else: # HOLD_AT_WAYPOINT
+            p_target = self.waypoints[self.active_target_index]
+            return TrajectoryReference(p_target.copy(), np.zeros(3), np.zeros(3), self.yaw)
 
     def get_reference(self, time_s: float) -> TrajectoryReference:
-        if time_s <= self.times[0]:
+        """Fallback legacy que no usa el estado. Solo para compatibilidad."""
+        # Para inicialización (t=0), devolvemos siempre el punto de partida (primer waypoint)
+        if time_s <= 1e-6 and self.active_target_index <= 1 and self.phase == WaypointPhase.MOVE_TO_WAYPOINT:
             return TrajectoryReference(self.waypoints[0].copy(), np.zeros(3), np.zeros(3), self.yaw)
-        if time_s >= self.times[-1]:
-            return TrajectoryReference(self.waypoints[-1].copy(), np.zeros(3), np.zeros(3), self.yaw)
             
-        idx = np.searchsorted(self.times, time_s) - 1
-        t0, t1 = self.times[idx], self.times[idx+1]
-        p0, p1 = self.waypoints[idx], self.waypoints[idx+1]
-        
-        dt = t1 - t0
-        tau = (time_s - t0) / dt
-        
-        # Smoothstep cúbico: s(tau) = 3*tau^2 - 2*tau^3
-        s = 3*tau**2 - 2*tau**3
-        ds = 6*tau - 6*tau**2
-        dds = 6 - 12*tau
-        
-        pos = p0 + s * (p1 - p0)
-        vel = (ds / dt) * (p1 - p0)
-        acc = (dds / dt**2) * (p1 - p0)
-        
-        return TrajectoryReference(pos, vel, acc, self.yaw)
+        # En otros casos, devolvemos el waypoint objetivo actual
+        p_target = self.waypoints[min(self.active_target_index, len(self.waypoints)-1)]
+        return TrajectoryReference(p_target.copy(), np.zeros(3), np.zeros(3), self.yaw)
+
+    def check_completion(self, time_s: float, state: VehicleState, dt_s: float) -> Tuple[bool, str]:
+        if self.completed:
+            return True, "Trajectory completed"
+        return False, ""

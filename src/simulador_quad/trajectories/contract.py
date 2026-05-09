@@ -5,3 +5,7 @@ class Trajectory(ABC):
     @abstractmethod
     def get_reference(self, time_s: float) -> TrajectoryReference:
         pass
+
+    def reset(self) -> None:
+        """Reinicia el estado interno de la trayectoria si es stateful."""
+        pass
