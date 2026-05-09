@@ -43,7 +43,10 @@ class SimulationRunner:
         self.max_saturation_duration_s = max_saturation_duration_s
         self.saturation_timer_s = 0.0
         
-    def _check_termination(self, state: VehicleState, is_saturated: bool) -> Tuple[bool, str]:
+    def _check_safety_termination(self, state: VehicleState, is_saturated: bool) -> Tuple[bool, str]:
+        """
+        Comprueba condiciones de seguridad y fallos físicos (crash, límites, NaNs).
+        """
         # Acumular saturación
         if is_saturated:
             self.saturation_timer_s += self.physics_dt_s
@@ -82,11 +85,40 @@ class SimulationRunner:
         if tilt_angle > self.max_attitude_angle_rad:
             return True, f"Attitude angle exceeded limit ({tilt_angle:.2f} > {self.max_attitude_angle_rad:.2f})"
             
+        return False, ""
+
+    def _check_goal_termination(self, state: VehicleState, trajectory) -> Tuple[bool, str]:
+        """
+        Comprueba condiciones de finalización exitosa o por tiempo.
+        """
         # Tiempo máximo
         if state.time_s >= self.max_duration_s:
             return True, "Time limit reached"
             
+        # Trayectoria completada
+        if hasattr(trajectory, "final_time_s") and hasattr(trajectory, "final_position_W_m"):
+            # Solo consideramos terminada si el tiempo de referencia ha llegado al final
+            if state.time_s >= trajectory.final_time_s:
+                # Error de posición y velocidad
+                pos_err_m = np.linalg.norm(state.position_W_m - trajectory.final_position_W_m)
+                speed_m_s = np.linalg.norm(state.velocity_W_m_s)
+
+                # Umbrales según spec: 0.20 m y 0.30 m/s
+                if pos_err_m <= 0.20 and speed_m_s <= 0.30:
+                    return True, "Trajectory completed"
+
         return False, ""
+
+    def _check_trajectory_completion(self, state: VehicleState, trajectory) -> Tuple[bool, str]:
+        """
+        Mantenido para compatibilidad con tests, delega en _check_goal_termination.
+        """
+        term, reason = self._check_goal_termination(state, trajectory)
+        if reason == "Time limit reached":
+            return False, ""
+        return term, reason
+
+
     def run(self, initial_state: VehicleState, controller_func: Callable, trajectory) -> Dict[str, Any]:
         """
         Ejecuta la simulación.
@@ -128,16 +160,15 @@ class SimulationRunner:
         termination_reason = ""
         
         while True:
-            # Comprobar fin
+            # 0. Comprobar seguridad al inicio del bucle (antes de control/actuadores)
             is_saturated = np.any(current_applied.saturation_flags) or current_rotor_cmd.degraded_collective_thrust
-            term, reason = self._check_termination(state, is_saturated)
+            term, reason = self._check_safety_termination(state, is_saturated)
             if term:
                 termination_reason = reason
-                # Actualizar última muestra con la causa si existe
                 if telemetry:
                     telemetry[-1].termination_cause = reason
                 break
-            
+
             # Referencia actual
             current_ref = trajectory.get_reference(time_s)
 
@@ -192,7 +223,17 @@ class SimulationRunner:
                 telemetry.append(sample)
                 last_telemetry_time = time_s
 
-            # 4. Física
+            # 4. Comprobar finalización por tiempo o llegada (después de registrar telemetría)
+            term, reason = self._check_goal_termination(state, trajectory)
+
+            if term:
+                termination_reason = reason
+                # Actualizar última muestra con la causa
+                if telemetry:
+                    telemetry[-1].termination_cause = reason
+                break
+
+            # 5. Física
             v_wind = self.wind.get_wind(time_s)
             
             p, v, q, w = rk4_step(

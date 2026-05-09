@@ -71,10 +71,12 @@ def test_runner_multi_rate():
         
     result = runner.run(initial_state, dummy_controller, traj)
     
-    # 0.5s duration. Physics dt = 0.01 (50 steps). Control dt = 0.05 (10 steps). Telemetry dt = 0.1 (5 steps)
-    assert len(control_calls) == 10
-    # Telemetría en 0.0, 0.1, 0.2, 0.3, 0.4. (5 steps)
-    assert len(result["telemetry"]) == 5
+    # 0.5s duration. Physics dt = 0.01 (50 steps). Control dt = 0.05.
+    # Con el nuevo runner, se registra la telemetría y el control en t=0.5 antes de terminar.
+    # Puntos de control: 0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5 -> 11 puntos
+    assert len(control_calls) == 11
+    # Telemetría en 0.0, 0.1, 0.2, 0.3, 0.4, 0.5. (6 steps)
+    assert len(result["telemetry"]) == 6
     assert result["termination_reason"] == "Time limit reached"
     # Verificar que la observación se guardó
     assert np.allclose(result["telemetry"][0].observation.position_W_m, initial_state.position_W_m)
@@ -199,7 +201,7 @@ def test_termination_position_velocity_non_finite_and_attitude_limits():
         angular_velocity_B_rad_s=base_state.angular_velocity_B_rad_s,
         time_s=0.0
     )
-    assert runner._check_termination(out_of_position, False) == (True, "Out of position bounds")
+    assert runner._check_safety_termination(out_of_position, False) == (True, "Out of position bounds")
 
     out_of_velocity = VehicleState(
         position_W_m=base_state.position_W_m,
@@ -208,7 +210,7 @@ def test_termination_position_velocity_non_finite_and_attitude_limits():
         angular_velocity_B_rad_s=base_state.angular_velocity_B_rad_s,
         time_s=0.0
     )
-    assert runner._check_termination(out_of_velocity, False) == (True, "Out of velocity bounds")
+    assert runner._check_safety_termination(out_of_velocity, False) == (True, "Out of velocity bounds")
 
     non_finite = VehicleState(
         position_W_m=np.array([0.0, np.nan, 10.0]),
@@ -217,7 +219,7 @@ def test_termination_position_velocity_non_finite_and_attitude_limits():
         angular_velocity_B_rad_s=base_state.angular_velocity_B_rad_s,
         time_s=0.0
     )
-    assert runner._check_termination(non_finite, False) == (True, "Non-finite values in state")
+    assert runner._check_safety_termination(non_finite, False) == (True, "Non-finite values in state")
 
     runner.max_attitude_angle_rad = 0.2
     roll_rad = 1.0
@@ -230,6 +232,51 @@ def test_termination_position_velocity_non_finite_and_attitude_limits():
         angular_velocity_B_rad_s=base_state.angular_velocity_B_rad_s,
         time_s=0.0
     )
-    terminated, reason = runner._check_termination(tilted, False)
+    terminated, reason = runner._check_safety_termination(tilted, False)
     assert terminated
     assert "Attitude angle exceeded limit" in reason
+
+def test_trajectory_completion_termination():
+    runner = setup_runner(max_dur=10.0)
+
+    # Trayectoria que termina en t=1.0s en [1,0,10]
+    from simulador_quad.trajectories.analytic import LineTrajectory
+    pts = np.array([[0,0,10], [1,0,10]])
+    times = np.array([0.0, 1.0])
+    traj = LineTrajectory(pts, times)
+
+    # Estado llegando al final en t=1.1s (después de final_time_s)
+    # y dentro de tolerancia (0.20m, 0.30m/s)
+    state = VehicleState(
+        position_W_m=np.array([1.05, 0.0, 10.0]), # error 0.05 < 0.20
+        velocity_W_m_s=np.array([0.1, 0.0, 0.0]),  # speed 0.1 < 0.30
+        orientation_WB=get_level_quaternion(0.0),
+        angular_velocity_B_rad_s=np.zeros(3),
+        time_s=1.1
+    )
+
+    term, reason = runner._check_trajectory_completion(state, traj)
+    assert term
+    assert reason == "Trajectory completed"
+
+    # Estado fuera de tolerancia de posición
+    state_far = VehicleState(
+        position_W_m=np.array([1.3, 0.0, 10.0]), # error 0.3 > 0.20
+        velocity_W_m_s=np.array([0.1, 0.0, 0.0]),
+        orientation_WB=get_level_quaternion(0.0),
+        angular_velocity_B_rad_s=np.zeros(3),
+        time_s=1.1
+    )
+    term, reason = runner._check_trajectory_completion(state_far, traj)
+    assert not term
+
+    # Estado antes del tiempo final
+    state_early = VehicleState(
+        position_W_m=np.array([1.0, 0.0, 10.0]),
+        velocity_W_m_s=np.array([0.0, 0.0, 0.0]),
+        orientation_WB=get_level_quaternion(0.0),
+        angular_velocity_B_rad_s=np.zeros(3),
+        time_s=0.9
+    )
+    term, reason = runner._check_trajectory_completion(state_early, traj)
+    assert not term
