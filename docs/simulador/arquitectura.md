@@ -15,7 +15,7 @@ El simulador esta organizado como codigo cientifico simple. Las carpetas separan
    - aplica retardo, lag y saturacion en actuadores;
    - guarda telemetria cuando toca `telemetry_dt_s`;
    - avanza el estado con RK4 usando `physics_dt_s`.
-5. El episodio termina por limite de tiempo o por una condicion de seguridad/validez.
+5. El episodio termina por límite de tiempo, por una condición de seguridad/validez o por haber llegado al final de una trayectoria finita (`line` / `waypoint`).
 6. Se exportan `telemetry.json` y `metrics.json`.
 7. Se generan automáticamente figuras PNG y el visor interactivo `visualization_3d.html`.
 

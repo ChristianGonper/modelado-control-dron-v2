@@ -51,7 +51,7 @@ Los umbrales numericos de RMSE y error maximo son iniciales. Deben revisarse cua
 | `scenarios/circle_drag.yaml` | Nominal con disipacion | Verificar seguimiento circular con drag lineal activo. | Drag lineal `[0.1, 0.1, 0.05]`, sin viento ni ruido. | `42` | `termination_reason == "Time limit reached"`, `saturation_percentage == 0`, `degradation_percentage <= 1`, `position_rmse_m <= 0.45`. |
 | `scenarios/circle_noisy_wind.yaml` | Robustez | Verificar seguimiento circular con viento constante, ruido de observacion, retardo y lag. | Viento `[2, 1, 0]`, ruido pos/vel, drag, retardo y lag. | `123` | `termination_reason == "Time limit reached"`, `saturation_percentage == 0`, `degradation_percentage <= 5`, `position_rmse_m <= 0.60`. |
 | `scenarios/lissajous_clean.yaml` | Nominal dinamico | Verificar seguimiento suave 3D sin perturbaciones externas. | Sin viento, sin ruido, sin drag. | `42` | `termination_reason == "Time limit reached"`, `saturation_percentage == 0`, `degradation_percentage <= 1`, `position_rmse_m <= 0.70`. |
-| `scenarios/waypoint_clean.yaml` | Demostracion de trayectoria suavizada | Verificar carga y seguimiento de waypoints con smoothstep cubico. | Sin viento, sin ruido, sin drag. | `42` | `termination_reason == "Time limit reached"`, sin fallo por actitud/no finitos/saturacion persistente, `position_rmse_m <= 0.50`. |
+| `scenarios/waypoint_clean.yaml` | Demostracion de trayectoria suavizada | Verificar carga y seguimiento de waypoints con smoothstep cubico. | Sin viento, sin ruido, sin drag. | `42` | `termination_reason == "Trajectory completed"`, sin fallo por actitud/no finitos/saturacion persistente, `position_rmse_m <= 0.50`. |
 
 ## Resultados historicos
 
@@ -61,7 +61,7 @@ Motivos:
 
 - Los artefactos generados antes de la metadata fuerte no registraban commit, estado del arbol, comando exacto ni hash de `uv.lock`.
 - Algunos resultados pueden proceder de versiones anteriores de escenarios o codigo.
-- Por ejemplo, el resultado historico de `results/waypoint_clean/metrics.json` registra una duracion de 60 s, mientras el YAML actual `scenarios/waypoint_clean.yaml` declara `max_duration_s: 15.0`.
+- Por ejemplo, la duración registrada en resultados históricos puede no coincidir con el YAML actual (especialmente en trayectorias finitas como `waypoint`).
 
 Para usar un resultado en memoria:
 
@@ -130,7 +130,7 @@ Cada episodio queda identificado por familia, geometria, perturbacion, PID, semi
 
 Los escenarios de dataset `v1` empiezan en la referencia de la trayectoria en `t = 0`. Por tanto, sus metricas de error se interpretan como seguimiento desde condicion inicial consistente. No deben usarse para justificar capacidad de captura desde una posicion inicial lejana.
 
-Los filtros duros de validez del dataset estan implementados en `passes_hard_filters`: terminacion por limite de tiempo, metricas finitas, saturacion y degradacion no superiores al 2%, y error maximo por debajo del umbral de familia.
+Los filtros duros de validez del dataset estan implementados en `passes_hard_filters`: terminacion esperada por familia, metricas finitas, saturacion y degradacion no superiores al 2%, y error maximo por debajo del umbral de familia. Para `waypoint`, la terminacion esperada puede ser `"Trajectory completed"`.
 
 ## Relacion con pruebas automaticas
 

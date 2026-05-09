@@ -167,7 +167,9 @@ trajectory:
 - `times`: tiempo asociado a cada waypoint. Debe tener la misma longitud que `waypoints`.
 - `yaw_rad`: guiñada constante de la referencia. Si falta, se usa `0.0`.
 
-Antes del primer tiempo mantiene el primer waypoint. Despues del ultimo mantiene el ultimo waypoint. Entre waypoints usa `s(tau) = 3 tau^2 - 2 tau^3`, con velocidad cero en los extremos de cada tramo.
+Antes del primer tiempo mantiene el primer waypoint. Entre waypoints usa `s(tau) = 3 tau^2 - 2 tau^3`, con velocidad cero en los extremos de cada tramo.
+
+**Terminación finita:** A diferencia de otras trayectorias, `line` / `waypoint` son finitas. El episodio termina automáticamente con la causa `"Trajectory completed"` cuando el vehículo llega al último waypoint (error de posición <= 0.20 m y velocidad <= 0.30 m/s) una vez superado el último instante de `times`. Si no llega a entrar en tolerancia, el episodio continuará hasta agotar `max_duration_s`.
 
 ## `controller`
 

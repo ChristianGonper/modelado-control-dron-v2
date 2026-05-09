@@ -42,6 +42,8 @@ uv run simulador-quad run <ruta_escenario.yaml> --no-visualization
 
 Un episodio que termina por una condición física, por ejemplo saturación persistente o altura inválida, no implica por sí mismo un error del programa. La causa queda registrada como resultado del experimento.
 
+En trayectorias finitas `line` / `waypoint`, `"Trajectory completed"` es una terminación normal: indica que el vehículo ha llegado al último waypoint dentro de las tolerancias de posición y velocidad definidas por el runner.
+
 Si el YAML contiene parametros fisicos invalidos, el simulador falla antes de ejecutar. El mensaje indica la ruta del campo, por ejemplo `Invalid vehicle.mass_kg: expected positive kg value, got -1.0`.
 
 El comando `plot` sigue estando disponible para regenerar figuras desde un JSON existente:

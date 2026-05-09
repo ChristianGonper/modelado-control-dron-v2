@@ -131,7 +131,7 @@ El resumen clasifica cada episodio como `VALID`, `INVALID`, `MISSING` o `ERROR` 
 
 Un episodio se considera valido por los filtros duros del dataset si:
 
-- `termination_reason == "Time limit reached"`;
+- `termination_reason == "Time limit reached"` (o `"Trajectory completed"` para familias de trayectorias finitas como `waypoint`);
 - las metricas usadas por filtros y score son finitas;
 - `saturation_percentage <= 2.0`;
 - `degradation_percentage <= 2.0`;
