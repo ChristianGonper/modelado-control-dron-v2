@@ -83,6 +83,14 @@ class LineTrajectory(Trajectory):
         self.times = np.array(times).astype(float)
         self.yaw = yaw_rad
         
+    @property
+    def final_time_s(self) -> float:
+        return float(self.times[-1])
+
+    @property
+    def final_position_W_m(self) -> np.ndarray:
+        return self.waypoints[-1].copy()
+
     def get_reference(self, time_s: float) -> TrajectoryReference:
         if time_s <= self.times[0]:
             return TrajectoryReference(self.waypoints[0].copy(), np.zeros(3), np.zeros(3), self.yaw)

@@ -67,3 +67,7 @@ def test_line_trajectory():
     
     ref4 = traj.get_reference(10.0)
     assert np.allclose(ref4.position_W_m, [1.0, 1.0, 0.0])
+
+    # Propiedades de fin de trayectoria
+    assert traj.final_time_s == 2.0
+    assert np.allclose(traj.final_position_W_m, [1.0, 1.0, 0.0])
