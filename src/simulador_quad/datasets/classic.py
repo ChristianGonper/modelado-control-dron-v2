@@ -3,6 +3,7 @@ import yaml
 import numpy as np
 from typing import List, Dict, Any, Tuple
 from pathlib import Path
+from simulador_quad.scenarios.loader import instantiate_trajectory
 
 # --- Constants v1 ---
 
@@ -100,6 +101,17 @@ def get_base_rotors(actuators: Dict[str, float]) -> List[Dict[str, Any]]:
         rotors.append(r)
     return rotors
 
+def initial_state_from_trajectory_config(trajectory_cfg: Dict[str, Any]) -> Dict[str, Any]:
+    trajectory = instantiate_trajectory(trajectory_cfg)
+    ref0 = trajectory.get_reference(0.0)
+    return {
+        "position_W_m": ref0.position_W_m.tolist(),
+        "velocity_W_m_s": [0.0, 0.0, 0.0],
+        "orientation_WB": None,
+        "yaw_rad": float(ref0.yaw_rad),
+        "angular_velocity_B_rad_s": [0.0, 0.0, 0.0],
+    }
+
 def build_scenario_config(
     scenario_id: str,
     family: str,
@@ -121,12 +133,7 @@ def build_scenario_config(
             "linear_drag_coefficient": profile["drag"],
             "rotors": get_base_rotors(profile["actuators"])
         },
-        "initial_state": {
-            "position_W_m": [0.0, 0.0, 1.0],
-            "velocity_W_m_s": [0.0, 0.0, 0.0],
-            "orientation_WB": None,
-            "angular_velocity_B_rad_s": [0.0, 0.0, 0.0],
-        },
+        "initial_state": initial_state_from_trajectory_config(trajectory_cfg),
         "trajectory": trajectory_cfg,
         "controller": {
             "type": "classic",
