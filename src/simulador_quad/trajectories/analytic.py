@@ -262,3 +262,39 @@ class LineTrajectory(Trajectory):
         if self.completed:
             return True, "Trajectory completed"
         return False, ""
+
+class LemniscateTrajectory(Trajectory):
+    """
+    Trayectoria en forma de ocho (Lemniscata de Gerono) en el plano XY.
+    x(t) = cx + a * sin(w * t)
+    y(t) = cy + b * sin(2 * w * t)
+    z(t) = cz
+    """
+    def __init__(self, center_W_m: np.ndarray, a: float, b: float, omega_rad_s: float, yaw_mode: str = "forward"):
+        self.center = center_W_m.copy()
+        self.a = a
+        self.b = b
+        self.w = omega_rad_s
+        self.yaw_mode = yaw_mode
+        
+    def get_reference(self, time_s: float) -> TrajectoryReference:
+        t = time_s
+        
+        pos = self.center.copy()
+        pos[0] += self.a * np.sin(self.w * t)
+        pos[1] += self.b * np.sin(2 * self.w * t)
+        
+        vel = np.zeros(3)
+        vel[0] = self.a * self.w * np.cos(self.w * t)
+        vel[1] = 2 * self.b * self.w * np.cos(2 * self.w * t)
+        
+        acc = np.zeros(3)
+        acc[0] = -self.a * self.w**2 * np.sin(self.w * t)
+        acc[1] = -4 * self.b * self.w**2 * np.sin(2 * self.w * t)
+        
+        if self.yaw_mode == "forward":
+            yaw = np.arctan2(vel[1], vel[0]) # Apuntar hacia donde se mueve
+        else:
+            yaw = 0.0
+            
+        return TrajectoryReference(pos, vel, acc, yaw)
