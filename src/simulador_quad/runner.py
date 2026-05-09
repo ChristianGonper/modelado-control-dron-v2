@@ -125,10 +125,10 @@ class SimulationRunner:
         return term, reason
 
 
-    def run(self, initial_state: VehicleState, controller_func: Callable, trajectory) -> Dict[str, Any]:
+    def run(self, initial_state: VehicleState, controller: Any, trajectory) -> Dict[str, Any]:
         """
         Ejecuta la simulación.
-        controller_func: (time_s, observation_state, reference) -> ControlCommand
+        controller: Objeto con compute_control(t, obs, ref) o callable (t, obs, ref) -> ControlCommand
         trajectory: objeto con get_reference(time_s)
         Devuelve el estado final, la causa de terminación y la telemetría.
         """
@@ -143,6 +143,10 @@ class SimulationRunner:
         self.actuators.reset(0.0)
         if hasattr(trajectory, "reset"):
             trajectory.reset()
+        
+        # Resetear controlador si es necesario (para memoria recurrente)
+        if hasattr(controller, "reset"):
+            controller.reset()
         
         telemetry = []
         
@@ -196,7 +200,10 @@ class SimulationRunner:
                 )
                 
                 # Ejecutar controlador
-                current_control = controller_func(time_s, current_obs, current_ref)
+                if hasattr(controller, "compute_control"):
+                    current_control = controller.compute_control(time_s, current_obs, current_ref)
+                else:
+                    current_control = controller(time_s, current_obs, current_ref)
                 
                 # Mezclador
                 current_rotor_cmd = self.mixer.compute_rotor_commands(

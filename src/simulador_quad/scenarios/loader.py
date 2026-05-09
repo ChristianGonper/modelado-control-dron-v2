@@ -5,7 +5,7 @@ from simulador_quad.core.contracts import VehicleParameters, RotorParameters, Ve
 from simulador_quad.dynamics.actuators import ActuatorSystem
 from simulador_quad.dynamics.mixer import QuadcopterMixer
 from simulador_quad.dynamics.perturbations import WindModel, ObservationNoise
-from simulador_quad.trajectories.analytic import HoldTrajectory, CircleTrajectory, LissajousTrajectory, LineTrajectory
+from simulador_quad.trajectories.analytic import HoldTrajectory, CircleTrajectory, LissajousTrajectory, LineTrajectory, LemniscateTrajectory
 from simulador_quad.control.classic import ClassicCascadeController
 from simulador_quad.core.frames import get_level_quaternion
 from simulador_quad.scenarios.schema import validate_scenario_config
@@ -38,6 +38,14 @@ def instantiate_trajectory(t_cfg: Dict[str, Any]) -> Any:
             waypoint_tolerance_m=float(t_cfg.get('waypoint_tolerance_m', 0.20)),
             waypoint_speed_tolerance_m_s=float(t_cfg.get('waypoint_speed_tolerance_m_s', 0.20)),
             dwell_time_s=float(t_cfg.get('dwell_time_s', 0.40))
+        )
+    elif t_type == 'lemniscate':
+        return LemniscateTrajectory(
+            center_W_m=np.array(t_cfg['center_W_m']).astype(float),
+            a=float(t_cfg['a']),
+            b=float(t_cfg['b']),
+            omega_rad_s=float(t_cfg['omega_rad_s']),
+            yaw_mode=t_cfg.get('yaw_mode', 'forward')
         )
     else:
         raise ValueError(f"Unknown trajectory type: {t_type}")
@@ -102,6 +110,22 @@ def instantiate_scenario(config: Dict[str, Any]) -> Tuple[Any, Any, Any, Any, An
             v_params.mass_kg, v_params.gravity_m_s2, v_params.inertia_B_kg_m2,
             Kp_pos=kp_pos, Kd_pos=kd_pos, Kp_att=kp_att, Kd_att=kd_att,
             max_body_moments_Nm=max_moments
+        )
+    elif c_cfg['type'] == 'neural':
+        from simulador_quad.control.neural import NeuralController
+        max_moments = c_cfg.get('max_body_moments_Nm')
+        if max_moments is not None:
+            max_moments = np.array(max_moments).astype(float)
+            
+        controller = NeuralController(
+            checkpoint_path=c_cfg['checkpoint_path'],
+            normalization_path=c_cfg['normalization_path'],
+            architecture=c_cfg.get('architecture', 'mlp'),
+            sequence_length=c_cfg.get('sequence_length', 20),
+            clip_to_classic_limits=c_cfg.get('clip_to_classic_limits', True),
+            mass_kg=v_params.mass_kg,
+            gravity_m_s2=v_params.gravity_m_s2,
+            max_moments_Nm=max_moments if max_moments is not None else np.array([10.0, 10.0, 2.0])
         )
     else:
         raise ValueError(f"Unknown controller type: {c_cfg['type']}")

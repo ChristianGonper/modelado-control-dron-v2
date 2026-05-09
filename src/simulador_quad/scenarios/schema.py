@@ -128,23 +128,37 @@ def _validate_initial_state(config: Mapping[str, Any]) -> None:
 
 def _validate_controller(config: Mapping[str, Any]) -> None:
     controller = _require_mapping(config, "controller")
-    if controller.get("type") == "classic":
+    c_type = controller.get("type")
+    
+    if c_type == "classic":
         for field in ("Kp_pos", "Kd_pos", "Kp_att", "Kd_att"):
             if field in controller:
                 _as_array(f"controller.{field}", controller.get(field), (3,))
                 if np.any(_as_array(f"controller.{field}", controller.get(field)) < 0.0):
                     raise _invalid(f"controller.{field}", "non-negative vector", controller.get(field))
-        if "max_body_moments_Nm" in controller:
-            _as_array("controller.max_body_moments_Nm", controller.get("max_body_moments_Nm"), (3,))
-            if np.any(_as_array("controller.max_body_moments_Nm", controller.get("max_body_moments_Nm")) < 0.0):
-                raise _invalid("controller.max_body_moments_Nm", "non-negative vector", controller.get("max_body_moments_Nm"))
+    
+    if c_type == "neural":
+        for field in ("checkpoint_path", "normalization_path"):
+            if not isinstance(controller.get(field), str):
+                raise _invalid(f"controller.{field}", "string path", controller.get(field))
+        if controller.get("architecture") not in ("mlp", "gru", "lstm"):
+            raise _invalid("controller.architecture", "one of ('mlp', 'gru', 'lstm')", controller.get("architecture"))
+
+    # Validacion comun de limites
+    if "max_body_moments_Nm" in controller:
+        moments = _as_array("controller.max_body_moments_Nm", controller.get("max_body_moments_Nm"), (3,))
+        if np.any(moments < 0.0):
+            raise _invalid("controller.max_body_moments_Nm", "non-negative vector", controller.get("max_body_moments_Nm"))
+
+    if c_type not in ("classic", "neural"):
+        raise _invalid("controller.type", "one of ('classic', 'neural')", c_type)
 
 
 def _validate_trajectory(config: Mapping[str, Any]) -> None:
     traj = _require_mapping(config, "trajectory")
     t_type = traj.get("type")
-    if t_type not in ("hold", "circle", "lissajous", "line", "waypoint"):
-        raise _invalid("trajectory.type", "one of ('hold', 'circle', 'lissajous', 'line', 'waypoint')", t_type)
+    if t_type not in ("hold", "circle", "lissajous", "line", "waypoint", "lemniscate"):
+        raise _invalid("trajectory.type", "one of ('hold', 'circle', 'lissajous', 'line', 'waypoint', 'lemniscate')", t_type)
 
     if t_type in ("line", "waypoint"):
         wps = _require_sequence(traj, "waypoints")
