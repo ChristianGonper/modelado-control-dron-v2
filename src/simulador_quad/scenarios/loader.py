@@ -1,4 +1,4 @@
-import yaml
+﻿import yaml
 import numpy as np
 from typing import Dict, Any, Tuple
 from simulador_quad.core.contracts import VehicleParameters, RotorParameters, VehicleState
@@ -16,10 +16,29 @@ def load_scenario(path: str) -> Dict[str, Any]:
     validate_scenario_config(config)
     return config
 
+def instantiate_trajectory(t_cfg: Dict[str, Any]) -> Any:
+    t_type = t_cfg['type']
+    if t_type == 'hold':
+        return HoldTrajectory(np.array(t_cfg['position_W_m']).astype(float), float(t_cfg.get('yaw_rad', 0.0)))
+    elif t_type == 'circle':
+        return CircleTrajectory(
+            np.array(t_cfg['center_W_m']).astype(float), float(t_cfg['radius_m']), float(t_cfg['omega_rad_s']), t_cfg.get('yaw_mode', 'forward')
+        )
+    elif t_type == 'lissajous':
+        return LissajousTrajectory(
+            np.array(t_cfg['center_W_m']).astype(float), np.array(t_cfg['amplitudes']).astype(float), np.array(t_cfg['omegas']).astype(float)
+        )
+    elif t_type == 'line' or t_type == 'waypoint':
+        return LineTrajectory(
+            np.array(t_cfg['waypoints']).astype(float), np.array(t_cfg['times']).astype(float), float(t_cfg.get('yaw_rad', 0.0))
+        )
+    else:
+        raise ValueError(f"Unknown trajectory type: {t_type}")
+
 def instantiate_scenario(config: Dict[str, Any]) -> Tuple[Any, Any, Any, Any, Any, Any, Any]:
     validate_scenario_config(config)
     seed = config.get('seed', 42)
-    
+
     # 1. Vehicle
     v_cfg = config['vehicle']
     rotors = []
@@ -33,7 +52,7 @@ def instantiate_scenario(config: Dict[str, Any]) -> Tuple[Any, Any, Any, Any, An
             time_constant_s=float(r['time_constant_s']),
             delay_s=float(r.get('delay_s', 0.0))
         ))
-        
+
     v_params = VehicleParameters(
         mass_kg=float(v_cfg['mass_kg']),
         inertia_B_kg_m2=np.array(v_cfg['inertia_B_kg_m2']).astype(float),
@@ -41,17 +60,17 @@ def instantiate_scenario(config: Dict[str, Any]) -> Tuple[Any, Any, Any, Any, An
         linear_drag_coefficient=np.array(v_cfg['linear_drag_coefficient']).astype(float),
         rotors=rotors
     )
-    
+
     mixer = QuadcopterMixer(rotors)
     actuators = ActuatorSystem(rotors, dt_s=float(config['timing']['physics_dt_s']))
-    
+
     # 2. Initial State
     is_cfg = config['initial_state']
     if is_cfg.get('orientation_WB') is None:
         q0 = get_level_quaternion(float(is_cfg.get('yaw_rad', 0.0)))
     else:
         q0 = np.array(is_cfg['orientation_WB']).astype(float)
-        
+
     initial_state = VehicleState(
         position_W_m=np.array(is_cfg['position_W_m']).astype(float),
         velocity_W_m_s=np.array(is_cfg['velocity_W_m_s']).astype(float),
@@ -59,27 +78,10 @@ def instantiate_scenario(config: Dict[str, Any]) -> Tuple[Any, Any, Any, Any, An
         angular_velocity_B_rad_s=np.array(is_cfg['angular_velocity_B_rad_s']).astype(float),
         time_s=0.0
     )
-    
+
     # 3. Trajectory
-    t_cfg = config['trajectory']
-    t_type = t_cfg['type']
-    if t_type == 'hold':
-        trajectory = HoldTrajectory(np.array(t_cfg['position_W_m']).astype(float), float(t_cfg.get('yaw_rad', 0.0)))
-    elif t_type == 'circle':
-        trajectory = CircleTrajectory(
-            np.array(t_cfg['center_W_m']).astype(float), float(t_cfg['radius_m']), float(t_cfg['omega_rad_s']), t_cfg.get('yaw_mode', 'forward')
-        )
-    elif t_type == 'lissajous':
-        trajectory = LissajousTrajectory(
-            np.array(t_cfg['center_W_m']).astype(float), np.array(t_cfg['amplitudes']).astype(float), np.array(t_cfg['omegas']).astype(float)
-        )
-    elif t_type == 'line' or t_type == 'waypoint':
-        trajectory = LineTrajectory(
-            np.array(t_cfg['waypoints']).astype(float), np.array(t_cfg['times']).astype(float), float(t_cfg.get('yaw_rad', 0.0))
-        )
-    else:
-        raise ValueError(f"Unknown trajectory type: {t_type}")
-        
+    trajectory = instantiate_trajectory(config['trajectory'])
+
     # 4. Controller
     c_cfg = config['controller']
     if c_cfg['type'] == 'classic':
@@ -88,7 +90,7 @@ def instantiate_scenario(config: Dict[str, Any]) -> Tuple[Any, Any, Any, Any, An
         kd_pos = c_cfg.get('Kd_pos')
         kp_att = c_cfg.get('Kp_att')
         kd_att = c_cfg.get('Kd_att')
-        
+
         controller = ClassicCascadeController(
             v_params.mass_kg, v_params.gravity_m_s2, v_params.inertia_B_kg_m2,
             Kp_pos=kp_pos, Kd_pos=kd_pos, Kp_att=kp_att, Kd_att=kd_att,
@@ -96,7 +98,7 @@ def instantiate_scenario(config: Dict[str, Any]) -> Tuple[Any, Any, Any, Any, An
         )
     else:
         raise ValueError(f"Unknown controller type: {c_cfg['type']}")
-        
+
     # 5. Perturbations
     p_cfg = config['perturbations']
     wind = WindModel(np.array(p_cfg['constant_wind_W_m_s']).astype(float))
@@ -105,5 +107,5 @@ def instantiate_scenario(config: Dict[str, Any]) -> Tuple[Any, Any, Any, Any, An
         vel_std_m_s=float(p_cfg.get('vel_std_m_s', 0.0)),
         seed=seed
     )
-    
+
     return v_params, mixer, actuators, initial_state, trajectory, controller, wind, noise
