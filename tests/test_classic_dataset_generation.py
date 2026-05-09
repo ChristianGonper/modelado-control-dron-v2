@@ -1,4 +1,4 @@
-import os
+﻿import os
 import shutil
 import pytest
 import pandas as pd
@@ -49,3 +49,30 @@ def test_write_dataset(tmp_path):
     config = load_scenario(str(first_path))
     assert config["name"] == manifest_df.iloc[0]["scenario_id"]
     assert config["vehicle"]["rotors"][0]["omega_max_rad_s"] == 1500.0
+
+def test_initial_state_consistency(tmp_path):
+    output_dir = tmp_path / "v1_init"
+    write_dataset_files("v1_init", str(output_dir))
+
+    manifest_df = pd.read_csv(output_dir / "manifest.csv")
+    from simulador_quad.scenarios.loader import load_scenario, instantiate_trajectory
+    import numpy as np
+
+    # Check ALL generated scenarios to ensure they all follow the rule
+    for _, row in manifest_df.iterrows():
+        scenario_path = output_dir / row["scenario_path"]
+        config = load_scenario(str(scenario_path))
+
+        trajectory = instantiate_trajectory(config["trajectory"])
+        ref0 = trajectory.get_reference(0.0)
+
+        initial_pos = np.array(config["initial_state"]["position_W_m"])
+        initial_yaw = float(config["initial_state"]["yaw_rad"])
+
+        np.testing.assert_allclose(initial_pos, ref0.position_W_m, atol=1e-6, err_msg=f"Failed for {row['scenario_id']}")
+        assert abs(initial_yaw - ref0.yaw_rad) < 1e-6, f"Failed for {row['scenario_id']}"
+
+        # Verify velocity and angular velocity are zero
+        assert all(v == 0.0 for v in config["initial_state"]["velocity_W_m_s"])
+        assert all(v == 0.0 for v in config["initial_state"]["angular_velocity_B_rad_s"])
+        assert config["initial_state"]["orientation_WB"] is None
