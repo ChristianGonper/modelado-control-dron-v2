@@ -98,7 +98,6 @@ def main():
     
     # Select best score
     # Sort by score ascending, then by sum of gains ascending (conservative)
-    # The spec says "desempate del 5% a favor del PID mas conservador"
     candidates.sort(key=lambda x: x["score"])
     best = candidates[0]
     
