@@ -1,6 +1,6 @@
-# Trazabilidad del simulador clasico
+# Trazabilidad del simulador
 
-Esta matriz conecta requisitos del TFG con modelo, implementacion, pruebas, escenarios y metricas. Su objetivo es hacer auditable el estado actual del simulador clasico.
+Esta matriz conecta requisitos del TFG con modelo, implementacion, pruebas, escenarios y metricas. Su objetivo es hacer auditable el estado actual del simulador clasico y la capa neuronal por imitacion.
 
 Estados usados:
 
@@ -34,7 +34,8 @@ Estados usados:
 | Visualizacion postproceso | Generar figuras y visor 3D para inspeccion de resultados. | `src/simulador_quad/visualization/plots.py`, `src/simulador_quad/visualization/three_d.py` | `tests/test_visualization.py`, `tests/test_model_regressions.py` | Resultados de cualquier escenario | Figuras PNG, `visualization_3d.html` y esquema minimo de JSON exportado. | Implementado |
 | Reproducibilidad fuerte de ejecucion | Vincular resultados con codigo, entorno y comando exacto. | `src/simulador_quad/app.py`, `src/simulador_quad/metrics/report.py` | `tests/test_app_metadata.py` | Todos los escenarios oficiales | Metadata de commit, entorno, comando, hashes y configuracion efectiva. | Implementado |
 | Dataset clasico versionado | Generar datos clasicos reproducibles por familia antes de entrenar una red. | `src/simulador_quad/datasets/classic.py`, `tools/generate_classic_dataset.py`, `tools/run_classic_dataset.py`, `tools/summarize_classic_dataset.py`, `tools/tune_classic_pid.py` | `tests/test_classic_dataset_generation.py`, `tests/test_classic_dataset_scripts.py`, `tests/test_classic_pid_selection.py` | `data/classic_dataset/v1/scenarios/` generado localmente | `manifest.csv`, `pids/*.yaml`, `run_report.csv`, `summary.csv`, filtros duros y conteo de 150 episodios. | Implementado |
-| Control neuronal por imitacion | Objetivo final de comparacion del TFG. | Pendiente | Pendiente | Pendiente | Dataset, entrenamiento y evaluacion cerrada. | Pendiente |
+| Control neuronal por imitacion | Comparar el controlador clasico con modelos supervisados que imitan sus comandos. | `src/simulador_quad/control/neural.py`, `src/simulador_quad/ml/*.py`, `tools/train_neural_controller.py`, `tools/evaluate_neural_controller.py`, `tools/run_neural_scenario.py` | `tests/test_neural_dataset.py`, `tests/test_neural_models.py`, `tests/test_neural_training.py`, `tests/test_neural_evaluation.py`, `tests/test_neural_controller.py` | Dataset clasico `v1`, `scenarios/neural_ood_lemniscate.yaml` | `config.yaml`, `normalization.json`, checkpoints, `train/val/test_metrics.json`, `ood_metrics.json`, `metrics.json` en bucle cerrado. | Implementado |
+| Evaluacion OOD neuronal | Separar generalizacion de la evaluacion in-distribution del dataset clasico. | `tools/evaluate_neural_controller.py`, `tools/run_neural_scenario.py`, `src/simulador_quad/trajectories/analytic.py` | `tests/test_neural_evaluation.py`, `tests/test_trajectories.py` | `scenarios/neural_ood_lemniscate.yaml` y datasets OOD generados localmente | `ood_metrics.json` para telemetria OOD ya generada; `metrics.json` para ejecucion cerrada. | Parcial |
 
 ## Lectura recomendada
 
@@ -53,4 +54,5 @@ Para auditar un resultado concreto:
 - Revisar que la metadata de entorno y commit se conserva en todos los resultados finales de memoria.
 - Ampliar regresiones de escenarios cortos si se anaden nuevos escenarios oficiales.
 - Mantener `docs/simulador/dataset_clasico.md` sincronizado si cambian familias, perfiles, splits, scripts, manifiesto o filtros duros.
-- Mantener control neuronal como fase futura hasta que exista evaluacion en bucle cerrado.
+- Mantener la documentacion neuronal sincronizada si cambian features, normalizacion, artefactos, comandos o criterios OOD.
+- No presentar `test` del dataset clasico como generalizacion fuerte; usar OOD separado y documentar como se genero su telemetria.

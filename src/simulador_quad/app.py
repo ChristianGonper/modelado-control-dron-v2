@@ -163,13 +163,9 @@ def run_simulation(scenario_path: str, visualization: bool = True, command: str 
         max_saturation_duration_s=term_cfg.get('max_saturation_duration_s', 1.0)
     )
     
-    # Función control para el runner (adaptador)
-    def controller_func(t, obs, ref):
-        return controller.compute_control(t, obs, ref)
-    
     # Ejecutar
     print("Iniciando simulación...")
-    result_raw = runner.run(initial_state, controller_func, trajectory)
+    result_raw = runner.run(initial_state, controller, trajectory)
     telemetry = result_raw['telemetry']
     reason = result_raw['termination_reason']
     

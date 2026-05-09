@@ -16,6 +16,8 @@ Implementado:
 - Integracion RK4 con pasos separados de fisica, control y telemetria.
 - Controlador clasico en cascada.
 - Ganancias explicitas opcionales del controlador clasico desde YAML.
+- Controlador neuronal por imitacion en bucle cerrado, con MLP, GRU y LSTM.
+- Pipeline ML con carga de telemetria, normalizacion train-only, entrenamiento supervisado y evaluacion in-distribution/OOD.
 - Mezclador de cuadricoptero con empuje colectivo y momentos de cuerpo.
 - Actuadores con saturacion, retardo puro opcional y lag de primer orden sobre `omega`.
 - Drag lineal simplificado, viento constante y ruido gaussiano de observacion en posicion/velocidad.
@@ -25,8 +27,6 @@ Implementado:
 
 No implementado todavia:
 
-- Controlador neuronal real por imitacion.
-- Entrenamiento, loaders de ML y evaluacion neuronal en bucle cerrado.
 - Aerodinamica formal mas alla del drag lineal.
 - Modelo de bateria, sensores realistas, estimador onboard, contacto con suelo o datos experimentales.
 
@@ -38,6 +38,7 @@ No implementado todavia:
 - [Trazabilidad](trazabilidad.md): matriz requisito-modelo-codigo-prueba-escenario-metrica del simulador clasico.
 - [Validacion](validacion.md): clasificacion de escenarios, criterios de aceptacion y evidencias para la memoria.
 - [Dataset clasico](dataset_clasico.md): comandos y artefactos de generacion de datos clasicos previos a la fase neuronal.
+- [Control neuronal](control_neuronal.md): entrenamiento, evaluacion supervisada, OOD e inferencia en bucle cerrado.
 - [Mantenimiento documental](mantenimiento.md): checklist para actualizar esta documentacion despues de cambios agresivos.
 
 ## Comandos minimos
@@ -48,6 +49,7 @@ uv run simulador-quad run scenarios\hover_clean.yaml
 uv run simulador-quad run scenarios\circle_drag.yaml
 uv run simulador-quad plot results\hover_clean\telemetry.json --metrics results\hover_clean\metrics.json --out results\hover_clean\figures
 uv run python tools\generate_classic_dataset.py --version v1 --out data\classic_dataset\v1
+uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture mlp --out data\neural_control\mlp_v1
 ```
 
 Las figuras generadas tienen nombres estables:

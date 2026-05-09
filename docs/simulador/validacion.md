@@ -1,8 +1,8 @@
 # Validacion de escenarios y resultados
 
-Este documento define como usar los escenarios actuales como evidencia experimental del simulador clasico. No sustituye a los YAML ni a las metricas exportadas: fija el papel de cada escenario, los criterios iniciales de aceptacion y las evidencias minimas que deben conservarse para la memoria del TFG.
+Este documento define como usar los escenarios actuales como evidencia experimental del simulador. No sustituye a los YAML ni a las metricas exportadas: fija el papel de cada escenario, los criterios iniciales de aceptacion y las evidencias minimas que deben conservarse para la memoria del TFG.
 
-La capa neuronal queda fuera de esta fase. Cuando exista controlador neuronal, sus escenarios y criterios deberan documentarse en una ampliacion separada y compararse con las mismas condiciones.
+La validacion clasica y la neuronal deben separarse. Los escenarios oficiales clasicos siguen siendo la referencia de sanidad fisica y trazabilidad. El controlador neuronal se evalua en dos niveles: error supervisado sobre telemetria exportada y ejecucion en bucle cerrado dentro del simulador.
 
 ## Comandos oficiales
 
@@ -30,6 +30,22 @@ uv run python tools\run_classic_dataset.py --dataset data\classic_dataset\v1 --n
 uv run python tools\summarize_classic_dataset.py --dataset data\classic_dataset\v1
 ```
 
+Para entrenamiento y evaluacion neuronal:
+
+```powershell
+uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture gru --out data\neural_control\gru_v1
+uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1
+uv run python tools\run_neural_scenario.py --scenario scenarios\neural_ood_lemniscate.yaml --checkpoint data\neural_control\gru_v1\checkpoints\gru_best.pt --normalization data\neural_control\gru_v1\normalization.json --architecture gru --no-visualization
+```
+
+Para evaluacion OOD supervisada:
+
+```powershell
+uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1 --ood-dataset data\neural_ood\lemniscate_v1
+```
+
+El directorio OOD debe contener `manifest.csv` y telemetria ya generada. Este comando no ejecuta el escenario OOD; solo evalua un dataset OOD existente.
+
 ## Criterios generales
 
 Un escenario se considera valido como evidencia de la version clasica si cumple:
@@ -52,6 +68,7 @@ Los umbrales numericos de RMSE y error maximo son iniciales. Deben revisarse cua
 | `scenarios/circle_noisy_wind.yaml` | Robustez | Verificar seguimiento circular con viento constante, ruido de observacion, retardo y lag. | Viento `[2, 1, 0]`, ruido pos/vel, drag, retardo y lag. | `123` | `termination_reason == "Time limit reached"`, `saturation_percentage == 0`, `degradation_percentage <= 5`, `position_rmse_m <= 0.60`. |
 | `scenarios/lissajous_clean.yaml` | Nominal dinamico | Verificar seguimiento suave 3D sin perturbaciones externas. | Sin viento, sin ruido, sin drag. | `42` | `termination_reason == "Time limit reached"`, `saturation_percentage == 0`, `degradation_percentage <= 1`, `position_rmse_m <= 0.70`. |
 | `scenarios/waypoint_clean.yaml` | Demostración de trayectoria con paradas | Verificar llegada secuencial a puntos con frenado y asentamiento en cada waypoint. | Sin viento, sin ruido, sin drag. | `42` | `termination_reason == "Trajectory completed"`, sin fallo por actitud/no finitos/saturación persistente, `position_rmse_m <= 0.40`. |
+| `scenarios/neural_ood_lemniscate.yaml` | OOD / generalizacion | Verificar una trayectoria analitica no incluida en el dataset clasico base. | Viento bajo y ruido bajo. | `1234` | Con controlador clasico debe ejecutarse sin fallo fisico. Con controlador neuronal, usar como evidencia OOD en bucle cerrado y reportar terminacion, RMSE, saturacion y degradacion sin mezclarlo con `test`. |
 
 ## Resultados historicos
 
@@ -132,6 +149,20 @@ Los escenarios de dataset `v1` empiezan en la referencia de la trayectoria en `t
 
 Los filtros duros de validez del dataset estan implementados en `passes_hard_filters`: terminacion esperada por familia, metricas finitas, saturacion y degradacion no superiores al 2%, y error maximo por debajo del umbral de familia. Para `waypoint`, la terminacion esperada puede ser `"Trajectory completed"`.
 
+## Control neuronal
+
+La validacion neuronal tiene tres evidencias distintas:
+
+1. Entrenamiento supervisado: `tools\train_neural_controller.py` genera `config.yaml`, `normalization.json`, checkpoint y metricas de entrenamiento/validacion.
+2. Evaluacion supervisada: `tools\evaluate_neural_controller.py` escribe `train_metrics.json`, `val_metrics.json` y `test_metrics.json`; si se proporciona `--ood-dataset`, escribe tambien `ood_metrics.json`.
+3. Bucle cerrado: `tools\run_neural_scenario.py` ejecuta un escenario YAML existente sustituyendo el controlador por un checkpoint neuronal en memoria.
+
+El split `test` del dataset clasico mide desempeno in-distribution. No debe presentarse como prueba fuerte de generalizacion, porque las familias, geometrias y perturbaciones del dataset estan repartidas entre `train`, `val` y `test`. La generalizacion debe apoyarse en OOD separado, por ejemplo la lemniscata.
+
+La metrica supervisada `saturation_percentage` del evaluador neuronal mide comandos predichos fuera de limites antes del clipping, no saturacion fisica aplicada por actuadores. Por defecto usa masa `1.0 kg`, gravedad `9.81 m/s^2`, empuje maximo `m*g*2.5` y momentos `[10, 10, 2] Nm`. Si el dataset OOD usa otra masa o limites, esa metrica debe interpretarse con cautela hasta parametrizar esos limites desde CLI o metadata.
+
+En bucle cerrado, las saturaciones y degradaciones relevantes son las de `metrics.json` del simulador, que proceden del mixer y actuadores reales de la ejecucion.
+
 ## Relacion con pruebas automaticas
 
 La suite actual ya incluye validaciones automaticas del modelo clasico:
@@ -146,6 +177,11 @@ La suite actual ya incluye validaciones automaticas del modelo clasico:
 - `tests/test_classic_dataset_generation.py`: manifiesto `v1`, conteos por familia, determinismo y YAML generados validos.
 - `tests/test_classic_dataset_scripts.py`: flujo CLI generacion, ejecucion limitada y resumen en directorio temporal.
 - `tests/test_classic_pid_selection.py`: filtros duros, finitud y score de seleccion PID.
+- `tests/test_neural_dataset.py`: carga de telemetria, features, normalizacion y ventanas recurrentes.
+- `tests/test_neural_models.py`: forward de MLP, GRU y LSTM.
+- `tests/test_neural_training.py`: entrenamiento corto por CLI y dimensiones recurrentes.
+- `tests/test_neural_evaluation.py`: evaluacion supervisada por CLI y escritura de metricas.
+- `tests/test_neural_controller.py`: carga de checkpoint dummy e inferencia en bucle cerrado.
 
 Las regresiones automaticas no sustituyen a las ejecuciones oficiales completas para la memoria. Su papel es detectar roturas rapidas de contrato y evitar que `results/` historico actue como unico oraculo.
 
@@ -156,9 +192,9 @@ Estos escenarios validan el simulador dentro del alcance actual:
 - cuerpo rigido 6DOF;
 - cuaterniones;
 - RK4;
-- control clasico;
+- control clasico y control neuronal por imitacion;
 - drag lineal simplificado;
 - viento constante y ruido de observacion simple;
 - actuadores simplificados con saturacion, retardo y lag.
 
-No validan vuelo real, aerodinamica formal, sensores realistas, estimador onboard ni control neuronal.
+No validan vuelo real, aerodinamica formal, sensores realistas ni estimador onboard. El control neuronal queda validado solo dentro del alcance de imitacion supervisada y simulacion cerrada sobre este modelo 6DOF simplificado.

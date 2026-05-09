@@ -56,7 +56,7 @@ El argumento `--metrics` es opcional, pero permite anotar información como el R
 
 ## Generar dataset clasico
 
-El repo incluye un flujo de datos clasicos previo a la fase neuronal. Genera escenarios YAML, PIDs por familia, manifiesto y resultados separados bajo `data/classic_dataset/<version>/`.
+El repo incluye un flujo de datos clasicos que sirve como experto para imitacion neuronal. Genera escenarios YAML, PIDs por familia, manifiesto y resultados separados bajo `data/classic_dataset/<version>/`.
 
 Generar el dataset `v1`:
 
@@ -90,6 +90,40 @@ uv run python tools\summarize_classic_dataset.py --dataset data\classic_dataset\
 ```
 
 El flujo completo esta descrito en `docs/simulador/dataset_clasico.md`.
+
+## Entrenar y evaluar control neuronal
+
+Una vez ejecutado el dataset clasico y generados sus `telemetry.json`, se puede entrenar un controlador neuronal por imitacion:
+
+```powershell
+uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture mlp --out data\neural_control\mlp_v1
+uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture gru --out data\neural_control\gru_v1
+uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture lstm --out data\neural_control\lstm_v1
+```
+
+Evaluacion supervisada in-distribution:
+
+```powershell
+uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1
+```
+
+Evaluacion supervisada OOD sobre un dataset ya generado:
+
+```powershell
+uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1 --ood-dataset data\neural_ood\lemniscate_v1
+```
+
+El directorio pasado a `--ood-dataset` debe tener `manifest.csv` y telemetria existente. El evaluador no ejecuta escenarios; solo compara predicciones con comandos expertos ya exportados.
+
+Ejecucion en bucle cerrado de un checkpoint neuronal:
+
+```powershell
+uv run python tools\run_neural_scenario.py --scenario scenarios\neural_ood_lemniscate.yaml --checkpoint data\neural_control\gru_v1\checkpoints\gru_best.pt --normalization data\neural_control\gru_v1\normalization.json --architecture gru --no-visualization
+```
+
+Este comando no modifica el YAML original. Sustituye el controlador en memoria, ejecuta el simulador y escribe telemetria/metricas en un directorio derivado de `output.dir` o en `--out` si se proporciona.
+
+La metrica supervisada `saturation_percentage` del evaluador neuronal mide comandos predichos fuera de limites antes del clipping. Por defecto usa masa `1.0 kg`, gravedad `9.81 m/s^2`, empuje maximo `m*g*2.5` y momentos `[10, 10, 2] Nm`; si el dataset usa otros limites, interpretar esa metrica con cautela hasta parametrizarla desde CLI o metadata.
 
 Figuras generadas (tanto en `run` automático como en `plot` manual):
 

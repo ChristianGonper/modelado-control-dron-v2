@@ -189,6 +189,8 @@ El avance de `line` / `waypoint` no depende de `times` ni de `termination.max_du
 
 ## `controller`
 
+### Controlador clasico
+
 ```yaml
 controller:
   type: "classic"
@@ -199,7 +201,7 @@ controller:
   max_body_moments_Nm: [2.0, 2.0, 0.5]
 ```
 
-- `type`: actualmente solo se acepta `"classic"`.
+- `type`: `"classic"` para el controlador en cascada.
 - `Kp_pos`: ganancias proporcionales de posicion por eje ENU. Si falta, se usa `[2.0, 2.0, 5.0]`.
 - `Kd_pos`: ganancias derivativas de posicion por eje ENU. Si falta, se usa `[1.0, 1.0, 2.0]`.
 - `Kp_att`: ganancias proporcionales de actitud por eje de cuerpo FRD. Si falta, se usa `[4.0, 4.0, 1.0]`.
@@ -207,6 +209,29 @@ controller:
 - `max_body_moments_Nm`: limites de momentos `[tau_x, tau_y, tau_z]` en FRD. Si falta, el controlador usa `[10.0, 10.0, 2.0]`.
 
 El controlador clasico usa un bucle externo de posicion y un bucle interno de actitud. Las ganancias declaradas en YAML permiten fijar PIDs por familia de trayectoria para datasets clasicos; si se omiten, se conservan los defaults del controlador.
+
+### Controlador neuronal
+
+```yaml
+controller:
+  type: "neural"
+  architecture: "gru"
+  checkpoint_path: "data/neural_control/gru_v1/checkpoints/gru_best.pt"
+  normalization_path: "data/neural_control/gru_v1/normalization.json"
+  sequence_length: 20
+  clip_to_classic_limits: true
+  max_body_moments_Nm: [10.0, 10.0, 2.0]
+```
+
+- `type`: `"neural"` para cargar un modelo entrenado por imitacion.
+- `architecture`: arquitectura del checkpoint. Debe ser `"mlp"`, `"gru"` o `"lstm"`.
+- `checkpoint_path`: ruta al `.pt` entrenado.
+- `normalization_path`: ruta al `normalization.json` guardado durante entrenamiento. Debe corresponder a la misma version de features que el checkpoint.
+- `sequence_length`: longitud de ventana para GRU/LSTM. Si falta, se usa `20`. Para MLP se ignora.
+- `clip_to_classic_limits`: si es `true`, limita las salidas de la red antes de pasarlas al mixer. Si falta, se usa `true`.
+- `max_body_moments_Nm`: limites de momentos `[tau_x, tau_y, tau_z]` en FRD. Si falta, se usa `[10.0, 10.0, 2.0]`.
+
+El controlador neuronal devuelve el mismo contrato que el clasico: `collective_thrust_N` y `body_moments_Nm`. El empuje se limita a `0..mass_kg*gravity_m_s2*2.5` cuando `clip_to_classic_limits` esta activo. GRU/LSTM mantienen memoria interna; el runner llama a `reset()` al inicio de cada simulacion.
 
 ## `perturbations`
 
@@ -267,7 +292,8 @@ La validacion implementada en `src/simulador_quad/scenarios/schema.py` cubre par
 - tiempos `physics_dt_s`, `control_dt_s`, `telemetry_dt_s` y `max_duration_s` positivos;
 - estado inicial con vectores `[3]` finitos y cuaternion `orientation_WB` nulo o unitario;
 - controlador clasico con ganancias `Kp_pos`, `Kd_pos`, `Kp_att`, `Kd_att` opcionales como vectores `[3]` finitos y no negativos;
-- limites `controller.max_body_moments_Nm` opcionales como vector `[3]` finito y no negativo.
+- controlador neuronal con `checkpoint_path`, `normalization_path` y `architecture` validos;
+- limites `controller.max_body_moments_Nm` opcionales como vector `[3]` finito y no negativo para controladores clasicos y neuronales.
 - trayectorias `line` / `waypoint` con `waypoints` no vacio, cada waypoint como vector `[3]` finito, `times` legacy con longitud compatible si aparece, y parametros opcionales de velocidad/aceleracion/tolerancia/dwell fisicamente validos.
 
 Ejemplo de error:
@@ -298,6 +324,7 @@ Para probar los distintos tipos de trayectorias, se proporcionan los siguientes 
 - `circle_noisy_wind.yaml`: Círculo con viento constante y ruido en sensores.
 - `lissajous_clean.yaml`: Trayectoria en curva de Lissajous (`lissajous`) 3D.
 - `waypoint_clean.yaml`: Misión secuencial de puntos (`waypoint` / `line`) con perfil de velocidad limitado y parada controlada en cada waypoint.
+- `neural_ood_lemniscate.yaml`: Trayectoria de lemniscata (`lemniscate`) para evaluacion OOD. Por defecto usa controlador clasico; puede ejecutarse con un checkpoint neuronal mediante `tools\run_neural_scenario.py`.
 
 La clasificacion de estos escenarios como nominales, robustez o demostracion, junto con sus criterios de aceptacion, esta en `docs/simulador/validacion.md`.
 

@@ -1,8 +1,8 @@
 # Dataset clasico
 
-Este documento describe el estado implementado de la generacion de datos clasicos previa al control neuronal. El objetivo es producir episodios reproducibles con el controlador clasico para usarlos mas adelante como base de imitacion.
+Este documento describe el estado implementado de la generacion de datos clasicos. El objetivo es producir episodios reproducibles con el controlador clasico y usarlos como dataset experto para imitacion neuronal.
 
-La capa neuronal queda fuera de este flujo: no hay loaders de ML, entrenamiento, inferencia ni evaluacion neuronal en bucle cerrado.
+La generacion del dataset sigue siendo clasica: no entrena redes ni ejecuta control neuronal. La capa neuronal consume sus `manifest.csv` y `telemetry.json` mediante los scripts descritos en `docs/simulador/control_neuronal.md`.
 
 ## Alcance
 
@@ -82,6 +82,8 @@ Los splits se asignan de forma estratificada por familia:
 - `lissajous`: 34 train, 7 val, 7 test.
 - `waypoint`: 25 train, 5 val, 6 test.
 
+Estos splits son adecuados para entrenamiento supervisado y evaluacion in-distribution, pero no constituyen por si solos una prueba fuerte de generalizacion geometrica. Las mismas familias, geometrias y perturbaciones aparecen repartidas entre splits, aunque no se repiten pares exactos `geometry_id + perturbation_id`. Para estudiar generalizacion debe generarse o aportar un dataset OOD separado y evaluarlo con `tools\evaluate_neural_controller.py --ood-dataset`.
+
 ## Comandos
 
 Generar estructura, PIDs iniciales y escenarios YAML:
@@ -126,6 +128,17 @@ uv run python tools\summarize_classic_dataset.py --dataset data\classic_dataset\
 ```
 
 El resumen clasifica cada episodio como `VALID`, `INVALID`, `MISSING` o `ERROR` y escribe `summary.csv`.
+
+Uso como dataset de imitacion neuronal:
+
+```powershell
+uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture mlp --out data\neural_control\mlp_v1
+uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture gru --out data\neural_control\gru_v1
+uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture lstm --out data\neural_control\lstm_v1
+uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1
+```
+
+La normalizacion neuronal se calcula solo con muestras `train`. Para evaluar OOD, el directorio pasado a `--ood-dataset` debe contener `manifest.csv` y telemetria ya generada; el evaluador no simula esos episodios.
 
 ## Criterios de validez
 

@@ -2,30 +2,27 @@
 
 Este repositorio contiene el desarrollo de un simulador 6DOF de cuadricoptero para un Trabajo de Fin de Grado. El objetivo academico es disponer de un banco de ensayo trazable para comparar un controlador clasico con, en una fase posterior, un controlador neuronal entrenado por imitacion.
 
-El estado actual consolida la parte clasica del simulador y la generacion reproducible de datos clasicos por familia de trayectoria. La capa neuronal no esta implementada todavia: no hay loaders de ML, entrenamiento, carga de modelo ni evaluacion neuronal en bucle cerrado.
+El estado actual incluye la parte clásica del simulador y el **Pipeline de Control Neuronal por Imitación**, permitiendo entrenar y ejecutar redes MLP y recurrentes (GRU/LSTM) para el control del cuadricóptero.
 
 ## Estado actual
 
 Implementado:
 
-- Dinamica de cuerpo rigido 6DOF con mundo ENU y cuerpo FRD.
+- Dinámica de cuerpo rígido 6DOF con mundo ENU y cuerpo FRD.
 - Actitud mediante cuaterniones `[w, x, y, z]`.
-- Integracion RK4 con pasos separados de fisica, control y telemetria.
-- Controlador clasico en cascada.
-- Ganancias explicitas opcionales del controlador clasico desde YAML, con defaults si no se declaran.
-- Mixer de cuadricoptero, actuadores con saturacion, retardo puro opcional y lag de primer orden sobre `omega`.
-- Drag lineal simplificado, viento constante y ruido gaussiano de observacion en posicion/velocidad.
-- Referencias analíticas (`hold`, `circle`, `lissajous`) y misión secuencial state-aware con parada en cada punto (`waypoint`).
-- Escenarios YAML, telemetria JSON, metricas JSON con unidades fisicas explicitas, figuras PNG y visor 3D HTML.
-- Validacion fisica basica de escenarios antes de ejecutar.
-- Generacion de dataset clasico versionado mediante scripts en `tools/` y manifiesto CSV.
+- Integración RK4 con pasos separados de física, control y telemetría.
+- Controlador clásico en cascada y **Controlador Neuronal en bucle cerrado**.
+- Pipeline de ML con PyTorch: Datasets para MLP y Secuenciales (GRU/LSTM), Normalización determinista, Arquitecturas y Entrenamiento supervisado.
+- Mixer de cuadricóptero, actuadores con saturación, retardo puro opcional y lag de primer orden sobre `omega`.
+- Drag lineal simplificado, viento constante y ruido gaussiano de observación en posición/velocidad.
+- Referencias analíticas (`hold`, `circle`, `lissajous`, `lemniscate`) y misión secuencial state-aware con parada en cada punto (`waypoint`).
+- Escenarios YAML, telemetría JSON, métricas JSON con unidades físicas explícitas, figuras PNG y visor 3D HTML.
+- Generación de dataset experto y entrenamiento/evaluación de modelos mediante scripts en `tools/`.
 
 Fuera de alcance actual:
 
-- Control neuronal por imitacion.
-- Entrenamiento neuronal, loaders de ML e inferencia de modelos.
-- Aerodinamica formal mas alla del drag lineal.
-- Modelo de bateria, sensores realistas, estimador onboard, contacto con suelo o validacion con datos reales.
+- Aerodinámica formal más allá del drag lineal.
+- Modelo de batería, sensores realistas, estimador onboard, contacto con suelo o validación con datos reales.
 
 ## Comandos minimos
 
@@ -43,6 +40,24 @@ uv run python tools\generate_classic_dataset.py --version v1 --out data\classic_
 uv run python tools\run_classic_dataset.py --dataset data\classic_dataset\v1 --no-visualization
 uv run python tools\summarize_classic_dataset.py --dataset data\classic_dataset\v1
 ```
+
+Para el pipeline neuronal (ML):
+
+```powershell
+# Entrenamiento (ejemplo GRU)
+uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture gru --out data\neural_control\gru_v1
+
+# Evaluacion supervisada in-distribution
+uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1
+
+# Evaluacion supervisada OOD sobre un dataset ya generado
+uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1 --ood-dataset data\neural_ood\lemniscate_v1
+
+# Ejecucion en bucle cerrado (escenario OOD)
+uv run python tools\run_neural_scenario.py --scenario scenarios\neural_ood_lemniscate.yaml --checkpoint data\neural_control\gru_v1\checkpoints\gru_best.pt --normalization data\neural_control\gru_v1\normalization.json --architecture gru
+```
+
+La evaluacion OOD supervisada espera un directorio con `manifest.csv` y `telemetry.json` ya generados; no ejecuta por si sola el escenario OOD. Para evaluar en bucle cerrado se usa `run_neural_scenario.py`, que sustituye el controlador del YAML en memoria sin modificar el escenario base.
 
 Para ejecutar otros escenarios:
 
@@ -62,6 +77,7 @@ uv run simulador-quad run scenarios\waypoint_clean.yaml --no-visualization
 - `docs/simulador/trazabilidad.md`: matriz requisito-modelo-codigo-prueba-escenario-metrica.
 - `docs/simulador/validacion.md`: clasificacion de escenarios y criterios de aceptacion.
 - `docs/simulador/dataset_clasico.md`: generacion, ejecucion y resumen del dataset clasico.
+- `docs/simulador/control_neuronal.md`: entrenamiento, evaluacion e inferencia del controlador neuronal por imitacion.
 - `docs/plans/`: specs vigentes de saneamiento y trabajo futuro inmediato.
 - `docs/plans/archived/`: planes historicos no vigentes.
 - `docs/reviews/`: auditorias y revisiones tecnicas.

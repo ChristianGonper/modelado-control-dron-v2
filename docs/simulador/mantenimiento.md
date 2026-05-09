@@ -60,6 +60,25 @@ Ejecutar al menos:
 uv run pytest tests\test_classic_controller_config.py tests\test_classic_dataset_generation.py tests\test_classic_dataset_scripts.py tests\test_classic_pid_selection.py
 ```
 
+## Cuando cambie el control neuronal
+
+Revisar:
+
+- `docs/simulador/control_neuronal.md`
+- `docs/simulador/arquitectura.md`
+- `docs/simulador/escenarios_yaml.md`
+- `docs/simulador/validacion.md`
+- `docs/simulador/trazabilidad.md`
+- `README.md`
+
+Actualizar features, targets, normalizacion, artefactos (`config.yaml`, `normalization.json`, checkpoints, metricas), comandos de `tools/`, limites de clipping y criterios OOD. Si cambia la evaluacion OOD, dejar claro si el comando ejecuta escenarios o consume telemetria ya generada.
+
+Ejecutar al menos:
+
+```powershell
+uv run pytest tests\test_neural_dataset.py tests\test_neural_models.py tests\test_neural_training.py tests\test_neural_evaluation.py tests\test_neural_controller.py
+```
+
 ## Cuando cambie el modelo fisico
 
 Revisar:
@@ -76,7 +95,7 @@ Ejemplos que obligan a documentar con cuidado:
 - contacto con suelo;
 - bateria;
 - aerodinamica formal;
-- controlador neuronal operativo.
+- cambios en el contrato del controlador neuronal o en los comandos que sustituye.
 
 ## Checklist antes de cerrar una actualizacion
 
@@ -86,6 +105,7 @@ uv run simulador-quad run scenarios\hover_clean.yaml
 uv run simulador-quad run scenarios\circle_drag.yaml
 uv run simulador-quad plot results\hover_clean\telemetry.json --metrics results\hover_clean\metrics.json --out results\hover_clean\figures
 uv run python tools\generate_classic_dataset.py --version test_v1 --out $env:TEMP\simulador_quad_dataset_test_v1 --overwrite
+uv run pytest tests\test_neural_dataset.py tests\test_neural_models.py tests\test_neural_training.py tests\test_neural_evaluation.py tests\test_neural_controller.py
 ```
 
 Despues de ejecutar:
@@ -95,4 +115,6 @@ Despues de ejecutar:
 - La documentacion no contradice `loader.py`, `export.py`, `report.py` ni el CLI.
 - La validacion de escenarios no contradice `schema.py`.
 - La documentacion del dataset no contradice `src/simulador_quad/datasets/classic.py` ni los scripts en `tools/`.
+- La documentacion neuronal no contradice `src/simulador_quad/ml/`, `src/simulador_quad/control/neural.py` ni los scripts neuronales en `tools/`.
+- OOD queda documentado como evaluacion separada y no se mezcla con `test`.
 - Los documentos normativos no se han modificado salvo decision explicita.

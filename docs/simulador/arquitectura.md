@@ -31,6 +31,8 @@ El simulador esta organizado como codigo cientifico simple. Las carpetas separan
 - `scenarios/schema.py`: validacion fisica simple de YAML antes de simular.
 - `trajectories/analytic.py`: referencias `hold`, `circle`, `lissajous` y `line` / `waypoint`. `line` y `waypoint` usan comportamiento `waypoint_stop`: perfil trapezoidal/triangular por tramo, parada en cada waypoint y avance condicionado por tolerancias y dwell.
 - `control/classic.py`: controlador clasico en cascada.
+- `control/neural.py`: controlador neuronal por imitacion compatible con el mismo contrato de control.
+- `ml/`: carga de telemetria, normalizacion train-only, modelos MLP/GRU/LSTM, entrenamiento y evaluacion supervisada.
 - `datasets/classic.py`: definicion reproducible del dataset clasico, familias, perfiles, YAML generados, PID iniciales, manifiesto y filtros de aceptacion.
 - `runner.py`: orquestacion multi-rate, ZOH, telemetria y terminacion.
 - `telemetry/export.py`: exportacion JSON.
@@ -41,6 +43,9 @@ El simulador esta organizado como codigo cientifico simple. Las carpetas separan
 - `tools/tune_classic_pid.py`: ajusta un PID clasico por familia en el perfil nominal con drag y actuadores.
 - `tools/run_classic_dataset.py`: ejecuta episodios del manifiesto y escribe `run_report.csv`.
 - `tools/summarize_classic_dataset.py`: resume resultados del dataset en `summary.csv`.
+- `tools/train_neural_controller.py`: entrena MLP, GRU o LSTM por imitacion desde telemetria clasica.
+- `tools/evaluate_neural_controller.py`: evalua modelos entrenados sobre `train`/`val`/`test` y, opcionalmente, un dataset OOD.
+- `tools/run_neural_scenario.py`: ejecuta un escenario existente sustituyendo el controlador por un checkpoint neuronal sin modificar el YAML base.
 
 ## Contratos de datos
 
@@ -80,6 +85,10 @@ Si `initial_state.orientation_WB` es `null`, el cargador genera una actitud nive
 Para `trajectory.type: "line"` o `"waypoint"`, la validacion comprueba que `waypoints` sea una lista no vacia de puntos `[3]` finitos, que `times` tenga la misma longitud si aparece como campo deprecated, y que los parametros opcionales de velocidad, aceleracion, tolerancia y dwell sean no negativos o positivos segun corresponda.
 
 Para `controller.type: "classic"`, el YAML puede declarar `Kp_pos`, `Kd_pos`, `Kp_att`, `Kd_att` y `max_body_moments_Nm` como vectores de tres componentes no negativas. Si faltan ganancias, el controlador conserva sus defaults.
+
+Para `controller.type: "neural"`, el YAML debe declarar `architecture`, `checkpoint_path` y `normalization_path`. El controlador neuronal implementa `compute_control(time_s, obs_state, reference)` y devuelve el mismo `ControlCommand` que el clasico: empuje colectivo en N y momentos FRD en Nm. Las arquitecturas soportadas son `mlp`, `gru` y `lstm`. GRU/LSTM mantienen una ventana interna de features y el runner llama a `reset()` al inicio de cada simulacion para limpiar esa memoria. Si `clip_to_classic_limits` es `true`, el controlador neuronal limita el empuje a `0..mass_kg*gravity_m_s2*2.5` y los momentos a `+-max_body_moments_Nm`. Si `max_body_moments_Nm` falta, usa `[10.0, 10.0, 2.0]`.
+
+La evaluacion supervisada neuronal se hace sobre telemetria ya exportada. `train` calcula pesos y normalizacion, `val` selecciona checkpoint, `test` mide desempeno in-distribution y OOD se evalua aparte con `--ood-dataset`. El dataset OOD debe tener `manifest.csv` y `telemetry.json` generados previamente; el evaluador no ejecuta escenarios por si mismo.
 
 ## Dataset clasico
 
@@ -123,9 +132,9 @@ Las metricas no sustituyen a la inspeccion de telemetria. Para explicar un resul
 
 ## Limites actuales
 
-- Solo hay controlador clasico estable en la interfaz de escenarios.
-- Las ganancias del controlador clasico pueden venir del YAML, pero el unico controlador operativo sigue siendo el clasico.
 - El viento es constante.
 - El ruido de observacion afecta solo a posicion y velocidad.
 - La visualización es postproceso y automática tras cada ejecución exitosa.
-- La generacion de dataset clasico no implementa entrenamiento neuronal, loaders de ML ni inferencia.
+- El controlador neuronal aprende por imitacion supervisada de los comandos clasicos; no optimiza directamente una funcion de coste en bucle cerrado.
+- La evaluacion `train`/`val`/`test` del dataset clasico mide desempeno in-distribution. La generalizacion debe evaluarse con datasets o escenarios OOD separados.
+- La metrica supervisada `saturation_percentage` neuronal usa por defecto masa `1.0 kg`, gravedad `9.81 m/s^2`, empuje maximo `m*g*2.5` y momentos `[10, 10, 2] Nm`, salvo que se llame al evaluador interno con otros limites.
