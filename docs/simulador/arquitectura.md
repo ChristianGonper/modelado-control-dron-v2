@@ -8,14 +8,14 @@ El simulador esta organizado como codigo cientifico simple. Las carpetas separan
 2. `scenarios.loader` lee y valida el YAML; despues instancia vehiculo, rotores, estado inicial, trayectoria, controlador, viento y ruido.
 3. `SimulationRunner` inicializa tiempos de fisica, control y telemetria.
 4. En cada ciclo:
-   - obtiene la referencia de trayectoria para `time_s`;
+   - obtiene la referencia de trayectoria para `time_s`; si la trayectoria implementa `get_reference_for_state`, tambien recibe el estado actual para generar referencias state-aware;
    - genera la observacion, con ruido si aplica;
    - llama al controlador cuando toca `control_dt_s`;
    - convierte empuje/momentos a comandos de rotor mediante el mezclador;
    - aplica retardo, lag y saturacion en actuadores;
    - guarda telemetria cuando toca `telemetry_dt_s`;
    - avanza el estado con RK4 usando `physics_dt_s`.
-5. El episodio termina por límite de tiempo, por una condición de seguridad/validez o por haber llegado al final de una trayectoria finita (`line` / `waypoint`).
+5. El episodio termina por límite de tiempo, por una condición de seguridad/validez o por haber llegado al final de una trayectoria finita (`line` / `waypoint`). En trayectorias state-aware, la terminación normal puede estar gobernada por `check_completion`.
 6. Se exportan `telemetry.json` y `metrics.json`.
 7. Se generan automáticamente figuras PNG y el visor interactivo `visualization_3d.html`.
 
@@ -29,7 +29,7 @@ El simulador esta organizado como codigo cientifico simple. Las carpetas separan
 - `dynamics/mixer.py`: asignacion de empuje colectivo y momentos a empujes de rotor.
 - `dynamics/perturbations.py`: drag lineal, viento constante y ruido de observacion.
 - `scenarios/schema.py`: validacion fisica simple de YAML antes de simular.
-- `trajectories/analytic.py`: referencias `hold`, `circle`, `lissajous` y `line`.
+- `trajectories/analytic.py`: referencias `hold`, `circle`, `lissajous` y `line` / `waypoint`. `line` y `waypoint` usan comportamiento `waypoint_stop`: perfil trapezoidal/triangular por tramo, parada en cada waypoint y avance condicionado por tolerancias y dwell.
 - `control/classic.py`: controlador clasico en cascada.
 - `datasets/classic.py`: definicion reproducible del dataset clasico, familias, perfiles, YAML generados, PID iniciales, manifiesto y filtros de aceptacion.
 - `runner.py`: orquestacion multi-rate, ZOH, telemetria y terminacion.
@@ -55,6 +55,8 @@ Los contratos relevantes para interpretar resultados son:
 
 La telemetria distingue comando solicitado, comando objetivo de rotor y estado aplicado. Esta separacion es importante para estudiar saturacion, retardos y lag de actuadores.
 
+Las trayectorias analiticas (`hold`, `circle`, `lissajous`) dependen solo de `time_s`. Las trayectorias `line` / `waypoint` son state-aware: mantienen fase interna de mision y generan la referencia del siguiente waypoint usando el estado actual para comprobar asentamiento. El campo legacy `times` puede aparecer en YAML, pero no controla el avance entre waypoints.
+
 ## Telemetria
 
 Cada muestra de `telemetry.json` contiene:
@@ -74,6 +76,8 @@ Cada muestra de `telemetry.json` contiene:
 Antes de ejecutar o instanciar un escenario, `validate_scenario_config` comprueba los parametros fisicos que afectan directamente a la validez del resultado: masa, gravedad, inercia, drag, rotores, tiempos y estado inicial. Los errores incluyen la ruta del campo, por ejemplo `vehicle.rotors[0].omega_max_rad_s`.
 
 Si `initial_state.orientation_WB` es `null`, el cargador genera una actitud nivelada a partir de `yaw_rad`. Si se proporciona un cuaternion, debe ser finito y unitario; la validacion lo rechaza en lugar de normalizarlo silenciosamente.
+
+Para `trajectory.type: "line"` o `"waypoint"`, la validacion comprueba que `waypoints` sea una lista no vacia de puntos `[3]` finitos, que `times` tenga la misma longitud si aparece como campo deprecated, y que los parametros opcionales de velocidad, aceleracion, tolerancia y dwell sean no negativos o positivos segun corresponda.
 
 Para `controller.type: "classic"`, el YAML puede declarar `Kp_pos`, `Kd_pos`, `Kp_att`, `Kd_att` y `max_body_moments_Nm` como vectores de tres componentes no negativas. Si faltan ganancias, el controlador conserva sus defaults.
 

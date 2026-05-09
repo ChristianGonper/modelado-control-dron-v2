@@ -15,6 +15,7 @@ Implementado:
 - Ganancias explicitas opcionales del controlador clasico desde YAML, con defaults si no se declaran.
 - Mixer de cuadricoptero, actuadores con saturacion, retardo puro opcional y lag de primer orden sobre `omega`.
 - Drag lineal simplificado, viento constante y ruido gaussiano de observacion en posicion/velocidad.
+- Referencias analíticas (`hold`, `circle`, `lissajous`) y misión secuencial state-aware con parada en cada punto (`waypoint`).
 - Escenarios YAML, telemetria JSON, metricas JSON con unidades fisicas explicitas, figuras PNG y visor 3D HTML.
 - Validacion fisica basica de escenarios antes de ejecutar.
 - Generacion de dataset clasico versionado mediante scripts en `tools/` y manifiesto CSV.

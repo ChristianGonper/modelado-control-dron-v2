@@ -150,26 +150,42 @@ trajectory:
 
 ### Line / Waypoint
 
-Interpola waypoints con smoothstep cubico. En el YAML puede declararse como `line` o `waypoint`.
+Misión discreta de alcanzar puntos con parada controlada en cada uno. En el YAML puede declararse como `line` o `waypoint`; ambos nombres cargan el mismo comportamiento `waypoint_stop`.
+
+Esta trayectoria es **state-aware**: la referencia no avanza por tiempo global, sino que planifica un perfil de movimiento (trapezoidal o triangular) hacia el siguiente punto y espera a que el vehículo se asiente antes de saltar al siguiente tramo.
 
 ```yaml
 trajectory:
   type: "line"
   waypoints:
+    - [0, 0, 0]
     - [0, 0, 2]
     - [2, 0, 2]
-    - [2, 2, 3]
-  times: [0.0, 4.0, 8.0]
   yaw_rad: 0.0
+  max_speed_m_s: 0.6
+  max_acceleration_m_s2: 0.5
+  waypoint_tolerance_m: 0.20
+  waypoint_speed_tolerance_m_s: 0.20
+  dwell_time_s: 0.40
 ```
 
 - `waypoints`: lista de posiciones en mundo ENU.
-- `times`: tiempo asociado a cada waypoint. Debe tener la misma longitud que `waypoints`.
 - `yaw_rad`: guiñada constante de la referencia. Si falta, se usa `0.0`.
+- `max_speed_m_s`: velocidad máxima del perfil (default: `0.6`).
+- `max_acceleration_m_s2`: aceleración máxima del perfil (default: `0.5`).
+- `waypoint_tolerance_m`: distancia máxima al objetivo para considerar llegada (default: `0.20`).
+- `waypoint_speed_tolerance_m_s`: velocidad máxima permitida para considerar asentamiento (default: `0.20`).
+- `dwell_time_s`: tiempo que debe permanecer dentro de las tolerancias antes de avanzar (default: `0.40`).
+- `times`: **deprecated**. Lista legacy de tiempos asociada a waypoints. Si aparece, debe tener la misma longitud que `waypoints`; se acepta por compatibilidad pero no gobierna el avance entre waypoints.
 
-Antes del primer tiempo mantiene el primer waypoint. Entre waypoints usa `s(tau) = 3 tau^2 - 2 tau^3`, con velocidad cero en los extremos de cada tramo.
+**Comportamiento:**
+1. **MOVE_TO_WAYPOINT**: Genera un perfil de velocidad suave hacia el siguiente waypoint.
+2. **HOLD_AT_WAYPOINT**: Una vez que el perfil llega al destino, la referencia se queda fija y espera a que el vehículo cumpla los criterios de posición, velocidad y tiempo de permanencia (`dwell`).
+3. **SWITCH_SEGMENT**: Solo tras cumplir `dwell`, se avanza al siguiente tramo.
 
-**Terminación finita:** A diferencia de otras trayectorias, `line` / `waypoint` son finitas. El episodio termina automáticamente con la causa `"Trajectory completed"` cuando el vehículo llega al último waypoint (error de posición <= 0.20 m y velocidad <= 0.30 m/s) una vez superado el último instante de `times`. Si no llega a entrar en tolerancia, el episodio continuará hasta agotar `max_duration_s`.
+**Terminación:** Cuando se completa el último waypoint de la lista, el episodio termina automáticamente con la causa `"Trajectory completed"`.
+
+El avance de `line` / `waypoint` no depende de `times` ni de `termination.max_duration_s`; si el vehículo no consigue asentarse en un waypoint, la referencia permanece en ese punto hasta que cumpla las tolerancias o hasta que otra condición de terminación corte el episodio.
 
 ## `controller`
 
@@ -252,6 +268,7 @@ La validacion implementada en `src/simulador_quad/scenarios/schema.py` cubre par
 - estado inicial con vectores `[3]` finitos y cuaternion `orientation_WB` nulo o unitario;
 - controlador clasico con ganancias `Kp_pos`, `Kd_pos`, `Kp_att`, `Kd_att` opcionales como vectores `[3]` finitos y no negativos;
 - limites `controller.max_body_moments_Nm` opcionales como vector `[3]` finito y no negativo.
+- trayectorias `line` / `waypoint` con `waypoints` no vacio, cada waypoint como vector `[3]` finito, `times` legacy con longitud compatible si aparece, y parametros opcionales de velocidad/aceleracion/tolerancia/dwell fisicamente validos.
 
 Ejemplo de error:
 
@@ -280,7 +297,7 @@ Para probar los distintos tipos de trayectorias, se proporcionan los siguientes 
 - `circle_drag.yaml`: Trayectoria circular (`circle`) con rozamiento lineal activo.
 - `circle_noisy_wind.yaml`: Círculo con viento constante y ruido en sensores.
 - `lissajous_clean.yaml`: Trayectoria en curva de Lissajous (`lissajous`) 3D.
-- `waypoint_clean.yaml`: Seguimiento de una lista de puntos (`waypoint` / `line`) con paradas suaves.
+- `waypoint_clean.yaml`: Misión secuencial de puntos (`waypoint` / `line`) con perfil de velocidad limitado y parada controlada en cada waypoint.
 
 La clasificacion de estos escenarios como nominales, robustez o demostracion, junto con sus criterios de aceptacion, esta en `docs/simulador/validacion.md`.
 

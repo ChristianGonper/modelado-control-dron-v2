@@ -51,7 +51,7 @@ Los umbrales numericos de RMSE y error maximo son iniciales. Deben revisarse cua
 | `scenarios/circle_drag.yaml` | Nominal con disipacion | Verificar seguimiento circular con drag lineal activo. | Drag lineal `[0.1, 0.1, 0.05]`, sin viento ni ruido. | `42` | `termination_reason == "Time limit reached"`, `saturation_percentage == 0`, `degradation_percentage <= 1`, `position_rmse_m <= 0.45`. |
 | `scenarios/circle_noisy_wind.yaml` | Robustez | Verificar seguimiento circular con viento constante, ruido de observacion, retardo y lag. | Viento `[2, 1, 0]`, ruido pos/vel, drag, retardo y lag. | `123` | `termination_reason == "Time limit reached"`, `saturation_percentage == 0`, `degradation_percentage <= 5`, `position_rmse_m <= 0.60`. |
 | `scenarios/lissajous_clean.yaml` | Nominal dinamico | Verificar seguimiento suave 3D sin perturbaciones externas. | Sin viento, sin ruido, sin drag. | `42` | `termination_reason == "Time limit reached"`, `saturation_percentage == 0`, `degradation_percentage <= 1`, `position_rmse_m <= 0.70`. |
-| `scenarios/waypoint_clean.yaml` | Demostracion de trayectoria suavizada | Verificar carga y seguimiento de waypoints con smoothstep cubico. | Sin viento, sin ruido, sin drag. | `42` | `termination_reason == "Trajectory completed"`, sin fallo por actitud/no finitos/saturacion persistente, `position_rmse_m <= 0.50`. |
+| `scenarios/waypoint_clean.yaml` | Demostración de trayectoria con paradas | Verificar llegada secuencial a puntos con frenado y asentamiento en cada waypoint. | Sin viento, sin ruido, sin drag. | `42` | `termination_reason == "Trajectory completed"`, sin fallo por actitud/no finitos/saturación persistente, `position_rmse_m <= 0.40`. |
 
 ## Resultados historicos
 

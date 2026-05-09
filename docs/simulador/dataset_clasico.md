@@ -141,6 +141,8 @@ Un episodio se considera valido por los filtros duros del dataset si:
   - `lissajous`: `0.90 m`;
   - `waypoint`: `0.80 m`.
 
+Para la familia `waypoint`, el dataset mide la capacidad de alcanzar secuencialmente una lista de puntos, frenar y asentarse en cada uno antes de avanzar al siguiente. La causa de terminación normal es `"Trajectory completed"`. Si los escenarios generados conservan el campo legacy `times`, este no gobierna el avance entre waypoints; el avance depende de tolerancia de posición, tolerancia de velocidad y dwell de la trayectoria `waypoint_stop`.
+
 El score de ajuste PID combina error de posicion, actitud RMS, esfuerzo de control normalizado, saturacion y degradacion. El empuje se normaliza por el peso `m*g` y los momentos por `0.1 Nm`, para no mezclar unidades directamente.
 
 ## Pruebas automaticas
