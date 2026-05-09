@@ -72,7 +72,7 @@ BASE_TIMING = {
 }
 
 BASE_TERMINATION = {
-    "max_duration_s": 15.0, # Sufficient for all families
+    "max_duration_s": 45.0, # Sufficient for all families
     "z_min_m": 0.0,
     "max_attitude_angle_rad": 1.256, # ~72 deg
     "max_saturation_duration_s": 2.0
