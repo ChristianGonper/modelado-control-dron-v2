@@ -1,0 +1,51 @@
+name: "Neural OOD Lemniscate"
+seed: 1234
+description: "Escenario de evaluacion Out-of-Distribution con trayectoria Lemniscata de Gerono."
+
+vehicle:
+  mass_kg: 1.0
+  inertia_B_kg_m2: [[0.05, 0, 0], [0, 0.05, 0], [0, 0, 0.1]]
+  linear_drag_coefficient: [0.01, 0.01, 0.01]
+  rotors:
+    - {position_B_m: [0.17, 0.17, 0], turning_direction: -1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 1000, time_constant_s: 0.05, delay_s: 0.0}
+    - {position_B_m: [0.17, -0.17, 0], turning_direction: 1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 1000, time_constant_s: 0.05, delay_s: 0.0}
+    - {position_B_m: [-0.17, 0.17, 0], turning_direction: 1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 1000, time_constant_s: 0.05, delay_s: 0.0}
+    - {position_B_m: [-0.17, -0.17, 0], turning_direction: -1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 1000, time_constant_s: 0.05, delay_s: 0.0}
+
+initial_state:
+  position_W_m: [0, 0, 2.0]
+  velocity_W_m_s: [0, 0, 0]
+  orientation_WB: null
+  angular_velocity_B_rad_s: [0, 0, 0]
+
+trajectory:
+  type: "lemniscate"
+  center_W_m: [0, 0, 2.0]
+  a: 2.0
+  b: 1.0
+  omega_rad_s: 0.5
+  yaw_mode: "forward"
+
+controller:
+  type: "classic" # Por defecto clasico, se puede sobreescribir con el script run_neural_scenario.py
+
+perturbations:
+  constant_wind_W_m_s: [0.5, 0.2, 0]
+  pos_std_m: 0.01
+  vel_std_m_s: 0.01
+
+timing:
+  physics_dt_s: 0.01
+  control_dt_s: 0.02
+  telemetry_dt_s: 0.1
+
+termination:
+  max_duration_s: 20.0
+  z_min_m: 0.0
+  max_attitude_angle_rad: 1.256
+  max_saturation_duration_s: 1.0
+
+output:
+  dir: "results/neural_ood_lemniscate"
+  telemetry_file: "telemetry.json"
+  metrics_file: "metrics.json"
