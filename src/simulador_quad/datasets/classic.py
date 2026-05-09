@@ -440,9 +440,13 @@ def passes_hard_filters(metrics: Dict[str, Any], family: str) -> Tuple[bool, str
         if val is None or not np.isfinite(val):
             return False, f"Non-finite or missing metric: {k}"
 
-    if metrics["termination_reason"] != "Time limit reached":
+    valid_terminations = ["Time limit reached"]
+    if family == "waypoint":
+        valid_terminations.append("Trajectory completed")
+
+    if metrics["termination_reason"] not in valid_terminations:
         return False, f"Invalid termination: {metrics['termination_reason']}"
-    
+
     if metrics["saturation_percentage"] > 2.0:
         return False, f"Saturation too high: {metrics['saturation_percentage']:.2f}%"
     
@@ -457,5 +461,5 @@ def passes_hard_filters(metrics: Dict[str, Any], family: str) -> Tuple[bool, str
     }
     if metrics["position_max_err_m"] > limits.get(family, 1.0):
         return False, f"Max position error too high: {metrics['position_max_err_m']:.2f} m"
-        
+
     return True, "OK"

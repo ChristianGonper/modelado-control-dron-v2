@@ -36,6 +36,17 @@ def test_hard_filters():
     assert not ok
     assert "position error" in msg.lower()
 
+    # Pass case: waypoint completed
+    m_wp = metrics_ok.copy()
+    m_wp["termination_reason"] = "Trajectory completed"
+    ok, msg = passes_hard_filters(m_wp, "waypoint")
+    assert ok
+
+    # Fail case: hold completed (not allowed)
+    ok, msg = passes_hard_filters(m_wp, "hold")
+    assert not ok
+    assert "termination" in msg.lower()
+
 def test_pid_score():
     from simulador_quad.core.frames import get_level_quaternion
     class MockState:
