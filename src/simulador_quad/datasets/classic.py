@@ -78,6 +78,19 @@ BASE_TERMINATION = {
     "max_saturation_duration_s": 2.0
 }
 
+WAYPOINT_TERMINATION = {
+    **BASE_TERMINATION,
+    "max_duration_s": 60.0,
+}
+
+WAYPOINT_STOP_DEFAULTS = {
+    "max_speed_m_s": 0.6,
+    "max_acceleration_m_s2": 0.5,
+    "waypoint_tolerance_m": 0.20,
+    "waypoint_speed_tolerance_m_s": 0.20,
+    "dwell_time_s": 0.40,
+}
+
 # --- Helper Functions ---
 
 def build_pid_id(family: str, version: str) -> str:
@@ -145,7 +158,7 @@ def build_scenario_config(
             "vel_std_m_s": profile["vel_std"]
         },
         "timing": BASE_TIMING,
-        "termination": BASE_TERMINATION,
+        "termination": WAYPOINT_TERMINATION if family == "waypoint" else BASE_TERMINATION,
         "output": {
             "dir": os.path.join(output_root, "results", family, scenario_id),
             "telemetry_file": "telemetry.json",
@@ -229,7 +242,9 @@ def get_geometry_variants(family: str) -> List[Tuple[str, Dict[str, Any]]]:
         return variants
 
     elif family == "waypoint":
-        # 6 patterns
+        # 6 waypoint_stop missions. The legacy `times` field is intentionally
+        # not generated: waypoint progression is governed by position, speed
+        # and dwell criteria inside the trajectory.
         names = ["square", "rect", "zigzag", "stairs", "diag3d", "closed"]
         waypoints = [
             [[0,0,2], [2,0,2], [2,2,2], [0,2,2], [0,0,2]],
@@ -239,19 +254,13 @@ def get_geometry_variants(family: str) -> List[Tuple[str, Dict[str, Any]]]:
             [[0,0,1], [2,2,3]],
             [[0,0,2], [1,1,3], [0,2,2], [-1,1,3], [0,0,2]]
         ]
-        times = [
-            [0, 4, 8, 12, 16],
-            [0, 5, 7, 12, 14],
-            [0, 3, 6, 9, 12],
-            [0, 3, 6, 9, 12],
-            [0, 10],
-            [0, 4, 8, 12, 16]
-        ]
         
         variants = []
-        for i, (name, wp, ts) in enumerate(zip(names, waypoints, times)):
+        for i, (name, wp) in enumerate(zip(names, waypoints)):
             variants.append((f"g{i+1:02d}", {
-                "type": "waypoint", "waypoints": wp, "times": ts
+                "type": "waypoint",
+                "waypoints": wp,
+                **WAYPOINT_STOP_DEFAULTS,
             }))
         return variants
     
@@ -318,7 +327,12 @@ def write_dataset_files(version: str, output_root: str, overwrite: bool = False)
         "hold": {"Kp_pos": [2.0, 2.0, 5.0], "Kd_pos": [1.0, 1.0, 2.0], "Kp_att": [4.0, 4.0, 1.0], "Kd_att": [1.5, 1.5, 0.5]},
         "circle": {"Kp_pos": [2.0, 2.0, 5.0], "Kd_pos": [1.0, 1.0, 2.0], "Kp_att": [4.0, 4.0, 1.0], "Kd_att": [1.5, 1.5, 0.5]},
         "lissajous": {"Kp_pos": [2.0, 2.0, 5.0], "Kd_pos": [1.0, 1.0, 2.0], "Kp_att": [4.0, 4.0, 1.0], "Kd_att": [1.5, 1.5, 0.5]},
-        "waypoint": {"Kp_pos": [2.0, 2.0, 5.0], "Kd_pos": [1.0, 1.0, 2.0], "Kp_att": [4.0, 4.0, 1.0], "Kd_att": [1.5, 1.5, 0.5]}
+        "waypoint": {
+            "Kp_pos": [2.0, 2.0, 5.0],
+            "Kd_pos": [1.2, 1.2, 2.4],
+            "Kp_att": [4.8, 4.8, 1.2],
+            "Kd_att": [1.2, 1.2, 0.4],
+        }
     }
     
     pid_configs = {}
@@ -338,7 +352,8 @@ def write_dataset_files(version: str, output_root: str, overwrite: bool = False)
         
         with open(pid_path, 'r') as f:
             pid_all = yaml.safe_load(f)
-            pid_configs[family] = {k: pid_all[k] for k in ["Kp_pos", "Kd_pos", "Kp_att", "Kd_att"] if k in pid_all}
+            pid_fields = ["Kp_pos", "Kd_pos", "Kp_att", "Kd_att", "max_body_moments_Nm"]
+            pid_configs[family] = {k: pid_all[k] for k in pid_fields if k in pid_all}
 
     # Write scenarios
     for row in manifest_data:

@@ -32,6 +32,22 @@ def test_determinism():
     m2 = get_dataset_manifest_data()
     assert m1 == m2
 
+def test_waypoint_dataset_uses_waypoint_stop_config():
+    manifest = get_dataset_manifest_data()
+    waypoint_rows = [row for row in manifest if row["family"] == "waypoint"]
+    assert waypoint_rows
+
+    for row in waypoint_rows:
+        cfg = row["trajectory_cfg"]
+        assert cfg["type"] == "waypoint"
+        assert "waypoints" in cfg
+        assert "times" not in cfg
+        assert cfg["max_speed_m_s"] == 0.6
+        assert cfg["max_acceleration_m_s2"] == 0.5
+        assert cfg["waypoint_tolerance_m"] == 0.20
+        assert cfg["waypoint_speed_tolerance_m_s"] == 0.20
+        assert cfg["dwell_time_s"] == 0.40
+
 def test_write_dataset(tmp_path):
     output_dir = tmp_path / "v1"
     write_dataset_files("v1", str(output_dir))
@@ -49,6 +65,15 @@ def test_write_dataset(tmp_path):
     config = load_scenario(str(first_path))
     assert config["name"] == manifest_df.iloc[0]["scenario_id"]
     assert config["vehicle"]["rotors"][0]["omega_max_rad_s"] == 1500.0
+
+    waypoint_row = manifest_df[manifest_df["family"] == "waypoint"].iloc[0]
+    waypoint_path = output_dir / waypoint_row["scenario_path"]
+    waypoint_config = load_scenario(str(waypoint_path))
+    waypoint_trajectory = waypoint_config["trajectory"]
+    assert "times" not in waypoint_trajectory
+    assert waypoint_trajectory["max_speed_m_s"] == 0.6
+    assert waypoint_trajectory["max_acceleration_m_s2"] == 0.5
+    assert waypoint_config["termination"]["max_duration_s"] == 60.0
 
 def test_initial_state_consistency(tmp_path):
     output_dir = tmp_path / "v1_init"
