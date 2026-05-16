@@ -31,7 +31,7 @@ El simulador esta organizado como codigo cientifico simple. Las carpetas separan
 - `scenarios/schema.py`: validacion fisica simple de YAML antes de simular.
 - `trajectories/analytic.py`: referencias `hold`, `circle`, `lissajous` y `line` / `waypoint`. `line` y `waypoint` usan comportamiento `waypoint_stop`: perfil trapezoidal/triangular por tramo, parada en cada waypoint y avance condicionado por tolerancias y dwell.
 - `control/classic.py`: controlador clasico en cascada.
-- `control/neural.py`: controlador neuronal por imitacion compatible con el mismo contrato de control.
+- `control/neural.py`: controladores neuronales compatibles con el mismo contrato de control; incluye sustitucion directa de comandos y programacion neuronal de ganancias del lazo externo.
 - `ml/`: carga de telemetria, normalizacion train-only, modelos MLP/GRU/LSTM, entrenamiento y evaluacion supervisada.
 - `datasets/classic.py`: definicion reproducible del dataset clasico, familias, perfiles, YAML generados, PID iniciales, manifiesto y filtros de aceptacion.
 - `runner.py`: orquestacion multi-rate, ZOH, telemetria y terminacion.
@@ -46,6 +46,11 @@ El simulador esta organizado como codigo cientifico simple. Las carpetas separan
 - `tools/train_neural_controller.py`: entrena MLP, GRU o LSTM por imitacion desde telemetria clasica.
 - `tools/evaluate_neural_controller.py`: evalua modelos entrenados sobre `train`/`val`/`test` y, opcionalmente, un dataset OOD.
 - `tools/run_neural_scenario.py`: ejecuta un escenario existente sustituyendo el controlador por un checkpoint neuronal sin modificar el YAML base.
+- `tools/train_neural_position_controller.py`: entrena una red que predice multiplicadores de `Kp_pos` y `Kd_pos`.
+- `tools/evaluate_neural_position_controller.py`: evalua fidelidad supervisada de ganancias externas.
+- `tools/run_neural_position_scenario.py`: ejecuta un escenario con red en el lazo externo y lazo interno clasico.
+- `tools/generate_pid_bank.py`: crea un banco inicial de PIDs por familia a partir de los PIDs actuales.
+- `tools/generate_position_gain_dataset_from_bank.py`: expande un dataset clasico usando el banco de PIDs para entrenar la red de ganancias.
 
 ## Contratos de datos
 
@@ -87,6 +92,8 @@ Para `trajectory.type: "line"` o `"waypoint"`, la validacion comprueba que `wayp
 Para `controller.type: "classic"`, el YAML puede declarar `Kp_pos`, `Kd_pos`, `Kp_att`, `Kd_att` y `max_body_moments_Nm` como vectores de tres componentes no negativas. Si faltan ganancias, el controlador conserva sus defaults.
 
 Para `controller.type: "neural"`, el YAML debe declarar `architecture`, `checkpoint_path` y `normalization_path`. El controlador neuronal implementa `compute_control(time_s, obs_state, reference)` y devuelve el mismo `ControlCommand` que el clasico: empuje colectivo en N y momentos FRD en Nm. Las arquitecturas soportadas son `mlp`, `gru` y `lstm`. GRU/LSTM mantienen una ventana interna de features y el runner llama a `reset()` al inicio de cada simulacion para limpiar esa memoria. Si `clip_to_classic_limits` es `true`, el controlador neuronal limita el empuje a `0..mass_kg*gravity_m_s2*2.5` y los momentos a `+-max_body_moments_Nm`. Si `max_body_moments_Nm` falta, usa `[10.0, 10.0, 2.0]`.
+
+Para `controller.type: "neural_position"`, el YAML debe declarar `architecture`, `checkpoint_path` y `normalization_path`. La red predice 6 log-multiplicadores para `Kp_pos` y `Kd_pos`. Tras desnormalizar, el controlador aplica `exp`, limita con `multiplier_clip` y usa el lazo interno clasico para convertir fuerza deseada en actitud, empuje y momentos. Por defecto `base_Kp_pos = [2.0, 2.0, 5.0]`, `base_Kd_pos = [1.0, 1.0, 2.0]` y `multiplier_clip = [0.25, 4.0]`.
 
 La evaluacion supervisada neuronal se hace sobre telemetria ya exportada. `train` calcula pesos y normalizacion, `val` selecciona checkpoint, `test` mide desempeno in-distribution y OOD se evalua aparte con `--ood-dataset`. El dataset OOD debe tener `manifest.csv` y `telemetry.json` generados previamente; el evaluador no ejecuta escenarios por si mismo.
 
@@ -136,5 +143,6 @@ Las metricas no sustituyen a la inspeccion de telemetria. Para explicar un resul
 - El ruido de observacion afecta solo a posicion y velocidad.
 - La visualización es postproceso y automática tras cada ejecución exitosa.
 - El controlador neuronal aprende por imitacion supervisada de los comandos clasicos; no optimiza directamente una funcion de coste en bucle cerrado.
+- El controlador `neural_position` aprende por imitacion de ganancias externas; mejora la estabilidad estructural al conservar el lazo interno clasico, pero su calidad final tambien debe medirse en bucle cerrado.
 - La evaluacion `train`/`val`/`test` del dataset clasico mide desempeno in-distribution. La generalizacion debe evaluarse con datasets o escenarios OOD separados.
 - La metrica supervisada `saturation_percentage` neuronal usa por defecto masa `1.0 kg`, gravedad `9.81 m/s^2`, empuje maximo `m*g*2.5` y momentos `[10, 10, 2] Nm`, salvo que se llame al evaluador interno con otros limites.
