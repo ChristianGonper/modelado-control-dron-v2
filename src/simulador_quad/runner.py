@@ -95,7 +95,7 @@ class SimulationRunner:
         if state.time_s >= self.max_duration_s:
             return True, "Time limit reached"
             
-        # Trayectoria completada (vía método específico)
+        # Trayectoria completada
         if hasattr(trajectory, "check_completion"):
             term, reason = trajectory.check_completion(state.time_s, state, self.physics_dt_s)
             if term:
@@ -109,7 +109,7 @@ class SimulationRunner:
                 pos_err_m = np.linalg.norm(state.position_W_m - trajectory.final_position_W_m)
                 speed_m_s = np.linalg.norm(state.velocity_W_m_s)
 
-                # Umbrales según spec: 0.20 m y 0.30 m/s
+                # Umbrales
                 if pos_err_m <= 0.20 and speed_m_s <= 0.30:
                     return True, "Trajectory completed"
 

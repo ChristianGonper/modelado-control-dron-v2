@@ -49,9 +49,7 @@ def main():
         print(f"Evaluating split: {split}...")
         
         ds_root = args.dataset if split != "ood" else args.ood_dataset
-        # Para OOD, cargamos todo el dataset como un unico split si no hay division explicita, 
-        # o simplemente usamos split='train' por defecto si el dataset OOD es pequeño.
-        # En este repo, los datasets OOD generados por scripts suelen tener split='train'.
+        # Para OOD, cargamos todo el dataset como un unico split si no hay division explicita
         actual_split = split if split != "ood" else "train"
         
         if config["architecture"] == "mlp":

@@ -9,8 +9,6 @@ __pycache__/
 .uv-cache/
 
 # Project specific
-results/
-scratch/
 .tmp_cli_test/
 
 # OS

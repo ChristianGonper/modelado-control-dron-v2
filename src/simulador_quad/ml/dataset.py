@@ -182,7 +182,7 @@ def build_feature_vector(pos, vel, quat, omega, ref_pos, ref_vel, ref_acc, ref_y
     # Features
     x = np.concatenate([
         pos, vel, quat, omega,
-        ref_pos, ref_vel, ref_acc, [ref_yaw],
+        ref_pos, ref_vel, ref_acc, [ref_yaw], # ref_yaw is no a vector
         err_pos, err_vel,
         [np.sin(ref_yaw), np.cos(ref_yaw)]
     ])

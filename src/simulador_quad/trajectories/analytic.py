@@ -170,18 +170,6 @@ class LineTrajectory(Trajectory):
             self.phase = WaypointPhase.HOLD_AT_WAYPOINT
 
     def get_reference_for_state(self, time_s: float, state: VehicleState) -> TrajectoryReference:
-        # La trayectoria avanza su tiempo interno independientemente del tiempo global
-        # pero reaccionando al estado para cambiar de fase/segmento.
-        # Nota: phase_time_s se incrementa en cada llamada? 
-        # En realidad necesitamos el dt_s para avanzar phase_time_s.
-        # Pero get_reference_for_state no recibe dt_s. 
-        # Sin embargo, SimulationRunner llama a esto en un bucle con dt_s fijo.
-        # Podriamos deducir dt_s del estado si es necesario, o pasarle dt_s.
-        # El contrato que defini arriba no tiene dt_s.
-        
-        # Como el runner llama a esto en cada paso, podemos usar la diferencia de tiempo
-        # entre llamadas si guardamos el ultimo time_s.
-        
         if not hasattr(self, "_last_time_s"):
             self._last_time_s = time_s
         
@@ -224,9 +212,9 @@ class LineTrajectory(Trajectory):
                 u = d / L
                 s, s_dot, s_ddot = compute_trapezoidal_profile(self.phase_time_s, L, self.max_speed, self.max_acc)
             
-            pos = p0 + s * (d / L if L > 1e-6 else np.zeros(3))
-            vel = s_dot * (d / L if L > 1e-6 else np.zeros(3))
-            acc = s_ddot * (d / L if L > 1e-6 else np.zeros(3))
+            pos = p0 + s * (u if L > 1e-6 else np.zeros(3))
+            vel = s_dot * (u if L > 1e-6 else np.zeros(3))
+            acc = s_ddot * (u if L > 1e-6 else np.zeros(3))
             
             # Si el perfil ha terminado, pasamos a HOLD_AT_WAYPOINT
             # pero la referencia se queda en p1
