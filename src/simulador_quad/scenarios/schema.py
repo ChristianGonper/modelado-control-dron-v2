@@ -137,12 +137,23 @@ def _validate_controller(config: Mapping[str, Any]) -> None:
                 if np.any(_as_array(f"controller.{field}", controller.get(field)) < 0.0):
                     raise _invalid(f"controller.{field}", "non-negative vector", controller.get(field))
     
-    if c_type == "neural":
+    if c_type in ("neural", "neural_position"):
         for field in ("checkpoint_path", "normalization_path"):
             if not isinstance(controller.get(field), str):
                 raise _invalid(f"controller.{field}", "string path", controller.get(field))
         if controller.get("architecture") not in ("mlp", "gru", "lstm"):
             raise _invalid("controller.architecture", "one of ('mlp', 'gru', 'lstm')", controller.get("architecture"))
+
+    if c_type == "neural_position":
+        for field in ("base_Kp_pos", "base_Kd_pos", "Kp_att", "Kd_att"):
+            if field in controller:
+                gains = _as_array(f"controller.{field}", controller.get(field), (3,))
+                if np.any(gains < 0.0):
+                    raise _invalid(f"controller.{field}", "non-negative vector", controller.get(field))
+        if "multiplier_clip" in controller:
+            clip = _as_array("controller.multiplier_clip", controller.get("multiplier_clip"), (2,))
+            if clip[0] <= 0.0 or clip[1] < clip[0]:
+                raise _invalid("controller.multiplier_clip", "[positive_min, max] with max >= min", controller.get("multiplier_clip"))
 
     # Validacion comun de limites
     if "max_body_moments_Nm" in controller:
@@ -150,8 +161,8 @@ def _validate_controller(config: Mapping[str, Any]) -> None:
         if np.any(moments < 0.0):
             raise _invalid("controller.max_body_moments_Nm", "non-negative vector", controller.get("max_body_moments_Nm"))
 
-    if c_type not in ("classic", "neural"):
-        raise _invalid("controller.type", "one of ('classic', 'neural')", c_type)
+    if c_type not in ("classic", "neural", "neural_position"):
+        raise _invalid("controller.type", "one of ('classic', 'neural', 'neural_position')", c_type)
 
 
 def _validate_trajectory(config: Mapping[str, Any]) -> None:

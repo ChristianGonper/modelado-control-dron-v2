@@ -127,6 +127,27 @@ def instantiate_scenario(config: Dict[str, Any]) -> Tuple[Any, Any, Any, Any, An
             gravity_m_s2=v_params.gravity_m_s2,
             max_moments_Nm=max_moments if max_moments is not None else np.array([10.0, 10.0, 2.0])
         )
+    elif c_cfg['type'] == 'neural_position':
+        from simulador_quad.control.neural import NeuralPositionController
+        max_moments = c_cfg.get('max_body_moments_Nm')
+        if max_moments is not None:
+            max_moments = np.array(max_moments).astype(float)
+
+        controller = NeuralPositionController(
+            checkpoint_path=c_cfg['checkpoint_path'],
+            normalization_path=c_cfg['normalization_path'],
+            architecture=c_cfg.get('architecture', 'mlp'),
+            sequence_length=c_cfg.get('sequence_length', 20),
+            mass_kg=v_params.mass_kg,
+            gravity_m_s2=v_params.gravity_m_s2,
+            inertia_B_kg_m2=v_params.inertia_B_kg_m2,
+            base_Kp_pos=np.array(c_cfg.get('base_Kp_pos', [2.0, 2.0, 5.0])).astype(float),
+            base_Kd_pos=np.array(c_cfg.get('base_Kd_pos', [1.0, 1.0, 2.0])).astype(float),
+            Kp_att=np.array(c_cfg.get('Kp_att', [4.0, 4.0, 1.0])).astype(float),
+            Kd_att=np.array(c_cfg.get('Kd_att', [1.5, 1.5, 0.5])).astype(float),
+            max_body_moments_Nm=max_moments if max_moments is not None else np.array([10.0, 10.0, 2.0]),
+            multiplier_clip=np.array(c_cfg.get('multiplier_clip', [0.25, 4.0])).astype(float),
+        )
     else:
         raise ValueError(f"Unknown controller type: {c_cfg['type']}")
 
