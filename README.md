@@ -57,7 +57,7 @@ uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset
 uv run python tools\run_neural_scenario.py --scenario scenarios\neural_ood_lemniscate.yaml --checkpoint data\neural_control\gru_v1\checkpoints\gru_best.pt --normalization data\neural_control\gru_v1\normalization.json --architecture gru
 ```
 
-La evaluacion OOD supervisada espera un directorio con `manifest.csv` y `telemetry.json` ya generados; no ejecuta por si sola el escenario OOD. Para evaluar en bucle cerrado se usa `run_neural_scenario.py`, que sustituye el controlador del YAML en memoria sin modificar el escenario base.
+La evaluacion supervisada mide fidelidad de imitacion: compara los comandos de la red con los comandos del PID del dataset. La metrica principal para comparar calidad de control es `position_rmse_m` en ejecuciones de bucle cerrado, acompanada de `position_mae_m`, `position_max_err_m`, terminacion y saturacion. La evaluacion OOD supervisada espera un directorio con `manifest.csv` y `telemetry.json` ya generados; no ejecuta por si sola el escenario OOD. Para evaluar en bucle cerrado se usa `run_neural_scenario.py`, que sustituye el controlador del YAML en memoria sin modificar el escenario base.
 
 Para ejecutar otros escenarios:
 

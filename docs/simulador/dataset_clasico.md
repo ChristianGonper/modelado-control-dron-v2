@@ -24,6 +24,8 @@ En este repo, nominal significa:
 - sin viento;
 - sin ruido de observacion.
 
+Por tanto, los episodios perturbados del dataset son demostraciones del PID congelado bajo condiciones mas exigentes, no trayectorias expertas perfectas. Cuando se usan para aprendizaje por imitacion, la red aprende a reproducir los comandos del PID observados en esas condiciones. La metrica supervisada de la red mide esa fidelidad de imitacion; la metrica que responde al objetivo de seguimiento de trayectoria debe obtenerse despues, ejecutando el controlador neuronal en bucle cerrado y analizando `position_rmse_m`, `position_mae_m` y `position_max_err_m`.
+
 ## Perfiles de entorno
 
 | Perfil | Papel |
@@ -139,6 +141,8 @@ uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset
 ```
 
 La normalizacion neuronal se calcula solo con muestras `train`. Para evaluar OOD, el directorio pasado a `--ood-dataset` debe contener `manifest.csv` y telemetria ya generada; el evaluador no simula esos episodios.
+
+Para comparar el controlador clasico y el neuronal, no basta con `mse_normalized` de la evaluacion supervisada. Esa metrica compara comandos de red contra comandos PID. La comparacion experimental principal debe hacerse con ejecuciones en bucle cerrado y metricas comunes de simulacion, usando `position_rmse_m` como metrica principal de error de trayectoria y reportando tambien error maximo, terminacion y saturacion.
 
 ## Criterios de validez
 

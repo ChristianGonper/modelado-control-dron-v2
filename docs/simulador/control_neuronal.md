@@ -47,6 +47,8 @@ uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset
 
 La evaluación supervisada escribe métricas por split (`train_metrics.json`, `val_metrics.json`, `test_metrics.json`) en el directorio de la ejecución neuronal. Incluye error normalizado, errores en unidades físicas y `saturation_percentage`, entendido como porcentaje de muestras donde la red predice comandos fuera de límites antes de aplicar clipping.
 
+Estas métricas miden fidelidad de imitación, no calidad final de seguimiento. El entrenamiento minimiza MSE normalizado sobre los comandos del PID (`collective_thrust_N` y `body_moments_Nm`), por lo que un valor bajo indica que la red reproduce el experto clásico sobre las muestras disponibles. No implica por sí mismo que la trayectoria en bucle cerrado tenga menor error.
+
 Por defecto, la métrica supervisada de saturación usa los límites del vehículo base del dataset clásico: masa `1.0 kg`, gravedad `9.81 m/s^2`, empuje máximo `m*g*2.5` y momentos máximos `[10, 10, 2] Nm`. Si se evalúan datasets con otra masa o límites personalizados, esta métrica debe parametrizarse desde código o ampliarse en una fase posterior para leer esos valores desde metadata.
 
 ### 4. Evaluación OOD Supervisada
@@ -66,6 +68,12 @@ uv run python tools\run_neural_scenario.py --scenario scenarios\neural_ood_lemni
 
 Este comando carga el YAML base, sustituye el bloque `controller` en memoria por un controlador neuronal y ejecuta el simulador. No modifica el YAML original. Si no se indica `--out`, el directorio de salida se deriva del `output.dir` original añadiendo un sufijo con la arquitectura.
 
+La métrica principal para comparar controladores en el objetivo físico del TFG es el error de trayectoria en bucle cerrado, no la loss supervisada. En las salidas `metrics.json`, la métrica principal es:
+
+- `position_rmse_m`: RMSE de la norma del error de posición `||reference.position_W_m - state.position_W_m||`.
+
+Como métricas auxiliares deben reportarse `position_mae_m`, `position_max_err_m`, `termination_reason`, `saturation_percentage` y `degradation_percentage`. Esta separación es especialmente importante porque el PID se ajusta en condiciones nominales sin viento ni ruido, mientras que parte del dataset de imitación incluye perturbaciones: en esos episodios el comando del PID es una demostración reproducible, pero no necesariamente produce seguimiento perfecto de la referencia.
+
 ## Normalización
 Es crítica para el entrenamiento de redes neuronales. Los parámetros de normalización se guardan en `normalization.json` y deben ser los mismos durante el entrenamiento y la inferencia. El sistema los carga automáticamente desde el directorio del modelo.
 
@@ -83,4 +91,4 @@ En inferencia, los límites efectivos son:
 
 ## Alcance Actual
 
-El pipeline implementado cubre entrenamiento supervisado, evaluación supervisada y ejecución en bucle cerrado. La calidad final de un modelo entrenado depende del dataset disponible, de los hiperparámetros y de la validación experimental posterior. El test `train`/`val`/`test` del dataset clásico mide desempeño in-distribution; la generalización debe justificarse con datasets o escenarios OOD separados.
+El pipeline implementado cubre entrenamiento supervisado, evaluación supervisada y ejecución en bucle cerrado. La calidad final de un modelo entrenado depende del dataset disponible, de los hiperparámetros y de la validación experimental posterior. El test `train`/`val`/`test` del dataset clásico mide fidelidad de imitación in-distribution; la calidad de control debe evaluarse ejecutando el controlador neuronal en el simulador y comparando métricas de trayectoria. La generalización debe justificarse con datasets o escenarios OOD separados.
