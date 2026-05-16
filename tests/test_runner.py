@@ -122,6 +122,38 @@ def test_zoh_keeps_control_command_while_actuators_evolve_at_physics_dt():
     assert np.allclose(commanded_thrust_N, 100.0)
     assert np.all(np.diff(applied_omega_rad_s) > 0.0)
 
+
+def test_actuators_start_from_hover_not_zero():
+    runner = setup_runner(
+        max_dur=0.01,
+        physics_dt_s=0.01,
+        control_dt_s=0.1,
+        telemetry_dt_s=0.01,
+        rotor_time_constant_s=0.05,
+    )
+
+    initial_state = VehicleState(
+        position_W_m=np.array([0.0, 0.0, 10.0]),
+        velocity_W_m_s=np.zeros(3),
+        orientation_WB=get_level_quaternion(0.0),
+        angular_velocity_B_rad_s=np.zeros(3),
+        time_s=0.0
+    )
+
+    class DummyTraj:
+        def get_reference(self, time_s):
+            from simulador_quad.core.contracts import TrajectoryReference
+            return TrajectoryReference(np.zeros(3), np.zeros(3), np.zeros(3), 0.0)
+
+    def hover_controller(t, obs, ref):
+        return ControlCommand(collective_thrust_N=9.81, body_moments_Nm=np.zeros(3))
+
+    result = runner.run(initial_state, hover_controller, DummyTraj())
+    first = result["telemetry"][0]
+
+    assert np.isclose(np.sum(first.rotor_applied.applied_thrust_N), 9.81)
+    assert np.all(first.rotor_applied.applied_omega_rad_s > 0.0)
+
 def test_termination_z_min():
     runner = setup_runner(max_dur=10.0)
     runner.z_min_m = 0.0

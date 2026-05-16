@@ -154,17 +154,20 @@ class SimulationRunner:
         last_control_time = time_s - self.control_dt_s - 1e-6
         last_telemetry_time = time_s - self.telemetry_dt_s - 1e-6
         
-        current_control = ControlCommand(0.0, np.zeros(3))
+        hover_thrust_N = self.vehicle_params.mass_kg * self.vehicle_params.gravity_m_s2
+        current_control = ControlCommand(hover_thrust_N, np.zeros(3))
         # Inicialización de objetos de contrato
-        current_rotor_cmd = RotorCommand(
-            target_thrust_N=np.zeros(self.mixer.num_rotors),
-            target_omega_rad_s=np.zeros(self.mixer.num_rotors)
+        current_rotor_cmd = self.mixer.compute_rotor_commands(
+            current_control.collective_thrust_N,
+            current_control.body_moments_Nm,
         )
+        hover_omega_rad_s = float(np.mean(current_rotor_cmd.target_omega_rad_s))
+        self.actuators.reset(hover_omega_rad_s)
         current_applied = RotorAppliedState(
-            applied_omega_rad_s=np.zeros(self.mixer.num_rotors),
-            applied_thrust_N=np.zeros(self.mixer.num_rotors),
+            applied_omega_rad_s=current_rotor_cmd.target_omega_rad_s.copy(),
+            applied_thrust_N=current_rotor_cmd.target_thrust_N.copy(),
             applied_torque_Nm=np.zeros(self.mixer.num_rotors),
-            rotor_speed_rpm=np.zeros(self.mixer.num_rotors),
+            rotor_speed_rpm=current_rotor_cmd.target_omega_rad_s * 60.0 / (2.0 * np.pi),
             saturation_flags=np.zeros(self.mixer.num_rotors, dtype=bool)
         )
         current_obs = state # Inicialmente coincide

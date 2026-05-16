@@ -6,7 +6,7 @@ El simulador esta organizado como codigo cientifico simple. Las carpetas separan
 
 1. `app.py` recibe `simulador-quad run <escenario.yaml>`.
 2. `scenarios.loader` lee y valida el YAML; despues instancia vehiculo, rotores, estado inicial, trayectoria, controlador, viento y ruido.
-3. `SimulationRunner` inicializa tiempos de fisica, control y telemetria.
+3. `SimulationRunner` inicializa tiempos de fisica, control y telemetria. Antes del primer paso fisico, el comando y los actuadores se inicializan en hover (`mass_kg * gravity_m_s2`) para evitar que un episodio nivelado empiece con los rotores a cero.
 4. En cada ciclo:
    - obtiene la referencia de trayectoria para `time_s`; si la trayectoria implementa `get_reference_for_state`, tambien recibe el estado actual para generar referencias state-aware;
    - genera la observacion, con ruido si aplica;
