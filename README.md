@@ -38,7 +38,7 @@ Para generar y ejecutar el dataset clasico `v1`:
 
 ```powershell
 uv run python tools\generate_classic_dataset.py --version v1 --out data\classic_dataset\v1
-uv run python tools\run_classic_dataset.py --dataset data\classic_dataset\v1 --no-visualization
+uv run python tools\run_classic_dataset.py --dataset data\classic_dataset\v1 --no-visualization --workers 4
 uv run python tools\summarize_classic_dataset.py --dataset data\classic_dataset\v1
 ```
 
@@ -46,7 +46,7 @@ Para el pipeline neuronal (ML):
 
 ```powershell
 # Entrenamiento (ejemplo GRU)
-uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture gru --out data\neural_control\gru_v1
+uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture gru --out data\neural_control\gru_v1 --device cuda
 
 # Evaluacion supervisada in-distribution
 uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1
@@ -55,20 +55,23 @@ uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset
 uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1 --ood-dataset data\neural_ood\lemniscate_v1
 
 # Ejecucion en bucle cerrado (escenario OOD)
-uv run python tools\run_neural_scenario.py --scenario scenarios\neural_ood_lemniscate.yaml --checkpoint data\neural_control\gru_v1\checkpoints\gru_best.pt --normalization data\neural_control\gru_v1\normalization.json --architecture gru
+uv run python tools\run_neural_scenario.py --scenario scenarios\neural_ood_lemniscate.yaml --checkpoint data\neural_control\gru_v1\checkpoints\gru_best.pt --normalization data\neural_control\gru_v1\normalization.json --device cuda
 ```
 
-La evaluacion supervisada mide fidelidad de imitacion: compara los comandos de la red con los comandos del PID del dataset. La metrica principal para comparar calidad de control es `position_rmse_m` en ejecuciones de bucle cerrado, acompanada de `position_mae_m`, `position_max_err_m`, terminacion y saturacion. La evaluacion OOD supervisada espera un directorio con `manifest.csv` y `telemetry.json` ya generados; no ejecuta por si sola el escenario OOD. Para evaluar en bucle cerrado se usa `run_neural_scenario.py`, que sustituye el controlador del YAML en memoria sin modificar el escenario base.
+La evaluacion supervisada mide fidelidad de imitacion: compara los comandos de la red con los comandos del PID del dataset. La metrica principal para comparar calidad de control es `position_rmse_m` en ejecuciones de bucle cerrado, acompanada de `position_mae_m`, `position_max_err_m`, terminacion y saturacion. La evaluacion OOD supervisada espera un directorio con `manifest.csv` y `telemetry.json` ya generados; no ejecuta por si sola el escenario OOD. Para evaluar en bucle cerrado se usa `run_neural_scenario.py`, que sustituye el controlador del YAML en memoria sin modificar el escenario base. Si no se indica `--architecture`, los scripts de inferencia la leen desde el `config.yaml` del entrenamiento. `--device auto` usa CUDA cuando PyTorch la detecta; `--device cuda` falla de forma explicita si el entorno no tiene GPU disponible.
 
 Para el controlador neuronal de lazo externo:
 
 ```powershell
 uv run python tools\generate_pid_bank.py --dataset data\classic_dataset\v1 --out data\pid_bank\v1
 uv run python tools\generate_position_gain_dataset_from_bank.py --source-dataset data\classic_dataset\v1 --pid-bank data\pid_bank\v1 --out data\position_gain_dataset\v1
-uv run python tools\run_classic_dataset.py --dataset data\position_gain_dataset\v1 --no-visualization
-uv run python tools\train_neural_position_controller.py --dataset data\position_gain_dataset\v1 --architecture gru --out data\neural_control\position_gru_v1
-uv run python tools\run_neural_position_scenario.py --scenario scenarios\neural_ood_lemniscate.yaml --checkpoint data\neural_control\position_gru_v1\checkpoints\gru_best.pt --normalization data\neural_control\position_gru_v1\normalization.json --architecture gru
+uv run python tools\run_classic_dataset.py --dataset data\position_gain_dataset\v1 --no-visualization --workers 4
+uv run python tools\train_neural_position_controller.py --dataset data\position_gain_dataset\v1 --architecture gru --out data\neural_control\position_gru_v1 --device cuda
+uv run python tools\run_neural_position_scenario.py --scenario scenarios\neural_ood_lemniscate.yaml --checkpoint data\neural_control\position_gru_v1\checkpoints\gru_best.pt --normalization data\neural_control\position_gru_v1\normalization.json --device cuda
+uv run python tools\run_neural_position_dataset.py --dataset data\position_gain_dataset\v1 --split test --checkpoint data\neural_control\position_gru_v1\checkpoints\gru_best.pt --normalization data\neural_control\position_gru_v1\normalization.json --device cuda --no-visualization
 ```
+
+Para paralelizar simulaciones independientes en CPU se puede subir `--workers` en `run_classic_dataset.py` o `run_neural_position_dataset.py`. Con una sola GPU, lo normal es entrenar/evaluar con `--device cuda` y mantener `--workers 1` en inferencia CUDA; varios workers CUDA cargan copias independientes del modelo en la misma GPU y pueden competir por memoria.
 
 Para ejecutar otros escenarios:
 

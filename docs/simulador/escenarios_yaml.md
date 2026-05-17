@@ -221,6 +221,7 @@ controller:
   sequence_length: 20
   clip_to_classic_limits: true
   max_body_moments_Nm: [10.0, 10.0, 2.0]
+  device: "auto"
 ```
 
 - `type`: `"neural"` para cargar un modelo entrenado por imitacion.
@@ -230,6 +231,7 @@ controller:
 - `sequence_length`: longitud de ventana para GRU/LSTM. Si falta, se usa `20`. Para MLP se ignora.
 - `clip_to_classic_limits`: si es `true`, limita las salidas de la red antes de pasarlas al mixer. Si falta, se usa `true`.
 - `max_body_moments_Nm`: limites de momentos `[tau_x, tau_y, tau_z]` en FRD. Si falta, se usa `[10.0, 10.0, 2.0]`.
+- `device`: `"auto"`, `"cpu"` o `"cuda"`. Si falta, `auto` usa CUDA cuando PyTorch la detecta.
 
 El controlador neuronal devuelve el mismo contrato que el clasico: `collective_thrust_N` y `body_moments_Nm`. El empuje se limita a `0..mass_kg*gravity_m_s2*2.5` cuando `clip_to_classic_limits` esta activo. GRU/LSTM mantienen memoria interna; el runner llama a `reset()` al inicio de cada simulacion.
 
@@ -246,12 +248,14 @@ controller:
   base_Kd_pos: [1.0, 1.0, 2.0]
   multiplier_clip: [0.25, 4.0]
   max_body_moments_Nm: [10.0, 10.0, 2.0]
+  device: "auto"
 ```
 
 - `type`: `"neural_position"` para usar una red como programador de ganancias del lazo externo.
 - `architecture`, `checkpoint_path`, `normalization_path` y `sequence_length`: mismos criterios que en el controlador neuronal directo.
 - `base_Kp_pos` y `base_Kd_pos`: ganancias base sobre las que se aplican los multiplicadores predichos. Si faltan, se usan los defaults mostrados.
 - `multiplier_clip`: rango `[min, max]` aplicado a los multiplicadores tras `exp`. Si falta, se usa `[0.25, 4.0]`.
+- `device`: `"auto"`, `"cpu"` o `"cuda"`. Si falta, `auto` usa CUDA cuando PyTorch la detecta.
 
 En este modo la red no predice empuje ni momentos. Predice multiplicadores de `Kp_pos` y `Kd_pos`; el lazo interno de actitud sigue siendo clasico.
 

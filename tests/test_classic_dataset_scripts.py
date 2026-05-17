@@ -45,6 +45,10 @@ def test_classic_dataset_workflow(tmp_dataset_dir):
     ]
     result = subprocess.run(run_cmd, capture_output=True, text=True)
     assert result.returncode == 0
+
+    run_parallel_cmd = run_cmd + ["--workers", "2", "--rerun"]
+    result = subprocess.run(run_parallel_cmd, capture_output=True, text=True)
+    assert result.returncode == 0
     
     # Check result exists
     res_path = os.path.join(tmp_dataset_dir, "results", "hold", "hold_g01_P0_nominal_s1042", "metrics.json")

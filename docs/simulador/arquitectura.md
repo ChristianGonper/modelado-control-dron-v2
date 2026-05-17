@@ -41,7 +41,7 @@ El simulador esta organizado como codigo cientifico simple. Las carpetas separan
 - `visualization/three_d.py`: visor interactivo HTML 3D basado en Plotly.
 - `tools/generate_classic_dataset.py`: genera estructura `data/classic_dataset/<version>/` con `manifest.csv`, `pids/` y escenarios YAML.
 - `tools/tune_classic_pid.py`: ajusta un PID clasico por familia en el perfil nominal con drag y actuadores.
-- `tools/run_classic_dataset.py`: ejecuta episodios del manifiesto y escribe `run_report.csv`.
+- `tools/run_classic_dataset.py`: ejecuta episodios del manifiesto, opcionalmente en varios procesos, y escribe `run_report.csv`.
 - `tools/summarize_classic_dataset.py`: resume resultados del dataset en `summary.csv`.
 - `tools/train_neural_controller.py`: entrena MLP, GRU o LSTM por imitacion desde telemetria clasica.
 - `tools/evaluate_neural_controller.py`: evalua modelos entrenados sobre `train`/`val`/`test` y, opcionalmente, un dataset OOD.
@@ -49,6 +49,7 @@ El simulador esta organizado como codigo cientifico simple. Las carpetas separan
 - `tools/train_neural_position_controller.py`: entrena una red que predice multiplicadores de `Kp_pos` y `Kd_pos`.
 - `tools/evaluate_neural_position_controller.py`: evalua fidelidad supervisada de ganancias externas.
 - `tools/run_neural_position_scenario.py`: ejecuta un escenario con red en el lazo externo y lazo interno clasico.
+- `tools/run_neural_position_dataset.py`: ejecuta escenarios de un manifiesto con un checkpoint `neural_position` y escribe un reporte especifico de esa arquitectura.
 - `tools/generate_pid_bank.py`: crea un banco inicial de PIDs por familia a partir de los PIDs actuales.
 - `tools/generate_position_gain_dataset_from_bank.py`: expande un dataset clasico usando el banco de PIDs para entrenar la red de ganancias.
 
@@ -93,7 +94,7 @@ Para `controller.type: "classic"`, el YAML puede declarar `Kp_pos`, `Kd_pos`, `K
 
 Para `controller.type: "neural"`, el YAML debe declarar `architecture`, `checkpoint_path` y `normalization_path`. El controlador neuronal implementa `compute_control(time_s, obs_state, reference)` y devuelve el mismo `ControlCommand` que el clasico: empuje colectivo en N y momentos FRD en Nm. Las arquitecturas soportadas son `mlp`, `gru` y `lstm`. GRU/LSTM mantienen una ventana interna de features y el runner llama a `reset()` al inicio de cada simulacion para limpiar esa memoria. Si `clip_to_classic_limits` es `true`, el controlador neuronal limita el empuje a `0..mass_kg*gravity_m_s2*2.5` y los momentos a `+-max_body_moments_Nm`. Si `max_body_moments_Nm` falta, usa `[10.0, 10.0, 2.0]`.
 
-Para `controller.type: "neural_position"`, el YAML debe declarar `architecture`, `checkpoint_path` y `normalization_path`. La red predice 6 log-multiplicadores para `Kp_pos` y `Kd_pos`. Tras desnormalizar, el controlador aplica `exp`, limita con `multiplier_clip` y usa el lazo interno clasico para convertir fuerza deseada en actitud, empuje y momentos. Por defecto `base_Kp_pos = [2.0, 2.0, 5.0]`, `base_Kd_pos = [1.0, 1.0, 2.0]` y `multiplier_clip = [0.25, 4.0]`.
+Para `controller.type: "neural_position"`, el YAML debe declarar `architecture`, `checkpoint_path` y `normalization_path`. La red predice 6 log-multiplicadores para `Kp_pos` y `Kd_pos`. Tras desnormalizar, el controlador aplica `exp`, limita con `multiplier_clip` y usa el lazo interno clasico para convertir fuerza deseada en actitud, empuje y momentos. Por defecto `base_Kp_pos = [2.0, 2.0, 5.0]`, `base_Kd_pos = [1.0, 1.0, 2.0]`, `multiplier_clip = [0.25, 4.0]` y `device = "auto"`. En los scripts de inferencia, si `--architecture` se omite, se toma de `config.yaml` junto al checkpoint.
 
 La evaluacion supervisada neuronal se hace sobre telemetria ya exportada. `train` calcula pesos y normalizacion, `val` selecciona checkpoint, `test` mide desempeno in-distribution y OOD se evalua aparte con `--ood-dataset`. El dataset OOD debe tener `manifest.csv` y `telemetry.json` generados previamente; el evaluador no ejecuta escenarios por si mismo.
 

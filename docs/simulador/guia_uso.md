@@ -74,7 +74,7 @@ Este comando crea tambien PIDs iniciales por familia si no existen:
 Ejecutar el dataset completo sin visualizacion:
 
 ```powershell
-uv run python tools\run_classic_dataset.py --dataset data\classic_dataset\v1 --no-visualization
+uv run python tools\run_classic_dataset.py --dataset data\classic_dataset\v1 --no-visualization --workers 4
 ```
 
 Para pruebas rapidas:

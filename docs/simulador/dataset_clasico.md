@@ -112,7 +112,7 @@ uv run python tools\tune_classic_pid.py --family waypoint --out data\classic_dat
 Ejecutar episodios:
 
 ```powershell
-uv run python tools\run_classic_dataset.py --dataset data\classic_dataset\v1 --no-visualization
+uv run python tools\run_classic_dataset.py --dataset data\classic_dataset\v1 --no-visualization --workers 4
 ```
 
 Opciones utiles:
@@ -122,6 +122,7 @@ Opciones utiles:
 - `--limit 10`: limita el numero de episodios.
 - `--rerun`: vuelve a ejecutar episodios con `metrics.json` ya existente.
 - `--fail-fast`: detiene al primer error.
+- `--workers 4`: reparte escenarios independientes en varios procesos.
 
 Resumir resultados:
 
