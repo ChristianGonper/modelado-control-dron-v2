@@ -14,6 +14,15 @@ from simulador_quad.ml.normalization import Normalizer
 from simulador_quad.ml.dataset import build_feature_vector
 from simulador_quad.control.classic import ClassicCascadeController
 
+
+def _resolve_torch_device(device: str = "auto") -> str:
+    if device == "auto":
+        return "cuda" if torch.cuda.is_available() else "cpu"
+    if device == "cuda" and not torch.cuda.is_available():
+        raise RuntimeError("CUDA requested, but torch.cuda.is_available() is False")
+    return device
+
+
 class NeuralController(Controller):
     """
     Implementa el contrato de Controller usando una red neuronal entrenada.
@@ -26,16 +35,18 @@ class NeuralController(Controller):
                  clip_to_classic_limits: bool = True,
                  mass_kg: float = 1.0,
                  gravity_m_s2: float = 9.81,
-                 max_moments_Nm: np.ndarray = np.array([10.0, 10.0, 2.0])):
+                 max_moments_Nm: np.ndarray = np.array([10.0, 10.0, 2.0]),
+                 device: str = "auto"):
         self.architecture = architecture
         self.sequence_length = sequence_length
         self.clip_to_classic_limits = clip_to_classic_limits
         self.mass = mass_kg
         self.g = gravity_m_s2
         self.max_moments = max_moments_Nm
+        self.device = _resolve_torch_device(device)
         
         # Cargar normalizador
-        self.normalizer = Normalizer.load(normalization_path)
+        self.normalizer = Normalizer.load(normalization_path).to(self.device)
         
         # Cargar modelo
         # Deducir input_dim del normalizador cargado
@@ -53,8 +64,8 @@ class NeuralController(Controller):
         if "input_dim" in config and config["input_dim"] != input_dim:
             raise ValueError(f"Input dim mismatch: model config has {config['input_dim']}, but normalizer has {input_dim}")
 
-        self.model = build_model(architecture, input_dim, output_dim, config)
-        self.model.load_state_dict(torch.load(checkpoint_path, map_location="cpu"))
+        self.model = build_model(architecture, input_dim, output_dim, config).to(self.device)
+        self.model.load_state_dict(torch.load(checkpoint_path, map_location=self.device))
         self.model.eval()
         
         # Estado recurrente para GRU/LSTM
@@ -76,7 +87,7 @@ class NeuralController(Controller):
         )
         
         # 2. Normalizar
-        x_norm = self.normalizer.normalize_x(torch.tensor(x, dtype=torch.float32))
+        x_norm = self.normalizer.normalize_x(torch.tensor(x, dtype=torch.float32, device=self.device))
         
         # 3. Preparar entrada segun arquitectura
         if self.architecture == "mlp":
@@ -94,7 +105,7 @@ class NeuralController(Controller):
             y_norm = self.model(model_input).squeeze(0) # [4]
         
         # 5. Desnormalizar
-        y = self.normalizer.denormalize_y(y_norm).numpy()
+        y = self.normalizer.denormalize_y(y_norm).cpu().numpy()
         
         thrust = float(y[0])
         moments = y[1:4]
@@ -133,9 +144,11 @@ class NeuralPositionController(Controller):
         Kd_att: np.ndarray | None = None,
         max_body_moments_Nm: np.ndarray | None = None,
         multiplier_clip: np.ndarray | None = None,
+        device: str = "auto",
     ):
         self.architecture = architecture
         self.sequence_length = sequence_length
+        self.device = _resolve_torch_device(device)
         self.base_Kp_pos = np.array(base_Kp_pos if base_Kp_pos is not None else [2.0, 2.0, 5.0], dtype=float)
         self.base_Kd_pos = np.array(base_Kd_pos if base_Kd_pos is not None else [1.0, 1.0, 2.0], dtype=float)
         self.multiplier_clip = np.array(multiplier_clip if multiplier_clip is not None else [0.25, 4.0], dtype=float)
@@ -154,7 +167,7 @@ class NeuralPositionController(Controller):
             max_body_moments_Nm=max_body_moments_Nm,
         )
 
-        self.normalizer = Normalizer.load(normalization_path)
+        self.normalizer = Normalizer.load(normalization_path).to(self.device)
         input_dim = len(self.normalizer.mean_x)
         output_dim = 6
 
@@ -169,8 +182,8 @@ class NeuralPositionController(Controller):
         if "output_dim" in config and config["output_dim"] != output_dim:
             raise ValueError(f"Output dim mismatch: model config has {config['output_dim']}, expected {output_dim}")
 
-        self.model = build_model(architecture, input_dim, output_dim, config)
-        self.model.load_state_dict(torch.load(checkpoint_path, map_location="cpu"))
+        self.model = build_model(architecture, input_dim, output_dim, config).to(self.device)
+        self.model.load_state_dict(torch.load(checkpoint_path, map_location=self.device))
         self.model.eval()
 
         self.window = deque(maxlen=sequence_length)
@@ -190,7 +203,7 @@ class NeuralPositionController(Controller):
             reference.acceleration_W_m_s2,
             reference.yaw_rad,
         )
-        x_norm = self.normalizer.normalize_x(torch.tensor(x, dtype=torch.float32))
+        x_norm = self.normalizer.normalize_x(torch.tensor(x, dtype=torch.float32, device=self.device))
 
         if self.architecture == "mlp":
             model_input = x_norm.unsqueeze(0)
@@ -203,7 +216,7 @@ class NeuralPositionController(Controller):
         with torch.no_grad():
             y_norm = self.model(model_input).squeeze(0)
 
-        log_multipliers = self.normalizer.denormalize_y(y_norm).numpy()
+        log_multipliers = self.normalizer.denormalize_y(y_norm).cpu().numpy()
         multipliers = np.exp(log_multipliers)
         return np.clip(multipliers, self.multiplier_clip[0], self.multiplier_clip[1])
 

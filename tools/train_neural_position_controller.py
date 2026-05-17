@@ -41,10 +41,17 @@ def main():
     parser.add_argument("--base-kp-pos", type=_parse_vector, default=[2.0, 2.0, 5.0])
     parser.add_argument("--base-kd-pos", type=_parse_vector, default=[1.0, 1.0, 2.0])
     parser.add_argument("--multiplier-clip", type=_parse_vector, default=[0.25, 4.0])
+    parser.add_argument("--device", type=str, choices=["auto", "cpu", "cuda"], default="auto")
     args = parser.parse_args()
 
     torch.manual_seed(args.seed)
     os.makedirs(args.out, exist_ok=True)
+
+    device = "cuda" if args.device == "auto" and torch.cuda.is_available() else args.device
+    if device == "auto":
+        device = "cpu"
+    if device == "cuda" and not torch.cuda.is_available():
+        raise RuntimeError("CUDA requested, but torch.cuda.is_available() is False")
 
     dataset_cls = PositionGainDataset if args.architecture == "mlp" else SequentialPositionGainDataset
     kwargs = {
@@ -94,7 +101,7 @@ def main():
         "lr": args.lr,
         "patience": args.patience,
         "seed": args.seed,
-        "device": "cuda" if torch.cuda.is_available() else "cpu",
+        "device": device,
         "out_dir": args.out,
         "feature_version": f"{FEATURE_VERSION}_position_gain",
         "base_Kp_pos": args.base_kp_pos,

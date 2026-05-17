@@ -48,8 +48,13 @@ def main():
     parser = argparse.ArgumentParser(description="Evaluate a neural position-loop gain scheduler.")
     parser.add_argument("--dataset", type=str, required=True)
     parser.add_argument("--run", type=str, required=True)
-    parser.add_argument("--device", type=str, default="cpu")
+    parser.add_argument("--device", type=str, choices=["auto", "cpu", "cuda"], default="auto")
     args = parser.parse_args()
+    device = "cuda" if args.device == "auto" and torch.cuda.is_available() else args.device
+    if device == "auto":
+        device = "cpu"
+    if device == "cuda" and not torch.cuda.is_available():
+        raise RuntimeError("CUDA requested, but torch.cuda.is_available() is False")
 
     with open(os.path.join(args.run, "config.yaml"), "r") as f:
         config = yaml.safe_load(f)
@@ -57,7 +62,7 @@ def main():
     norm = Normalizer.load(os.path.join(args.run, "normalization.json"))
     model = build_model(config["architecture"], config["input_dim"], config["output_dim"], config)
     checkpoint = os.path.join(args.run, "checkpoints", f"{config['architecture']}_best.pt")
-    model.load_state_dict(torch.load(checkpoint, map_location=args.device))
+    model.load_state_dict(torch.load(checkpoint, map_location=device))
 
     dataset_cls = PositionGainDataset if config["architecture"] == "mlp" else SequentialPositionGainDataset
     kwargs = {
@@ -76,7 +81,7 @@ def main():
         ds.transform = norm.normalize_x
         ds.target_transform = norm.normalize_y
         loader = DataLoader(ds, batch_size=config.get("batch_size", 64), shuffle=False)
-        metrics = evaluate_position_model(model, loader, norm, device=args.device)
+        metrics = evaluate_position_model(model, loader, norm, device=device)
         with open(os.path.join(args.run, "metrics", f"{split}_position_metrics.json"), "w") as f:
             json.dump(metrics, f, indent=4)
         print(f"Split {split} MSE: {metrics['mse_normalized']:.6f}")

@@ -23,11 +23,17 @@ def main():
     parser.add_argument("--seed", type=int, default=42, help="Random seed.")
     parser.add_argument("--sequence-length", type=int, default=20, help="Sequence length for recurrent models.")
     parser.add_argument("--hidden-dim", type=int, default=64, help="Hidden dimension size.")
+    parser.add_argument("--device", type=str, choices=["auto", "cpu", "cuda"], default="auto", help="Training device.")
     
     args = parser.parse_args()
     
     # Reproducibilidad
     torch.manual_seed(args.seed)
+    device = "cuda" if args.device == "auto" and torch.cuda.is_available() else args.device
+    if device == "auto":
+        device = "cpu"
+    if device == "cuda" and not torch.cuda.is_available():
+        raise RuntimeError("CUDA requested, but torch.cuda.is_available() is False")
     
     os.makedirs(args.out, exist_ok=True)
     
@@ -73,7 +79,7 @@ def main():
         "lr": args.lr,
         "patience": args.patience,
         "seed": args.seed,
-        "device": "cuda" if torch.cuda.is_available() else "cpu",
+        "device": device,
         "out_dir": args.out,
         "feature_version": FEATURE_VERSION
     }

@@ -125,7 +125,8 @@ def instantiate_scenario(config: Dict[str, Any]) -> Tuple[Any, Any, Any, Any, An
             clip_to_classic_limits=c_cfg.get('clip_to_classic_limits', True),
             mass_kg=v_params.mass_kg,
             gravity_m_s2=v_params.gravity_m_s2,
-            max_moments_Nm=max_moments if max_moments is not None else np.array([10.0, 10.0, 2.0])
+            max_moments_Nm=max_moments if max_moments is not None else np.array([10.0, 10.0, 2.0]),
+            device=c_cfg.get('device', 'auto'),
         )
     elif c_cfg['type'] == 'neural_position':
         from simulador_quad.control.neural import NeuralPositionController
@@ -147,6 +148,7 @@ def instantiate_scenario(config: Dict[str, Any]) -> Tuple[Any, Any, Any, Any, An
             Kd_att=np.array(c_cfg.get('Kd_att', [1.5, 1.5, 0.5])).astype(float),
             max_body_moments_Nm=max_moments if max_moments is not None else np.array([10.0, 10.0, 2.0]),
             multiplier_clip=np.array(c_cfg.get('multiplier_clip', [0.25, 4.0])).astype(float),
+            device=c_cfg.get('device', 'auto'),
         )
     else:
         raise ValueError(f"Unknown controller type: {c_cfg['type']}")

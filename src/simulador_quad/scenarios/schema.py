@@ -143,6 +143,8 @@ def _validate_controller(config: Mapping[str, Any]) -> None:
                 raise _invalid(f"controller.{field}", "string path", controller.get(field))
         if controller.get("architecture") not in ("mlp", "gru", "lstm"):
             raise _invalid("controller.architecture", "one of ('mlp', 'gru', 'lstm')", controller.get("architecture"))
+        if "device" in controller and controller.get("device") not in ("auto", "cpu", "cuda"):
+            raise _invalid("controller.device", "one of ('auto', 'cpu', 'cuda')", controller.get("device"))
 
     if c_type == "neural_position":
         for field in ("base_Kp_pos", "base_Kd_pos", "Kp_att", "Kd_att"):

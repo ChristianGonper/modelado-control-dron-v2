@@ -11,7 +11,7 @@ from simulador_quad.control.neural import NeuralPositionController
 from simulador_quad.core.contracts import VehicleState, TrajectoryReference
 from simulador_quad.core.frames import get_level_quaternion
 from simulador_quad.ml.dataset import PositionGainDataset, SequentialPositionGainDataset
-from simulador_quad.ml.models import MLPControllerNet
+from simulador_quad.ml.models import MLPControllerNet, build_model
 from simulador_quad.scenarios.loader import instantiate_scenario
 
 
@@ -234,3 +234,76 @@ def test_train_neural_position_script_execution(tmp_path):
     assert (out_dir / "normalization.json").exists()
     assert (out_dir / "config.yaml").exists()
     assert (out_dir / "checkpoints" / "mlp_best.pt").exists()
+
+
+def test_run_neural_position_scenario_infers_lstm_architecture(tmp_path):
+    model_dir = tmp_path / "lstm_model"
+    (model_dir / "checkpoints").mkdir(parents=True)
+    with open(model_dir / "normalization.json", "w") as f:
+        json.dump({
+            "mean_x": [0.0] * 31,
+            "std_x": [1.0] * 31,
+            "mean_y": [0.0] * 6,
+            "std_y": [1.0] * 6,
+            "feature_names": ["f"] * 31,
+            "target_names": ["t"] * 6,
+            "feature_version": "v1_position_gain",
+            "epsilon": 1e-8,
+        }, f)
+    model = build_model("lstm", 31, 6, {"hidden_dim": 8})
+    torch.save(model.state_dict(), model_dir / "checkpoints" / "lstm_best.pt")
+    with open(model_dir / "config.yaml", "w") as f:
+        yaml.dump({"architecture": "lstm", "input_dim": 31, "output_dim": 6, "hidden_dim": 8, "sequence_length": 4}, f)
+
+    scenario = {
+        "name": "neural_position_lstm_infer_test",
+        "vehicle": {
+            "mass_kg": 1.0,
+            "inertia_B_kg_m2": [[0.05, 0, 0], [0, 0.05, 0], [0, 0, 0.1]],
+            "linear_drag_coefficient": [0.0, 0.0, 0.0],
+            "rotors": [
+                {"position_B_m": [0.17, 0.17, 0], "turning_direction": -1, "k_f": 1e-4, "k_m": 1e-6, "omega_max_rad_s": 1000, "time_constant_s": 0.0},
+                {"position_B_m": [0.17, -0.17, 0], "turning_direction": 1, "k_f": 1e-4, "k_m": 1e-6, "omega_max_rad_s": 1000, "time_constant_s": 0.0},
+                {"position_B_m": [-0.17, 0.17, 0], "turning_direction": 1, "k_f": 1e-4, "k_m": 1e-6, "omega_max_rad_s": 1000, "time_constant_s": 0.0},
+                {"position_B_m": [-0.17, -0.17, 0], "turning_direction": -1, "k_f": 1e-4, "k_m": 1e-6, "omega_max_rad_s": 1000, "time_constant_s": 0.0},
+            ],
+        },
+        "initial_state": {
+            "position_W_m": [0.0, 0.0, 2.0],
+            "velocity_W_m_s": [0.0, 0.0, 0.0],
+            "orientation_WB": None,
+            "angular_velocity_B_rad_s": [0.0, 0.0, 0.0],
+        },
+        "trajectory": {"type": "hold", "position_W_m": [0.0, 0.0, 2.0]},
+        "controller": {"type": "classic"},
+        "perturbations": {"constant_wind_W_m_s": [0.0, 0.0, 0.0]},
+        "timing": {"physics_dt_s": 0.01, "control_dt_s": 0.02, "telemetry_dt_s": 0.1},
+        "termination": {"max_duration_s": 0.1, "z_min_m": -1.0},
+        "output": {"dir": str(tmp_path / "closed_loop"), "telemetry_file": "telemetry.json", "metrics_file": "metrics.json"},
+    }
+    scenario_path = tmp_path / "scenario.yaml"
+    with open(scenario_path, "w") as f:
+        yaml.dump(scenario, f)
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "tools/run_neural_position_scenario.py",
+            "--scenario",
+            str(scenario_path),
+            "--checkpoint",
+            str(model_dir / "checkpoints" / "lstm_best.pt"),
+            "--normalization",
+            str(model_dir / "normalization.json"),
+            "--out",
+            str(tmp_path / "lstm_run"),
+            "--device",
+            "cpu",
+            "--no-visualization",
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
+    assert (tmp_path / "lstm_run" / "metrics.json").exists()
