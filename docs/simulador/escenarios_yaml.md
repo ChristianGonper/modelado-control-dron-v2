@@ -148,6 +148,28 @@ trajectory:
 - `omegas`: frecuencias angulares por eje en `rad/s`.
 - El yaw actual de esta trayectoria es constante `0.0`.
 
+### Lemniscate
+
+Trayectoria en forma de ocho (Lemniscata de Gerono) en el plano horizontal `X_W-Y_W` con altura constante. Incluye un mecanismo de suavizado (warmup) para evitar discontinuidades de velocidad y orientación al inicio de la simulación.
+
+```yaml
+trajectory:
+  type: "lemniscate"
+  center_W_m: [0, 0, 2.0]
+  a: 2.0
+  b: 1.0
+  omega_rad_s: 0.5
+  yaw_mode: "forward"
+  warmup_s: 3.0
+```
+
+- `center_W_m`: centro de la trayectoria.
+- `a`: semi-eje mayor en `X_W`.
+- `b`: semi-eje menor en `Y_W`.
+- `omega_rad_s`: velocidad angular de avance de la referencia.
+- `yaw_mode`: si es `"forward"`, la guiñada sigue la dirección de avance (tangente a la trayectoria); cualquier otro valor la mantiene en `0.0`.
+- `warmup_s`: duración en segundos de la fase de calentamiento/suavizado (default: `3.0`). Durante esta fase, la referencia se interpola suavemente usando un polinomio cúbico de Hermite desde el estado estacionario inicial hasta la trayectoria nominal.
+
 ### Line / Waypoint
 
 Misión discreta de alcanzar puntos con parada controlada en cada uno. En el YAML puede declararse como `line` o `waypoint`; ambos nombres cargan el mismo comportamiento `waypoint_stop`.
