@@ -25,6 +25,7 @@ Implementado:
 - Escenarios YAML, telemetria JSON, metricas JSON con unidades fisicas explicitas y figuras PNG reproducibles.
 - Validacion fisica basica de escenarios antes de ejecutar.
 - Generacion de dataset clasico versionado con manifiesto CSV, escenarios YAML generados, PID por familia y resultados separados.
+- Soporte de trayectorias compuestas (`composite`) y transiciones automáticas en línea recta con frenado para validación OOD.
 
 No implementado todavia:
 

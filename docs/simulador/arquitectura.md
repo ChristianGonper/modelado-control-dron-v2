@@ -30,6 +30,7 @@ El simulador esta organizado como codigo cientifico simple. Las carpetas separan
 - `dynamics/perturbations.py`: drag lineal, viento constante y ruido de observacion.
 - `scenarios/schema.py`: validacion fisica simple de YAML antes de simular.
 - `trajectories/analytic.py`: referencias `hold`, `circle`, `lissajous` y `line` / `waypoint`. `line` y `waypoint` usan comportamiento `waypoint_stop`: perfil trapezoidal/triangular por tramo, parada en cada waypoint y avance condicionado por tolerancias y dwell.
+- `trajectories/composite.py`: clase `CompositeTrajectory` para secuenciar múltiples sub-trayectorias de forma continua. Inserta automáticamente transiciones lineales si la distancia entre el final de una trayectoria y el inicio de la siguiente supera los 5 cm. La transición lineal realiza un frenado completo en velocidad a cero al llegar al punto de inicio de la siguiente trayectoria (transición posicional con parada intermedia) para reducir discontinuidades de posición y reiniciar el siguiente tramo desde reposo.
 - `control/classic.py`: controlador clasico en cascada.
 - `control/neural.py`: controladores neuronales compatibles con el mismo contrato de control; incluye sustitucion directa de comandos y programacion neuronal de ganancias del lazo externo.
 - `ml/`: carga de telemetria, normalizacion train-only, modelos MLP/GRU/LSTM, entrenamiento y evaluacion supervisada.
@@ -66,7 +67,7 @@ Los contratos relevantes para interpretar resultados son:
 
 La telemetria distingue comando solicitado, comando objetivo de rotor y estado aplicado. Esta separacion es importante para estudiar saturacion, retardos y lag de actuadores.
 
-Las trayectorias analiticas (`hold`, `circle`, `lissajous`) dependen solo de `time_s`. Las trayectorias `line` / `waypoint` son state-aware: mantienen fase interna de mision y generan la referencia del siguiente waypoint usando el estado actual para comprobar asentamiento. El campo legacy `times` puede aparecer en YAML, pero no controla el avance entre waypoints.
+Las trayectorias analiticas (`hold`, `circle`, `lissajous`) dependen solo de `time_s`. Las trayectorias `line` / `waypoint` son state-aware: mantienen fase interna de mision y generan la referencia del siguiente waypoint usando el estado actual para comprobar asentamiento. El campo legacy `times` puede aparecer en YAML, pero no controla el avance entre waypoints. Las trayectorias compuestas (`composite`) combinan secuencialmente ambos tipos de trayectorias, realizando un seguimiento temporal de cada sub-trayectoria (usando el campo `duration` en las analíticas) y controlando la transición a la siguiente mediante la comprobación de completitud (`check_completion`).
 
 ## Telemetria
 
@@ -89,6 +90,8 @@ Antes de ejecutar o instanciar un escenario, `validate_scenario_config` comprueb
 Si `initial_state.orientation_WB` es `null`, el cargador genera una actitud nivelada a partir de `yaw_rad`. Si se proporciona un cuaternion, debe ser finito y unitario; la validacion lo rechaza en lugar de normalizarlo silenciosamente.
 
 Para `trajectory.type: "line"` o `"waypoint"`, la validacion comprueba que `waypoints` sea una lista no vacia de puntos `[3]` finitos, que `times` tenga la misma longitud si aparece como campo deprecated, y que los parametros opcionales de velocidad, aceleracion, tolerancia y dwell sean no negativos o positivos segun corresponda.
+
+Para `trajectory.type: "composite"`, la validación comprueba de forma recursiva que la secuencia de sub-trayectorias no esté vacía, que cada una sea válida de acuerdo a su tipo, que el campo `duration` sea obligatorio y positivo para las sub-trayectorias analíticas de la secuencia, y que si se define `duration` en cualquier sub-trayectoria, este sea estrictamente positivo. También valida que la velocidad de transición `transition_speed` sea positiva si se proporciona.
 
 Para `controller.type: "classic"`, el YAML puede declarar `Kp_pos`, `Kd_pos`, `Kp_att`, `Kd_att` y `max_body_moments_Nm` como vectores de tres componentes no negativas. Si faltan ganancias, el controlador conserva sus defaults.
 

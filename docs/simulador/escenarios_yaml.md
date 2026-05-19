@@ -213,6 +213,43 @@ trajectory:
 
 El avance de `line` / `waypoint` no depende de `times` ni de `termination.max_duration_s`; si el vehículo no consigue asentarse en un waypoint, la referencia permanece en ese punto hasta que cumpla las tolerancias o hasta que otra condición de terminación corte el episodio.
 
+### Composite
+
+Secuencia ordenada de sub-trayectorias ejecutadas de manera consecutiva.
+
+```yaml
+trajectory:
+  type: "composite"
+  transition_speed: 0.5   # Opcional (m/s). Si se omite, no se insertan transiciones suaves
+  sequence:
+    - type: "hold"
+      position_W_m: [0.0, 0.0, 1.0]
+      duration: 3.0
+      yaw_rad: 0.0
+    - type: "circle"
+      center_W_m: [0.0, 0.0, 1.0]
+      radius_m: 2.0
+      omega_rad_s: 0.5
+      duration: 12.57
+      yaw_mode: "forward"
+    - type: "waypoint"
+      waypoints:
+        - [2.0, 0.0, 1.0]
+        - [2.0, 2.0, 1.5]
+      max_speed_m_s: 0.6
+      max_acceleration_m_s2: 0.5
+```
+
+- `sequence`: lista de diccionarios que definen sub-trayectorias individuales. Soporta recursividad (composites anidados).
+- `transition_speed`: velocidad de transición lineal (en `m/s`) que se activa automáticamente si la distancia espacial entre el punto final de un tramo y el inicial del siguiente es superior a `5 cm`.
+- `duration`: campo en segundos. Es **obligatorio** para sub-trayectorias que no tienen fin inherente (como `hold`, `circle`, `lissajous`, `lemniscate`) dentro de la secuencia `composite`. Si se define en cualquier otro tipo de sub-trayectoria, debe ser un valor estrictamente positivo.
+
+**Transiciones suaves:**
+La transición inserta dinámicamente un tramo de `LineTrajectory` entre trayectorias consecutivas con discontinuidades de posición. Para reducir discontinuidades de posición y reiniciar el siguiente tramo desde reposo, la transición lineal realiza un **frenado completo en velocidad a cero** al llegar al punto inicial del siguiente tramo. Tras detenerse y cumplir la tolerancia de velocidad del regulador, arranca la siguiente sub-trayectoria.
+
+**Terminación:**
+Cuando se completa la última trayectoria (o el último waypoint del tramo final si es de tipo discreto), el episodio de simulación compuesto finaliza con la causa `"Composite trajectory completed"`.
+
 ## `controller`
 
 ### Controlador clasico
@@ -376,6 +413,7 @@ Para probar los distintos tipos de trayectorias, se proporcionan los siguientes 
 - `circle_noisy_wind.yaml`: Círculo con viento constante y ruido en sensores.
 - `lissajous_clean.yaml`: Trayectoria en curva de Lissajous (`lissajous`) 3D.
 - `waypoint_clean.yaml`: Misión secuencial de puntos (`waypoint` / `line`) con perfil de velocidad limitado y parada controlada en cada waypoint.
+- `composite_ood.yaml`: Combinación secuencial de trayectorias (`hold` -> `circle` -> `waypoint`) con transiciones lineales automáticas y paradas intermedias para evaluación OOD.
 - `neural_ood_lemniscate.yaml`: Trayectoria de lemniscata (`lemniscate`) para evaluacion OOD. Por defecto usa controlador clasico; puede ejecutarse con un checkpoint neuronal mediante `tools\run_neural_scenario.py`.
 
 La clasificacion de estos escenarios como nominales, robustez o demostracion, junto con sus criterios de aceptacion, esta en `docs/simulador/validacion.md`.

@@ -15,7 +15,7 @@ Implementado:
 - Pipeline de ML con PyTorch: Datasets para MLP y Secuenciales (GRU/LSTM), Normalización determinista, Arquitecturas y Entrenamiento supervisado.
 - Mixer de cuadricóptero, actuadores con saturación, retardo puro opcional y lag de primer orden sobre `omega`.
 - Drag lineal simplificado, viento constante y ruido gaussiano de observación en posición/velocidad.
-- Referencias analíticas (`hold`, `circle`, `lissajous`, `lemniscate`) y misión secuencial state-aware con parada en cada punto (`waypoint`).
+- Referencias analíticas (`hold`, `circle`, `lissajous`, `lemniscate`), misión secuencial state-aware con parada en cada punto (`waypoint`), y **trayectorias compuestas** (`composite`) que permiten encadenar secuencias con transiciones lineales automáticas.
 - Escenarios YAML, telemetría JSON, métricas JSON con unidades físicas explícitas, figuras PNG y visor 3D HTML.
 - Generación de dataset experto y entrenamiento/evaluación de modelos mediante scripts en `tools/`.
 - Control neuronal alternativo en el lazo externo de posición (`neural_position`), donde la red predice ganancias variables y el lazo interno clásico estabiliza actitud.
@@ -82,6 +82,7 @@ uv run simulador-quad run scenarios\circle_drag.yaml --no-visualization
 uv run simulador-quad run scenarios\circle_noisy_wind.yaml --no-visualization
 uv run simulador-quad run scenarios\lissajous_clean.yaml --no-visualization
 uv run simulador-quad run scenarios\waypoint_clean.yaml --no-visualization
+uv run simulador-quad run scenarios\composite_ood.yaml --no-visualization
 ```
 
 ## Mapa documental
