@@ -173,7 +173,18 @@ def _validate_trajectory(config: Mapping[str, Any]) -> None:
     if t_type not in ("hold", "circle", "lissajous", "line", "waypoint", "lemniscate"):
         raise _invalid("trajectory.type", "one of ('hold', 'circle', 'lissajous', 'line', 'waypoint', 'lemniscate')", t_type)
 
-    if t_type in ("line", "waypoint"):
+    if t_type == "lemniscate":
+        _as_array("trajectory.center_W_m", traj.get("center_W_m"), (3,))
+        _positive("trajectory.a", traj.get("a"))
+        _positive("trajectory.b", traj.get("b"))
+        _positive("trajectory.omega_rad_s", traj.get("omega_rad_s"))
+        if "yaw_mode" in traj:
+            if not isinstance(traj.get("yaw_mode"), str):
+                raise _invalid("trajectory.yaw_mode", "string", traj.get("yaw_mode"))
+        if "warmup_s" in traj:
+            _non_negative("trajectory.warmup_s", traj.get("warmup_s"))
+
+    elif t_type in ("line", "waypoint"):
         wps = _require_sequence(traj, "waypoints")
         if len(wps) == 0:
             raise _invalid("trajectory.waypoints", "non-empty list", wps)
