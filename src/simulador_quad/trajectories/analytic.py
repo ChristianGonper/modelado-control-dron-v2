@@ -253,16 +253,28 @@ class LineTrajectory(Trajectory):
 
 class LemniscateTrajectory(Trajectory):
     """
-    Trayectoria en forma de ocho (Lemniscata de Gerono) en el plano XY.
+    Trayectoria en forma de ocho (Lemniscata de Gerono) en el plano XY con oscilación vertical en Z.
     x(t) = cx + a * sin(w * t)
     y(t) = cy + b * sin(2 * w * t)
-    z(t) = cz
+    z(t) = cz + z_amp * sin(z_w * t)
     """
-    def __init__(self, center_W_m: np.ndarray, a: float, b: float, omega_rad_s: float, yaw_mode: str = "forward", warmup_s: float = 3.0):
+    def __init__(
+        self, 
+        center_W_m: np.ndarray, 
+        a: float, 
+        b: float, 
+        omega_rad_s: float, 
+        z_amp: float = 0.0, 
+        z_omega_rad_s: float = 0.0, 
+        yaw_mode: str = "forward", 
+        warmup_s: float = 3.0
+    ):
         self.center = center_W_m.copy()
         self.a = a
         self.b = b
         self.w = omega_rad_s
+        self.z_amp = z_amp
+        self.z_w = z_omega_rad_s
         self.yaw_mode = yaw_mode
         self.warmup_s = warmup_s
         
@@ -273,19 +285,19 @@ class LemniscateTrajectory(Trajectory):
         offset_pos = np.array([
             self.a * np.sin(self.w * t),
             self.b * np.sin(2.0 * self.w * t),
-            0.0
+            self.z_amp * np.sin(self.z_w * t) if self.z_amp > 0.0 and self.z_w > 0.0 else 0.0
         ])
         
         vel_nom = np.array([
             self.a * self.w * np.cos(self.w * t),
             2.0 * self.b * self.w * np.cos(2.0 * self.w * t),
-            0.0
+            self.z_amp * self.z_w * np.cos(self.z_w * t) if self.z_amp > 0.0 and self.z_w > 0.0 else 0.0
         ])
         
         acc_nom = np.array([
             -self.a * self.w**2 * np.sin(self.w * t),
             -4.0 * self.b * self.w**2 * np.sin(2.0 * self.w * t),
-            0.0
+            -self.z_amp * self.z_w**2 * np.sin(self.z_w * t) if self.z_amp > 0.0 and self.z_w > 0.0 else 0.0
         ])
         
         yaw_nom = np.arctan2(vel_nom[1], vel_nom[0]) if self.yaw_mode == "forward" else 0.0

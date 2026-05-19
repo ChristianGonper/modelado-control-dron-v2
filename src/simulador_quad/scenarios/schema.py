@@ -183,6 +183,10 @@ def _validate_trajectory(config: Mapping[str, Any]) -> None:
                 raise _invalid("trajectory.yaw_mode", "string", traj.get("yaw_mode"))
         if "warmup_s" in traj:
             _non_negative("trajectory.warmup_s", traj.get("warmup_s"))
+        if "z_amp" in traj:
+            _non_negative("trajectory.z_amp", traj.get("z_amp"))
+        if "z_omega_rad_s" in traj:
+            _non_negative("trajectory.z_omega_rad_s", traj.get("z_omega_rad_s"))
 
     elif t_type in ("line", "waypoint"):
         wps = _require_sequence(traj, "waypoints")
