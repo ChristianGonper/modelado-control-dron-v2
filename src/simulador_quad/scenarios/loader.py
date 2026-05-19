@@ -6,6 +6,7 @@ from simulador_quad.dynamics.actuators import ActuatorSystem
 from simulador_quad.dynamics.mixer import QuadcopterMixer
 from simulador_quad.dynamics.perturbations import WindModel, ObservationNoise
 from simulador_quad.trajectories.analytic import HoldTrajectory, CircleTrajectory, LissajousTrajectory, LineTrajectory, LemniscateTrajectory
+from simulador_quad.trajectories.composite import CompositeTrajectory
 from simulador_quad.control.classic import ClassicCascadeController
 from simulador_quad.core.frames import get_level_quaternion
 from simulador_quad.scenarios.schema import validate_scenario_config
@@ -50,6 +51,13 @@ def instantiate_trajectory(t_cfg: Dict[str, Any]) -> Any:
             yaw_mode=t_cfg.get('yaw_mode', 'forward'),
             warmup_s=float(t_cfg.get('warmup_s', 3.0))
         )
+    elif t_type == 'composite':
+        sub_trajs = [instantiate_trajectory(sub_cfg) for sub_cfg in t_cfg['sequence']]
+        durations = [sub_cfg.get('duration') for sub_cfg in t_cfg['sequence']]
+        transition_speed = t_cfg.get('transition_speed')
+        if transition_speed is not None:
+            transition_speed = float(transition_speed)
+        return CompositeTrajectory(sub_trajs, durations, transition_speed)
     else:
         raise ValueError(f"Unknown trajectory type: {t_type}")
 
