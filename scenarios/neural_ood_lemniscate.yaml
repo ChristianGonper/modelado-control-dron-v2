@@ -25,6 +25,7 @@ trajectory:
   b: 1.0
   omega_rad_s: 0.5
   yaw_mode: "forward"
+  warmup_s: 3.0
 
 controller:
   type: "classic" # Por defecto clasico, se puede sobreescribir con el script run_neural_scenario.py
