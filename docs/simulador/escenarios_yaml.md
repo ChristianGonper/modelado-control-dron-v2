@@ -150,7 +150,7 @@ trajectory:
 
 ### Lemniscate
 
-Trayectoria en forma de ocho (Lemniscata de Gerono) en el plano horizontal `X_W-Y_W` con altura constante. Incluye un mecanismo de suavizado (warmup) para evitar discontinuidades de velocidad y orientación al inicio de la simulación.
+Trayectoria en forma de ocho (Lemniscata de Gerono) en el plano horizontal `X_W-Y_W` con opción de oscilación vertical en `Z_W`. Incluye un mecanismo de suavizado (warmup) para evitar discontinuidades de velocidad y orientación al inicio de la simulación.
 
 ```yaml
 trajectory:
@@ -159,6 +159,8 @@ trajectory:
   a: 2.0
   b: 1.0
   omega_rad_s: 0.5
+  z_amp: 0.5            # Opcional, por defecto 0.0 (lemniscata plana)
+  z_omega_rad_s: 0.6    # Opcional, por defecto 0.0
   yaw_mode: "forward"
   warmup_s: 3.0
 ```
@@ -167,6 +169,8 @@ trajectory:
 - `a`: semi-eje mayor en `X_W`.
 - `b`: semi-eje menor en `Y_W`.
 - `omega_rad_s`: velocidad angular de avance de la referencia.
+- `z_amp`: amplitud de la oscilación vertical en metros. Si se omite, es `0.0`.
+- `z_omega_rad_s`: frecuencia angular de la oscilación vertical en `rad/s`. Si se omite, es `0.0`.
 - `yaw_mode`: si es `"forward"`, la guiñada sigue la dirección de avance (tangente a la trayectoria); cualquier otro valor la mantiene en `0.0`.
 - `warmup_s`: duración en segundos de la fase de calentamiento/suavizado (default: `3.0`). Durante esta fase, la referencia se interpola suavemente usando un polinomio cúbico de Hermite desde el estado estacionario inicial hasta la trayectoria nominal.
 

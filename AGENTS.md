@@ -2,7 +2,7 @@
 
 ## Proposito del repo
 
-Este repositorio contiene el TFG de un simulador 6DOF de cuadricoptero para comparar control clasico y, en una fase posterior, control neuronal por imitacion. El estado actual se centra en consolidar el simulador clasico y la generacion de datos clasicos reproducibles.
+Este repositorio contiene el TFG de un simulador 6DOF de cuadricóptero para comparar control clásico y control neuronal por imitación. El estado actual incluye la consolidación del simulador clásico, la generación de datos reproducibles, y la evaluación Out-of-Distribution (OOD) de controladores neuronales (directos e híbridos de lazo externo) en trayectorias 2D y 3D (e.g., Lemniscatas con oscilación vertical).
 
 ## Fuentes de verdad
 
