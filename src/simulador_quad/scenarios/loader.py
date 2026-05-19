@@ -45,7 +45,8 @@ def instantiate_trajectory(t_cfg: Dict[str, Any]) -> Any:
             a=float(t_cfg['a']),
             b=float(t_cfg['b']),
             omega_rad_s=float(t_cfg['omega_rad_s']),
-            yaw_mode=t_cfg.get('yaw_mode', 'forward')
+            yaw_mode=t_cfg.get('yaw_mode', 'forward'),
+            warmup_s=float(t_cfg.get('warmup_s', 3.0))
         )
     else:
         raise ValueError(f"Unknown trajectory type: {t_type}")
