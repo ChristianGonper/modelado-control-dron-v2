@@ -26,3 +26,4 @@ Si cambia el comportamiento, el alcance, los comandos, los escenarios, la teleme
 - Mantén codigo cientifico simple: nombres fisicos claros, unidades y marcos de referencia explicitos, pocas abstracciones.
 - Mantén mundo ENU y cuerpo FRD en escenarios, documentacion, figuras y datasets.
 - No introduzcas cambios de alcance sin actualizar los documentos normativos afectados.
+- Solo hagas commits cuando el usuario lo indique explicitamente. Cuando se pidan commits, hazlos pequeños, revisables y con una unica unidad funcional por commit.
