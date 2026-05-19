@@ -49,10 +49,10 @@ Para el pipeline neuronal (ML):
 uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture gru --out data\neural_control\gru_v1 --device cuda
 
 # Evaluacion supervisada in-distribution
-uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1
+uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1 --device cuda
 
 # Evaluacion supervisada OOD sobre un dataset ya generado
-uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1 --ood-dataset data\neural_ood\lemniscate_v1
+uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1 --ood-dataset data\neural_ood\lemniscate_v1 --device cuda
 
 # Ejecucion en bucle cerrado (escenario OOD)
 uv run python tools\run_neural_scenario.py --scenario scenarios\neural_ood_lemniscate.yaml --checkpoint data\neural_control\gru_v1\checkpoints\gru_best.pt --normalization data\neural_control\gru_v1\normalization.json --device cuda
@@ -70,6 +70,8 @@ uv run python tools\train_neural_position_controller.py --dataset data\position_
 uv run python tools\run_neural_position_scenario.py --scenario scenarios\neural_ood_lemniscate.yaml --checkpoint data\neural_control\position_gru_v1\checkpoints\gru_best.pt --normalization data\neural_control\position_gru_v1\normalization.json --device cuda
 uv run python tools\run_neural_position_dataset.py --dataset data\position_gain_dataset\v1 --split test --checkpoint data\neural_control\position_gru_v1\checkpoints\gru_best.pt --normalization data\neural_control\position_gru_v1\normalization.json --device cuda --no-visualization
 ```
+
+En `run_neural_position_dataset.py`, omitir `--split` ejecuta todos los escenarios del manifiesto; `--split test` limita la ejecucion al subconjunto de test.
 
 Para paralelizar simulaciones independientes en CPU se puede subir `--workers` en `run_classic_dataset.py` o `run_neural_position_dataset.py`. Con una sola GPU, lo normal es entrenar/evaluar con `--device cuda` y mantener `--workers 1` en inferencia CUDA; varios workers CUDA cargan copias independientes del modelo en la misma GPU y pueden competir por memoria.
 

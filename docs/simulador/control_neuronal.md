@@ -57,7 +57,7 @@ Los scripts de entrenamiento aceptan `--device auto|cpu|cuda`. Por defecto `auto
 ### 3. Evaluación Supervisada
 Calcula el error (MSE/MAE) comparando las salidas de la red con los comandos que habría dado el experto sobre los mismos datos.
 ```powershell
-uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1
+uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1 --device cuda
 ```
 
 Para el modo `neural_position`:
@@ -76,7 +76,7 @@ Por defecto, la métrica supervisada de saturación usa los límites del vehícu
 Para medir generalización fuera de distribución, el script acepta un dataset OOD separado:
 
 ```powershell
-uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1 --ood-dataset data\neural_ood\lemniscate_v1
+uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1 --ood-dataset data\neural_ood\lemniscate_v1 --device cuda
 ```
 
 `--ood-dataset` debe apuntar a un directorio con la misma estructura mínima que el dataset clásico: `manifest.csv` y `telemetry.json` bajo los `result_dir` indicados. El comando no ejecuta automáticamente el escenario OOD; evalúa telemetría ya generada. El resultado se escribe como `metrics/ood_metrics.json`.
@@ -100,6 +100,8 @@ Para ejecutar muchos escenarios de test u OOD con el controlador `neural_positio
 ```powershell
 uv run python tools\run_neural_position_dataset.py --dataset data\position_gain_dataset\v1 --split test --checkpoint data\neural_control\position_lstm_v1\checkpoints\lstm_best.pt --normalization data\neural_control\position_lstm_v1\normalization.json --device cuda --no-visualization
 ```
+
+Si se omite `--split`, el script ejecuta todos los escenarios del `manifest.csv`; con `--split test` ejecuta solo los episodios de test. Tambien se puede combinar con `--family`, `--scenario-id` y `--limit`.
 
 `run_classic_dataset.py` y `run_neural_position_dataset.py` aceptan `--workers N` para repartir escenarios independientes en procesos. Es recomendable usar `--workers N --device cpu` para barridos paralelos de simulacion en CPU, o `--workers 1 --device cuda` cuando la inferencia usa una sola GPU. Varios procesos CUDA pueden funcionar, pero cada proceso carga su propia copia del modelo y compite por memoria y planificacion en la misma GPU.
 
