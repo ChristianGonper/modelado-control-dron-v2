@@ -17,6 +17,7 @@ Implementado:
 - Controlador clasico en cascada.
 - Ganancias explicitas opcionales del controlador clasico desde YAML.
 - Controlador neuronal por imitacion en bucle cerrado, con MLP, GRU y LSTM.
+- Controlador neuronal `neural_position`, donde la red programa ganancias del lazo externo y el lazo interno clasico estabiliza actitud.
 - Pipeline ML con carga de telemetria, normalizacion train-only, entrenamiento supervisado y evaluacion in-distribution/OOD.
 - Mezclador de cuadricoptero con empuje colectivo y momentos de cuerpo.
 - Actuadores con saturacion, retardo puro opcional y lag de primer orden sobre `omega`.
@@ -24,6 +25,7 @@ Implementado:
 - Escenarios YAML, telemetria JSON, metricas JSON con unidades fisicas explicitas y figuras PNG reproducibles.
 - Validacion fisica basica de escenarios antes de ejecutar.
 - Generacion de dataset clasico versionado con manifiesto CSV, escenarios YAML generados, PID por familia y resultados separados.
+- Soporte de trayectorias compuestas (`composite`) y transiciones automáticas en línea recta con frenado para validación OOD.
 
 No implementado todavia:
 
@@ -49,7 +51,8 @@ uv run simulador-quad run scenarios\hover_clean.yaml
 uv run simulador-quad run scenarios\circle_drag.yaml
 uv run simulador-quad plot results\hover_clean\telemetry.json --metrics results\hover_clean\metrics.json --out results\hover_clean\figures
 uv run python tools\generate_classic_dataset.py --version v1 --out data\classic_dataset\v1
-uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture mlp --out data\neural_control\mlp_v1
+uv run python tools\run_classic_dataset.py --dataset data\classic_dataset\v1 --no-visualization --workers 4
+uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture mlp --out data\neural_control\mlp_v1 --device cuda
 ```
 
 Las figuras generadas tienen nombres estables:

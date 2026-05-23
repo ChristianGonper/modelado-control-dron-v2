@@ -1,6 +1,6 @@
-name: "Neural OOD Lemniscate"
+name: "Neural OOD Lemniscate Fast"
 seed: 1234
-description: "Escenario de evaluacion Out-of-Distribution con trayectoria Lemniscata de Gerono."
+description: "Escenario de evaluacion Out-of-Distribution con trayectoria Lemniscata de Gerono plana pero mas rapida."
 
 vehicle:
   mass_kg: 1.0
@@ -21,14 +21,14 @@ initial_state:
 trajectory:
   type: "lemniscate"
   center_W_m: [0, 0, 2.0]
-  a: 1.5
-  b: 0.75
-  omega_rad_s: 0.3
+  a: 2.0
+  b: 1.0
+  omega_rad_s: 0.5
   yaw_mode: "forward"
-  warmup_s: 3.0
+  warmup_s: 4.0
 
 controller:
-  type: "classic" # Por defecto clasico, se puede sobreescribir con el script run_neural_scenario.py
+  type: "classic"
 
 perturbations:
   constant_wind_W_m_s: [0.5, 0.2, 0]
@@ -47,6 +47,6 @@ termination:
   max_saturation_duration_s: 1.0
 
 output:
-  dir: "results/neural_ood_lemniscate"
+  dir: "results/neural_ood_lemniscate_fast"
   telemetry_file: "telemetry.json"
   metrics_file: "metrics.json"

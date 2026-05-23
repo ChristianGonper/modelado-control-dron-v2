@@ -137,12 +137,25 @@ def _validate_controller(config: Mapping[str, Any]) -> None:
                 if np.any(_as_array(f"controller.{field}", controller.get(field)) < 0.0):
                     raise _invalid(f"controller.{field}", "non-negative vector", controller.get(field))
     
-    if c_type == "neural":
+    if c_type in ("neural", "neural_position"):
         for field in ("checkpoint_path", "normalization_path"):
             if not isinstance(controller.get(field), str):
                 raise _invalid(f"controller.{field}", "string path", controller.get(field))
         if controller.get("architecture") not in ("mlp", "gru", "lstm"):
             raise _invalid("controller.architecture", "one of ('mlp', 'gru', 'lstm')", controller.get("architecture"))
+        if "device" in controller and controller.get("device") not in ("auto", "cpu", "cuda"):
+            raise _invalid("controller.device", "one of ('auto', 'cpu', 'cuda')", controller.get("device"))
+
+    if c_type == "neural_position":
+        for field in ("base_Kp_pos", "base_Kd_pos", "Kp_att", "Kd_att"):
+            if field in controller:
+                gains = _as_array(f"controller.{field}", controller.get(field), (3,))
+                if np.any(gains < 0.0):
+                    raise _invalid(f"controller.{field}", "non-negative vector", controller.get(field))
+        if "multiplier_clip" in controller:
+            clip = _as_array("controller.multiplier_clip", controller.get("multiplier_clip"), (2,))
+            if clip[0] <= 0.0 or clip[1] < clip[0]:
+                raise _invalid("controller.multiplier_clip", "[positive_min, max] with max >= min", controller.get("multiplier_clip"))
 
     # Validacion comun de limites
     if "max_body_moments_Nm" in controller:
@@ -150,37 +163,98 @@ def _validate_controller(config: Mapping[str, Any]) -> None:
         if np.any(moments < 0.0):
             raise _invalid("controller.max_body_moments_Nm", "non-negative vector", controller.get("max_body_moments_Nm"))
 
-    if c_type not in ("classic", "neural"):
-        raise _invalid("controller.type", "one of ('classic', 'neural')", c_type)
+    if c_type not in ("classic", "neural", "neural_position"):
+        raise _invalid("controller.type", "one of ('classic', 'neural', 'neural_position')", c_type)
 
 
-def _validate_trajectory(config: Mapping[str, Any]) -> None:
-    traj = _require_mapping(config, "trajectory")
+def _validate_single_trajectory(traj: Mapping[str, Any], prefix: str, is_inside_composite: bool = False) -> None:
     t_type = traj.get("type")
-    if t_type not in ("hold", "circle", "lissajous", "line", "waypoint", "lemniscate"):
-        raise _invalid("trajectory.type", "one of ('hold', 'circle', 'lissajous', 'line', 'waypoint', 'lemniscate')", t_type)
+    if t_type not in ("hold", "circle", "lissajous", "line", "waypoint", "lemniscate", "composite"):
+        raise _invalid(f"{prefix}.type", "one of ('hold', 'circle', 'lissajous', 'line', 'waypoint', 'lemniscate', 'composite')", t_type)
 
-    if t_type in ("line", "waypoint"):
+    if "duration" in traj:
+        if not is_inside_composite:
+            raise ValueError(f"Field 'duration' in {prefix} is only allowed for sub-trajectories inside a composite trajectory. For global simulation duration, use termination.max_duration_s.")
+        _positive(f"{prefix}.duration", traj.get("duration"), "seconds value")
+
+    if is_inside_composite:
+        if t_type in ("hold", "circle", "lissajous", "lemniscate"):
+            if "duration" not in traj:
+                raise ValueError(f"Trajectory {prefix} of type {t_type} must specify 'duration' inside a composite trajectory.")
+
+    if t_type == "composite":
+        seq = _require_sequence(traj, "sequence")
+        if len(seq) == 0:
+            raise _invalid(f"{prefix}.sequence", "non-empty list", seq)
+        for idx, item in enumerate(seq):
+            if not isinstance(item, Mapping):
+                raise _invalid(f"{prefix}.sequence[{idx}]", "mapping", item)
+            _validate_single_trajectory(item, f"{prefix}.sequence[{idx}]", is_inside_composite=True)
+        if "transition_speed" in traj:
+            _positive(f"{prefix}.transition_speed", traj.get("transition_speed"), "m/s value")
+
+    elif t_type == "lemniscate":
+        _as_array(f"{prefix}.center_W_m", traj.get("center_W_m"), (3,))
+        _positive(f"{prefix}.a", traj.get("a"))
+        _positive(f"{prefix}.b", traj.get("b"))
+        _positive(f"{prefix}.omega_rad_s", traj.get("omega_rad_s"))
+        if "yaw_mode" in traj:
+            if not isinstance(traj.get("yaw_mode"), str):
+                raise _invalid(f"{prefix}.yaw_mode", "string", traj.get("yaw_mode"))
+        if "warmup_s" in traj:
+            _non_negative(f"{prefix}.warmup_s", traj.get("warmup_s"))
+        if "z_amp" in traj:
+            _non_negative(f"{prefix}.z_amp", traj.get("z_amp"))
+        if "z_omega_rad_s" in traj:
+            _non_negative(f"{prefix}.z_omega_rad_s", traj.get("z_omega_rad_s"))
+
+    elif t_type in ("line", "waypoint"):
         wps = _require_sequence(traj, "waypoints")
         if len(wps) == 0:
-            raise _invalid("trajectory.waypoints", "non-empty list", wps)
+            raise _invalid(f"{prefix}.waypoints", "non-empty list", wps)
         
         for idx, wp in enumerate(wps):
-            _as_array(f"trajectory.waypoints[{idx}]", wp, (3,))
+            _as_array(f"{prefix}.waypoints[{idx}]", wp, (3,))
 
         if "times" in traj:
             times = _require_sequence(traj, "times")
             if len(times) != len(wps):
-                raise _invalid("trajectory.times", f"list of same length as waypoints ({len(wps)})", len(times))
+                raise _invalid(f"{prefix}.times", f"list of same length as waypoints ({len(wps)})", len(times))
             for idx, t in enumerate(times):
-                _non_negative(f"trajectory.times[{idx}]", t, "s value")
+                _non_negative(f"{prefix}.times[{idx}]", t, "s value")
 
         for field in ("max_speed_m_s", "max_acceleration_m_s2", "waypoint_tolerance_m"):
             if field in traj:
-                _positive(f"trajectory.{field}", traj.get(field))
+                _positive(f"{prefix}.{field}", traj.get(field))
         for field in ("waypoint_speed_tolerance_m_s", "dwell_time_s"):
             if field in traj:
-                _non_negative(f"trajectory.{field}", traj.get(field))
+                _non_negative(f"{prefix}.{field}", traj.get(field))
+
+    elif t_type == "hold":
+        _as_array(f"{prefix}.position_W_m", traj.get("position_W_m"), (3,))
+        if "yaw_rad" in traj:
+            try:
+                float(traj.get("yaw_rad"))
+            except (TypeError, ValueError) as exc:
+                raise _invalid(f"{prefix}.yaw_rad", "float", traj.get("yaw_rad")) from exc
+
+    elif t_type == "circle":
+        _as_array(f"{prefix}.center_W_m", traj.get("center_W_m"), (3,))
+        _positive(f"{prefix}.radius_m", traj.get("radius_m"))
+        _positive(f"{prefix}.omega_rad_s", traj.get("omega_rad_s"))
+        if "yaw_mode" in traj:
+            if not isinstance(traj.get("yaw_mode"), str):
+                raise _invalid(f"{prefix}.yaw_mode", "string", traj.get("yaw_mode"))
+
+    elif t_type == "lissajous":
+        _as_array(f"{prefix}.center_W_m", traj.get("center_W_m"), (3,))
+        _as_array(f"{prefix}.amplitudes", traj.get("amplitudes"), (3,))
+        _as_array(f"{prefix}.omegas", traj.get("omegas"), (3,))
+
+
+def _validate_trajectory(config: Mapping[str, Any]) -> None:
+    traj = _require_mapping(config, "trajectory")
+    _validate_single_trajectory(traj, "trajectory")
 
 
 def validate_scenario_config(config: Mapping[str, Any]) -> None:

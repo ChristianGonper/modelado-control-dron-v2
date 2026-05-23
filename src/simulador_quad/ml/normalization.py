@@ -67,6 +67,18 @@ class Normalizer:
             raise ValueError("Normalizer must be fitted before use")
         return (y_norm * self.std_y) + self.mean_y
 
+    def to(self, device: str):
+        """Mueve los estadisticos a CPU/CUDA para usar el normalizador junto al modelo."""
+        if self.mean_x is not None:
+            self.mean_x = self.mean_x.to(device)
+        if self.std_x is not None:
+            self.std_x = self.std_x.to(device)
+        if self.mean_y is not None:
+            self.mean_y = self.mean_y.to(device)
+        if self.std_y is not None:
+            self.std_y = self.std_y.to(device)
+        return self
+
     def save(self, path: str):
         """Guarda estadisticos en JSON."""
         data = {

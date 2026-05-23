@@ -74,7 +74,7 @@ Este comando crea tambien PIDs iniciales por familia si no existen:
 Ejecutar el dataset completo sin visualizacion:
 
 ```powershell
-uv run python tools\run_classic_dataset.py --dataset data\classic_dataset\v1 --no-visualization
+uv run python tools\run_classic_dataset.py --dataset data\classic_dataset\v1 --no-visualization --workers 4
 ```
 
 Para pruebas rapidas:
@@ -96,21 +96,21 @@ El flujo completo esta descrito en `docs/simulador/dataset_clasico.md`.
 Una vez ejecutado el dataset clasico y generados sus `telemetry.json`, se puede entrenar un controlador neuronal por imitacion:
 
 ```powershell
-uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture mlp --out data\neural_control\mlp_v1
-uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture gru --out data\neural_control\gru_v1
-uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture lstm --out data\neural_control\lstm_v1
+uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture mlp --out data\neural_control\mlp_v1 --device cuda
+uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture gru --out data\neural_control\gru_v1 --device cuda
+uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture lstm --out data\neural_control\lstm_v1 --device cuda
 ```
 
 Evaluacion supervisada in-distribution:
 
 ```powershell
-uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1
+uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1 --device cuda
 ```
 
 Evaluacion supervisada OOD sobre un dataset ya generado:
 
 ```powershell
-uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1 --ood-dataset data\neural_ood\lemniscate_v1
+uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1 --ood-dataset data\neural_ood\lemniscate_v1 --device cuda
 ```
 
 El directorio pasado a `--ood-dataset` debe tener `manifest.csv` y telemetria existente. El evaluador no ejecuta escenarios; solo compara predicciones con comandos expertos ya exportados.
@@ -118,10 +118,10 @@ El directorio pasado a `--ood-dataset` debe tener `manifest.csv` y telemetria ex
 Ejecucion en bucle cerrado de un checkpoint neuronal:
 
 ```powershell
-uv run python tools\run_neural_scenario.py --scenario scenarios\neural_ood_lemniscate.yaml --checkpoint data\neural_control\gru_v1\checkpoints\gru_best.pt --normalization data\neural_control\gru_v1\normalization.json --architecture gru --no-visualization
+uv run python tools\run_neural_scenario.py --scenario scenarios\neural_ood_lemniscate.yaml --checkpoint data\neural_control\gru_v1\checkpoints\gru_best.pt --normalization data\neural_control\gru_v1\normalization.json --device cuda --no-visualization
 ```
 
-Este comando no modifica el YAML original. Sustituye el controlador en memoria, ejecuta el simulador y escribe telemetria/metricas en un directorio derivado de `output.dir` o en `--out` si se proporciona.
+Este comando no modifica el YAML original. Sustituye el controlador en memoria, ejecuta el simulador y escribe telemetria/metricas en un directorio derivado de `output.dir` o en `--out` si se proporciona. Si no se indica `--architecture`, se lee desde el `config.yaml` del entrenamiento.
 
 La metrica supervisada `saturation_percentage` del evaluador neuronal mide comandos predichos fuera de limites antes del clipping. Por defecto usa masa `1.0 kg`, gravedad `9.81 m/s^2`, empuje maximo `m*g*2.5` y momentos `[10, 10, 2] Nm`; si el dataset usa otros limites, interpretar esa metrica con cautela hasta parametrizarla desde CLI o metadata.
 

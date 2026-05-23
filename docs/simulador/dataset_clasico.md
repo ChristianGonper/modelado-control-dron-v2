@@ -112,7 +112,7 @@ uv run python tools\tune_classic_pid.py --family waypoint --out data\classic_dat
 Ejecutar episodios:
 
 ```powershell
-uv run python tools\run_classic_dataset.py --dataset data\classic_dataset\v1 --no-visualization
+uv run python tools\run_classic_dataset.py --dataset data\classic_dataset\v1 --no-visualization --workers 4
 ```
 
 Opciones utiles:
@@ -122,6 +122,7 @@ Opciones utiles:
 - `--limit 10`: limita el numero de episodios.
 - `--rerun`: vuelve a ejecutar episodios con `metrics.json` ya existente.
 - `--fail-fast`: detiene al primer error.
+- `--workers 4`: reparte escenarios independientes en varios procesos.
 
 Resumir resultados:
 
@@ -134,10 +135,10 @@ El resumen clasifica cada episodio como `VALID`, `INVALID`, `MISSING` o `ERROR` 
 Uso como dataset de imitacion neuronal:
 
 ```powershell
-uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture mlp --out data\neural_control\mlp_v1
-uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture gru --out data\neural_control\gru_v1
-uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture lstm --out data\neural_control\lstm_v1
-uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1
+uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture mlp --out data\neural_control\mlp_v1 --device cuda
+uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture gru --out data\neural_control\gru_v1 --device cuda
+uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture lstm --out data\neural_control\lstm_v1 --device cuda
+uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1 --device cuda
 ```
 
 La normalizacion neuronal se calcula solo con muestras `train`. Para evaluar OOD, el directorio pasado a `--ood-dataset` debe contener `manifest.csv` y telemetria ya generada; el evaluador no simula esos episodios.

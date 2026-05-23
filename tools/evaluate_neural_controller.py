@@ -16,10 +16,15 @@ def main():
     parser = argparse.ArgumentParser(description="Evaluate a trained neural controller.")
     parser.add_argument("--dataset", type=str, required=True, help="Path to classic dataset root.")
     parser.add_argument("--run", type=str, required=True, help="Path to the training run directory.")
-    parser.add_argument("--device", type=str, default="cpu", help="Device to use.")
+    parser.add_argument("--device", type=str, choices=["auto", "cpu", "cuda"], default="auto", help="Device to use.")
     parser.add_argument("--ood-dataset", type=str, help="Optional path to OOD dataset root.")
     
     args = parser.parse_args()
+    device = "cuda" if args.device == "auto" and torch.cuda.is_available() else args.device
+    if device == "auto":
+        device = "cpu"
+    if device == "cuda" and not torch.cuda.is_available():
+        raise RuntimeError("CUDA requested, but torch.cuda.is_available() is False")
     
     # 1. Cargar config
     config_path = os.path.join(args.run, "config.yaml")
@@ -36,7 +41,7 @@ def main():
     model = build_model(config["architecture"], input_dim, output_dim, config)
     
     checkpoint_path = os.path.join(args.run, "checkpoints", f"{config['architecture']}_best.pt")
-    model.load_state_dict(torch.load(checkpoint_path, map_location=args.device))
+    model.load_state_dict(torch.load(checkpoint_path, map_location=device))
     
     # 4. Evaluar cada split (train, val, test)
     splits = ["train", "val", "test"]
@@ -67,7 +72,7 @@ def main():
         
         loader = DataLoader(ds, batch_size=config.get("batch_size", 64), shuffle=False)
         
-        metrics = evaluate_model(model, loader, norm, device=args.device)
+        metrics = evaluate_model(model, loader, norm, device=device)
         results[split] = metrics
         
         # Guardar metricas del split

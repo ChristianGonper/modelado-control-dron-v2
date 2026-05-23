@@ -253,36 +253,70 @@ class LineTrajectory(Trajectory):
 
 class LemniscateTrajectory(Trajectory):
     """
-    Trayectoria en forma de ocho (Lemniscata de Gerono) en el plano XY.
+    Trayectoria en forma de ocho (Lemniscata de Gerono) en el plano XY con oscilación vertical en Z.
     x(t) = cx + a * sin(w * t)
     y(t) = cy + b * sin(2 * w * t)
-    z(t) = cz
+    z(t) = cz + z_amp * sin(z_w * t)
     """
-    def __init__(self, center_W_m: np.ndarray, a: float, b: float, omega_rad_s: float, yaw_mode: str = "forward"):
+    def __init__(
+        self, 
+        center_W_m: np.ndarray, 
+        a: float, 
+        b: float, 
+        omega_rad_s: float, 
+        z_amp: float = 0.0, 
+        z_omega_rad_s: float = 0.0, 
+        yaw_mode: str = "forward", 
+        warmup_s: float = 3.0
+    ):
         self.center = center_W_m.copy()
         self.a = a
         self.b = b
         self.w = omega_rad_s
+        self.z_amp = z_amp
+        self.z_w = z_omega_rad_s
         self.yaw_mode = yaw_mode
+        self.warmup_s = warmup_s
         
     def get_reference(self, time_s: float) -> TrajectoryReference:
         t = time_s
         
-        pos = self.center.copy()
-        pos[0] += self.a * np.sin(self.w * t)
-        pos[1] += self.b * np.sin(2 * self.w * t)
+        # Posición, velocidad y aceleración nominales respecto al centro
+        offset_pos = np.array([
+            self.a * np.sin(self.w * t),
+            self.b * np.sin(2.0 * self.w * t),
+            self.z_amp * np.sin(self.z_w * t) if self.z_amp > 0.0 and self.z_w > 0.0 else 0.0
+        ])
         
-        vel = np.zeros(3)
-        vel[0] = self.a * self.w * np.cos(self.w * t)
-        vel[1] = 2 * self.b * self.w * np.cos(2 * self.w * t)
+        vel_nom = np.array([
+            self.a * self.w * np.cos(self.w * t),
+            2.0 * self.b * self.w * np.cos(2.0 * self.w * t),
+            self.z_amp * self.z_w * np.cos(self.z_w * t) if self.z_amp > 0.0 and self.z_w > 0.0 else 0.0
+        ])
         
-        acc = np.zeros(3)
-        acc[0] = -self.a * self.w**2 * np.sin(self.w * t)
-        acc[1] = -4 * self.b * self.w**2 * np.sin(2 * self.w * t)
+        acc_nom = np.array([
+            -self.a * self.w**2 * np.sin(self.w * t),
+            -4.0 * self.b * self.w**2 * np.sin(2.0 * self.w * t),
+            -self.z_amp * self.z_w**2 * np.sin(self.z_w * t) if self.z_amp > 0.0 and self.z_w > 0.0 else 0.0
+        ])
         
-        if self.yaw_mode == "forward":
-            yaw = np.arctan2(vel[1], vel[0]) # Apuntar hacia donde se mueve
+        yaw_nom = np.arctan2(vel_nom[1], vel_nom[0]) if self.yaw_mode == "forward" else 0.0
+        
+        if self.warmup_s > 0.0 and t < self.warmup_s:
+            # Interpolación suave (hermítico cúbico)
+            s = t / self.warmup_s
+            f = 3.0 * s**2 - 2.0 * s**3
+            df_dt = (6.0 * s - 6.0 * s**2) / self.warmup_s
+            d2f_dt2 = (6.0 - 12.0 * s) / (self.warmup_s**2)
+            
+            pos = self.center.copy() + f * offset_pos
+            vel = f * vel_nom + df_dt * offset_pos
+            acc = f * acc_nom + 2.0 * df_dt * vel_nom + d2f_dt2 * offset_pos
+            yaw = f * yaw_nom + (1.0 - f) * 0.0
         else:
-            yaw = 0.0
+            pos = self.center.copy() + offset_pos
+            vel = vel_nom
+            acc = acc_nom
+            yaw = yaw_nom
             
         return TrajectoryReference(pos, vel, acc, yaw)

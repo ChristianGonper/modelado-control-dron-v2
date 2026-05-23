@@ -26,22 +26,22 @@ Para el dataset clasico versionado:
 
 ```powershell
 uv run python tools\generate_classic_dataset.py --version v1 --out data\classic_dataset\v1
-uv run python tools\run_classic_dataset.py --dataset data\classic_dataset\v1 --no-visualization
+uv run python tools\run_classic_dataset.py --dataset data\classic_dataset\v1 --no-visualization --workers 4
 uv run python tools\summarize_classic_dataset.py --dataset data\classic_dataset\v1
 ```
 
 Para entrenamiento y evaluacion neuronal:
 
 ```powershell
-uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture gru --out data\neural_control\gru_v1
-uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1
-uv run python tools\run_neural_scenario.py --scenario scenarios\neural_ood_lemniscate.yaml --checkpoint data\neural_control\gru_v1\checkpoints\gru_best.pt --normalization data\neural_control\gru_v1\normalization.json --architecture gru --no-visualization
+uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture gru --out data\neural_control\gru_v1 --device cuda
+uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1 --device cuda
+uv run python tools\run_neural_scenario.py --scenario scenarios\neural_ood_lemniscate.yaml --checkpoint data\neural_control\gru_v1\checkpoints\gru_best.pt --normalization data\neural_control\gru_v1\normalization.json --device cuda --no-visualization
 ```
 
 Para evaluacion OOD supervisada:
 
 ```powershell
-uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1 --ood-dataset data\neural_ood\lemniscate_v1
+uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1 --ood-dataset data\neural_ood\lemniscate_v1 --device cuda
 ```
 
 El directorio OOD debe contener `manifest.csv` y telemetria ya generada. Este comando no ejecuta el escenario OOD; solo evalua un dataset OOD existente.

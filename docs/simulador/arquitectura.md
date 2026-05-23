@@ -30,8 +30,9 @@ El simulador esta organizado como codigo cientifico simple. Las carpetas separan
 - `dynamics/perturbations.py`: drag lineal, viento constante y ruido de observacion.
 - `scenarios/schema.py`: validacion fisica simple de YAML antes de simular.
 - `trajectories/analytic.py`: referencias `hold`, `circle`, `lissajous` y `line` / `waypoint`. `line` y `waypoint` usan comportamiento `waypoint_stop`: perfil trapezoidal/triangular por tramo, parada en cada waypoint y avance condicionado por tolerancias y dwell.
+- `trajectories/composite.py`: clase `CompositeTrajectory` para secuenciar múltiples sub-trayectorias de forma continua. Inserta automáticamente transiciones lineales si la distancia entre el final de una trayectoria y el inicio de la siguiente supera los 5 cm. La transición lineal realiza un frenado completo en velocidad a cero al llegar al punto de inicio de la siguiente trayectoria (transición posicional con parada intermedia) para reducir discontinuidades de posición y reiniciar el siguiente tramo desde reposo.
 - `control/classic.py`: controlador clasico en cascada.
-- `control/neural.py`: controlador neuronal por imitacion compatible con el mismo contrato de control.
+- `control/neural.py`: controladores neuronales compatibles con el mismo contrato de control; incluye sustitucion directa de comandos y programacion neuronal de ganancias del lazo externo.
 - `ml/`: carga de telemetria, normalizacion train-only, modelos MLP/GRU/LSTM, entrenamiento y evaluacion supervisada.
 - `datasets/classic.py`: definicion reproducible del dataset clasico, familias, perfiles, YAML generados, PID iniciales, manifiesto y filtros de aceptacion.
 - `runner.py`: orquestacion multi-rate, ZOH, telemetria y terminacion.
@@ -41,11 +42,17 @@ El simulador esta organizado como codigo cientifico simple. Las carpetas separan
 - `visualization/three_d.py`: visor interactivo HTML 3D basado en Plotly.
 - `tools/generate_classic_dataset.py`: genera estructura `data/classic_dataset/<version>/` con `manifest.csv`, `pids/` y escenarios YAML.
 - `tools/tune_classic_pid.py`: ajusta un PID clasico por familia en el perfil nominal con drag y actuadores.
-- `tools/run_classic_dataset.py`: ejecuta episodios del manifiesto y escribe `run_report.csv`.
+- `tools/run_classic_dataset.py`: ejecuta episodios del manifiesto, opcionalmente en varios procesos, y escribe `run_report.csv`.
 - `tools/summarize_classic_dataset.py`: resume resultados del dataset en `summary.csv`.
 - `tools/train_neural_controller.py`: entrena MLP, GRU o LSTM por imitacion desde telemetria clasica.
 - `tools/evaluate_neural_controller.py`: evalua modelos entrenados sobre `train`/`val`/`test` y, opcionalmente, un dataset OOD.
 - `tools/run_neural_scenario.py`: ejecuta un escenario existente sustituyendo el controlador por un checkpoint neuronal sin modificar el YAML base.
+- `tools/train_neural_position_controller.py`: entrena una red que predice multiplicadores de `Kp_pos` y `Kd_pos`.
+- `tools/evaluate_neural_position_controller.py`: evalua fidelidad supervisada de ganancias externas.
+- `tools/run_neural_position_scenario.py`: ejecuta un escenario con red en el lazo externo y lazo interno clasico.
+- `tools/run_neural_position_dataset.py`: ejecuta escenarios de un manifiesto con un checkpoint `neural_position` y escribe un reporte especifico de esa arquitectura.
+- `tools/generate_pid_bank.py`: crea un banco inicial de PIDs por familia a partir de los PIDs actuales.
+- `tools/generate_position_gain_dataset_from_bank.py`: expande un dataset clasico usando el banco de PIDs para entrenar la red de ganancias.
 
 ## Contratos de datos
 
@@ -60,7 +67,7 @@ Los contratos relevantes para interpretar resultados son:
 
 La telemetria distingue comando solicitado, comando objetivo de rotor y estado aplicado. Esta separacion es importante para estudiar saturacion, retardos y lag de actuadores.
 
-Las trayectorias analiticas (`hold`, `circle`, `lissajous`) dependen solo de `time_s`. Las trayectorias `line` / `waypoint` son state-aware: mantienen fase interna de mision y generan la referencia del siguiente waypoint usando el estado actual para comprobar asentamiento. El campo legacy `times` puede aparecer en YAML, pero no controla el avance entre waypoints.
+Las trayectorias analiticas (`hold`, `circle`, `lissajous`) dependen solo de `time_s`. Las trayectorias `line` / `waypoint` son state-aware: mantienen fase interna de mision y generan la referencia del siguiente waypoint usando el estado actual para comprobar asentamiento. El campo legacy `times` puede aparecer en YAML, pero no controla el avance entre waypoints. Las trayectorias compuestas (`composite`) combinan secuencialmente ambos tipos de trayectorias, realizando un seguimiento temporal de cada sub-trayectoria (usando el campo `duration` en las analíticas) y controlando la transición a la siguiente mediante la comprobación de completitud (`check_completion`).
 
 ## Telemetria
 
@@ -84,9 +91,13 @@ Si `initial_state.orientation_WB` es `null`, el cargador genera una actitud nive
 
 Para `trajectory.type: "line"` o `"waypoint"`, la validacion comprueba que `waypoints` sea una lista no vacia de puntos `[3]` finitos, que `times` tenga la misma longitud si aparece como campo deprecated, y que los parametros opcionales de velocidad, aceleracion, tolerancia y dwell sean no negativos o positivos segun corresponda.
 
+Para `trajectory.type: "composite"`, la validación comprueba de forma recursiva que la secuencia de sub-trayectorias no esté vacía, que cada una sea válida de acuerdo a su tipo, que el campo `duration` sea obligatorio y positivo para las sub-trayectorias analíticas de la secuencia, y que si se define `duration` en cualquier sub-trayectoria, este sea estrictamente positivo. También valida que la velocidad de transición `transition_speed` sea positiva si se proporciona.
+
 Para `controller.type: "classic"`, el YAML puede declarar `Kp_pos`, `Kd_pos`, `Kp_att`, `Kd_att` y `max_body_moments_Nm` como vectores de tres componentes no negativas. Si faltan ganancias, el controlador conserva sus defaults.
 
 Para `controller.type: "neural"`, el YAML debe declarar `architecture`, `checkpoint_path` y `normalization_path`. El controlador neuronal implementa `compute_control(time_s, obs_state, reference)` y devuelve el mismo `ControlCommand` que el clasico: empuje colectivo en N y momentos FRD en Nm. Las arquitecturas soportadas son `mlp`, `gru` y `lstm`. GRU/LSTM mantienen una ventana interna de features y el runner llama a `reset()` al inicio de cada simulacion para limpiar esa memoria. Si `clip_to_classic_limits` es `true`, el controlador neuronal limita el empuje a `0..mass_kg*gravity_m_s2*2.5` y los momentos a `+-max_body_moments_Nm`. Si `max_body_moments_Nm` falta, usa `[10.0, 10.0, 2.0]`.
+
+Para `controller.type: "neural_position"`, el YAML debe declarar `architecture`, `checkpoint_path` y `normalization_path`. La red predice 6 log-multiplicadores para `Kp_pos` y `Kd_pos`. Tras desnormalizar, el controlador aplica `exp`, limita con `multiplier_clip` y usa el lazo interno clasico para convertir fuerza deseada en actitud, empuje y momentos. Por defecto `base_Kp_pos = [2.0, 2.0, 5.0]`, `base_Kd_pos = [1.0, 1.0, 2.0]`, `multiplier_clip = [0.25, 4.0]` y `device = "auto"`. En los scripts de inferencia, si `--architecture` se omite, se toma de `config.yaml` junto al checkpoint.
 
 La evaluacion supervisada neuronal se hace sobre telemetria ya exportada. `train` calcula pesos y normalizacion, `val` selecciona checkpoint, `test` mide desempeno in-distribution y OOD se evalua aparte con `--ood-dataset`. El dataset OOD debe tener `manifest.csv` y `telemetry.json` generados previamente; el evaluador no ejecuta escenarios por si mismo.
 
@@ -136,5 +147,6 @@ Las metricas no sustituyen a la inspeccion de telemetria. Para explicar un resul
 - El ruido de observacion afecta solo a posicion y velocidad.
 - La visualización es postproceso y automática tras cada ejecución exitosa.
 - El controlador neuronal aprende por imitacion supervisada de los comandos clasicos; no optimiza directamente una funcion de coste en bucle cerrado.
+- El controlador `neural_position` aprende por imitacion de ganancias externas; mejora la estabilidad estructural al conservar el lazo interno clasico, pero su calidad final tambien debe medirse en bucle cerrado.
 - La evaluacion `train`/`val`/`test` del dataset clasico mide desempeno in-distribution. La generalizacion debe evaluarse con datasets o escenarios OOD separados.
 - La metrica supervisada `saturation_percentage` neuronal usa por defecto masa `1.0 kg`, gravedad `9.81 m/s^2`, empuje maximo `m*g*2.5` y momentos `[10, 10, 2] Nm`, salvo que se llame al evaluador interno con otros limites.

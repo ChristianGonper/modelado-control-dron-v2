@@ -1,0 +1,66 @@
+name: "Composite Out of Distribution"
+seed: 42
+
+vehicle:
+  mass_kg: 1.0
+  inertia_B_kg_m2: [[0.05, 0, 0], [0, 0.05, 0], [0, 0, 0.1]]
+  linear_drag_coefficient: [0, 0, 0]
+  rotors:
+    - {position_B_m: [0.17, 0.17, 0], turning_direction: -1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 1000, time_constant_s: 0.0}
+    - {position_B_m: [0.17, -0.17, 0], turning_direction: 1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 1000, time_constant_s: 0.0}
+    - {position_B_m: [-0.17, 0.17, 0], turning_direction: 1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 1000, time_constant_s: 0.0}
+    - {position_B_m: [-0.17, -0.17, 0], turning_direction: -1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 1000, time_constant_s: 0.0}
+
+initial_state:
+  position_W_m: [0, 0, 0]
+  velocity_W_m_s: [0, 0, 0]
+  orientation_WB: null
+  angular_velocity_B_rad_s: [0, 0, 0]
+
+trajectory:
+  type: "composite"
+  transition_speed: 0.5
+  sequence:
+    - type: "hold"
+      position_W_m: [0, 0, 1.0]
+      duration: 3.0
+      yaw_rad: 0.0
+    - type: "circle"
+      center_W_m: [0, 0, 1.0]
+      radius_m: 2.0
+      omega_rad_s: 0.5
+      duration: 12.57  # Aproximadamente 1 vuelta
+      yaw_mode: "forward"
+    - type: "waypoint"
+      waypoints:
+        - [2.0, 0.0, 1.0]
+        - [2.0, 2.0, 1.5]
+        - [0.0, 2.0, 1.2]
+        - [0.0, 0.0, 1.0]
+      max_speed_m_s: 0.6
+      max_acceleration_m_s2: 0.5
+      waypoint_tolerance_m: 0.20
+      waypoint_speed_tolerance_m_s: 0.20
+      dwell_time_s: 0.40
+
+controller:
+  type: "classic"
+
+perturbations:
+  constant_wind_W_m_s: [0, 0, 0]
+  pos_std_m: 0.0
+  vel_std_m_s: 0.0
+
+timing:
+  physics_dt_s: 0.01
+  control_dt_s: 0.02
+  telemetry_dt_s: 0.1
+
+termination:
+  max_duration_s: 45.0
+  z_min_m: -0.1
+
+output:
+  dir: "results/composite_ood"
+  telemetry_file: "telemetry.json"
+  metrics_file: "metrics.json"

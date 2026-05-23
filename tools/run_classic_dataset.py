@@ -1,7 +1,26 @@
 import argparse
 import os
+from concurrent.futures import ProcessPoolExecutor, as_completed
 import pandas as pd
 from simulador_quad.app import run_simulation
+
+
+def _run_row(row, dataset, no_visualization, rerun):
+    scenario_id = row["scenario_id"]
+    scenario_path = os.path.join(dataset, row["scenario_path"])
+    result_dir = os.path.join(dataset, row["result_dir"])
+    metrics_file = os.path.join(result_dir, "metrics.json")
+
+    if os.path.exists(metrics_file) and not rerun:
+        return {"scenario_id": scenario_id, "status": "SKIPPED"}
+
+    try:
+        run_simulation(scenario_path, visualization=not no_visualization)
+        status = "SUCCESS"
+    except Exception as exc:
+        status = f"FAILED: {exc}"
+    return {"scenario_id": scenario_id, "status": status}
+
 
 def main():
     parser = argparse.ArgumentParser(description="Run classical control dataset simulations.")
@@ -12,8 +31,13 @@ def main():
     parser.add_argument("--no-visualization", action="store_true", help="Disable visualizations")
     parser.add_argument("--rerun", action="store_true", help="Rerun already completed simulations")
     parser.add_argument("--fail-fast", action="store_true", help="Stop on first error")
+    parser.add_argument("--workers", type=int, default=1, help="Number of parallel scenario processes.")
     
     args = parser.parse_args()
+    if args.workers < 1:
+        raise ValueError("--workers must be >= 1")
+    if args.workers > 1 and args.fail_fast:
+        raise ValueError("--fail-fast requires --workers 1")
     
     manifest_path = os.path.join(args.dataset, "manifest.csv")
     if not os.path.exists(manifest_path):
@@ -27,39 +51,39 @@ def main():
         df = df[df["family"] == args.family]
     if args.scenario_id:
         df = df[df["scenario_id"] == args.scenario_id]
+    if args.limit:
+        df = df.head(args.limit)
         
-    count = 0
     total = len(df)
     print(f"Total scenarios to run: {total}")
     
     report = []
-    
-    for _, row in df.iterrows():
-        if args.limit and count >= args.limit:
-            break
-            
-        scenario_path = os.path.join(args.dataset, row["scenario_path"])
-        result_dir = os.path.join(args.dataset, row["result_dir"])
-        metrics_file = os.path.join(result_dir, "metrics.json")
-        
-        if os.path.exists(metrics_file) and not args.rerun:
-            print(f"[{count+1}/{total}] Skipping {row['scenario_id']} (already exists)")
-            count += 1
-            continue
-            
-        print(f"[{count+1}/{total}] Running {row['scenario_id']}...")
-        
-        try:
-            run_simulation(scenario_path, visualization=not args.no_visualization)
-            status = "SUCCESS"
-        except Exception as e:
-            print(f"Error running {row['scenario_id']}: {e}")
-            status = f"FAILED: {e}"
-            if args.fail_fast:
-                break
-        
-        report.append({"scenario_id": row["scenario_id"], "status": status})
-        count += 1
+
+    rows = [row.to_dict() for _, row in df.iterrows()]
+    if args.workers == 1:
+        for index, row in enumerate(rows, start=1):
+            print(f"[{index}/{total}] Running {row['scenario_id']}...")
+            result = _run_row(row, args.dataset, args.no_visualization, args.rerun)
+            if result["status"] == "SKIPPED":
+                print(f"[{index}/{total}] Skipping {row['scenario_id']} (already exists)")
+            elif result["status"].startswith("FAILED"):
+                print(f"Error running {row['scenario_id']}: {result['status']}")
+                report.append(result)
+                if args.fail_fast:
+                    break
+                continue
+            report.append(result)
+    else:
+        print(f"Running with {args.workers} worker processes.")
+        with ProcessPoolExecutor(max_workers=args.workers) as executor:
+            futures = [
+                executor.submit(_run_row, row, args.dataset, args.no_visualization, args.rerun)
+                for row in rows
+            ]
+            for index, future in enumerate(as_completed(futures), start=1):
+                result = future.result()
+                print(f"[{index}/{total}] {result['scenario_id']}: {result['status']}")
+                report.append(result)
         
     # Save run report
     report_path = os.path.join(args.dataset, "run_report.csv")

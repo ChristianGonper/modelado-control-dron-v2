@@ -1,5 +1,5 @@
 import numpy as np
-from simulador_quad.trajectories.analytic import HoldTrajectory, CircleTrajectory, LissajousTrajectory, LineTrajectory
+from simulador_quad.trajectories.analytic import HoldTrajectory, CircleTrajectory, LissajousTrajectory, LineTrajectory, LemniscateTrajectory
 
 def test_hold_trajectory():
     pos = np.array([1.0, 2.0, 3.0])
@@ -127,3 +127,77 @@ def test_line_trajectory_triangular():
     ref2 = traj.get_reference_for_state(2.0, get_state(2.0))
     assert np.allclose(ref2.position_W_m, [0.5, 0.0, 0.0])
     assert np.allclose(ref2.velocity_W_m_s, [0.0, 0.0, 0.0])
+
+def test_lemniscate_trajectory():
+    center = np.array([1.0, 2.0, 3.0])
+    a = 2.0
+    b = 1.0
+    w = 0.5
+    warmup = 3.0
+    traj = LemniscateTrajectory(center, a, b, w, yaw_mode="forward", warmup_s=warmup)
+    
+    # En t = 0: posición es exactamente el centro, velocidad, aceleración y yaw son exactamente cero.
+    ref0 = traj.get_reference(0.0)
+    assert np.allclose(ref0.position_W_m, center)
+    assert np.allclose(ref0.velocity_W_m_s, 0.0)
+    assert np.allclose(ref0.acceleration_W_m_s2, 0.0)
+    assert np.isclose(ref0.yaw_rad, 0.0)
+    
+    # En t = warmup: coincide exactamente con el valor nominal de la lemniscata
+    ref_warm = traj.get_reference(warmup)
+    
+    pos_expected = center + np.array([a * np.sin(w * warmup), b * np.sin(2.0 * w * warmup), 0.0])
+    vel_expected = np.array([a * w * np.cos(w * warmup), 2.0 * b * w * np.cos(2.0 * w * warmup), 0.0])
+    acc_expected = np.array([-a * w**2 * np.sin(w * warmup), -4.0 * b * w**2 * np.sin(2.0 * w * warmup), 0.0])
+    yaw_expected = np.arctan2(vel_expected[1], vel_expected[0])
+    
+    assert np.allclose(ref_warm.position_W_m, pos_expected)
+    assert np.allclose(ref_warm.velocity_W_m_s, vel_expected)
+    assert np.allclose(ref_warm.acceleration_W_m_s2, acc_expected)
+    assert np.isclose(ref_warm.yaw_rad, yaw_expected)
+    
+    # En t = warmup + 1.0: también coincide con el valor nominal
+    t_after = warmup + 1.0
+    ref_after = traj.get_reference(t_after)
+    pos_after_expected = center + np.array([a * np.sin(w * t_after), b * np.sin(2.0 * w * t_after), 0.0])
+    assert np.allclose(ref_after.position_W_m, pos_after_expected)
+
+def test_lemniscate_3d_trajectory():
+    center = np.array([1.0, 2.0, 3.0])
+    a = 2.0
+    b = 1.0
+    w = 0.5
+    z_amp = 0.5
+    z_w = 0.6
+    warmup = 3.0
+    traj = LemniscateTrajectory(center, a, b, w, z_amp=z_amp, z_omega_rad_s=z_w, yaw_mode="forward", warmup_s=warmup)
+    
+    # En t = 0: todo es cero o el centro
+    ref0 = traj.get_reference(0.0)
+    assert np.allclose(ref0.position_W_m, center)
+    assert np.allclose(ref0.velocity_W_m_s, 0.0)
+    assert np.allclose(ref0.acceleration_W_m_s2, 0.0)
+    assert np.isclose(ref0.yaw_rad, 0.0)
+    
+    # En t = warmup: coincide exactamente con los valores 3D calculados
+    ref_warm = traj.get_reference(warmup)
+    pos_expected = center + np.array([
+        a * np.sin(w * warmup),
+        b * np.sin(2.0 * w * warmup),
+        z_amp * np.sin(z_w * warmup)
+    ])
+    vel_expected = np.array([
+        a * w * np.cos(w * warmup),
+        2.0 * b * w * np.cos(2.0 * w * warmup),
+        z_amp * z_w * np.cos(z_w * warmup)
+    ])
+    acc_expected = np.array([
+        -a * w**2 * np.sin(w * warmup),
+        -4.0 * b * w**2 * np.sin(2.0 * w * warmup),
+        -z_amp * z_w**2 * np.sin(z_w * warmup)
+    ])
+    
+    assert np.allclose(ref_warm.position_W_m, pos_expected)
+    assert np.allclose(ref_warm.velocity_W_m_s, vel_expected)
+    assert np.allclose(ref_warm.acceleration_W_m_s2, acc_expected)
+
