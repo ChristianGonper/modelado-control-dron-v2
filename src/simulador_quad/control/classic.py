@@ -91,6 +91,17 @@ class ClassicCascadeController(Controller):
         # Saturar momentos
         return np.clip(tau_B, -self.max_moments_Nm, self.max_moments_Nm)
 
+    def compute_control_from_desired_force_W(
+        self,
+        obs_state: VehicleState,
+        yaw_rad: float,
+        desired_force_W_N: np.ndarray,
+    ) -> ControlCommand:
+        """Convierte fuerza deseada ENU (ya calculada por lazo externo o NN) en comando usando conversion geometrica + PID actitud clasico."""
+        thrust_N, q_des = self.desired_force_to_attitude(desired_force_W_N, yaw_rad)
+        tau_B = self.compute_attitude_moments(obs_state, q_des)
+        return ControlCommand(collective_thrust_N=thrust_N, body_moments_Nm=tau_B)
+
     def compute_control_with_position_gains(
         self,
         obs_state: VehicleState,
@@ -99,9 +110,7 @@ class ClassicCascadeController(Controller):
         Kd_pos: np.ndarray,
     ) -> ControlCommand:
         desired_force_W = self.compute_desired_force_W(obs_state, reference, Kp_pos=Kp_pos, Kd_pos=Kd_pos)
-        thrust_N, q_des = self.desired_force_to_attitude(desired_force_W, reference.yaw_rad)
-        tau_B = self.compute_attitude_moments(obs_state, q_des)
-        return ControlCommand(collective_thrust_N=thrust_N, body_moments_Nm=tau_B)
+        return self.compute_control_from_desired_force_W(obs_state, reference.yaw_rad, desired_force_W)
 
     def compute_control(self, time_s: float, obs_state: VehicleState, reference: TrajectoryReference) -> ControlCommand:
         return self.compute_control_with_position_gains(obs_state, reference, self.Kp_pos, self.Kd_pos)

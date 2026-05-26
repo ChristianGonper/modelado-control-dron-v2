@@ -18,31 +18,31 @@ def dummy_model_dir(tmp_path):
     model_dir.mkdir()
     (model_dir / "checkpoints").mkdir()
     
-    # Normalizador dummy (31 inputs, 4 outputs)
+    # Normalizador dummy (31 inputs, 6 outputs for neural_position legacy path)
     norm_data = {
         "mean_x": [0.0] * 31,
         "std_x": [1.0] * 31,
-        "mean_y": [0.0] * 4,
-        "std_y": [1.0] * 4,
+        "mean_y": [0.0] * 6,
+        "std_y": [1.0] * 6,
         "feature_names": ["f"] * 31,
-        "target_names": ["t"] * 4,
+        "target_names": ["t"] * 6,
         "feature_version": "v1",
         "epsilon": 1e-8
     }
     with open(model_dir / "normalization.json", "w") as f:
         json.dump(norm_data, f)
         
-    # Checkpoint dummy (pesos aleatorios para MLP)
+    # Checkpoint dummy (pesos aleatorios para MLP) - 6 outputs for position gain test
     from simulador_quad.ml.models import MLPControllerNet
     hidden_dim = 16
-    model = MLPControllerNet(31, 4, hidden_dim=hidden_dim)
+    model = MLPControllerNet(31, 6, hidden_dim=hidden_dim)
     torch.save(model.state_dict(), model_dir / "checkpoints" / "mlp_best.pt")
     
     # Config dummy
     config = {
         "architecture": "mlp",
         "input_dim": 31,
-        "output_dim": 4,
+        "output_dim": 6,
         "hidden_dim": hidden_dim
     }
     with open(model_dir / "config.yaml", "w") as f:
@@ -81,10 +81,12 @@ def test_neural_controller_execution(dummy_model_dir):
             "position_W_m": [0, 0, 1]
         },
         "controller": {
-            "type": "neural",
+            "type": "neural_position",
             "architecture": "mlp",
             "checkpoint_path": str(checkpoint),
-            "normalization_path": str(norm_path)
+            "normalization_path": str(norm_path),
+            "base_Kp_pos": [2.0, 2.0, 5.0],
+            "base_Kd_pos": [1.0, 1.0, 2.0],
         },
         "timing": {
             "physics_dt_s": 0.01,
