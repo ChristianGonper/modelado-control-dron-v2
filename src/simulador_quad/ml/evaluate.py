@@ -72,3 +72,42 @@ def evaluate_model(model, loader, normalizer, device="cpu",
     }
     
     return metrics
+
+
+def evaluate_outer_force_model(model, loader, normalizer, device="cpu", max_thrust=24.525, max_tilt_rad=0.52):
+    """Supervised eval for 3-output desired_force_W_N. Includes pre-clip exceed % for norm and tilt."""
+    model.eval()
+    model.to(device)
+    total_mse = 0.0
+    all_p, all_t = [], []
+    with torch.no_grad():
+        for x, y in loader:
+            x, y = x.to(device), y.to(device)
+            yp = model(x)
+            loss = torch.nn.functional.mse_loss(yp, y)
+            total_mse += loss.item() * x.size(0)
+            all_p.append(yp.cpu())
+            all_t.append(y.cpu())
+    total_mse /= max(len(loader.dataset), 1)
+    Yp = normalizer.denormalize_y(torch.cat(all_p))
+    Yt = normalizer.denormalize_y(torch.cat(all_t))
+    err = Yp - Yt
+    mae = torch.abs(err).mean(0).tolist()
+    rmse = torch.sqrt((err**2).mean(0)).tolist()
+    # pre-clip stats
+    norms_p = torch.norm(Yp, dim=1)
+    norms_t = torch.norm(Yt, dim=1)
+    exceed_thrust = (norms_p > max_thrust).float().mean().item() * 100
+    # tilt approx using acos(fz/norm)
+    uz_p = torch.clamp(Yp[:, 2] / (norms_p + 1e-12), -1.0, 1.0)
+    tilts_p = torch.acos(uz_p)
+    exceed_tilt = (tilts_p > max_tilt_rad).float().mean().item() * 100
+    return {
+        "mse_normalized": float(total_mse),
+        "mae_force_W_N": mae,
+        "rmse_force_W_N": rmse,
+        "mae_force_norm_N": float(torch.abs(norms_p - norms_t).mean()),
+        "rmse_force_norm_N": float(torch.sqrt(((norms_p - norms_t)**2).mean())),
+        "force_norm_clip_percentage_pre": float(exceed_thrust),
+        "force_tilt_clip_percentage_pre": float(exceed_tilt),
+    }
