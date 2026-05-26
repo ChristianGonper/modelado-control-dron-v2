@@ -16,7 +16,7 @@ Implementado:
 - Integracion RK4 con pasos separados de fisica, control y telemetria.
 - Controlador clasico en cascada.
 - Ganancias explicitas opcionales del controlador clasico desde YAML.
-- Controlador neuronal por imitacion en bucle cerrado, con MLP, GRU y LSTM.
+- Controlador `neural` por imitacion de fuerza externa ENU, con MLP, GRU y LSTM, y PID clasico en el lazo interno.
 - Controlador neuronal `neural_position`, donde la red programa ganancias del lazo externo y el lazo interno clasico estabiliza actitud.
 - Pipeline ML con carga de telemetria, normalizacion train-only, entrenamiento supervisado y evaluacion in-distribution/OOD.
 - Mezclador de cuadricoptero con empuje colectivo y momentos de cuerpo.
@@ -25,6 +25,7 @@ Implementado:
 - Escenarios YAML, telemetria JSON, metricas JSON con unidades fisicas explicitas y figuras PNG reproducibles.
 - Validacion fisica basica de escenarios antes de ejecutar.
 - Generacion de dataset clasico versionado con manifiesto CSV, escenarios YAML generados, PID por familia y resultados separados.
+- Generacion de dataset `outer_force` mediante banco de PIDs externos, seleccion segura de experto por escenario y targets `desired_force_W_N`.
 - Soporte de trayectorias compuestas (`composite`) y transiciones automáticas en línea recta con frenado para validación OOD.
 
 No implementado todavia:
@@ -39,8 +40,8 @@ No implementado todavia:
 - [Arquitectura actual](arquitectura.md): flujo de simulacion, modulos, contratos, telemetria y metricas.
 - [Trazabilidad](trazabilidad.md): matriz requisito-modelo-codigo-prueba-escenario-metrica del simulador clasico.
 - [Validacion](validacion.md): clasificacion de escenarios, criterios de aceptacion y evidencias para la memoria.
-- [Dataset clasico](dataset_clasico.md): comandos y artefactos de generacion de datos clasicos previos a la fase neuronal.
-- [Control neuronal](control_neuronal.md): entrenamiento, evaluacion supervisada, OOD e inferencia en bucle cerrado.
+- [Dataset clasico](dataset_clasico.md): fuente reproducible de escenarios y telemetria para construir expertos neuronales.
+- [Control neuronal](control_neuronal.md): dataset `outer_force`, entrenamiento, evaluacion supervisada, OOD e inferencia hibrida en bucle cerrado.
 - [Mantenimiento documental](mantenimiento.md): checklist para actualizar esta documentacion despues de cambios agresivos.
 
 ## Comandos minimos
@@ -52,7 +53,9 @@ uv run simulador-quad run scenarios\circle_drag.yaml
 uv run simulador-quad plot results\hover_clean\telemetry.json --metrics results\hover_clean\metrics.json --out results\hover_clean\figures
 uv run python tools\generate_classic_dataset.py --version v1 --out data\classic_dataset\v1
 uv run python tools\run_classic_dataset.py --dataset data\classic_dataset\v1 --no-visualization --workers 4
-uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture mlp --out data\neural_control\mlp_v1 --device cuda
+uv run python tools\generate_outer_force_pid_bank.py --dataset data\classic_dataset\v1 --out data\outer_force_pid_bank\v1
+uv run python tools\generate_outer_force_dataset.py --source-dataset data\classic_dataset\v1 --pid-bank data\outer_force_pid_bank\v1 --out data\outer_force_dataset\v1
+uv run python tools\train_neural_controller.py --dataset data\outer_force_dataset\v1 --architecture mlp --feature-version outer_force_min_v1 --out data\neural_control\outer_force_mlp_min_v1 --device auto
 ```
 
 Las figuras generadas tienen nombres estables:

@@ -349,6 +349,8 @@ El documento final deberá incluir:
 
 El controlador neuronal se entrenará para imitar acciones generadas por el controlador clásico.
 
+El modo neuronal principal implementado sustituye solo el lazo externo: la red predice la fuerza deseada `desired_force_W_N[3]` en mundo ENU y el lazo interno clasico convierte esa fuerza y el yaw de referencia en empuje y momentos. El dataset correspondiente se construye seleccionando por escenario un PID externo seguro, conservando sin cambios el PID interno y los limites del escenario fuente. Se mantiene de forma separada el modo `neural_position`, que predice multiplicadores de ganancias externas.
+
 El conjunto de datos deberá documentar:
 
 - Escenarios usados para generar muestras.
@@ -360,6 +362,8 @@ El conjunto de datos deberá documentar:
 - Métrica de entrenamiento.
 
 La evaluación no deberá limitarse a error supervisado de entrenamiento. El controlador neuronal deberá evaluarse cerrando el bucle dentro del simulador.
+
+Para el modo de fuerza externa, la evaluacion cerrada debera informar tambien la activacion de los limites de norma e inclinacion de la fuerza predicha, para no confundir estabilidad debida al clipping con comportamiento aprendido.
 
 ## 14. Escenarios de simulación
 

@@ -278,25 +278,31 @@ El controlador clasico usa un bucle externo de posicion y un bucle interno de ac
 ```yaml
 controller:
   type: "neural"
-  architecture: "gru"
-  checkpoint_path: "data/neural_control/gru_v1/checkpoints/gru_best.pt"
-  normalization_path: "data/neural_control/gru_v1/normalization.json"
-  sequence_length: 20
+  architecture: "mlp"
+  checkpoint_path: "data/neural_control/outer_force_mlp_min_v1/checkpoints/mlp_best.pt"
+  normalization_path: "data/neural_control/outer_force_mlp_min_v1/normalization.json"
+  feature_version: "outer_force_min_v1"
   clip_to_classic_limits: true
+  max_desired_tilt_rad: 0.52
+  Kp_att: [4.0, 4.0, 1.0]
+  Kd_att: [1.5, 1.5, 0.5]
   max_body_moments_Nm: [10.0, 10.0, 2.0]
   device: "auto"
 ```
 
-- `type`: `"neural"` para cargar un modelo entrenado por imitacion.
+- `type`: `"neural"` para cargar un modelo outer-force entrenado por imitacion.
 - `architecture`: arquitectura del checkpoint. Debe ser `"mlp"`, `"gru"` o `"lstm"`.
 - `checkpoint_path`: ruta al `.pt` entrenado.
-- `normalization_path`: ruta al `normalization.json` guardado durante entrenamiento. Debe corresponder a la misma version de features que el checkpoint.
+- `normalization_path`: ruta al `normalization.json` guardado durante entrenamiento. Debe corresponder a las mismas features y targets que el checkpoint.
+- `feature_version`: debe ser `"outer_force_min_v1"` o `"outer_force_full_v1"`.
 - `sequence_length`: longitud de ventana para GRU/LSTM. Si falta, se usa `20`. Para MLP se ignora.
-- `clip_to_classic_limits`: si es `true`, limita las salidas de la red antes de pasarlas al mixer. Si falta, se usa `true`.
+- `clip_to_classic_limits`: si es `true`, limita la fuerza predicha antes del lazo interno. Si falta, se usa `true`.
+- `max_desired_tilt_rad`: limite positivo y menor que `pi/2` para la inclinacion solicitada por la fuerza; es obligatorio en un YAML `neural`.
+- `Kp_att` y `Kd_att`: ganancias del PID interno clasico que estabiliza actitud.
 - `max_body_moments_Nm`: limites de momentos `[tau_x, tau_y, tau_z]` en FRD. Si falta, se usa `[10.0, 10.0, 2.0]`.
 - `device`: `"auto"`, `"cpu"` o `"cuda"`. Si falta, `auto` usa CUDA cuando PyTorch la detecta.
 
-El controlador neuronal devuelve el mismo contrato que el clasico: `collective_thrust_N` y `body_moments_Nm`. El empuje se limita a `0..mass_kg*gravity_m_s2*2.5` cuando `clip_to_classic_limits` esta activo. GRU/LSTM mantienen memoria interna; el runner llama a `reset()` al inicio de cada simulacion.
+La red predice `desired_force_W_N[3]` en mundo ENU. El lazo interno clasico devuelve el contrato final `collective_thrust_N` y `body_moments_Nm`. Cuando el clipping esta activo se limita la norma de fuerza a `mass_kg*gravity_m_s2*2.5`, la inclinacion solicitada y una componente vertical ascendente minima. GRU/LSTM mantienen memoria interna; el runner llama a `reset()` al inicio de cada simulacion. Los checkpoints anteriores de cuatro comandos finales o de seis salidas `neural_position` no se cargan como outer-force.
 
 ### Controlador neuronal en lazo externo
 
@@ -315,7 +321,7 @@ controller:
 ```
 
 - `type`: `"neural_position"` para usar una red como programador de ganancias del lazo externo.
-- `architecture`, `checkpoint_path`, `normalization_path` y `sequence_length`: mismos criterios que en el controlador neuronal directo.
+- `architecture`, `checkpoint_path`, `normalization_path` y `sequence_length`: mismos criterios generales de carga; el checkpoint y su normalizacion deben corresponder especificamente al modo `neural_position`.
 - `base_Kp_pos` y `base_Kd_pos`: ganancias base sobre las que se aplican los multiplicadores predichos. Si faltan, se usan los defaults mostrados.
 - `multiplier_clip`: rango `[min, max]` aplicado a los multiplicadores tras `exp`. Si falta, se usa `[0.25, 4.0]`.
 - `device`: `"auto"`, `"cpu"` o `"cuda"`. Si falta, `auto` usa CUDA cuando PyTorch la detecta.

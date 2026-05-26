@@ -82,7 +82,7 @@ La primera versión del TFG incluirá:
 - Orientación con cuaterniones.
 - Integración numérica mediante RK4.
 - Control clásico de referencia.
-- Control neuronal por imitación.
+- Control neuronal por imitacion con lazo externo neuronal de fuerza y lazo interno clasico, manteniendo una alternativa de programacion neuronal de ganancias externas.
 - Actuadores con velocidad de giro, saturación, lag de primer orden y relación cuadrática empuje-velocidad.
 - Perturbaciones simples: ruido de observación, retardo o lag de actuadores, viento externo simplificado y drag lineal.
 - Métricas de seguimiento, esfuerzo de control y estabilidad.

@@ -183,6 +183,8 @@ El controlador neuronal será:
 - Evaluado en bucle cerrado dentro del simulador.
 - Comparado con las mismas métricas y escenarios.
 
+El contrato principal implementado para `controller.type: neural` es hibrido: la red devuelve fuerza deseada en mundo ENU y reutiliza el lazo interno clasico para generar el comando final. El modo `neural_position`, que programa ganancias del lazo externo, se conserva como arquitectura distinta. Los datasets, checkpoints y metricas de ambos modos no deben mezclarse silenciosamente.
+
 No se aceptará una comparación basada únicamente en pérdida de entrenamiento.
 
 ## 11. Escenarios y configuración

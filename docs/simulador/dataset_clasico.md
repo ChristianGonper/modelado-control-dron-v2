@@ -2,7 +2,7 @@
 
 Este documento describe el estado implementado de la generacion de datos clasicos. El objetivo es producir episodios reproducibles con el controlador clasico y usarlos como dataset experto para imitacion neuronal.
 
-La generacion del dataset sigue siendo clasica: no entrena redes ni ejecuta control neuronal. La capa neuronal consume sus `manifest.csv` y `telemetry.json` mediante los scripts descritos en `docs/simulador/control_neuronal.md`.
+La generacion del dataset sigue siendo clasica: no entrena redes ni ejecuta control neuronal. Para `neural` outer-force, su `manifest.csv` define las condiciones y splits desde los que se ejecuta un banco adicional de PIDs externos; los targets finales proceden de la telemetria del experto seleccionado, no de copiar directamente los comandos del dataset clasico.
 
 ## Alcance
 
@@ -24,7 +24,7 @@ En este repo, nominal significa:
 - sin viento;
 - sin ruido de observacion.
 
-Por tanto, los episodios perturbados del dataset son demostraciones del PID congelado bajo condiciones mas exigentes, no trayectorias expertas perfectas. Cuando se usan para aprendizaje por imitacion, la red aprende a reproducir los comandos del PID observados en esas condiciones. La metrica supervisada de la red mide esa fidelidad de imitacion; la metrica que responde al objetivo de seguimiento de trayectoria debe obtenerse despues, ejecutando el controlador neuronal en bucle cerrado y analizando `position_rmse_m`, `position_mae_m` y `position_max_err_m`.
+Por tanto, los episodios perturbados del dataset son ensayos reproducibles bajo condiciones mas exigentes, no trayectorias expertas perfectas. En el pipeline `outer_force`, cada condicion se vuelve a ejecutar con variantes del PID externo y se conserva solo una demostracion segura elegida por criterio documentado. La metrica supervisada mide fidelidad de fuerza; el seguimiento de trayectoria debe medirse despues en bucle cerrado con `position_rmse_m`, `position_mae_m` y `position_max_err_m`.
 
 ## Perfiles de entorno
 
@@ -132,18 +132,18 @@ uv run python tools\summarize_classic_dataset.py --dataset data\classic_dataset\
 
 El resumen clasifica cada episodio como `VALID`, `INVALID`, `MISSING` o `ERROR` y escribe `summary.csv`.
 
-Uso como dataset de imitacion neuronal:
+Construccion del dataset de imitacion de fuerza externa:
 
 ```powershell
-uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture mlp --out data\neural_control\mlp_v1 --device cuda
-uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture gru --out data\neural_control\gru_v1 --device cuda
-uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture lstm --out data\neural_control\lstm_v1 --device cuda
-uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1 --device cuda
+uv run python tools\generate_outer_force_pid_bank.py --dataset data\classic_dataset\v1 --out data\outer_force_pid_bank\v1
+uv run python tools\generate_outer_force_dataset.py --source-dataset data\classic_dataset\v1 --pid-bank data\outer_force_pid_bank\v1 --out data\outer_force_dataset\v1
+uv run python tools\train_neural_controller.py --dataset data\outer_force_dataset\v1 --architecture mlp --feature-version outer_force_min_v1 --out data\neural_control\outer_force_mlp_min_v1 --device auto
+uv run python tools\evaluate_neural_controller.py --dataset data\outer_force_dataset\v1 --run data\neural_control\outer_force_mlp_min_v1 --device auto
 ```
 
-La normalizacion neuronal se calcula solo con muestras `train`. Para evaluar OOD, el directorio pasado a `--ood-dataset` debe contener `manifest.csv` y telemetria ya generada; el evaluador no simula esos episodios.
+El banco conserva por escenario el PID interno, limites, vehiculo, semilla y perturbaciones originales, y varia solo `Kp_pos` y `Kd_pos`. El generador `outer_force` excluye candidatos inseguros y conserva el split del escenario fuente. La normalizacion neuronal se calcula solo con muestras `train`. Para evaluar OOD, el directorio pasado a `--ood-dataset` debe contener `manifest.csv` y telemetria compatible de fuerza ya generada; el evaluador no simula esos episodios.
 
-Para comparar el controlador clasico y el neuronal, no basta con `mse_normalized` de la evaluacion supervisada. Esa metrica compara comandos de red contra comandos PID. La comparacion experimental principal debe hacerse con ejecuciones en bucle cerrado y metricas comunes de simulacion, usando `position_rmse_m` como metrica principal de error de trayectoria y reportando tambien error maximo, terminacion y saturacion.
+Para comparar el controlador clasico y el neuronal, no basta con las metricas supervisadas de fuerza. Estas comparan la fuerza de la red con `desired_force_W_N` del experto PID seleccionado. La comparacion experimental principal debe hacerse con ejecuciones en bucle cerrado y metricas comunes de simulacion, usando `position_rmse_m` como metrica principal y reportando tambien error maximo, terminacion, saturacion y clipping de fuerza.
 
 ## Criterios de validez
 
@@ -171,5 +171,6 @@ La cobertura especifica de este flujo esta en:
 - `tests/test_classic_dataset_generation.py`
 - `tests/test_classic_dataset_scripts.py`
 - `tests/test_classic_pid_selection.py`
+- `tests/test_outer_force_generation_integration.py`
 
-Estas pruebas verifican ganancias explicitas del controlador, generacion determinista, PIDs versionados, manifiesto, scripts CLI, filtros de finitud y criterio de seleccion.
+Estas pruebas verifican ganancias explicitas del controlador, generacion determinista, PIDs versionados, manifiesto, scripts CLI, filtros de finitud y, para outer-force, preservacion del lazo interno y seleccion coherente del experto por escenario.
