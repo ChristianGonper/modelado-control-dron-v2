@@ -33,18 +33,20 @@ uv run python tools\summarize_classic_dataset.py --dataset data\classic_dataset\
 Para entrenamiento y evaluacion neuronal:
 
 ```powershell
-uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture gru --out data\neural_control\gru_v1 --device cuda
-uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1 --device cuda
-uv run python tools\run_neural_scenario.py --scenario scenarios\neural_ood_lemniscate.yaml --checkpoint data\neural_control\gru_v1\checkpoints\gru_best.pt --normalization data\neural_control\gru_v1\normalization.json --device cuda --no-visualization
+uv run python tools\generate_outer_force_pid_bank.py --dataset data\classic_dataset\v1 --out data\outer_force_pid_bank\v1
+uv run python tools\generate_outer_force_dataset.py --source-dataset data\classic_dataset\v1 --pid-bank data\outer_force_pid_bank\v1 --out data\outer_force_dataset\v1
+uv run python tools\train_neural_controller.py --dataset data\outer_force_dataset\v1 --architecture mlp --feature-version outer_force_min_v1 --out data\neural_control\outer_force_mlp_min_v1 --device auto
+uv run python tools\evaluate_neural_controller.py --dataset data\outer_force_dataset\v1 --run data\neural_control\outer_force_mlp_min_v1 --device auto
+uv run python tools\run_neural_scenario.py --scenario scenarios\neural_ood_lemniscate.yaml --checkpoint data\neural_control\outer_force_mlp_min_v1\checkpoints\mlp_best.pt --normalization data\neural_control\outer_force_mlp_min_v1\normalization.json --device auto --no-visualization
 ```
 
 Para evaluacion OOD supervisada:
 
 ```powershell
-uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1 --ood-dataset data\neural_ood\lemniscate_v1 --device cuda
+uv run python tools\evaluate_neural_controller.py --dataset data\outer_force_dataset\v1 --run data\neural_control\outer_force_mlp_min_v1 --ood-dataset data\neural_ood\outer_force_lemniscate_v1 --device auto
 ```
 
-El directorio OOD debe contener `manifest.csv` y telemetria ya generada. Este comando no ejecuta el escenario OOD; solo evalua un dataset OOD existente.
+El directorio OOD debe contener `manifest.csv` y telemetria compatible con targets de fuerza ya generada. Este comando no ejecuta el escenario OOD; solo evalua un dataset OOD existente.
 
 ## Criterios generales
 
@@ -153,13 +155,13 @@ Los filtros duros de validez del dataset estan implementados en `passes_hard_fil
 
 La validacion neuronal tiene tres evidencias distintas:
 
-1. Entrenamiento supervisado: `tools\train_neural_controller.py` genera `config.yaml`, `normalization.json`, checkpoint y metricas de entrenamiento/validacion.
-2. Evaluacion supervisada: `tools\evaluate_neural_controller.py` escribe `train_metrics.json`, `val_metrics.json` y `test_metrics.json`; si se proporciona `--ood-dataset`, escribe tambien `ood_metrics.json`.
-3. Bucle cerrado: `tools\run_neural_scenario.py` ejecuta un escenario YAML existente sustituyendo el controlador por un checkpoint neuronal en memoria.
+1. Oraculo outer-force: `tools\generate_outer_force_pid_bank.py` ejecuta variantes del PID externo por escenario manteniendo PID interno, limites y condiciones fuente; `tools\generate_outer_force_dataset.py` excluye candidatos inseguros y selecciona el experto por RMSE, esfuerzo dentro del 5% y conservadurismo en empate.
+2. Entrenamiento y evaluacion supervisada: `tools\train_neural_controller.py` genera `config.yaml`, `normalization.json` y checkpoint; `tools\evaluate_neural_controller.py` escribe `metrics/*_force_metrics.json` para comparar `desired_force_W_N`.
+3. Bucle cerrado: `tools\run_neural_scenario.py` ejecuta un escenario YAML existente sustituyendo el controlador por un checkpoint que decide fuerza externa y mantiene PID interno clasico.
 
-El split `test` del dataset clasico mide desempeno in-distribution. No debe presentarse como prueba fuerte de generalizacion, porque las familias, geometrias y perturbaciones del dataset estan repartidas entre `train`, `val` y `test`. La generalizacion debe apoyarse en OOD separado, por ejemplo la lemniscata.
+El split `test` heredado por el dataset `outer_force` mide desempeno in-distribution. No debe presentarse como prueba fuerte de generalizacion, porque procede de las familias y condiciones del dataset clasico. La generalizacion debe apoyarse en OOD separado, por ejemplo la lemniscata.
 
-La metrica supervisada `saturation_percentage` del evaluador neuronal mide comandos predichos fuera de limites antes del clipping, no saturacion fisica aplicada por actuadores. Por defecto usa masa `1.0 kg`, gravedad `9.81 m/s^2`, empuje maximo `m*g*2.5` y momentos `[10, 10, 2] Nm`. Si el dataset OOD usa otra masa o limites, esa metrica debe interpretarse con cautela hasta parametrizar esos limites desde CLI o metadata.
+La evaluacion supervisada de outer-force mide error de fuerza frente al experto; no demuestra estabilidad cerrada. En bucle cerrado, `force_norm_clip_percentage` y `force_tilt_clip_percentage` indican cuanto depende la salida neuronal de las protecciones de fuerza, y deben informarse junto con las saturaciones y degradaciones procedentes del mixer y los actuadores.
 
 En bucle cerrado, las saturaciones y degradaciones relevantes son las de `metrics.json` del simulador, que proceden del mixer y actuadores reales de la ejecucion.
 
@@ -182,6 +184,8 @@ La suite actual ya incluye validaciones automaticas del modelo clasico:
 - `tests/test_neural_training.py`: entrenamiento corto por CLI y dimensiones recurrentes.
 - `tests/test_neural_evaluation.py`: evaluacion supervisada por CLI y escritura de metricas.
 - `tests/test_neural_controller.py`: carga de checkpoint dummy e inferencia en bucle cerrado.
+- `tests/test_neural_outer_force.py`: fuerza deseada, clipping de inclinacion/componente vertical y rechazo de checkpoints incompatibles.
+- `tests/test_outer_force_generation_integration.py`: banco real por escenario, preservacion del PID interno/limites y seleccion de experto.
 
 Las regresiones automaticas no sustituyen a las ejecuciones oficiales completas para la memoria. Su papel es detectar roturas rapidas de contrato y evitar que `results/` historico actue como unico oraculo.
 
@@ -192,7 +196,7 @@ Estos escenarios validan el simulador dentro del alcance actual:
 - cuerpo rigido 6DOF;
 - cuaterniones;
 - RK4;
-- control clasico y control neuronal por imitacion;
+- control clasico, control `neural` de fuerza externa por imitacion y modo `neural_position`;
 - drag lineal simplificado;
 - viento constante y ruido de observacion simple;
 - actuadores simplificados con saturacion, retardo y lag.

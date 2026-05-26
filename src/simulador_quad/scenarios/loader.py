@@ -123,20 +123,25 @@ def instantiate_scenario(config: Dict[str, Any]) -> Tuple[Any, Any, Any, Any, An
             max_body_moments_Nm=max_moments
         )
     elif c_cfg['type'] == 'neural':
-        from simulador_quad.control.neural import NeuralController
+        from simulador_quad.control.neural import NeuralOuterForceController
         max_moments = c_cfg.get('max_body_moments_Nm')
         if max_moments is not None:
             max_moments = np.array(max_moments).astype(float)
-            
-        controller = NeuralController(
+        # New outer-force contract (rejects legacy 4/6 inside controller __init__)
+        controller = NeuralOuterForceController(
             checkpoint_path=c_cfg['checkpoint_path'],
             normalization_path=c_cfg['normalization_path'],
             architecture=c_cfg.get('architecture', 'mlp'),
+            feature_version=c_cfg.get('feature_version', 'outer_force_min_v1'),
             sequence_length=c_cfg.get('sequence_length', 20),
             clip_to_classic_limits=c_cfg.get('clip_to_classic_limits', True),
+            max_desired_tilt_rad=c_cfg.get('max_desired_tilt_rad', 0.52),
             mass_kg=v_params.mass_kg,
             gravity_m_s2=v_params.gravity_m_s2,
-            max_moments_Nm=max_moments if max_moments is not None else np.array([10.0, 10.0, 2.0]),
+            inertia_B_kg_m2=v_params.inertia_B_kg_m2,
+            Kp_att=np.array(c_cfg.get('Kp_att', [4.0, 4.0, 1.0])).astype(float),
+            Kd_att=np.array(c_cfg.get('Kd_att', [1.5, 1.5, 0.5])).astype(float),
+            max_body_moments_Nm=max_moments if max_moments is not None else np.array([10.0, 10.0, 2.0]),
             device=c_cfg.get('device', 'auto'),
         )
     elif c_cfg['type'] == 'neural_position':

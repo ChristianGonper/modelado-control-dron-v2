@@ -71,12 +71,12 @@ Revisar:
 - `docs/simulador/trazabilidad.md`
 - `README.md`
 
-Actualizar features, targets, normalizacion, artefactos (`config.yaml`, `normalization.json`, checkpoints, metricas), comandos de `tools/`, limites de clipping y criterios OOD. Si cambia la evaluacion OOD, dejar claro si el comando ejecuta escenarios o consume telemetria ya generada.
+Actualizar features, targets, normalizacion, artefactos (`config.yaml`, `normalization.json`, checkpoints, metricas), comandos de `tools/`, limites de clipping y criterios OOD. Para `neural` outer-force, revisar tambien la seleccion del experto, la preservacion del PID interno, los limites del escenario fuente y las metricas `force_norm_clip_percentage` / `force_tilt_clip_percentage`. Si cambia la evaluacion OOD, dejar claro si el comando ejecuta escenarios o consume telemetria ya generada.
 
 Ejecutar al menos:
 
 ```powershell
-uv run pytest tests\test_neural_dataset.py tests\test_neural_models.py tests\test_neural_training.py tests\test_neural_evaluation.py tests\test_neural_controller.py
+uv run pytest tests\test_neural_dataset.py tests\test_neural_models.py tests\test_neural_training.py tests\test_neural_evaluation.py tests\test_neural_controller.py tests\test_neural_outer_force.py tests\test_outer_force_generation_integration.py
 ```
 
 ## Cuando cambie el modelo fisico
@@ -95,7 +95,7 @@ Ejemplos que obligan a documentar con cuidado:
 - contacto con suelo;
 - bateria;
 - aerodinamica formal;
-- cambios en el contrato del controlador neuronal o en los comandos que sustituye.
+- cambios en el contrato del controlador neuronal, sus targets de fuerza o el reparto entre lazo externo e interno.
 
 ## Checklist antes de cerrar una actualizacion
 
@@ -105,7 +105,7 @@ uv run simulador-quad run scenarios\hover_clean.yaml
 uv run simulador-quad run scenarios\circle_drag.yaml
 uv run simulador-quad plot results\hover_clean\telemetry.json --metrics results\hover_clean\metrics.json --out results\hover_clean\figures
 uv run python tools\generate_classic_dataset.py --version test_v1 --out $env:TEMP\simulador_quad_dataset_test_v1 --overwrite
-uv run pytest tests\test_neural_dataset.py tests\test_neural_models.py tests\test_neural_training.py tests\test_neural_evaluation.py tests\test_neural_controller.py
+uv run pytest tests\test_neural_dataset.py tests\test_neural_models.py tests\test_neural_training.py tests\test_neural_evaluation.py tests\test_neural_controller.py tests\test_neural_outer_force.py tests\test_outer_force_generation_integration.py
 ```
 
 Despues de ejecutar:

@@ -157,6 +157,25 @@ def _validate_controller(config: Mapping[str, Any]) -> None:
             if clip[0] <= 0.0 or clip[1] < clip[0]:
                 raise _invalid("controller.multiplier_clip", "[positive_min, max] with max >= min", controller.get("multiplier_clip"))
 
+    if c_type == "neural":
+        # Outer-force neural (new contract): feature_version + tilt limit mandatory
+        fv = controller.get("feature_version")
+        if fv not in ("outer_force_min_v1", "outer_force_full_v1"):
+            raise _invalid("controller.feature_version", "one of ('outer_force_min_v1', 'outer_force_full_v1')", fv)
+        if "max_desired_tilt_rad" not in controller:
+            raise _invalid("controller.max_desired_tilt_rad", "positive value < pi/2 (required for neural outer-force)", None)
+        tilt = _positive("controller.max_desired_tilt_rad", controller.get("max_desired_tilt_rad"), "rad")
+        if tilt >= np.pi / 2:
+            raise _invalid("controller.max_desired_tilt_rad", "value < pi/2", controller.get("max_desired_tilt_rad"))
+        if "clip_to_classic_limits" in controller:
+            if not isinstance(controller.get("clip_to_classic_limits"), bool):
+                raise _invalid("controller.clip_to_classic_limits", "boolean", controller.get("clip_to_classic_limits"))
+        for field in ("Kp_att", "Kd_att", "max_body_moments_Nm"):
+            if field in controller:
+                gains = _as_array(f"controller.{field}", controller.get(field), (3,))
+                if np.any(gains < 0.0):
+                    raise _invalid(f"controller.{field}", "non-negative vector", controller.get(field))
+
     # Validacion comun de limites
     if "max_body_moments_Nm" in controller:
         moments = _as_array("controller.max_body_moments_Nm", controller.get("max_body_moments_Nm"), (3,))

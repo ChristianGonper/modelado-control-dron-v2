@@ -34,8 +34,8 @@ def main():
     model_config = load_model_config(args.checkpoint)
     architecture = args.architecture or model_config.get("architecture", "mlp")
     
-    # 2. Modificar el controlador en memoria
-    config['controller'] = {
+    # 2. Modificar el controlador en memoria (support legacy neural + new outer-force)
+    ctrl_override = {
         "type": "neural",
         "architecture": architecture,
         "checkpoint_path": args.checkpoint,
@@ -44,6 +44,13 @@ def main():
         "clip_to_classic_limits": True,
         "device": args.device,
     }
+    # New outer force fields (from model config or defaults; schema requires tilt for neural)
+    if model_config.get("controller_mode") == "neural_outer_force" or model_config.get("output_dim") == 3:
+        ctrl_override["feature_version"] = model_config.get("feature_version", "outer_force_min_v1")
+        ctrl_override["max_desired_tilt_rad"] = model_config.get("max_desired_tilt_rad", 0.52)
+        ctrl_override["Kp_att"] = model_config.get("Kp_att", [4.0, 4.0, 1.0])
+        ctrl_override["Kd_att"] = model_config.get("Kd_att", [1.5, 1.5, 0.5])
+    config['controller'] = ctrl_override
     
     # 3. Modificar salida si se solicita
     if args.out:

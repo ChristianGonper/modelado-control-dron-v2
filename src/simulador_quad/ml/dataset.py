@@ -36,6 +36,18 @@ POSITION_GAIN_TARGET_NAMES = [
 DEFAULT_BASE_KP_POS = np.array([2.0, 2.0, 5.0], dtype=float)
 DEFAULT_BASE_KD_POS = np.array([1.0, 1.0, 2.0], dtype=float)
 
+# --- Outer force (neural outer-force controller) feature and target versioning ---
+# All new outer-force datasets use *observation* (not state) to avoid leakage under sensor noise.
+OUTER_FORCE_MIN_V1_NAMES = [
+    "error_pos_x", "error_pos_y", "error_pos_z",
+    "error_vel_x", "error_vel_y", "error_vel_z",
+    "ref_acc_x", "ref_acc_y", "ref_acc_z",
+]
+OUTER_FORCE_FULL_V1_NAMES = FEATURE_NAMES[:]  # 31 features, built from observation fields
+TARGET_FORCE_NAMES = ["force_x_W_N", "force_y_W_N", "force_z_W_N"]
+TARGET_FORCE_VERSION = "desired_force_W_v1"
+
+
 class ImitationDataset(Dataset):
     """
     Dataset para carga de telemetria y construccion de muestras supervisadas.
@@ -340,3 +352,263 @@ def _build_position_gain_target(dataset_path: Path, manifest_row, base_Kp_pos: n
         raise ValueError(f"Position gain targets must be positive in {scenario_path}")
 
     return np.log(np.concatenate([kp_pos / base_Kp_pos, kd_pos / base_Kd_pos]))
+
+
+# =============================================================================
+# Outer-force feature builders (always from "observation" to prevent leakage)
+# =============================================================================
+
+def build_outer_force_min_features_from_observation(observation: dict, reference: dict) -> np.ndarray:
+    """Construye features minimas (9) para outer-force: errores pos/vel + ref_acc (ENU)."""
+    pos = np.asarray(observation["position_W_m"], dtype=float)
+    vel = np.asarray(observation["velocity_W_m_s"], dtype=float)
+    ref_pos = np.asarray(reference["position_W_m"], dtype=float)
+    ref_vel = np.asarray(reference["velocity_W_m_s"], dtype=float)
+    ref_acc = np.asarray(reference["acceleration_W_m_s2"], dtype=float)
+
+    err_pos = ref_pos - pos
+    err_vel = ref_vel - vel
+    x = np.concatenate([err_pos, err_vel, ref_acc])
+    if x.shape != (9,):
+        raise ValueError(f"outer_force_min_v1 expected 9 features, got {x.shape}")
+    return x
+
+
+def build_outer_force_full_features_from_observation(observation: dict, reference: dict) -> np.ndarray:
+    """Construye features completas (31) desde observation (no state). Reutiliza build_feature_vector."""
+    pos = np.asarray(observation["position_W_m"], dtype=float)
+    vel = np.asarray(observation["velocity_W_m_s"], dtype=float)
+    quat = np.asarray(observation["orientation_WB"], dtype=float)
+    omega = np.asarray(observation["angular_velocity_B_rad_s"], dtype=float)
+    ref_pos = np.asarray(reference["position_W_m"], dtype=float)
+    ref_vel = np.asarray(reference["velocity_W_m_s"], dtype=float)
+    ref_acc = np.asarray(reference["acceleration_W_m_s2"], dtype=float)
+    ref_yaw = float(reference["yaw_rad"])
+    return build_feature_vector(pos, vel, quat, omega, ref_pos, ref_vel, ref_acc, ref_yaw)
+
+
+def _build_desired_force_target_for_entry(
+    entry: dict,
+    kp_pos: np.ndarray,
+    kd_pos: np.ndarray,
+    mass_kg: float,
+    g_m_s2: float,
+) -> np.ndarray:
+    """Calcula target desired_force_W_N[3] usando *observation* + reference + PID experto.
+    Delega estrictamente en ClassicCascadeController.compute_desired_force_W para equivalencia.
+    inertia dummy (no usada para calculo de fuerza).
+    """
+    from simulador_quad.control.classic import ClassicCascadeController
+    from simulador_quad.core.contracts import VehicleState, TrajectoryReference
+
+    obs_d = entry["observation"]
+    ref_d = entry["reference"]
+
+    obs_state = VehicleState(
+        position_W_m=np.asarray(obs_d["position_W_m"], dtype=float),
+        velocity_W_m_s=np.asarray(obs_d["velocity_W_m_s"], dtype=float),
+        orientation_WB=np.asarray(obs_d["orientation_WB"], dtype=float),
+        angular_velocity_B_rad_s=np.asarray(obs_d["angular_velocity_B_rad_s"], dtype=float),
+        time_s=float(obs_d.get("time_s", 0.0)),
+    )
+    reference = TrajectoryReference(
+        position_W_m=np.asarray(ref_d["position_W_m"], dtype=float),
+        velocity_W_m_s=np.asarray(ref_d["velocity_W_m_s"], dtype=float),
+        acceleration_W_m_s2=np.asarray(ref_d["acceleration_W_m_s2"], dtype=float),
+        yaw_rad=float(ref_d["yaw_rad"]),
+    )
+
+    tmp = ClassicCascadeController(
+        mass_kg,
+        g_m_s2,
+        np.eye(3),
+        Kp_pos=np.asarray(kp_pos, dtype=float),
+        Kd_pos=np.asarray(kd_pos, dtype=float),
+    )
+    f = tmp.compute_desired_force_W(obs_state, reference)
+    return np.asarray(f, dtype=float)
+
+
+# =============================================================================
+# OuterForce datasets (targets por-muestra, features versionables, observation source)
+# =============================================================================
+
+class OuterForceDataset(Dataset):
+    """Dataset para el controlador neural de fuerza externa deseada (desired_force_W_N[3]).
+    Targets calculados con el PID experto (Kp/Kd_pos) sobre la observation del experto.
+    Soporta outer_force_min_v1 (9) y outer_force_full_v1 (31).
+    """
+
+    def __init__(
+        self,
+        dataset_path: str,
+        split: str = "train",
+        feature_version: str = "outer_force_min_v1",
+        transform=None,
+        target_transform=None,
+    ):
+        self.dataset_path = Path(dataset_path)
+        self.manifest = pd.read_csv(self.dataset_path / "manifest.csv")
+        self.split_data = self.manifest[self.manifest["split"] == split]
+        self.transform = transform
+        self.target_transform = target_transform
+        self.feature_version = feature_version
+
+        if feature_version == "outer_force_min_v1":
+            self.feature_names = OUTER_FORCE_MIN_V1_NAMES
+            self._build_x = build_outer_force_min_features_from_observation
+        elif feature_version == "outer_force_full_v1":
+            self.feature_names = OUTER_FORCE_FULL_V1_NAMES
+            self._build_x = build_outer_force_full_features_from_observation
+        else:
+            raise ValueError(f"Unsupported feature_version for outer force: {feature_version}. "
+                             "Use 'outer_force_min_v1' or 'outer_force_full_v1'.")
+
+        self.target_names = TARGET_FORCE_NAMES[:]
+        self.target_version = TARGET_FORCE_VERSION
+        self.samples = []
+        self._load_telemetry()
+
+    def _load_telemetry(self):
+        for _, row in self.split_data.iterrows():
+            result_dir = self.dataset_path / row["result_dir"]
+            telemetry_path = result_dir / "telemetry.json"
+            if not telemetry_path.exists():
+                continue
+
+            # Cargar gains del experto y params fisicos desde el scenario yaml del experto (trazable)
+            if "scenario_path" not in row or pd.isna(row["scenario_path"]):
+                # Fallback conservador (1kg, 9.81) solo si no hay scenario (no recomendado)
+                kp_pos = DEFAULT_BASE_KP_POS.copy()
+                kd_pos = DEFAULT_BASE_KD_POS.copy()
+                mass = 1.0
+                g = 9.81
+            else:
+                scenario_path = self.dataset_path / row["scenario_path"]
+                with open(scenario_path, "r") as f:
+                    scenario = yaml.safe_load(f)
+                c = scenario.get("controller", {})
+                kp_pos = np.array(c.get("Kp_pos", DEFAULT_BASE_KP_POS), dtype=float)
+                kd_pos = np.array(c.get("Kd_pos", DEFAULT_BASE_KD_POS), dtype=float)
+                v = scenario.get("vehicle", {})
+                mass = float(v.get("mass_kg", 1.0))
+                g = float(v.get("gravity_m_s2", 9.81))
+
+            with open(telemetry_path, "r") as f:
+                telemetry = json.load(f)
+
+            for entry in telemetry:
+                try:
+                    x = self._build_x(entry["observation"], entry["reference"])
+                    y = _build_desired_force_target_for_entry(entry, kp_pos, kd_pos, mass, g)
+                except (KeyError, ValueError, TypeError, IndexError):
+                    continue  # malformed telemetry entry; see legacy ImitationDataset for similar pattern
+
+                if np.isfinite(x).all() and np.isfinite(y).all():
+                    self.samples.append((
+                        torch.tensor(x, dtype=torch.float32),
+                        torch.tensor(y, dtype=torch.float32),
+                    ))
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, idx):
+        x, y = self.samples[idx]
+        if self.transform:
+            x = self.transform(x)
+        if self.target_transform:
+            y = self.target_transform(y)
+        return x, y
+
+
+class SequentialOuterForceDataset(Dataset):
+    """Ventanas temporales para GRU/LSTM outer-force (targets de fuerza por-muestra)."""
+
+    def __init__(
+        self,
+        dataset_path: str,
+        split: str = "train",
+        sequence_length: int = 20,
+        feature_version: str = "outer_force_min_v1",
+        transform=None,
+        target_transform=None,
+    ):
+        self.dataset_path = Path(dataset_path)
+        self.manifest = pd.read_csv(self.dataset_path / "manifest.csv")
+        self.split_data = self.manifest[self.manifest["split"] == split]
+        self.sequence_length = sequence_length
+        self.feature_version = feature_version
+        self.transform = transform
+        self.target_transform = target_transform
+
+        if feature_version == "outer_force_min_v1":
+            self.feature_names = OUTER_FORCE_MIN_V1_NAMES
+            self._build_x = build_outer_force_min_features_from_observation
+        elif feature_version == "outer_force_full_v1":
+            self.feature_names = OUTER_FORCE_FULL_V1_NAMES
+            self._build_x = build_outer_force_full_features_from_observation
+        else:
+            raise ValueError(f"Unsupported feature_version: {feature_version}")
+
+        self.target_names = TARGET_FORCE_NAMES[:]
+        self.target_version = TARGET_FORCE_VERSION
+        self.windows = []
+        self._load_telemetry()
+
+    def _load_telemetry(self):
+        for _, row in self.split_data.iterrows():
+            result_dir = self.dataset_path / row["result_dir"]
+            telemetry_path = result_dir / "telemetry.json"
+            if not telemetry_path.exists():
+                continue
+
+            if "scenario_path" not in row or pd.isna(row["scenario_path"]):
+                kp_pos = DEFAULT_BASE_KP_POS.copy()
+                kd_pos = DEFAULT_BASE_KD_POS.copy()
+                mass = 1.0
+                g = 9.81
+            else:
+                scenario_path = self.dataset_path / row["scenario_path"]
+                with open(scenario_path, "r") as f:
+                    scenario = yaml.safe_load(f)
+                c = scenario.get("controller", {})
+                kp_pos = np.array(c.get("Kp_pos", DEFAULT_BASE_KP_POS), dtype=float)
+                kd_pos = np.array(c.get("Kd_pos", DEFAULT_BASE_KD_POS), dtype=float)
+                v = scenario.get("vehicle", {})
+                mass = float(v.get("mass_kg", 1.0))
+                g = float(v.get("gravity_m_s2", 9.81))
+
+            with open(telemetry_path, "r") as f:
+                telemetry = json.load(f)
+
+            episode_samples = []
+            for entry in telemetry:
+                try:
+                    x = self._build_x(entry["observation"], entry["reference"])
+                    y = _build_desired_force_target_for_entry(entry, kp_pos, kd_pos, mass, g)
+                except (KeyError, ValueError, TypeError, IndexError):
+                    continue  # malformed telemetry entry; see legacy ImitationDataset for similar pattern
+                if np.isfinite(x).all() and np.isfinite(y).all():
+                    episode_samples.append((
+                        torch.tensor(x, dtype=torch.float32),
+                        torch.tensor(y, dtype=torch.float32),
+                    ))
+
+            if len(episode_samples) >= self.sequence_length:
+                for i in range(len(episode_samples) - self.sequence_length + 1):
+                    window = episode_samples[i : i + self.sequence_length]
+                    x_seq = torch.stack([w[0] for w in window])
+                    y_last = window[-1][1]
+                    self.windows.append((x_seq, y_last))
+
+    def __len__(self):
+        return len(self.windows)
+
+    def __getitem__(self, idx):
+        x_seq, y = self.windows[idx]
+        if self.transform:
+            x_seq = self.transform(x_seq)
+        if self.target_transform:
+            y = self.target_transform(y)
+        return x_seq, y

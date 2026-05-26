@@ -31,8 +31,8 @@ El simulador esta organizado como codigo cientifico simple. Las carpetas separan
 - `scenarios/schema.py`: validacion fisica simple de YAML antes de simular.
 - `trajectories/analytic.py`: referencias `hold`, `circle`, `lissajous` y `line` / `waypoint`. `line` y `waypoint` usan comportamiento `waypoint_stop`: perfil trapezoidal/triangular por tramo, parada en cada waypoint y avance condicionado por tolerancias y dwell.
 - `trajectories/composite.py`: clase `CompositeTrajectory` para secuenciar múltiples sub-trayectorias de forma continua. Inserta automáticamente transiciones lineales si la distancia entre el final de una trayectoria y el inicio de la siguiente supera los 5 cm. La transición lineal realiza un frenado completo en velocidad a cero al llegar al punto de inicio de la siguiente trayectoria (transición posicional con parada intermedia) para reducir discontinuidades de posición y reiniciar el siguiente tramo desde reposo.
-- `control/classic.py`: controlador clasico en cascada.
-- `control/neural.py`: controladores neuronales compatibles con el mismo contrato de control; incluye sustitucion directa de comandos y programacion neuronal de ganancias del lazo externo.
+- `control/classic.py`: controlador clasico en cascada; expone el calculo de fuerza externa y la conversion fuerza ENU a mando con lazo interno clasico.
+- `control/neural.py`: `NeuralOuterForceController` para `type: neural`, que predice fuerza externa, y `NeuralPositionController`, que programa ganancias externas.
 - `ml/`: carga de telemetria, normalizacion train-only, modelos MLP/GRU/LSTM, entrenamiento y evaluacion supervisada.
 - `datasets/classic.py`: definicion reproducible del dataset clasico, familias, perfiles, YAML generados, PID iniciales, manifiesto y filtros de aceptacion.
 - `runner.py`: orquestacion multi-rate, ZOH, telemetria y terminacion.
@@ -44,7 +44,9 @@ El simulador esta organizado como codigo cientifico simple. Las carpetas separan
 - `tools/tune_classic_pid.py`: ajusta un PID clasico por familia en el perfil nominal con drag y actuadores.
 - `tools/run_classic_dataset.py`: ejecuta episodios del manifiesto, opcionalmente en varios procesos, y escribe `run_report.csv`.
 - `tools/summarize_classic_dataset.py`: resume resultados del dataset en `summary.csv`.
-- `tools/train_neural_controller.py`: entrena MLP, GRU o LSTM por imitacion desde telemetria clasica.
+- `tools/generate_outer_force_pid_bank.py`: ejecuta variantes del PID externo por escenario fuente conservando la configuracion interna y los limites originales.
+- `tools/generate_outer_force_dataset.py`: selecciona un experto seguro por escenario y produce telemetria/YAML coherentes para targets de fuerza.
+- `tools/train_neural_controller.py`: entrena MLP, GRU o LSTM por imitacion de `desired_force_W_N` desde el dataset `outer_force`.
 - `tools/evaluate_neural_controller.py`: evalua modelos entrenados sobre `train`/`val`/`test` y, opcionalmente, un dataset OOD.
 - `tools/run_neural_scenario.py`: ejecuta un escenario existente sustituyendo el controlador por un checkpoint neuronal sin modificar el YAML base.
 - `tools/train_neural_position_controller.py`: entrena una red que predice multiplicadores de `Kp_pos` y `Kd_pos`.
@@ -95,11 +97,11 @@ Para `trajectory.type: "composite"`, la validación comprueba de forma recursiva
 
 Para `controller.type: "classic"`, el YAML puede declarar `Kp_pos`, `Kd_pos`, `Kp_att`, `Kd_att` y `max_body_moments_Nm` como vectores de tres componentes no negativas. Si faltan ganancias, el controlador conserva sus defaults.
 
-Para `controller.type: "neural"`, el YAML debe declarar `architecture`, `checkpoint_path` y `normalization_path`. El controlador neuronal implementa `compute_control(time_s, obs_state, reference)` y devuelve el mismo `ControlCommand` que el clasico: empuje colectivo en N y momentos FRD en Nm. Las arquitecturas soportadas son `mlp`, `gru` y `lstm`. GRU/LSTM mantienen una ventana interna de features y el runner llama a `reset()` al inicio de cada simulacion para limpiar esa memoria. Si `clip_to_classic_limits` es `true`, el controlador neuronal limita el empuje a `0..mass_kg*gravity_m_s2*2.5` y los momentos a `+-max_body_moments_Nm`. Si `max_body_moments_Nm` falta, usa `[10.0, 10.0, 2.0]`.
+Para `controller.type: "neural"`, el YAML debe declarar `architecture`, `checkpoint_path`, `normalization_path`, una `feature_version` `outer_force_*` y `max_desired_tilt_rad`. La red predice `desired_force_W_N[3]` en mundo ENU; un controlador clasico interno la convierte en empuje colectivo y momentos FRD. Las arquitecturas soportadas son `mlp`, `gru` y `lstm`; GRU/LSTM mantienen ventana interna y el runner llama a `reset()` al inicio. Con `clip_to_classic_limits: true`, la fuerza se limita por norma a `mass_kg*gravity_m_s2*2.5`, por inclinacion deseada y por una componente vertical ascendente minima; despues el PID interno aplica `max_body_moments_Nm`. Checkpoints antiguos de cuatro comandos finales o seis salidas de `neural_position` se rechazan expresamente.
 
 Para `controller.type: "neural_position"`, el YAML debe declarar `architecture`, `checkpoint_path` y `normalization_path`. La red predice 6 log-multiplicadores para `Kp_pos` y `Kd_pos`. Tras desnormalizar, el controlador aplica `exp`, limita con `multiplier_clip` y usa el lazo interno clasico para convertir fuerza deseada en actitud, empuje y momentos. Por defecto `base_Kp_pos = [2.0, 2.0, 5.0]`, `base_Kd_pos = [1.0, 1.0, 2.0]`, `multiplier_clip = [0.25, 4.0]` y `device = "auto"`. En los scripts de inferencia, si `--architecture` se omite, se toma de `config.yaml` junto al checkpoint.
 
-La evaluacion supervisada neuronal se hace sobre telemetria ya exportada. `train` calcula pesos y normalizacion, `val` selecciona checkpoint, `test` mide desempeno in-distribution y OOD se evalua aparte con `--ood-dataset`. El dataset OOD debe tener `manifest.csv` y `telemetry.json` generados previamente; el evaluador no ejecuta escenarios por si mismo.
+La evaluacion supervisada de `neural` se hace sobre telemetria del dataset `outer_force`: `train` calcula normalizacion, `val` selecciona checkpoint y `test` mide imitacion in-distribution en unidades de fuerza. OOD se evalua aparte con `--ood-dataset`, que debe contener `manifest.csv` y telemetria previamente generada; el evaluador no ejecuta escenarios por si mismo.
 
 ## Dataset clasico
 
@@ -125,6 +127,10 @@ Artefactos generados:
 - `run_report.csv`: estado de ejecucion por escenario.
 - `summary.csv`: resumen de metricas y validez por filtros duros.
 
+## Dataset de fuerza externa
+
+El dataset `outer_force` deriva del manifiesto clasico, pero no reutiliza sus comandos como targets. Para cada escenario fuente, `generate_outer_force_pid_bank.py` ejecuta variantes de `Kp_pos` y `Kd_pos` bajo exactamente la trayectoria, perturbaciones, semilla, vehiculo, PID interno y limites del escenario. `generate_outer_force_dataset.py` descarta candidatos que no pasan filtros duros, elige el menor RMSE y, entre candidatos dentro del 5% del mejor, el de menor esfuerzo; un empate real se resuelve conservadoramente. La telemetria copiada y las ganancias del YAML final pertenecen al experto seleccionado para ese escenario.
+
 ## Metricas
 
 `metrics.json` resume:
@@ -146,7 +152,7 @@ Las metricas no sustituyen a la inspeccion de telemetria. Para explicar un resul
 - El viento es constante.
 - El ruido de observacion afecta solo a posicion y velocidad.
 - La visualización es postproceso y automática tras cada ejecución exitosa.
-- El controlador neuronal aprende por imitacion supervisada de los comandos clasicos; no optimiza directamente una funcion de coste en bucle cerrado.
+- El controlador `neural` aprende por imitacion supervisada de fuerza externa solicitada por un PID experto seleccionado; no optimiza directamente una funcion de coste en bucle cerrado.
 - El controlador `neural_position` aprende por imitacion de ganancias externas; mejora la estabilidad estructural al conservar el lazo interno clasico, pero su calidad final tambien debe medirse en bucle cerrado.
 - La evaluacion `train`/`val`/`test` del dataset clasico mide desempeno in-distribution. La generalizacion debe evaluarse con datasets o escenarios OOD separados.
-- La metrica supervisada `saturation_percentage` neuronal usa por defecto masa `1.0 kg`, gravedad `9.81 m/s^2`, empuje maximo `m*g*2.5` y momentos `[10, 10, 2] Nm`, salvo que se llame al evaluador interno con otros limites.
+- Las metricas supervisadas de `neural` miden error de fuerza; los porcentajes de clipping y las metricas fisicas de trayectoria deben verificarse en ejecucion cerrada.

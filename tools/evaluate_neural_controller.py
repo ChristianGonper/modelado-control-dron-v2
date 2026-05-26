@@ -7,10 +7,10 @@ import json
 import yaml
 import torch
 from torch.utils.data import DataLoader
-from simulador_quad.ml.dataset import ImitationDataset, SequentialImitationDataset
+from simulador_quad.ml.dataset import ImitationDataset, SequentialImitationDataset, OuterForceDataset, SequentialOuterForceDataset
 from simulador_quad.ml.normalization import Normalizer
 from simulador_quad.ml.models import build_model
-from simulador_quad.ml.evaluate import evaluate_model
+from simulador_quad.ml.evaluate import evaluate_model, evaluate_outer_force_model
 
 def main():
     parser = argparse.ArgumentParser(description="Evaluate a trained neural controller.")
@@ -50,14 +50,17 @@ def main():
     
     results = {}
     
+    is_outer = config.get("controller_mode") == "neural_outer_force" or config.get("output_dim", 4) == 3 or config.get("target_version") == "desired_force_W_v1"
     for split in splits:
         print(f"Evaluating split: {split}...")
         
         ds_root = args.dataset if split != "ood" else args.ood_dataset
-        # Para OOD, cargamos todo el dataset como un unico split si no hay division explicita
         actual_split = split if split != "ood" else "train"
         
-        if config["architecture"] == "mlp":
+        if is_outer:
+            ds_cls = OuterForceDataset if config["architecture"] == "mlp" else SequentialOuterForceDataset
+            ds = ds_cls(ds_root, split=actual_split, feature_version=config.get("feature_version", "outer_force_min_v1"))
+        elif config["architecture"] == "mlp":
             ds = ImitationDataset(ds_root, split=actual_split)
         else:
             ds = SequentialImitationDataset(ds_root, split=actual_split, sequence_length=config["sequence_length"])
@@ -72,16 +75,23 @@ def main():
         
         loader = DataLoader(ds, batch_size=config.get("batch_size", 64), shuffle=False)
         
-        metrics = evaluate_model(model, loader, norm, device=device)
+        if is_outer:
+            max_t = float(config.get("mass_kg", 1.0)) * 9.81 * 2.5
+            max_tilt = float(config.get("max_desired_tilt_rad", 0.52))
+            metrics = evaluate_outer_force_model(model, loader, norm, device=device, max_thrust=max_t, max_tilt_rad=max_tilt)
+            filename = f"{split}_force_metrics.json"
+        else:
+            metrics = evaluate_model(model, loader, norm, device=device)
+            filename = f"{split}_metrics.json"
         results[split] = metrics
         
         # Guardar metricas del split
-        filename = f"{split}_metrics.json"
         metrics_path = os.path.join(args.run, "metrics", filename)
+        os.makedirs(os.path.dirname(metrics_path), exist_ok=True)
         with open(metrics_path, "w") as f:
             json.dump(metrics, f, indent=4)
         
-        print(f"Split {split} MSE: {metrics['mse_normalized']:.6f}")
+        print(f"Split {split} MSE: {metrics.get('mse_normalized', 0):.6f}")
 
     print(f"Evaluation complete. Results saved in {os.path.join(args.run, 'metrics')}")
 

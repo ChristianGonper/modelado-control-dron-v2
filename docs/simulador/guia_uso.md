@@ -93,37 +93,37 @@ El flujo completo esta descrito en `docs/simulador/dataset_clasico.md`.
 
 ## Entrenar y evaluar control neuronal
 
-Una vez ejecutado el dataset clasico y generados sus `telemetry.json`, se puede entrenar un controlador neuronal por imitacion:
+Una vez disponible el dataset clasico, el modo `neural` requiere construir demostraciones de fuerza externa con un experto PID seleccionado por escenario:
 
 ```powershell
-uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture mlp --out data\neural_control\mlp_v1 --device cuda
-uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture gru --out data\neural_control\gru_v1 --device cuda
-uv run python tools\train_neural_controller.py --dataset data\classic_dataset\v1 --architecture lstm --out data\neural_control\lstm_v1 --device cuda
+uv run python tools\generate_outer_force_pid_bank.py --dataset data\classic_dataset\v1 --out data\outer_force_pid_bank\v1
+uv run python tools\generate_outer_force_dataset.py --source-dataset data\classic_dataset\v1 --pid-bank data\outer_force_pid_bank\v1 --out data\outer_force_dataset\v1
+uv run python tools\train_neural_controller.py --dataset data\outer_force_dataset\v1 --architecture mlp --feature-version outer_force_min_v1 --out data\neural_control\outer_force_mlp_min_v1 --device auto
 ```
 
 Evaluacion supervisada in-distribution:
 
 ```powershell
-uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1 --device cuda
+uv run python tools\evaluate_neural_controller.py --dataset data\outer_force_dataset\v1 --run data\neural_control\outer_force_mlp_min_v1 --device auto
 ```
 
 Evaluacion supervisada OOD sobre un dataset ya generado:
 
 ```powershell
-uv run python tools\evaluate_neural_controller.py --dataset data\classic_dataset\v1 --run data\neural_control\gru_v1 --ood-dataset data\neural_ood\lemniscate_v1 --device cuda
+uv run python tools\evaluate_neural_controller.py --dataset data\outer_force_dataset\v1 --run data\neural_control\outer_force_mlp_min_v1 --ood-dataset data\neural_ood\outer_force_lemniscate_v1 --device auto
 ```
 
-El directorio pasado a `--ood-dataset` debe tener `manifest.csv` y telemetria existente. El evaluador no ejecuta escenarios; solo compara predicciones con comandos expertos ya exportados.
+El directorio pasado a `--ood-dataset` debe tener `manifest.csv` y telemetria compatible con targets de fuerza existente. El evaluador no ejecuta escenarios; solo compara fuerzas predichas con el experto ya exportado.
 
 Ejecucion en bucle cerrado de un checkpoint neuronal:
 
 ```powershell
-uv run python tools\run_neural_scenario.py --scenario scenarios\neural_ood_lemniscate.yaml --checkpoint data\neural_control\gru_v1\checkpoints\gru_best.pt --normalization data\neural_control\gru_v1\normalization.json --device cuda --no-visualization
+uv run python tools\run_neural_scenario.py --scenario scenarios\neural_ood_lemniscate.yaml --checkpoint data\neural_control\outer_force_mlp_min_v1\checkpoints\mlp_best.pt --normalization data\neural_control\outer_force_mlp_min_v1\normalization.json --device auto --no-visualization
 ```
 
-Este comando no modifica el YAML original. Sustituye el controlador en memoria, ejecuta el simulador y escribe telemetria/metricas en un directorio derivado de `output.dir` o en `--out` si se proporciona. Si no se indica `--architecture`, se lee desde el `config.yaml` del entrenamiento.
+Este comando no modifica el YAML original. Sustituye el controlador en memoria por `neural`, cuya red predice `desired_force_W_N[3]` y cuyo PID interno clasico produce empuje y momentos; despues ejecuta el simulador y escribe telemetria/metricas. Si no se indica `--architecture`, se lee desde el `config.yaml` del entrenamiento.
 
-La metrica supervisada `saturation_percentage` del evaluador neuronal mide comandos predichos fuera de limites antes del clipping. Por defecto usa masa `1.0 kg`, gravedad `9.81 m/s^2`, empuje maximo `m*g*2.5` y momentos `[10, 10, 2] Nm`; si el dataset usa otros limites, interpretar esa metrica con cautela hasta parametrizarla desde CLI o metadata.
+Las metricas supervisadas miden error de fuerza de imitacion. En ejecucion cerrada, `metrics.json` registra ademas `force_norm_clip_percentage` y `force_tilt_clip_percentage`, junto con saturacion y degradacion del sistema fisico; son las metricas relevantes para comprobar si la proteccion esta dominando el vuelo simulado.
 
 Figuras generadas (tanto en `run` automático como en `plot` manual):
 
