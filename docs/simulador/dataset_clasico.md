@@ -141,7 +141,22 @@ uv run python tools\train_neural_controller.py --dataset data\outer_force_datase
 uv run python tools\evaluate_neural_controller.py --dataset data\outer_force_dataset\v1 --run data\neural_control\outer_force_mlp_min_v1 --device auto
 ```
 
-El banco conserva por escenario el PID interno, limites, vehiculo, semilla y perturbaciones originales, y varia solo `Kp_pos` y `Kd_pos`. El generador `outer_force` excluye candidatos inseguros y conserva el split del escenario fuente. La normalizacion neuronal se calcula solo con muestras `train`. Para evaluar OOD, el directorio pasado a `--ood-dataset` debe contener `manifest.csv` y telemetria compatible de fuerza ya generada; el evaluador no simula esos episodios.
+El banco conserva por escenario el PID interno, limites, vehiculo, semilla y perturbaciones originales, y varia solo `Kp_pos` y `Kd_pos`. El generador `outer_force` excluye candidatos inseguros y conserva el split del escenario fuente. La normalizacion neuronal se calcula solo con muestras `train`. Para evaluar OOD supervisado, usar un directorio con `manifest.csv` donde todas las filas tengan `split=ood` y telemetria compatible de fuerza bajo cada `result_dir` (p. ej. `data/neural_ood/outer_force_v1` tras `generate_outer_force_dataset` sobre escenarios OOD). `data/neural_ood/battery_v1` (`generate_ood_battery.py`) es un artefacto local ignorado por git y solo contiene escenarios para bucle cerrado hasta generar esa telemetria. El evaluador filtra `split=ood` y **no** remapea a `train`. No mezclar filas OOD en el manifest in-distribution.
+
+Bucle cerrado OOD por lotes:
+
+```powershell
+uv run python tools\generate_ood_battery.py --out data\neural_ood\battery_v1 --overwrite
+uv run python tools\run_neural_outer_force_dataset.py --dataset data\neural_ood\battery_v1 --split ood --checkpoint data\neural_control\outer_force_mlp_min_v1\checkpoints\mlp_best.pt --normalization data\neural_control\outer_force_mlp_min_v1\normalization.json --no-visualization
+```
+
+Tabla comparativa cerrada (varios controladores):
+
+```powershell
+uv run python tools\build_comparison_closed_loop.py --classic-report data\classic_dataset\v1\run_report.csv --classic-dataset data\classic_dataset\v1 --neural-report data\outer_force_dataset\v1\run_report_neural_mlp.csv --neural-dataset data\outer_force_dataset\v1 --out results\comparison_closed_loop_v1.csv
+```
+
+El agregador acepta reportes clasicos antiguos sin columna `result_dir`: en ese caso resuelve la ruta por `scenario_id` desde `manifest.csv`. Para reportes nuevos, `run_classic_dataset.py` ya escribe `result_dir` directamente.
 
 Para comparar el controlador clasico y el neuronal, no basta con las metricas supervisadas de fuerza. Estas comparan la fuerza de la red con `desired_force_W_N` del experto PID seleccionado. La comparacion experimental principal debe hacerse con ejecuciones en bucle cerrado y metricas comunes de simulacion, usando `position_rmse_m` como metrica principal y reportando tambien error maximo, terminacion, saturacion y clipping de fuerza.
 

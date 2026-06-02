@@ -74,9 +74,29 @@ Estas metricas miden fidelidad de imitacion del experto, no seguimiento de traye
 
 ```powershell
 uv run python tools\run_neural_scenario.py --scenario scenarios\neural_ood_lemniscate.yaml --checkpoint data\neural_control\outer_force_mlp_min_v1\checkpoints\mlp_best.pt --normalization data\neural_control\outer_force_mlp_min_v1\normalization.json --device auto --no-visualization
+uv run python tools\run_neural_outer_force_dataset.py --dataset data\outer_force_dataset\v1 --split test --checkpoint data\neural_control\outer_force_mlp_min_v1\checkpoints\mlp_best.pt --normalization data\neural_control\outer_force_mlp_min_v1\normalization.json --device auto --no-visualization --limit 2
 ```
 
-En bucle cerrado se deben informar `position_rmse_m`, `position_mae_m`, `position_max_err_m`, `termination_reason`, `saturation_percentage`, `degradation_percentage`, `force_norm_clip_percentage` y `force_tilt_clip_percentage`.
+OOD con `data\neural_ood\battery_v1` (solo escenarios YAML, sin telemetria de experto; directorio generado localmente e ignorado por git):
+
+```powershell
+uv run python tools\generate_ood_battery.py --out data\neural_ood\battery_v1 --overwrite
+uv run python tools\run_neural_outer_force_dataset.py --dataset data\neural_ood\battery_v1 --split ood --checkpoint data\neural_control\outer_force_mlp_min_v1\checkpoints\mlp_best.pt --normalization data\neural_control\outer_force_mlp_min_v1\normalization.json --no-visualization
+```
+
+Evaluacion supervisada OOD (requiere telemetria con targets de fuerza bajo `result_dir`, manifest `split=ood`):
+
+```powershell
+# Tras generar telemetria OOD (p. ej. copiar experto desde escenarios de battery_v1):
+# uv run python tools\generate_outer_force_dataset.py --source-dataset data\neural_ood\battery_v1 --pid-bank data\outer_force_pid_bank\v1 --out data\neural_ood\outer_force_v1
+uv run python tools\evaluate_neural_controller.py --dataset data\outer_force_dataset\v1 --run data\neural_control\outer_force_mlp_min_v1 --ood-dataset data\neural_ood\outer_force_v1 --splits ood --device auto
+```
+
+`battery_v1` no sirve para `evaluate_neural_controller.py --ood-dataset` (falla con error explicito). El evaluador usa `split=ood` en el manifiesto OOD; no remapea OOD a `train`. Sin `--ood-dataset`, el split `ood` falla de forma explicita.
+
+En bucle cerrado se deben informar `position_rmse_m`, `position_mae_m`, `position_max_err_m`, `termination_reason`, `saturation_percentage`, `degradation_percentage`, `force_norm_clip_percentage` y `force_tilt_clip_percentage`. La telemetria exporta `desired_force_W_N` (salida de red, **pre-clip**), `desired_force_clipped_W_N` (fuerza enviada al PID interno) y `perturbation.wind_W_m_s` por muestra cuando aplica.
+
+Instruccion operativa: al preparar evidencia de memoria, regenerar `battery_v1`, ejecutar el batch cerrado y construir la tabla comparativa en la misma revision de codigo. No usar `battery_v1` por si solo como resultado: es una lista de escenarios, no una corrida experimental.
 
 ## Configuracion y seguridad
 
@@ -101,9 +121,13 @@ Con `clip_to_classic_limits: true`, el controlador limita la norma de fuerza a `
 
 Un checkpoint legacy que produce cuatro comandos finales o un checkpoint `neural_position` de seis salidas se rechaza al cargarse como `neural`. Por tanto, los modelos anteriores no deben reutilizarse como outer-force sin regenerar dataset y entrenar de nuevo.
 
+## Arquitectura recurrente outer-force
+
+GRU/LSTM estan soportados en entrenamiento (`tools/train_neural_controller.py`). Para la evidencia final del TFG se prioriza **MLP + `outer_force_min_v1`**. Una segunda arquitectura recurrente outer-force es extension opcional; no es requisito para la comparacion principal frente al clasico.
+
 ## Modo conservado `neural_position`
 
-`controller.type: "neural_position"` permanece separado. Su red predice seis log-multiplicadores para `Kp_pos[3]` y `Kd_pos[3]`; tras aplicar `exp` y `multiplier_clip`, el controlador clasico calcula fuerza y estabiliza actitud. Sus scripts siguen siendo:
+`controller.type: "neural_position"` permanece separado. Entrenamiento e inferencia usan la **observacion** del controlador (no el estado verdadero), alineado con bucle cerrado bajo ruido. Telemetria historica sin bloque `observation` cae en `state` y puede desalinear train/inferencia: regenerar `position_gain_dataset` si aplica. Su red predice seis log-multiplicadores para `Kp_pos[3]` y `Kd_pos[3]`; tras aplicar `exp` y `multiplier_clip`, el controlador clasico calcula fuerza y estabiliza actitud. Sus scripts siguen siendo:
 
 ```powershell
 uv run python tools\generate_pid_bank.py --dataset data\classic_dataset\v1 --out data\pid_bank\v1
