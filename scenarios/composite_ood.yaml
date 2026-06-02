@@ -12,7 +12,7 @@ vehicle:
     - {position_B_m: [-0.17, -0.17, 0], turning_direction: -1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 1000, time_constant_s: 0.0}
 
 initial_state:
-  position_W_m: [0, 0, 0]
+  position_W_m: [0, 0, 1.0]
   velocity_W_m_s: [0, 0, 0]
   orientation_WB: null
   angular_velocity_B_rad_s: [0, 0, 0]

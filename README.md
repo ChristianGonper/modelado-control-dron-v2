@@ -17,8 +17,13 @@ Implementado:
 - Drag lineal simplificado, viento constante y ruido gaussiano de observación en posición/velocidad.
 - Referencias analíticas (`hold`, `circle`, `lissajous`, `lemniscate`), misión secuencial state-aware con parada en cada punto (`waypoint`), y **trayectorias compuestas** (`composite`) que permiten encadenar secuencias con transiciones lineales automáticas.
 - Escenarios YAML, telemetría JSON, métricas JSON con unidades físicas explícitas, figuras PNG y visor 3D HTML.
-- Generacion de dataset `outer_force` con seleccion de experto PID externo seguro por escenario y entrenamiento/evaluacion de modelos mediante scripts en `tools/`.
+- Tooling para generar el dataset `outer_force`, seleccionar un experto PID externo seguro por escenario y entrenar/evaluar modelos mediante scripts en `tools/`.
 - Control neuronal alternativo en el lazo externo de posición (`neural_position`), donde la red predice ganancias variables y el lazo interno clásico estabiliza actitud.
+
+Pendiente para evidencia final de memoria:
+
+- Generar y versionar los artefactos `data\outer_force_pid_bank\v1`, `data\outer_force_dataset\v1` y checkpoints `outer_force_*` bajo el contrato vigente de tres salidas `desired_force_W_N[3]`.
+- Producir una tabla comparativa cerrada entre PID clásico, oráculo por escenario, `neural` outer-force y `neural_position`; los checkpoints legacy de cuatro salidas en `data\neural_control\*_v1` no son evidencia válida para `controller.type: neural`.
 
 Fuera de alcance actual:
 
