@@ -45,31 +45,33 @@ uv run python tools\run_neural_scenario.py --scenario scenarios\neural_ood_lemni
 
 ## Orden de ejecución
 
+Estado tras la ejecucion de tooling: Fases 0, 1 y 5 quedan cubiertas a nivel de codigo, documentacion y pruebas ligeras; Fases 2 y 4 siguen pendientes porque requieren ejecutar el pipeline pesado (banco PID, dataset outer-force, entrenamiento y corridas comparativas). `data\neural_ood\battery_v1` es generado local e ignorado por git.
+
 ### Fase 0 — Preparación documental y escenario OOD
 
-- [ ] Verificar que `scenarios/composite_ood.yaml` inicia en `[0,0,1.0]`.
+- [x] Verificar que `scenarios/composite_ood.yaml` inicia en `[0,0,1.0]`.
   - Aceptación: el primer `hold.position_W_m` y `initial_state.position_W_m` coinciden.
   - Verificar: inspección del YAML y, cuando toque ejecutar, smoke de escenario clásico.
   - Archivos: `scenarios/composite_ood.yaml`, `docs/simulador/validacion.md`.
 
-- [ ] Mantener la gobernanza documental de reviews.
+- [x] Mantener la gobernanza documental de reviews.
   - Aceptación: `docs/reviews/README.md` indica que junio 2026 es diagnóstico vigente y mayo es histórico.
   - Verificar: lectura del índice de revisiones.
   - Archivos: `docs/reviews/README.md`.
 
 ### Fase 1 — Cierre de tooling OOD y evaluación
 
-- [ ] Renombrar e integrar `tools/generate-ood-batery.py`.
+- [x] Renombrar e integrar `tools/generate-ood-batery.py`.
   - Aceptación: nombre correcto `generate_ood_battery.py`, ayuda CLI clara, manifest compatible con evaluación OOD y sin script duplicado con typo.
   - Verificar: `uv run python tools\generate_ood_battery.py --help`.
   - Archivos: `tools/generate_ood_battery.py`, `tools/generate-ood-batery.py` si procede eliminarlo, docs afectadas.
 
-- [ ] Corregir el contrato de `evaluate_neural_controller.py` para OOD.
+- [x] Corregir el contrato de `evaluate_neural_controller.py` para OOD.
   - Aceptación: el split OOD no se trata silenciosamente como `train`; el CLI documenta si espera `manifest.csv` con split propio o dataset OOD completo.
   - Verificar: prueba unitaria o fixture mínimo de dataset OOD.
   - Archivos: `tools/evaluate_neural_controller.py`, `tests/`, `docs/simulador/control_neuronal.md`.
 
-- [ ] Crear batch de bucle cerrado para `neural` outer-force.
+- [x] Crear batch de bucle cerrado para `neural` outer-force.
   - Aceptación: script equivalente a `run_neural_position_dataset.py` que ejecuta manifest por split/controlador y escribe reporte CSV.
   - Verificar: smoke con 1–2 escenarios pequeños y `--no-visualization`.
   - Archivos: `tools/run_neural_outer_force_dataset.py`, `tests/`, README/docs.
@@ -103,7 +105,7 @@ uv run python tools\run_neural_scenario.py --scenario scenarios\neural_ood_lemni
   - Verificar: evaluación supervisada y bucle cerrado si se mantiene.
   - Archivos: `data/position_gain_dataset/v1/`, `data/neural_control/position_*`, docs.
 
-- [ ] Corregir o justificar la posible desalineación observation/state.
+- [x] Corregir o justificar la posible desalineación observation/state.
   - Aceptación: inferencia y entrenamiento usan la misma fuente de features, o el documento declara que no hay ruido/que el riesgo queda fuera del resultado principal.
   - Verificar: prueba con ruido o revisión de features.
   - Archivos: `src/simulador_quad/control/neural.py`, `src/simulador_quad/ml/dataset.py`, tests.
@@ -122,22 +124,22 @@ uv run python tools\run_neural_scenario.py --scenario scenarios\neural_ood_lemni
 
 - [ ] Producir `comparison_closed_loop_v1.csv`.
   - Aceptación: filas por `scenario_id`, controlador, split/OOD, `position_rmse_m`, `position_mae_m`, `position_max_err_m`, `termination_reason`, saturación, degradación, clipping y commit/hash.
-  - Verificar: CSV parseable y trazable a `metrics.json`.
+  - Verificar: CSV parseable y trazable a `metrics.json`; el agregador resuelve reportes clasicos antiguos sin `result_dir` mediante `manifest.csv`.
   - Archivos: ubicación a decidir en `results/` o `data/`.
 
 ### Fase 5 — Pruebas y deuda física acotada
 
-- [ ] Reforzar test hover ENU/FRD.
+- [x] Reforzar test hover ENU/FRD.
   - Aceptación: prueba de hover con fuerza en cuerpo FRD y orientación nivelada que detecte signo incorrecto de empuje.
   - Verificar: `uv run pytest tests\test_dynamics.py`.
   - Archivos: `tests/test_dynamics.py`.
 
-- [ ] Unificar o documentar drag lineal.
+- [x] Unificar o documentar drag lineal.
   - Aceptación: una sola fuente efectiva de drag en dinámica, sin imports muertos, o documentación explícita de responsabilidades.
   - Verificar: tests de dinámica/runner relevantes.
   - Archivos: `src/simulador_quad/dynamics/`, `src/simulador_quad/runner.py`, docs.
 
-- [ ] Revisar telemetría para auditoría de fuerza.
+- [x] Revisar telemetría para auditoría de fuerza.
   - Aceptación: `desired_force_W_N` y, si procede, fuerzas de perturbación disponibles por muestra o justificación de no incluirlas.
   - Verificar: inspección de `telemetry.json` generado en smoke.
   - Archivos: `src/simulador_quad/telemetry.py`, `src/simulador_quad/runner.py`, docs.

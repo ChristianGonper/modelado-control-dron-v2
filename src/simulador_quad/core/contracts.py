@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 import numpy as np
 
 @dataclass
@@ -64,3 +64,6 @@ class TelemetrySample:
     rotor_command: RotorCommand
     rotor_applied: RotorAppliedState
     termination_cause: str = ""
+    desired_force_W_N: Optional[np.ndarray] = None
+    desired_force_clipped_W_N: Optional[np.ndarray] = None
+    wind_W_m_s: Optional[np.ndarray] = None

@@ -24,6 +24,30 @@ def test_free_fall():
     assert np.allclose(q1, q0)
     assert np.allclose(w1, w0)
 
+def test_hover_level_frd_thrust_sign():
+    """Hover with thrust along -Z_B (FRD); wrong sign (+Z_B) accelerates downward."""
+    mass = 1.0
+    inertia = np.eye(3)
+    gravity = 9.81
+    dt = 0.1
+
+    p0 = np.zeros(3)
+    v0 = np.zeros(3)
+    q0 = get_level_quaternion(0.0)
+    w0 = np.zeros(3)
+
+    force_hover_B_N = np.array([0.0, 0.0, -mass * gravity])
+    torque_B_Nm = np.zeros(3)
+
+    p1, v1, _, _ = rk4_step(p0, v0, q0, w0, mass, inertia, gravity, dt, force_hover_B_N, torque_B_Nm)
+    assert np.allclose(v1, v0, atol=1e-9)
+    assert np.allclose(p1, p0, atol=1e-9)
+
+    force_wrong_B_N = np.array([0.0, 0.0, mass * gravity])
+    _, v_bad, _, _ = rk4_step(p0, v0, q0, w0, mass, inertia, gravity, dt, force_wrong_B_N, torque_B_Nm)
+    assert v_bad[2] < -0.5 * gravity * dt
+
+
 def test_ideal_hover():
     mass = 1.0
     inertia = np.eye(3)

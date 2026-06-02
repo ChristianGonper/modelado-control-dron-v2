@@ -10,7 +10,11 @@ from simulador_quad.control.classic import ClassicCascadeController
 from simulador_quad.control.neural import NeuralPositionController
 from simulador_quad.core.contracts import VehicleState, TrajectoryReference
 from simulador_quad.core.frames import get_level_quaternion
-from simulador_quad.ml.dataset import PositionGainDataset, SequentialPositionGainDataset
+from simulador_quad.ml.dataset import (
+    PositionGainDataset,
+    SequentialPositionGainDataset,
+    build_feature_vector,
+)
 from simulador_quad.ml.models import MLPControllerNet, build_model
 from simulador_quad.scenarios.loader import instantiate_scenario
 
@@ -90,6 +94,96 @@ def _write_gain_dataset(tmp_path):
         json.dump(telemetry, f)
 
     return ds
+
+
+def test_position_gain_dataset_uses_observation_when_present(tmp_path):
+    """Training features must match NeuralPositionController inputs (observation, not state)."""
+    ds = tmp_path / "gain_obs"
+    ep = ds / "ep_0"
+    sc_dir = ds / "scenarios"
+    ep.mkdir(parents=True)
+    sc_dir.mkdir()
+    with open(sc_dir / "scenario.yaml", "w", encoding="utf-8") as f:
+        yaml.dump(
+            {"controller": {"Kp_pos": [2, 2, 5], "Kd_pos": [1, 1, 2]}},
+            f,
+        )
+    pd.DataFrame(
+        [{"split": "train", "result_dir": "ep_0", "scenario_path": "scenarios/scenario.yaml"}]
+    ).to_csv(ds / "manifest.csv", index=False)
+
+    telemetry = [
+        {
+            "state": {
+                "position_W_m": [0.0, 0.0, 0.0],
+                "velocity_W_m_s": [0.0, 0.0, 0.0],
+                "orientation_WB": [1.0, 0.0, 0.0, 0.0],
+                "angular_velocity_B_rad_s": [0.0, 0.0, 0.0],
+            },
+            "observation": {
+                "position_W_m": [0.5, -0.3, 2.1],
+                "velocity_W_m_s": [0.1, 0.0, -0.05],
+                "orientation_WB": [1.0, 0.0, 0.0, 0.0],
+                "angular_velocity_B_rad_s": [0.0, 0.0, 0.0],
+            },
+            "reference": {
+                "position_W_m": [0.0, 0.0, 2.0],
+                "velocity_W_m_s": [0.0, 0.0, 0.0],
+                "acceleration_W_m_s2": [0.0, 0.0, 0.0],
+                "yaw_rad": 0.0,
+            },
+            "control": {"collective_thrust_N": 9.81, "body_moments_Nm": [0.0, 0.0, 0.0]},
+        }
+    ]
+    with open(ep / "telemetry.json", "w", encoding="utf-8") as f:
+        json.dump(telemetry, f)
+
+    dataset = PositionGainDataset(str(ds), split="train")
+    x_ds, _ = dataset[0]
+
+    obs = VehicleState(
+        position_W_m=np.array([0.5, -0.3, 2.1]),
+        velocity_W_m_s=np.array([0.1, 0.0, -0.05]),
+        orientation_WB=np.array([1.0, 0.0, 0.0, 0.0]),
+        angular_velocity_B_rad_s=np.zeros(3),
+        time_s=0.0,
+    )
+    ref = TrajectoryReference(
+        position_W_m=np.array([0.0, 0.0, 2.0]),
+        velocity_W_m_s=np.zeros(3),
+        acceleration_W_m_s2=np.zeros(3),
+        yaw_rad=0.0,
+    )
+    x_expected = build_feature_vector(
+        obs.position_W_m,
+        obs.velocity_W_m_s,
+        obs.orientation_WB,
+        obs.angular_velocity_B_rad_s,
+        ref.position_W_m,
+        ref.velocity_W_m_s,
+        ref.acceleration_W_m_s2,
+        ref.yaw_rad,
+    )
+    assert np.allclose(x_ds.numpy(), x_expected)
+
+    state_only = VehicleState(
+        position_W_m=np.zeros(3),
+        velocity_W_m_s=np.zeros(3),
+        orientation_WB=np.array([1.0, 0.0, 0.0, 0.0]),
+        angular_velocity_B_rad_s=np.zeros(3),
+        time_s=0.0,
+    )
+    x_state = build_feature_vector(
+        state_only.position_W_m,
+        state_only.velocity_W_m_s,
+        state_only.orientation_WB,
+        state_only.angular_velocity_B_rad_s,
+        ref.position_W_m,
+        ref.velocity_W_m_s,
+        ref.acceleration_W_m_s2,
+        ref.yaw_rad,
+    )
+    assert not np.allclose(x_ds.numpy(), x_state)
 
 
 def test_position_gain_dataset_targets_log_multipliers(tmp_path):

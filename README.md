@@ -17,12 +17,12 @@ Implementado:
 - Drag lineal simplificado, viento constante y ruido gaussiano de observación en posición/velocidad.
 - Referencias analíticas (`hold`, `circle`, `lissajous`, `lemniscate`), misión secuencial state-aware con parada en cada punto (`waypoint`), y **trayectorias compuestas** (`composite`) que permiten encadenar secuencias con transiciones lineales automáticas.
 - Escenarios YAML, telemetría JSON, métricas JSON con unidades físicas explícitas, figuras PNG y visor 3D HTML.
-- Tooling para generar el dataset `outer_force`, seleccionar un experto PID externo seguro por escenario y entrenar/evaluar modelos mediante scripts en `tools/`.
+- Tooling para generar el dataset `outer_force`, batería OOD (`generate_ood_battery.py`), batch cerrado (`run_neural_outer_force_dataset.py`), tabla comparativa (`build_comparison_closed_loop.py`) y entrenar/evaluar modelos mediante scripts en `tools/`.
 - Control neuronal alternativo en el lazo externo de posición (`neural_position`), donde la red predice ganancias variables y el lazo interno clásico estabiliza actitud.
 
 Pendiente para evidencia final de memoria:
 
-- Generar y versionar los artefactos `data\outer_force_pid_bank\v1`, `data\outer_force_dataset\v1` y checkpoints `outer_force_*` bajo el contrato vigente de tres salidas `desired_force_W_N[3]`.
+- Generar localmente los artefactos `data\outer_force_pid_bank\v1`, `data\outer_force_dataset\v1` y checkpoints `outer_force_*` bajo el contrato vigente de tres salidas `desired_force_W_N[3]`; `data\` esta ignorado por defecto, asi que solo se versionaran artefactos de evidencia si se decide explicitamente.
 - Producir una tabla comparativa cerrada entre PID clásico, oráculo por escenario, `neural` outer-force y `neural_position`; los checkpoints legacy de cuatro salidas en `data\neural_control\*_v1` no son evidencia válida para `controller.type: neural`.
 
 Fuera de alcance actual:
@@ -64,9 +64,17 @@ uv run python tools\evaluate_neural_controller.py --dataset data\outer_force_dat
 
 # Ejecucion en bucle cerrado (escenario OOD)
 uv run python tools\run_neural_scenario.py --scenario scenarios\neural_ood_lemniscate.yaml --checkpoint data\neural_control\outer_force_mlp_min_v1\checkpoints\mlp_best.pt --normalization data\neural_control\outer_force_mlp_min_v1\normalization.json --device auto --no-visualization
+
+# Batch cerrado sobre manifest (test u OOD)
+uv run python tools\run_neural_outer_force_dataset.py --dataset data\outer_force_dataset\v1 --split test --checkpoint data\neural_control\outer_force_mlp_min_v1\checkpoints\mlp_best.pt --normalization data\neural_control\outer_force_mlp_min_v1\normalization.json --no-visualization
+
+# Bateria OOD local ignorada por git (manifest split=ood)
+uv run python tools\generate_ood_battery.py --out data\neural_ood\battery_v1 --overwrite
 ```
 
 El banco `outer_force` ejecuta variantes del PID externo para cada escenario fuente, conserva el PID interno y los limites del YAML original, excluye candidatos inseguros y elige el experto por RMSE, esfuerzo dentro del margen del 5% y conservadurismo en empate. La evaluacion supervisada compara fuerzas ENU predichas con `desired_force_W_N` del experto; la calidad de control se compara en bucle cerrado con `position_rmse_m`, errores auxiliares, terminacion, saturacion, degradacion y porcentajes de clipping de fuerza. `run_neural_scenario.py` sustituye el controlador del YAML en memoria sin modificarlo. Los checkpoints legacy de cuatro comandos finales o seis salidas de `neural_position` no son compatibles con `controller.type: neural`.
+
+`data\neural_ood\battery_v1` contiene solo escenarios OOD generados localmente. Regenerarlo es barato y no debe confundirse con evidencia experimental final; la evidencia final requiere ejecutar los escenarios, conservar `metrics.json`/`telemetry.json` y construir `results\comparison_closed_loop_v1.csv`.
 
 Para el modo alternativo `neural_position`, que programa multiplicadores de ganancias:
 

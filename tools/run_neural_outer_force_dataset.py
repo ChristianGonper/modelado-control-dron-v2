@@ -1,5 +1,5 @@
 """
-Ejecuta un conjunto de escenarios con controlador neuronal de lazo externo.
+Ejecuta un conjunto de escenarios con controlador neuronal outer-force (type: neural).
 """
 import argparse
 import os
@@ -7,20 +7,20 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 
 import pandas as pd
 
-from run_neural_position_scenario import resolve_architecture, run_neural_position_scenario
+from run_neural_scenario import resolve_architecture, run_neural_outer_force_scenario
 
 
 def _run_row(row, dataset, checkpoint, normalization, architecture, device, no_visualization, rerun):
     scenario_id = row["scenario_id"]
     scenario_path = os.path.join(dataset, row["scenario_path"])
-    out_dir = os.path.join(dataset, row["result_dir"] + f"_neural_position_{architecture}")
+    out_dir = os.path.join(dataset, row["result_dir"] + f"_neural_{architecture}")
     metrics_file = os.path.join(out_dir, "metrics.json")
 
     if os.path.exists(metrics_file) and not rerun:
         return {"scenario_id": scenario_id, "status": "SKIPPED", "result_dir": out_dir}
 
     try:
-        run_neural_position_scenario(
+        run_neural_outer_force_scenario(
             scenario_path=scenario_path,
             checkpoint_path=checkpoint,
             normalization_path=normalization,
@@ -36,14 +36,16 @@ def _run_row(row, dataset, checkpoint, normalization, architecture, device, no_v
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run dataset scenarios with a neural position-loop controller.")
+    parser = argparse.ArgumentParser(
+        description="Run dataset scenarios with neural outer-force controller (closed loop)."
+    )
     parser.add_argument("--dataset", type=str, required=True, help="Path to dataset directory with manifest.csv.")
     parser.add_argument("--checkpoint", type=str, required=True)
     parser.add_argument("--normalization", type=str, required=True)
     parser.add_argument("--architecture", type=str, choices=["mlp", "gru", "lstm"], help="Override architecture from config.yaml.")
     parser.add_argument("--device", type=str, choices=["auto", "cpu", "cuda"], default="auto")
     parser.add_argument("--family", type=str, help="Filter by family")
-    parser.add_argument("--split", type=str, help="Filter by split")
+    parser.add_argument("--split", type=str, help="Filter by split (e.g. test, ood)")
     parser.add_argument("--scenario-id", type=str, help="Filter by specific scenario ID")
     parser.add_argument("--limit", type=int, help="Limit number of simulations")
     parser.add_argument("--workers", type=int, default=1, help="Number of parallel scenario processes.")
@@ -122,7 +124,7 @@ def main():
                 print(f"[{index}/{total}] {result['scenario_id']}: {result['status']}")
                 report.append(result)
 
-    report_path = os.path.join(args.dataset, f"run_report_neural_position_{architecture}.csv")
+    report_path = os.path.join(args.dataset, f"run_report_neural_{architecture}.csv")
     report_df = pd.DataFrame(report)
     if os.path.exists(report_path):
         old_report = pd.read_csv(report_path)

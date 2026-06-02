@@ -12,14 +12,22 @@ def _run_row(row, dataset, no_visualization, rerun):
     metrics_file = os.path.join(result_dir, "metrics.json")
 
     if os.path.exists(metrics_file) and not rerun:
-        return {"scenario_id": scenario_id, "status": "SKIPPED"}
+        return {
+            "scenario_id": scenario_id,
+            "status": "SKIPPED",
+            "result_dir": row["result_dir"],
+        }
 
     try:
         run_simulation(scenario_path, visualization=not no_visualization)
         status = "SUCCESS"
     except Exception as exc:
         status = f"FAILED: {exc}"
-    return {"scenario_id": scenario_id, "status": status}
+    return {
+        "scenario_id": scenario_id,
+        "status": status,
+        "result_dir": row["result_dir"],
+    }
 
 
 def main():

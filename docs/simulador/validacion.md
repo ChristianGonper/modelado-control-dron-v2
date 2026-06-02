@@ -40,13 +40,24 @@ uv run python tools\evaluate_neural_controller.py --dataset data\outer_force_dat
 uv run python tools\run_neural_scenario.py --scenario scenarios\neural_ood_lemniscate.yaml --checkpoint data\neural_control\outer_force_mlp_min_v1\checkpoints\mlp_best.pt --normalization data\neural_control\outer_force_mlp_min_v1\normalization.json --device auto --no-visualization
 ```
 
-Para evaluacion OOD supervisada:
+Para generar la bateria OOD y evaluarla:
 
 ```powershell
-uv run python tools\evaluate_neural_controller.py --dataset data\outer_force_dataset\v1 --run data\neural_control\outer_force_mlp_min_v1 --ood-dataset data\neural_ood\outer_force_lemniscate_v1 --device auto
+uv run python tools\generate_ood_battery.py --out data\neural_ood\battery_v1 --overwrite
+# Bucle cerrado OOD (battery_v1 = escenarios; sin telemetria de experto)
+uv run python tools\run_neural_outer_force_dataset.py --dataset data\neural_ood\battery_v1 --split ood --checkpoint data\neural_control\outer_force_mlp_min_v1\checkpoints\mlp_best.pt --normalization data\neural_control\outer_force_mlp_min_v1\normalization.json --no-visualization
+# Supervisado OOD: solo tras generar data\neural_ood\outer_force_v1 (telemetria + manifest split=ood)
+# uv run python tools\evaluate_neural_controller.py --dataset data\outer_force_dataset\v1 --run data\neural_control\outer_force_mlp_min_v1 --ood-dataset data\neural_ood\outer_force_v1 --splits ood --device auto
+uv run simulador-quad run scenarios\composite_ood.yaml --no-visualization
 ```
 
-El directorio OOD debe contener `manifest.csv` y telemetria compatible con targets de fuerza ya generada. Este comando no ejecuta el escenario OOD; solo evalua un dataset OOD existente.
+El directorio OOD debe usar `split=ood` en `manifest.csv`. No mezclar OOD con el split `test` del dataset clasico. La evaluacion supervisada requiere telemetria compatible con targets de fuerza; el batch `run_neural_outer_force_dataset.py` ejecuta el lazo cerrado. `composite_ood` inicia en `[0,0,1.0]` (primer `hold` e `initial_state` alineados). `data\neural_ood\battery_v1` se genera localmente y esta ignorado por git; para reproducir una evidencia, regenerar la bateria y las corridas desde el commit que se cite en `metrics.metadata`.
+
+Para construir la tabla comparativa:
+
+```powershell
+uv run python tools\build_comparison_closed_loop.py --classic-report data\classic_dataset\v1\run_report.csv --classic-dataset data\classic_dataset\v1 --neural-report data\outer_force_dataset\v1\run_report_neural_mlp.csv --neural-dataset data\outer_force_dataset\v1 --out results\comparison_closed_loop_v1.csv
+```
 
 ## Criterios generales
 

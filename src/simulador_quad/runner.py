@@ -5,7 +5,7 @@ from simulador_quad.core.attitude import body_to_world
 from simulador_quad.dynamics.rigid_body import rk4_step
 from simulador_quad.dynamics.actuators import ActuatorSystem
 from simulador_quad.dynamics.mixer import QuadcopterMixer
-from simulador_quad.dynamics.perturbations import compute_linear_drag, WindModel, ObservationNoise
+from simulador_quad.dynamics.perturbations import WindModel, ObservationNoise
 
 class SimulationRunner:
     def __init__(
@@ -223,6 +223,16 @@ class SimulationRunner:
             # 3. Telemetría (guardamos el estado ANTES del paso de física pero CON el comando actual)
             if time_s - last_telemetry_time >= self.telemetry_dt_s - 1e-6:
                 from simulador_quad.core.contracts import TelemetrySample
+                desired_force = None
+                desired_force_clipped = None
+                if hasattr(controller, "last_desired_force_W_N"):
+                    f = getattr(controller, "last_desired_force_W_N", None)
+                    if f is not None:
+                        desired_force = np.asarray(f, dtype=float).copy()
+                if hasattr(controller, "last_clipped_force_W_N"):
+                    fc = getattr(controller, "last_clipped_force_W_N", None)
+                    if fc is not None:
+                        desired_force_clipped = np.asarray(fc, dtype=float).copy()
                 sample = TelemetrySample(
                     time_s=time_s,
                     state=VehicleState(
@@ -239,7 +249,10 @@ class SimulationRunner:
                         body_moments_Nm=current_control.body_moments_Nm.copy()
                     ),
                     rotor_command=current_rotor_cmd,
-                    rotor_applied=current_applied
+                    rotor_applied=current_applied,
+                    desired_force_W_N=desired_force,
+                    desired_force_clipped_W_N=desired_force_clipped,
+                    wind_W_m_s=self.wind.get_wind(time_s).copy(),
                 )
                 telemetry.append(sample)
                 last_telemetry_time = time_s
