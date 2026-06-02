@@ -9,61 +9,15 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-import torch
 import yaml
 
+from neural_checkpoint_fixtures import make_dummy_outer_force_checkpoint
 from simulador_quad.control.neural import NeuralOuterForceController
 from simulador_quad.control.classic import ClassicCascadeController
 from simulador_quad.core.contracts import VehicleState, TrajectoryReference
 from simulador_quad.core.frames import get_level_quaternion
-from simulador_quad.ml.models import MLPControllerNet
 from simulador_quad.scenarios.schema import _validate_controller, validate_scenario_config
 from simulador_quad.scenarios.loader import instantiate_scenario
-
-
-def _make_dummy_outer_force_checkpoint(tmp_path: Path, output_dim: int = 3, controller_mode: str = "neural_outer_force",
-                                        target_names=None, feature_version="outer_force_min_v1"):
-    """Create minimal valid (or invalid for rejection) checkpoint tree for tests."""
-    model_dir = tmp_path / "outer_model"
-    (model_dir / "checkpoints").mkdir(parents=True, exist_ok=True)
-
-    if target_names is None:
-        target_names = ["force_x_W_N", "force_y_W_N", "force_z_W_N"] if output_dim == 3 else ["thrust", "mx", "my", "mz"]
-
-    norm_data = {
-        "mean_x": [0.0] * (9 if "min" in feature_version else 31),
-        "std_x": [1.0] * (9 if "min" in feature_version else 31),
-        "mean_y": [0.0] * output_dim,
-        "std_y": [1.0] * output_dim,
-        "feature_names": ["f"] * (9 if "min" in feature_version else 31),
-        "target_names": target_names,
-        "feature_version": feature_version,
-        "target_version": "desired_force_W_v1" if output_dim == 3 else "legacy",
-        "epsilon": 1e-8,
-    }
-    with open(model_dir / "normalization.json", "w") as f:
-        json.dump(norm_data, f)
-
-    # Create tiny MLP
-    in_dim = 9 if "min" in feature_version else 31
-    model = MLPControllerNet(in_dim, output_dim, hidden_dim=8)
-    for p in model.parameters():
-        torch.nn.init.constant_(p, 0.01)
-    torch.save(model.state_dict(), model_dir / "checkpoints" / "mlp_best.pt")
-
-    cfg = {
-        "architecture": "mlp",
-        "input_dim": in_dim,
-        "output_dim": output_dim,
-        "hidden_dim": 8,
-        "controller_mode": controller_mode,
-        "feature_version": feature_version,
-        "target_version": "desired_force_W_v1" if output_dim == 3 else None,
-    }
-    with open(model_dir / "config.yaml", "w") as f:
-        yaml.dump(cfg, f)
-
-    return model_dir
 
 
 def _state_ref():
@@ -84,7 +38,7 @@ def _state_ref():
 
 
 def test_neural_outer_force_controller_rejects_legacy_4out(tmp_path):
-    model_dir = _make_dummy_outer_force_checkpoint(tmp_path, output_dim=4, controller_mode=None, target_names=["thrust", "mx", "my", "mz"])
+    model_dir = make_dummy_outer_force_checkpoint(tmp_path, output_dim=4, controller_mode=None, target_names=["thrust", "mx", "my", "mz"])
     with pytest.raises(ValueError, match="Legacy 4-output neural checkpoint"):
         NeuralOuterForceController(
             checkpoint_path=str(model_dir / "checkpoints" / "mlp_best.pt"),
@@ -97,7 +51,7 @@ def test_neural_outer_force_controller_rejects_legacy_4out(tmp_path):
 
 def test_neural_outer_force_rejects_bare_legacy_checkpoint_no_config(tmp_path):
     """Bare checkpoint (no config.yaml) with 4-output weights must still be rejected clearly (P2 review fix)."""
-    model_dir = _make_dummy_outer_force_checkpoint(tmp_path, output_dim=4, controller_mode=None, target_names=None)
+    model_dir = make_dummy_outer_force_checkpoint(tmp_path, output_dim=4, controller_mode=None, target_names=None)
     # Remove the config.yaml so the inference path is exercised
     cfg_path = model_dir / "config.yaml"
     if cfg_path.exists():
@@ -114,7 +68,7 @@ def test_neural_outer_force_rejects_bare_legacy_checkpoint_no_config(tmp_path):
 
 
 def test_neural_outer_force_controller_rejects_legacy_6out_position(tmp_path):
-    model_dir = _make_dummy_outer_force_checkpoint(tmp_path, output_dim=6, controller_mode="neural_position")
+    model_dir = make_dummy_outer_force_checkpoint(tmp_path, output_dim=6, controller_mode="neural_position")
     with pytest.raises(ValueError, match="neural_position|6-output|gain"):
         NeuralOuterForceController(
             checkpoint_path=str(model_dir / "checkpoints" / "mlp_best.pt"),
@@ -124,7 +78,7 @@ def test_neural_outer_force_controller_rejects_legacy_6out_position(tmp_path):
 
 
 def test_neural_outer_force_controller_accepts_valid_3out(tmp_path):
-    model_dir = _make_dummy_outer_force_checkpoint(tmp_path, output_dim=3, controller_mode="neural_outer_force")
+    model_dir = make_dummy_outer_force_checkpoint(tmp_path, output_dim=3, controller_mode="neural_outer_force")
     ctrl = NeuralOuterForceController(
         checkpoint_path=str(model_dir / "checkpoints" / "mlp_best.pt"),
         normalization_path=str(model_dir / "normalization.json"),
@@ -146,7 +100,7 @@ def test_neural_outer_force_controller_accepts_valid_3out(tmp_path):
 
 def test_neural_outer_force_clipping_norm_boundary(tmp_path):
     """Norm clip: force > max_thrust scaled, direction preserved, no nan/inf."""
-    model_dir = _make_dummy_outer_force_checkpoint(tmp_path, output_dim=3)
+    model_dir = make_dummy_outer_force_checkpoint(tmp_path, output_dim=3)
     ctrl = NeuralOuterForceController(
         checkpoint_path=str(model_dir / "checkpoints" / "mlp_best.pt"),
         normalization_path=str(model_dir / "normalization.json"),
@@ -167,7 +121,7 @@ def test_neural_outer_force_clipping_norm_boundary(tmp_path):
 
 def test_neural_outer_force_clipping_tilt_boundary_and_fz_preserved(tmp_path):
     """Tilt clip at ~30deg example: horizontal reduced, Fz unchanged, resulting tilt == max, no nan/inf."""
-    model_dir = _make_dummy_outer_force_checkpoint(tmp_path, output_dim=3)
+    model_dir = make_dummy_outer_force_checkpoint(tmp_path, output_dim=3)
     max_tilt = np.deg2rad(30.0)
     ctrl = NeuralOuterForceController(
         checkpoint_path=str(model_dir / "checkpoints" / "mlp_best.pt"),
@@ -215,7 +169,7 @@ def test_neural_outer_force_clipping_tilt_boundary_and_fz_preserved(tmp_path):
 
 
 def test_neural_outer_force_clip_to_false_allows_large(tmp_path):
-    model_dir = _make_dummy_outer_force_checkpoint(tmp_path, output_dim=3)
+    model_dir = make_dummy_outer_force_checkpoint(tmp_path, output_dim=3)
     ctrl = NeuralOuterForceController(
         checkpoint_path=str(model_dir / "checkpoints" / "mlp_best.pt"),
         normalization_path=str(model_dir / "normalization.json"),
@@ -235,7 +189,7 @@ def test_neural_outer_force_clip_to_false_allows_large(tmp_path):
 
 
 def test_neural_outer_force_clip_counters_increment(tmp_path):
-    model_dir = _make_dummy_outer_force_checkpoint(tmp_path, output_dim=3)
+    model_dir = make_dummy_outer_force_checkpoint(tmp_path, output_dim=3)
     ctrl = NeuralOuterForceController(
         checkpoint_path=str(model_dir / "checkpoints" / "mlp_best.pt"),
         normalization_path=str(model_dir / "normalization.json"),
@@ -255,7 +209,7 @@ def test_neural_outer_force_clip_counters_increment(tmp_path):
 
 def test_neural_outer_force_equivalence_when_predicts_expert_force(tmp_path):
     """If the NN were to output exactly the expert force, the final command must match classic exactly."""
-    model_dir = _make_dummy_outer_force_checkpoint(tmp_path, output_dim=3)
+    model_dir = make_dummy_outer_force_checkpoint(tmp_path, output_dim=3)
     ctrl = NeuralOuterForceController(
         checkpoint_path=str(model_dir / "checkpoints" / "mlp_best.pt"),
         normalization_path=str(model_dir / "normalization.json"),
@@ -296,7 +250,7 @@ def test_neural_outer_force_equivalence_when_predicts_expert_force(tmp_path):
 # =============================================================================
 
 def test_schema_accepts_neural_outer_force_contract(tmp_path):
-    model_dir = _make_dummy_outer_force_checkpoint(tmp_path, output_dim=3, controller_mode="neural_outer_force")
+    model_dir = make_dummy_outer_force_checkpoint(tmp_path, output_dim=3, controller_mode="neural_outer_force")
     ckpt = str(model_dir / "checkpoints" / "mlp_best.pt")
     normp = str(model_dir / "normalization.json")
 
@@ -326,7 +280,7 @@ def test_schema_accepts_neural_outer_force_contract(tmp_path):
 
 
 def test_loader_instantiates_neural_outer_force(tmp_path):
-    model_dir = _make_dummy_outer_force_checkpoint(tmp_path, output_dim=3, controller_mode="neural_outer_force")
+    model_dir = make_dummy_outer_force_checkpoint(tmp_path, output_dim=3, controller_mode="neural_outer_force")
     ckpt = str(model_dir / "checkpoints" / "mlp_best.pt")
     normp = str(model_dir / "normalization.json")
 

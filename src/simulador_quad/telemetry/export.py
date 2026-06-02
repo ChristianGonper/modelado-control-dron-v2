@@ -40,6 +40,21 @@ def export_telemetry_json(telemetry: List[TelemetrySample], filepath: str):
                 "collective_thrust_N": s.control_command.collective_thrust_N,
                 "body_moments_Nm": s.control_command.body_moments_Nm,
             },
+            **(
+                {
+                    k: v
+                    for k, v in (
+                        ("desired_force_W_N", s.desired_force_W_N),
+                        ("desired_force_clipped_W_N", s.desired_force_clipped_W_N),
+                    )
+                    if v is not None
+                }
+            ),
+            **(
+                {"perturbation": {"wind_W_m_s": s.wind_W_m_s}}
+                if s.wind_W_m_s is not None
+                else {}
+            ),
             "rotors": {
                 "target_thrust_N": s.rotor_command.target_thrust_N,
                 "target_omega_rad_s": s.rotor_command.target_omega_rad_s,

@@ -1,6 +1,7 @@
 import numpy as np
 from typing import Callable, Tuple
-from simulador_quad.core.attitude import normalize_quaternion, quaternion_multiply, body_to_world, world_to_body
+from simulador_quad.core.attitude import normalize_quaternion, quaternion_multiply, body_to_world
+from simulador_quad.dynamics.perturbations import compute_linear_drag
 
 def compute_state_derivative(
     position_W_m: np.ndarray,
@@ -25,11 +26,8 @@ def compute_state_derivative(
     # Velocidad
     force_W_N = body_to_world(orientation_WB, force_B_N)
     
-    v_rel_W = velocity_W_m_s - wind_W_m_s
-    v_rel_B = world_to_body(orientation_WB, v_rel_W)
-    drag_B = -drag_coeff * v_rel_B
-    drag_W = body_to_world(orientation_WB, drag_B)
-    
+    drag_W = compute_linear_drag(velocity_W_m_s, wind_W_m_s, orientation_WB, drag_coeff)
+
     gravity_force_W = np.array([0.0, 0.0, -mass_kg * gravity_m_s2])
     total_force_W = force_W_N + drag_W + gravity_force_W
     dot_v = total_force_W / mass_kg

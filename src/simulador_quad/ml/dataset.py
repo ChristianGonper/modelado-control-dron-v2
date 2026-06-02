@@ -213,7 +213,7 @@ class PositionGainDataset(Dataset):
                 telemetry = json.load(f)
 
             for entry in telemetry:
-                sample_x, _ = _extract_features_from_entry(entry)
+                sample_x, _ = _extract_features_from_entry(entry, prefer_observation=True)
                 if np.isfinite(sample_x).all() and np.isfinite(target).all():
                     self.samples.append((
                         torch.tensor(sample_x, dtype=torch.float32),
@@ -268,7 +268,7 @@ class SequentialPositionGainDataset(Dataset):
 
             episode_samples = []
             for entry in telemetry:
-                sample_x, _ = _extract_features_from_entry(entry)
+                sample_x, _ = _extract_features_from_entry(entry, prefer_observation=True)
                 if np.isfinite(sample_x).all() and np.isfinite(target).all():
                     episode_samples.append((
                         torch.tensor(sample_x, dtype=torch.float32),
@@ -293,9 +293,12 @@ class SequentialPositionGainDataset(Dataset):
             y = self.target_transform(y)
         return x_seq, y
 
-def _extract_features_from_entry(entry: dict):
+def _extract_features_from_entry(entry: dict, prefer_observation: bool = False):
     """Convierte una entrada de telemetria en arrays de entrada y salida."""
-    state = entry["state"]
+    if prefer_observation and "observation" in entry:
+        state = entry["observation"]
+    else:
+        state = entry["state"]
     ref = entry["reference"]
     ctrl = entry.get("control") # Control puede no estar presente en inferencia
     
