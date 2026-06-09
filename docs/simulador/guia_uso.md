@@ -172,6 +172,91 @@ Para comparar escenarios en la memoria, usar primero metricas con unidades expli
 
 En `metadata.controller.parameters` quedan registradas las ganancias efectivas del controlador clasico (`Kp_pos`, `Kd_pos`, `Kp_att`, `Kd_att`) y sus limites principales (`min_thrust`, `max_thrust`, `max_moments_Nm`). Esto permite tratar el controlador clasico como baseline reproducible, no como caja negra.
 
+## Campaña Experimental Automatizada
+
+`tools/run_experimental_campaign.py` orquesta el protocolo completo con rutas y
+nombres de artefactos `v1` fijados en el propio script. Las fases son:
+
+| Fase | Operacion principal |
+|---|---|
+| 1 | Suite de pruebas y escenarios de sanidad |
+| 2 | Generacion, ejecucion y resumen del dataset clasico |
+| 3 | Banco y seleccion del experto outer-force |
+| 4 | Banco y dataset de ganancias de posicion |
+| 5 | Entrenamiento secuencial MLP, GRU y LSTM |
+| 6 | Evaluacion supervisada |
+| 7 | Evaluacion en bucle cerrado sobre el split `test` |
+| 8 | Generacion y evaluacion de la bateria OOD |
+| 9 | Transferencia cruzada de PID clasicos |
+| 10 | Consolidacion CSV y tablas LaTeX por salida estandar |
+
+Las fases se pueden ejecutar como `all`, una fase (`--phase 7`), una lista
+(`--phase 1,3,5`) o un intervalo (`--phase 1-4`). No resuelve dependencias:
+ejecutar una fase aislada exige que ya existan los artefactos de las fases
+anteriores. `--workers` controla procesos CPU de simulaciones independientes;
+el entrenamiento usa `--device`. En las evaluaciones cerradas el orquestador
+usa CPU para poder paralelizar escenarios.
+
+Antes de una campaña larga se debe inspeccionar el plan efectivo:
+
+```powershell
+uv run python tools\run_experimental_campaign.py --dry-run
+
+# Preparar datasets sin entrenar ni evaluar redes
+uv run python tools\run_experimental_campaign.py --phase 1-4 --workers 8
+
+# Ejecutar toda la campaña; reutiliza resultados ya completos
+uv run python tools\run_experimental_campaign.py --workers 8 --device cuda
+```
+
+`--rerun` fuerza las simulaciones ya completadas y activa `--overwrite` en los
+generadores que lo admiten. Debe usarse conscientemente porque regenera
+artefactos experimentales.
+
+### Transferencia clasica
+
+`tools/run_classic_transfer_dataset.py` ejecuta cada escenario seleccionado con
+los PID disponibles de las otras familias; excluye el PID de la familia
+original. Lee `manifest.csv` y `pids/pid_<familia>_*.yaml`, guarda los YAML
+materializados en `scenarios_transfer/`, las ejecuciones en
+`results_transfer/` y el indice `run_report_classic_transfer.csv`.
+
+```powershell
+uv run python tools\run_classic_transfer_dataset.py --dataset data\classic_dataset\v1 --workers 8 --no-visualization
+
+# Smoke de un escenario de una familia
+uv run python tools\run_classic_transfer_dataset.py --dataset data\classic_dataset\v1 --family hold --limit 1
+```
+
+Por defecto no reejecuta combinaciones con `metrics.json`; usar `--rerun` para
+forzarlas. El proceso devuelve codigo distinto de cero si falla alguna
+simulacion de la invocacion.
+
+### Consolidacion comparativa
+
+`tools/summarize_comparison.py` recoge los `metrics.json` existentes del
+baseline clasico, transferencia, oraculo outer-force, redes outer-force y
+redes de posicion, tanto `test` como OOD. Produce:
+
+- `comparison_all_runs.csv`: una fila por corrida encontrada.
+- `comparison_summary.csv`: agregacion por controlador, split y familia.
+- tablas LaTeX para `test` y OOD impresas por salida estandar.
+
+La tasa de exito considera validas las terminaciones `Time limit reached` y,
+solo para `waypoint`, `Trajectory completed`. Los artefactos ausentes se
+omiten, por lo que una ejecucion correcta no garantiza que la comparacion este
+completa; antes de usarla en la memoria se deben revisar los conteos de
+`comparison_summary.csv`.
+
+```powershell
+uv run python tools\summarize_comparison.py --dataset-classic data\classic_dataset\v1 --dataset-neural data\outer_force_dataset\v1 --dataset-position data\position_gain_dataset\v1 --dataset-ood data\neural_ood\battery_v1 --out-dir results
+```
+
+Los scripts batch `run_classic_dataset.py`,
+`run_neural_outer_force_dataset.py` y `run_neural_position_dataset.py` tambien
+devuelven codigo distinto de cero si alguna simulacion de la invocacion falla.
+Conservan el reporte CSV para poder inspeccionar los fallos.
+
 ## Flujo recomendado para un alumno
 
 1. Copiar un escenario existente en `scenarios/`.

@@ -89,6 +89,29 @@ uv run python tools\run_neural_position_dataset.py --dataset data\position_gain_
 
 En `run_neural_position_dataset.py`, omitir `--split` ejecuta todos los escenarios del manifiesto; `--split test` limita la ejecucion al subconjunto de test.
 
+Para ejecutar la campaña experimental completa de forma automatizada y consolidar resultados en tablas comparativas LaTeX:
+
+```powershell
+# Ejecutar la campaña completa en modo dry-run para verificar comandos
+uv run python tools\run_experimental_campaign.py --dry-run
+
+# Ejecutar fases específicas (p. ej. Fase 1 y 2 de sanidad y dataset clásico) con 8 workers
+uv run python tools\run_experimental_campaign.py --phase 1,2 --workers 8
+
+# Ejecutar la transferencia cruzada de PIDs clásicos
+uv run python tools\run_classic_transfer_dataset.py --dataset data\classic_dataset\v1 --workers 8 --no-visualization
+
+# Consolidar todos los resultados en un reporte final y generar código de tablas LaTeX
+uv run python tools\summarize_comparison.py --dataset-classic data\classic_dataset\v1 --dataset-neural data\outer_force_dataset\v1 --dataset-position data\position_gain_dataset\v1 --dataset-ood data\neural_ood\battery_v1 --out-dir results
+```
+
+La campaña consta de 10 fases y no resuelve automáticamente las dependencias al
+ejecutar fases aisladas. La transferencia genera `scenarios_transfer/`,
+`results_transfer/` y `run_report_classic_transfer.csv`; el resumen genera
+`results\comparison_all_runs.csv` y `results\comparison_summary.csv`, mientras
+que las tablas LaTeX se imprimen por salida estándar. La guía de uso documenta
+las fases, filtros, criterio de éxito y política de reejecución.
+
 Para paralelizar simulaciones independientes en CPU se puede subir `--workers` en `run_classic_dataset.py` o `run_neural_position_dataset.py`. Con una sola GPU, lo normal es entrenar/evaluar con `--device cuda` y mantener `--workers 1` en inferencia CUDA; varios workers CUDA cargan copias independientes del modelo en la misma GPU y pueden competir por memoria.
 
 Para ejecutar otros escenarios:
