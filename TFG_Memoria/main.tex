@@ -1,0 +1,76 @@
+\documentclass[12pt,a4paper]{article}
+
+\newcommand{\tituloTFG}{Simulador 6DOF de cuadricóptero para comparación de control clásico y neuronal por imitación}
+\newcommand{\tituloTFGEnglish}{6DOF quadcopter simulator for comparing classical and imitation-learning neural control}
+\newcommand{\autorTFG}{Christian González Pérez}
+\newcommand{\tutorTFGa}{José Ramón Rodríguez Ossorio}
+\newcommand{\tutorTFGb}{Guzmán González Mateos}
+\newcommand{\gradoTFG}{Grado en Ingeniería Aeroespacial}
+\newcommand{\convocatoriaTFG}{Junio, 2026}
+
+\usepackage{preamble}
+
+\begin{document}
+
+\hypersetup{pageanchor=false}
+\pagenumbering{gobble}
+\input{sections/00_portada}
+\clearpage
+\hypersetup{pageanchor=true}
+\pagenumbering{roman}
+\input{sections/00_agradecimientos}
+\input{sections/00_resumen}
+\input{sections/00_indices}
+
+\clearpage
+\pagenumbering{arabic}
+
+\section{Introducción}
+\label{sec:introduccion}
+\input{sections/01_introduccion}
+
+\section{Estado del arte}
+\label{sec:estado-arte}
+\input{sections/02_estado_arte}
+
+\section{Modelo físico del cuadricóptero}
+\label{sec:modelo-fisico}
+\input{sections/03_modelo_fisico}
+
+\section{Control clásico}
+\label{sec:control-clasico}
+\input{sections/04_control_clasico}
+
+\section{Control neuronal por imitación}
+\label{sec:control-neuronal}
+\input{sections/05_control_neuronal}
+
+\section{Escenarios, datasets y metodología experimental}
+\label{sec:metodologia}
+\input{sections/06_metodologia}
+
+\section{Resultados}
+\label{sec:resultados}
+\input{sections/07_resultados}
+
+\section{Discusión}
+\label{sec:discusion}
+\input{sections/08_discusion}
+
+\section{Conclusiones y trabajo futuro}
+\label{sec:conclusiones}
+\input{sections/09_conclusiones}
+
+\clearpage
+\renewcommand{\refname}{Bibliografia}
+\bibliographystyle{IEEEtran}
+\phantomsection
+\addcontentsline{toc}{section}{Bibliografia}
+\bibliography{refs}
+
+\input{sections/00_abreviaturas}
+
+\myappendix{Comandos y trazabilidad experimental}
+\input{appendices/a_comandos}
+
+\end{document}

@@ -1,0 +1,5 @@
+Este trabajo estudia el seguimiento de trayectorias de un cuadricóptero mediante control clásico y control neuronal por imitación. El objetivo no es demostrar que una red neuronal supera siempre a un controlador PID optimizado, sino analizar en qué condiciones una política aprendida puede generalizar mejor que controladores ajustados para familias concretas de trayectorias.
+
+Como parte del alcance se desarrolla un simulador propio de seis grados de libertad. La decisión responde a la necesidad de controlar las hipótesis físicas, los sistemas de referencia, la telemetría y la trazabilidad de los experimentos. Frente a simuladores existentes, normalmente más cerrados, más extensos o menos adaptados a un estudio acotado de control, el simulador desarrollado permite ligar directamente modelo físico, escenarios, datasets y métricas.
+
+La memoria presenta el modelo dinámico, la estrategia de control clásico, los controladores neuronales entrenados por imitación, la generación de escenarios y el protocolo experimental usado para comparar controladores en trayectorias nominales, transferencia entre familias y condiciones fuera de distribución.

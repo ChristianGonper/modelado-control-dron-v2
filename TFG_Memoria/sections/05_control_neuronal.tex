@@ -1,0 +1,5 @@
+Los controladores neuronales se entrenan mediante aprendizaje por imitacion a partir de demostraciones generadas por controladores expertos. Se consideran dos modos.
+
+El modo \textit{neural} predice directamente la fuerza deseada del lazo externo, manteniendo un controlador interno clasico para actitud y actuacion. El modo \textit{neural position} predice ajustes de las ganancias del controlador de posicion. Para cada modo se entrenaran arquitecturas MLP, GRU y LSTM.
+
+La evaluacion separara fidelidad supervisada y comportamiento en bucle cerrado. La primera mide si la red imita el objetivo del dataset; la segunda mide si dicha imitacion produce control estable y preciso al integrarse en el simulador.

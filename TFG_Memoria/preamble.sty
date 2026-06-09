@@ -1,0 +1,168 @@
+\ProvidesPackage{preamble}
+
+% Idioma, codificacion y tipografia.
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage{csquotes}
+\usepackage{microtype}
+\usepackage[all]{nowidow}
+\usepackage{setspace}
+\onehalfspacing
+
+% Pagina y cabeceras.
+\usepackage{geometry}
+\geometry{
+  a4paper,
+  left=30mm,
+  right=25mm,
+  top=30mm,
+  bottom=25mm,
+  headheight=2cm
+}
+\setlength{\parindent}{0.5cm}
+\setlength{\parskip}{0pt}
+
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\includegraphics[height=1.2cm]{Figuras/ule.jpg}}
+\chead{Escuela de Ingenierias \\ Industrial, Informatica y Aeroespacial}
+\rhead{Pagina \textbf{\thepage} de \textbf{\pageref*{LastPage}}}
+\lfoot{Autor: \autorTFG}
+\rfoot{\gradoTFG}
+\renewcommand{\headrulewidth}{1pt}
+\renewcommand{\footrulewidth}{1pt}
+\setlength{\headwidth}{\textwidth}
+
+% Matematicas, unidades y tablas.
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{bm}
+\usepackage{siunitx}
+\sisetup{
+  output-decimal-marker={,},
+  per-mode=symbol,
+  detect-all=true
+}
+\numberwithin{equation}{section}
+
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{tabularray}
+\usepackage{multirow}
+
+% Figuras y flotantes.
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{pdflscape}
+\usepackage{pdfpages}
+\usepackage{chngcntr}
+\counterwithin{figure}{section}
+\counterwithin{table}{section}
+\DeclareCaptionFont{fuenteimg}{\normalfont\fontsize{12pt}{12pt}\selectfont}
+\captionsetup[figure]{font=fuenteimg,labelsep=period}
+\captionsetup[table]{font=fuenteimg,labelsep=period}
+\captionsetup[subfigure]{font=fuenteimg,labelsep=period,justification=centering}
+
+% Listas, codigo y enlaces.
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{listings}
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  columns=fullflexible,
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny,
+  captionpos=b
+}
+
+\usepackage{titlesec}
+\usepackage{textcase}
+\usepackage{tocloft}
+\AddToHook{cmd/section/before}{\clearpage}
+\titleformat{\section}{\normalfont\fontsize{28pt}{28pt}\selectfont\bfseries}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\normalfont\fontsize{14pt}{14pt}\selectfont\bfseries\MakeTextUppercase}{\thesubsection.}{0.5em}{}
+\titleformat{\subsubsection}{\normalfont\fontsize{12pt}{12pt}\selectfont\bfseries}{\thesubsubsection.}{0.5em}{}
+\titlespacing*{\section}{0pt}{0pt}{12pt}
+\titlespacing*{\subsection}{0pt}{18pt}{12pt}
+\titlespacing*{\subsubsection}{0pt}{12pt}{8pt}
+
+\renewcommand{\cftsubsecfont}{\normalfont}
+\renewcommand{\cftsecpagefont}{\normalfont}
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+\renewcommand{\cfttoctitlefont}{\normalfont\fontsize{28pt}{28pt}\selectfont\bfseries}
+\renewcommand{\cftloftitlefont}{\normalfont\fontsize{28pt}{28pt}\selectfont\bfseries}
+\renewcommand{\cftlottitlefont}{\normalfont\fontsize{28pt}{28pt}\selectfont\bfseries}
+\setlength{\cftaftertoctitleskip}{2cm}
+\setlength{\cftafterloftitleskip}{2cm}
+\setlength{\cftafterlottitleskip}{2cm}
+\cftsetindents{section}{1em}{1em}
+\cftsetindents{subsection}{1em}{2.5em}
+\setlength{\cftsubsecindent}{\dimexpr\cftsecindent+\cftsecnumwidth}
+\setlength{\cftsubsubsecindent}{\dimexpr\cftsubsecindent+\cftsubsecnumwidth}
+\cftsetindents{figure}{1.5em}{1cm}
+\cftsetindents{table}{1.5em}{1cm}
+
+\usepackage{url}
+\usepackage{cite}
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linktoc=all,
+  linkcolor=blue,
+  citecolor=blue,
+  urlcolor=blue,
+  pdfauthor={\autorTFG},
+  pdftitle={\tituloTFG}
+}
+
+\AtBeginDocument{%
+  \renewcommand{\figureautorefname}{Figura}%
+  \def\figurename{Figura}%
+  \renewcommand{\tableautorefname}{Tabla}%
+  \def\tablename{Tabla}%
+}
+
+% Referencias con espacio no separable y enlace unico.
+\newcommand{\figref}[1]{\hyperref[#1]{Figura~\ref*{#1}}}
+\newcommand{\tabref}[1]{\hyperref[#1]{Tabla~\ref*{#1}}}
+\newcommand{\eqnref}[1]{\hyperref[#1]{ecuacion~(\ref*{#1})}}
+\newcommand{\Eqnref}[1]{\hyperref[#1]{Ecuacion~(\ref*{#1})}}
+\newcommand{\anejoref}[1]{\hyperref[#1]{Anejo~\ref*{#1}}}
+\newcommand{\apartadoref}[1]{\hyperref[#1]{apartado~\ref*{#1}}}
+\newcommand{\Apartadoref}[1]{\hyperref[#1]{Apartado~\ref*{#1}}}
+
+% Notacion recurrente del TFG.
+\newcommand{\frameW}{\mathcal{W}}
+\newcommand{\frameB}{\mathcal{B}}
+\newcommand{\posW}{\bm{p}_{\frameW}}
+\newcommand{\velW}{\bm{v}_{\frameW}}
+\newcommand{\forceW}{\bm{F}_{\frameW}}
+\newcommand{\omegaB}{\bm{\omega}_{\frameB}}
+\newcommand{\quatWB}{\bm{q}_{\frameW\frameB}}
+
+% Anejos.
+\newcounter{appendixcounter}
+\renewcommand{\theappendixcounter}{\arabic{appendixcounter}}
+\newcommand{\myappendix}[1]{%
+  \cleardoublepage
+  \thispagestyle{empty}
+  \refstepcounter{appendixcounter}
+  \vspace*{\fill}
+  \begin{center}
+    \parbox{0.9\textwidth}{\centering\Huge\bfseries Anejo \theappendixcounter. #1}
+  \end{center}
+  \vspace*{\fill}
+  \addcontentsline{toc}{section}{Anejo \theappendixcounter: #1}
+  \cleardoublepage
+}

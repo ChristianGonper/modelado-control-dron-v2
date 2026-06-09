@@ -1,0 +1,5 @@
+La metodologia experimental se estructura en escenarios nominales, escenarios perturbados y escenarios fuera de distribucion. Cada experimento registra telemetria, metricas de seguimiento, estado de terminacion y metadatos suficientes para reproducir la ejecucion.
+
+Las simulaciones independientes se ejecutaran en CPU con paralelismo de 16 trabajadores. Los entrenamientos neuronales se ejecutaran de forma secuencial en GPU cuando este disponible. Esta separacion evita mezclar trabajos masivos de simulacion con procesos de entrenamiento que compiten por memoria de GPU.
+
+El protocolo comparara PID especifico, PIDs transferidos, experto por escenario y redes neuronales. En presencia de viento o perturbaciones, el maestro de imitacion debe ser valido bajo la condicion concreta del escenario; si el experto falla, la demostracion no se usara como evidencia de aprendizaje robusto.
