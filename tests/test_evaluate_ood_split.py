@@ -7,9 +7,21 @@ import pytest
 import torch
 import yaml
 
+from simulador_quad.datasets.classic import INITIAL_PIDS
 from simulador_quad.ml.dataset import OuterForceDataset
 from simulador_quad.ml.models import MLPControllerNet
 from simulador_quad.ml.normalization import Normalizer
+
+
+def _write_frozen_pid_source(tmp_path: Path) -> Path:
+    pid_root = tmp_path / "classic_source"
+    pids_dir = pid_root / "pids"
+    pids_dir.mkdir(parents=True, exist_ok=True)
+    for family, gains in INITIAL_PIDS.items():
+        payload = {"pid_id": f"pid_{family}_v1", "family": family, "version": "v1", **gains}
+        with open(pids_dir / f"pid_{family}_v1.yaml", "w", encoding="utf-8") as file:
+            yaml.dump(payload, file)
+    return pid_root
 
 
 def _write_minimal_outer_force_run(tmp_path: Path, in_dim: int = 9) -> Path:
@@ -148,6 +160,7 @@ def test_evaluate_empty_ood_battery_raises(tmp_path):
     import sys
 
     run_dir = _write_minimal_outer_force_run(tmp_path)
+    pid_root = _write_frozen_pid_source(tmp_path)
     battery = tmp_path / "battery_only"
     subprocess.run(
         [
@@ -155,6 +168,8 @@ def test_evaluate_empty_ood_battery_raises(tmp_path):
             "tools/generate_ood_battery.py",
             "--out",
             str(battery),
+            "--pid-source-dataset",
+            str(pid_root),
             "--scenario-id",
             "lemniscate_3d_heavy_wind",
             "--overwrite",

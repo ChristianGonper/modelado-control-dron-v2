@@ -269,22 +269,30 @@ def main():
     # --- PHASE 10: Out-of-Distribution (OOD) ---
     if 10 in phases_to_run:
         print("\n--- PHASE 10: OOD Battery Execution ---")
+        ood_manifest = os.path.join("data/neural_ood/battery_v1", "manifest.csv")
         if not args.dry_run:
             for arch in ["mlp", "gru", "lstm"]:
                 of_cp = f"data/neural_control/outer_force_{arch}_min_v1/checkpoints/{arch}_best.pt"
                 of_norm = f"data/neural_control/outer_force_{arch}_min_v1/normalization.json"
-                pg_cp = f"data/neural_control/position_{arch}_v1/checkpoints/{arch}_best.pt"
-                pg_norm = f"data/neural_control/position_{arch}_v1/normalization.json"
-
                 missing_files = []
-                for f in [of_cp, of_norm, pg_cp, pg_norm]:
+                for f in [of_cp, of_norm]:
                     if not os.path.exists(f):
                         missing_files.append(f)
                 if missing_files:
                     print(f"ERROR: Missing files for OOD evaluation: {missing_files}")
                     print("Actionable: run training phase 7 first.")
                     sys.exit(1)
-        run_command([sys.executable, "tools/generate_ood_battery.py", "--out", "data/neural_ood/battery_v1", "--overwrite"], dry_run=args.dry_run)
+        ood_gen_cmd = [
+            sys.executable,
+            "tools/generate_ood_battery.py",
+            "--out",
+            "data/neural_ood/battery_v1",
+            "--pid-source-dataset",
+            "data/classic_dataset/v1",
+        ]
+        if args.rerun or not os.path.exists(ood_manifest):
+            ood_gen_cmd.append("--overwrite")
+        run_command(ood_gen_cmd, dry_run=args.dry_run)
         # Classic baseline over OOD
         run_command([sys.executable, "tools/run_classic_dataset.py", "--dataset", "data/neural_ood/battery_v1", "--no-visualization", "--workers", str(args.workers)] + rerun_flag, dry_run=args.dry_run)
         # Outer force models over OOD
@@ -295,19 +303,6 @@ def main():
                 "--split", "ood",
                 "--checkpoint", f"data/neural_control/outer_force_{arch}_min_v1/checkpoints/{arch}_best.pt",
                 "--normalization", f"data/neural_control/outer_force_{arch}_min_v1/normalization.json",
-                "--architecture", arch,
-                "--device", "cpu",
-                "--workers", str(args.workers),
-                "--no-visualization"
-            ] + rerun_flag, dry_run=args.dry_run)
-        # Position gain models over OOD
-        for arch in ["mlp", "gru", "lstm"]:
-            run_command([
-                sys.executable, "tools/run_neural_position_dataset.py",
-                "--dataset", "data/neural_ood/battery_v1",
-                "--split", "ood",
-                "--checkpoint", f"data/neural_control/position_{arch}_v1/checkpoints/{arch}_best.pt",
-                "--normalization", f"data/neural_control/position_{arch}_v1/normalization.json",
                 "--architecture", arch,
                 "--device", "cpu",
                 "--workers", str(args.workers),
@@ -326,7 +321,36 @@ def main():
                 print("ERROR: Missing dataset manifests for comparison consolidation (classic, outer force, position, or OOD battery).")
                 print("Actionable: run phases 2-6 and 10 first.")
                 sys.exit(1)
-        run_command([sys.executable, "tools/run_classic_transfer_dataset.py", "--dataset", "data/classic_dataset/v1", "--no-visualization", "--workers", str(args.workers)] + rerun_flag, dry_run=args.dry_run)
+        run_command([
+            sys.executable,
+            "tools/run_classic_transfer_dataset.py",
+            "--dataset",
+            "data/classic_dataset/v1",
+            "--pid-source-dataset",
+            "data/classic_dataset/v1",
+            "--split",
+            "test",
+            "--pid-family",
+            "all",
+            "--include-native",
+            "--no-visualization",
+            "--workers",
+            str(args.workers),
+        ] + rerun_flag, dry_run=args.dry_run)
+        run_command([
+            sys.executable,
+            "tools/run_classic_transfer_dataset.py",
+            "--dataset",
+            "data/neural_ood/battery_v1",
+            "--pid-source-dataset",
+            "data/classic_dataset/v1",
+            "--pid-family",
+            "all",
+            "--include-native",
+            "--no-visualization",
+            "--workers",
+            str(args.workers),
+        ] + rerun_flag, dry_run=args.dry_run)
         run_command([
             sys.executable, "tools/summarize_comparison.py",
             "--dataset-classic", "data/classic_dataset/v1",

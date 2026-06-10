@@ -7,6 +7,12 @@ and run_neural_position_dataset.py). Does not mix OOD rows into train/val/test s
 import argparse
 import csv
 import os
+from simulador_quad.core.fs import atomic_write_directory
+from simulador_quad.datasets.pids import (
+    FROZEN_PID_FAMILIES,
+    extract_controller_gains,
+    load_all_frozen_pids,
+)
 
 import numpy as np
 import yaml
@@ -320,16 +326,22 @@ def _build_scenario_definitions():
     ]
 
 
-def generate_battery(out_dir: str, scenario_ids: list[str] | None = None) -> int:
-    os.makedirs(out_dir, exist_ok=True)
-    os.makedirs(os.path.join(out_dir, "scenarios"), exist_ok=True)
+REPRESENTATIVE_MAPPING = {
+    "lemniscate": "lissajous",
+    "lissajous": "lissajous",
+    "waypoint": "waypoint",
+    "composite": "lissajous",
+}
 
-    dummy_pid = {
-        "Kp_pos": [2.0, 2.0, 5.0],
-        "Kd_pos": [1.0, 1.0, 2.0],
-        "Kp_att": [4.0, 4.0, 1.0],
-        "Kd_att": [1.5, 1.5, 0.5],
-    }
+
+def generate_battery(
+    out_dir: str,
+    scenario_ids: list[str] | None = None,
+    overwrite: bool = False,
+    pid_source_dataset: str = "data/classic_dataset/v1",
+) -> int:
+    pids_dir = os.path.join(pid_source_dataset, "pids")
+    frozen_pids = load_all_frozen_pids(pids_dir, required_families=FROZEN_PID_FAMILIES)
 
     scenarios = _build_scenario_definitions()
     if scenario_ids:
@@ -337,78 +349,92 @@ def generate_battery(out_dir: str, scenario_ids: list[str] | None = None) -> int
         if not scenarios:
             raise ValueError(f"No matching scenario ids in {scenario_ids}")
 
-    manifest_rows = []
+    def write_battery(temp_dir):
+        os.makedirs(os.path.join(temp_dir, "scenarios"), exist_ok=True)
+        manifest_rows = []
 
-    for sc in scenarios:
-        sc_id = sc["id"]
-        family = sc["family"]
+        for sc in scenarios:
+            sc_id = sc["id"]
+            family = sc["family"]
+            rep_pid_fam = REPRESENTATIVE_MAPPING.get(family, "lissajous")
+            pid_gains = extract_controller_gains(frozen_pids[rep_pid_fam])
 
-        config = {
-            "name": sc_id,
-            "seed": sc["seed"],
-            "vehicle": {
-                "mass_kg": BASE_VEHICLE["mass_kg"],
-                "inertia_B_kg_m2": BASE_VEHICLE["inertia_B_kg_m2"],
-                "gravity_m_s2": BASE_VEHICLE["gravity_m_s2"],
-                "linear_drag_coefficient": sc["drag"],
-                "rotors": get_rotors(sc["actuators"]["time_constant_s"], sc["actuators"]["delay_s"]),
-            },
-            "initial_state": get_initial_state(sc["trajectory"]),
-            "trajectory": sc["trajectory"],
-            "controller": {"type": "classic", **dummy_pid},
-            "perturbations": sc["perturbations"],
-            "timing": BASE_TIMING,
-            "termination": BASE_TERMINATION,
-            "output": {
-                "dir": f"results/{sc_id}",
-                "telemetry_file": "telemetry.json",
-                "metrics_file": "metrics.json",
-            },
-        }
-
-        family_dir = os.path.join(out_dir, "scenarios", family)
-        os.makedirs(family_dir, exist_ok=True)
-        scenario_yaml_path = os.path.join(family_dir, f"{sc_id}.yaml")
-        with open(scenario_yaml_path, "w", encoding="utf-8") as f:
-            yaml.dump(config, f, sort_keys=False)
-
-        rel_scenario_path = os.path.relpath(scenario_yaml_path, out_dir)
-        rel_result_dir = os.path.relpath(os.path.join(out_dir, "results", sc_id), out_dir)
-
-        manifest_rows.append(
-            {
-                "scenario_id": sc_id,
-                "family": family,
-                "split": "ood",
-                "scenario_path": rel_scenario_path,
-                "result_dir": rel_result_dir,
+            config = {
+                "name": sc_id,
+                "seed": sc["seed"],
+                "vehicle": {
+                    "mass_kg": BASE_VEHICLE["mass_kg"],
+                    "inertia_B_kg_m2": BASE_VEHICLE["inertia_B_kg_m2"],
+                    "gravity_m_s2": BASE_VEHICLE["gravity_m_s2"],
+                    "linear_drag_coefficient": sc["drag"],
+                    "rotors": get_rotors(sc["actuators"]["time_constant_s"], sc["actuators"]["delay_s"]),
+                },
+                "initial_state": get_initial_state(sc["trajectory"]),
+                "trajectory": sc["trajectory"],
+                "controller": {
+                    "type": "classic",
+                    "pid_family": rep_pid_fam,
+                    **pid_gains
+                },
+                "perturbations": sc["perturbations"],
+                "timing": BASE_TIMING,
+                "termination": BASE_TERMINATION,
+                "output": {
+                    "dir": f"results/{sc_id}",
+                    "telemetry_file": "telemetry.json",
+                    "metrics_file": "metrics.json",
+                },
             }
-        )
 
-    manifest_path = os.path.join(out_dir, "manifest.csv")
-    with open(manifest_path, "w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(
-            f, fieldnames=["scenario_id", "family", "split", "scenario_path", "result_dir"]
-        )
-        writer.writeheader()
-        writer.writerows(manifest_rows)
+            family_dir = os.path.join(temp_dir, "scenarios", family)
+            os.makedirs(family_dir, exist_ok=True)
+            scenario_yaml_path = os.path.join(family_dir, f"{sc_id}.yaml")
+            with open(scenario_yaml_path, "w", encoding="utf-8") as f:
+                yaml.dump(config, f, sort_keys=False)
 
-    readme_path = os.path.join(out_dir, "README.md")
-    with open(readme_path, "w", encoding="utf-8") as f:
-        f.write("# OOD Evaluation Battery\n\n")
-        f.write("Generated for Out-of-Distribution closed-loop testing (`split=ood`).\n")
-        f.write("Do not merge this manifest into train/val/test supervised splits.\n\n")
-        f.write("Regenerate with:\n\n")
-        f.write("```powershell\n")
-        f.write("uv run python tools/generate_ood_battery.py --out data/neural_ood/battery_v1 --overwrite\n")
-        f.write("```\n\n")
-        f.write("`manifest.result_dir` and each scenario `output.dir` both use `results/<scenario_id>` ")
-        f.write("(paths relative to this battery root).\n\n")
-        f.write("Supervised `evaluate_neural_controller.py --ood-dataset` requires telemetry under ")
-        f.write("`result_dir`; use `run_neural_outer_force_dataset.py` for scenario-only batteries.\n\n")
-        f.write(f"Total scenarios: {len(manifest_rows)}\n")
+            rel_scenario_path = os.path.relpath(scenario_yaml_path, temp_dir)
+            rel_result_dir = os.path.relpath(os.path.join(temp_dir, "results", sc_id), temp_dir)
 
-    return len(manifest_rows)
+            manifest_rows.append(
+                {
+                    "scenario_id": sc_id,
+                    "family": family,
+                    "split": "ood",
+                    "scenario_path": rel_scenario_path,
+                    "result_dir": rel_result_dir,
+                }
+            )
+
+        manifest_path = os.path.join(temp_dir, "manifest.csv")
+        with open(manifest_path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(
+                f, fieldnames=["scenario_id", "family", "split", "scenario_path", "result_dir"]
+            )
+            writer.writeheader()
+            writer.writerows(manifest_rows)
+
+        readme_path = os.path.join(temp_dir, "README.md")
+        with open(readme_path, "w", encoding="utf-8") as f:
+            f.write("# OOD Evaluation Battery\n\n")
+            f.write("Generated for Out-of-Distribution closed-loop testing (`split=ood`).\n")
+            f.write("Do not merge this manifest into train/val/test supervised splits.\n\n")
+            f.write("Regenerate with:\n\n")
+            f.write("```powershell\n")
+            f.write(
+                "uv run python tools/generate_ood_battery.py "
+                "--out data/neural_ood/battery_v1 "
+                "--pid-source-dataset data/classic_dataset/v1 "
+                "--overwrite\n"
+            )
+            f.write("```\n\n")
+            f.write("`manifest.result_dir` and each scenario `output.dir` both use `results/<scenario_id>` ")
+            f.write("(paths relative to this battery root).\n\n")
+            f.write("Supervised `evaluate_neural_controller.py --ood-dataset` requires telemetry under ")
+            f.write("`result_dir`; use `run_neural_outer_force_dataset.py` for scenario-only batteries.\n\n")
+            f.write(f"Total scenarios: {len(manifest_rows)}\n")
+
+    atomic_write_directory(out_dir, write_battery, overwrite)
+    return len(scenarios)
 
 
 def main():
@@ -428,16 +454,24 @@ def main():
         help="Generate only these scenario ids (repeatable). Default: all 10 scenarios.",
     )
     parser.add_argument(
+        "--pid-source-dataset",
+        type=str,
+        default="data/classic_dataset/v1",
+        help="Dataset root containing frozen PID YAML files (default: data/classic_dataset/v1).",
+    )
+    parser.add_argument(
         "--overwrite",
         action="store_true",
         help="Allow writing into an existing output directory.",
     )
     args = parser.parse_args()
 
-    if os.path.exists(args.out) and os.listdir(args.out) and not args.overwrite:
-        raise FileExistsError(f"{args.out} exists and is non-empty. Use --overwrite to replace.")
-
-    count = generate_battery(args.out, scenario_ids=args.scenario_ids)
+    count = generate_battery(
+        args.out,
+        scenario_ids=args.scenario_ids,
+        overwrite=args.overwrite,
+        pid_source_dataset=args.pid_source_dataset,
+    )
     print(f"Generated {count} OOD scenarios at {args.out}")
 
 

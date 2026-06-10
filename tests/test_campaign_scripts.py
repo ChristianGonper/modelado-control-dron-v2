@@ -55,6 +55,12 @@ def test_classic_transfer_and_summarize(tmp_dataset_dir):
     assert "scenario_id" in df.columns
     assert "pid_family" in df.columns
     assert "status" in df.columns
+    assert "execution_status" in df.columns
+    assert "execution_success" in df.columns
+    assert "termination_reason" in df.columns
+    assert "mission_success" in df.columns
+    assert "safety_success" in df.columns
+    assert set(df["execution_status"]) <= {"EXECUTED", "SKIPPED"}
     
     # Verify same-family transfer was NOT generated
     same_family_scenario_path = os.path.join(tmp_dataset_dir, "scenarios_transfer", "hold_g01_P0_nominal_s1042_with_pid_hold.yaml")
@@ -103,6 +109,10 @@ def test_classic_transfer_and_summarize(tmp_dataset_dir):
     assert "--workers 2" in result.stdout
     assert "generate_outer_force_pid_bank.py --dataset data/classic_dataset/v1 --out data/outer_force_pid_bank/v1 --workers 2" in result.stdout
     assert "--rmse-hold 0.2" in result.stdout
+    assert "generate_ood_battery.py" in result.stdout
+    assert "--pid-source-dataset data/classic_dataset/v1" in result.stdout
+    assert "run_classic_transfer_dataset.py --dataset data/classic_dataset/v1 --pid-source-dataset data/classic_dataset/v1 --split test --pid-family all --include-native" in result.stdout
+    assert "run_classic_transfer_dataset.py --dataset data/neural_ood/battery_v1 --pid-source-dataset data/classic_dataset/v1 --pid-family all --include-native" in result.stdout
     assert "Actionable" in open("tools/run_experimental_campaign.py").read()  # prereq string present
 
     # Negative prerequisites validation test
