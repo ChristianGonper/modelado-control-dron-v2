@@ -226,6 +226,18 @@ def test_tune_cli_subprocess_success_and_artifacts(tmp_path):
     assert fake_pid["tuning_info"]["search_config"]["rmse_thresh_used"] == 0.25
 
 
+def test_atomic_pid_yaml_is_safe_loadable(tmp_path):
+    from tools.tune_classic_pid import _write_atomic_yaml
+
+    path = tmp_path / "pid.yaml"
+    _write_atomic_yaml(
+        str(path),
+        {"tuning_info": {"diagnostic_geoms_profiles": [["g01", "P0_nominal"]]}},
+    )
+    with open(path, encoding="utf-8") as f:
+        assert yaml.safe_load(f)["tuning_info"]["diagnostic_geoms_profiles"] == [["g01", "P0_nominal"]]
+
+
 def test_tune_failure_no_valid_pid_for_failed(tmp_path):
     # Lightweight: missing base triggers early error path in main (no full sim); assert non-zero intent via code
     ds = _make_minimal_manifest(tmp_path, "hold")

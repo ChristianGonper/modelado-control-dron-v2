@@ -14,16 +14,13 @@ import json
 import csv
 import datetime
 import tempfile
-import shutil
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from typing import Dict, Any, List, Tuple
 import numpy as np
 
 from simulador_quad.datasets.classic import (
     FAMILIES,
-    PROFILES,
-    BASE_VEHICLE,
     build_scenario_config,
-    get_geometry_variants,
     get_diagnostic_cases,
     aggregate_diagnostic,
     needs_tuning,
@@ -80,6 +77,86 @@ def _run_pid_on_case(
     return result["telemetry"], metrics
 
 
+def _evaluate_pid_config(
+    pid_config: Dict[str, Any],
+    cases: List[Dict[str, Any]],
+    family: str,
+    output_root: str,
+    include_telemetry: bool = False,
+) -> List[Dict[str, Any]]:
+    """Evaluate one PID on all diagnostic cases.
+
+    This top-level function is intentionally process-pool friendly. Candidate
+    evaluations omit telemetry to keep inter-process results small.
+    """
+    results = []
+    for case in cases:
+        try:
+            telemetry, metrics = _run_pid_on_case(pid_config, case, family, output_root)
+            passed, reason = passes_hard_filters(metrics, family)
+            score = pid_candidate_score(metrics, telemetry, family)
+            result = {
+                "case": case,
+                "metrics": metrics,
+                "passed": passed,
+                "score": score,
+                "reason": reason,
+            }
+            if include_telemetry:
+                result["telemetry"] = telemetry
+            results.append(result)
+        except Exception as exc:
+            results.append({
+                "case": case,
+                "metrics": {"position_rmse_m": 999},
+                "passed": False,
+                "score": 1e9,
+                "reason": str(exc),
+            })
+    return results
+
+
+def _evaluate_candidate_round(
+    candidates: List[Dict[str, Any]],
+    cases: List[Dict[str, Any]],
+    family: str,
+    output_root: str,
+    workers: int,
+    round_name: str,
+) -> List[List[Dict[str, Any]]]:
+    """Evaluate an independent candidate round, preserving candidate order."""
+    total = len(candidates)
+    if total == 0:
+        return []
+
+    if workers == 1:
+        results = []
+        for index, candidate in enumerate(candidates, start=1):
+            results.append(_evaluate_pid_config(candidate["pid_config"], cases, family, output_root))
+            print(f"    {round_name}: candidate {index}/{total} complete")
+        return results
+
+    results = [None] * total
+    max_workers = min(workers, total)
+    print(f"    {round_name}: evaluating {total} candidates with {max_workers} worker processes")
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        future_to_index = {
+            executor.submit(
+                _evaluate_pid_config,
+                candidate["pid_config"],
+                cases,
+                family,
+                output_root,
+            ): index
+            for index, candidate in enumerate(candidates)
+        }
+        for completed, future in enumerate(as_completed(future_to_index), start=1):
+            index = future_to_index[future]
+            results[index] = future.result()
+            print(f"    {round_name}: candidate {completed}/{total} complete")
+    return results
+
+
 def _load_base_pid_gains(pid_yaml_path: str) -> Dict[str, List[float]]:
     with open(pid_yaml_path, "r") as f:
         data = yaml.safe_load(f) or {}
@@ -97,7 +174,7 @@ def _write_atomic_yaml(path: str, data: Dict[str, Any]):
     """Atomic write: .tmp then replace."""
     tmp = path + ".tmp"
     with open(tmp, "w") as f:
-        yaml.dump(data, f, sort_keys=False)
+        yaml.safe_dump(data, f, sort_keys=False)
     os.replace(tmp, path)
 
 
@@ -113,6 +190,7 @@ def main():
     parser.add_argument("--seed", type=int, default=1042, help="Seed for candidate generation (default 1042 for repro)")
     parser.add_argument("--initial-candidates", type=int, default=32, help="First round log-uniform candidates")
     parser.add_argument("--refinement-candidates", type=int, default=16, help="Local refinement candidates")
+    parser.add_argument("--workers", type=int, default=1, help="Parallel candidate processes (default: 1)")
     parser.add_argument("--rmse-hold", type=float, default=DEFAULT_RMSE_THRESH["hold"])
     parser.add_argument("--rmse-circle", type=float, default=DEFAULT_RMSE_THRESH["circle"])
     parser.add_argument("--rmse-lissajous", type=float, default=DEFAULT_RMSE_THRESH["lissajous"])
@@ -120,6 +198,8 @@ def main():
     parser.add_argument("--version", type=str, default="v1")
 
     args = parser.parse_args()
+    if args.workers < 1:
+        parser.error("--workers must be >= 1")
 
     rmse_thresh = {
         "hold": args.rmse_hold,
@@ -183,41 +263,30 @@ def main():
                 print(f"WARNING: very few diagnostic cases for {family}: {len(cases)} (continuing)")
 
             # Evaluate INITIAL on full diagnostic set for this family
-            initial_results: List[Dict[str, Any]] = []
-            for case in cases:
-                try:
-                    tel, met = _run_pid_on_case(initial_pid_config, case, family, tmp_root)
-                    passed, reason = passes_hard_filters(met, family)
-                    sc = pid_candidate_score(met, tel, family)
-                    initial_results.append({
-                        "case": case,
-                        "metrics": met,
-                        "telemetry": tel,
-                        "passed": passed,
-                        "score": sc,
-                        "reason": reason,
-                    })
-                    # also record for global diagnostic report
-                    all_diagnostic_rows.append({
-                        "family": family,
-                        "geometry_id": case["geometry_id"],
-                        "perturbation_id": case["perturbation_id"],
-                        "scenario_id": case.get("scenario_id", ""),
-                        "phase": "initial",
-                        "position_rmse_m": met.get("position_rmse_m"),
-                        "position_max_err_m": met.get("position_max_err_m"),
-                        "saturation_percentage": met.get("saturation_percentage"),
-                        "degradation_percentage": met.get("degradation_percentage"),
-                        "termination_reason": met.get("termination_reason"),
-                        "passed_hard": passed,
-                        "hard_reason": reason,
-                        "score": sc,
-                    })
-                except Exception as exc:
-                    print(f"  ERROR running initial on {case}: {exc}")
+            initial_results = _evaluate_pid_config(
+                initial_pid_config, cases, family, tmp_root, include_telemetry=True
+            )
+            for case, result in zip(cases, initial_results):
+                if "telemetry" not in result:
+                    print(f"  ERROR running initial on {case}: {result['reason']}")
                     had_failure = True
-                    failure_reasons[family] = f"initial_eval_error: {exc}"
-                    initial_results.append({"case": case, "metrics": {"position_rmse_m": 999}, "passed": False, "score": 1e9, "reason": str(exc)})
+                    failure_reasons[family] = f"initial_eval_error: {result['reason']}"
+                met = result["metrics"]
+                all_diagnostic_rows.append({
+                    "family": family,
+                    "geometry_id": case["geometry_id"],
+                    "perturbation_id": case["perturbation_id"],
+                    "scenario_id": case.get("scenario_id", ""),
+                    "phase": "initial",
+                    "position_rmse_m": met.get("position_rmse_m"),
+                    "position_max_err_m": met.get("position_max_err_m"),
+                    "saturation_percentage": met.get("saturation_percentage"),
+                    "degradation_percentage": met.get("degradation_percentage"),
+                    "termination_reason": met.get("termination_reason"),
+                    "passed_hard": result["passed"],
+                    "hard_reason": result["reason"],
+                    "score": result["score"],
+                })
 
             init_agg = aggregate_diagnostic(initial_results)
             do_tune, tune_reason = needs_tuning(init_agg, family, rmse_thresh[family])
@@ -254,18 +323,11 @@ def main():
                 )
                 # Eval up to initial+32
                 first_round = cands[:1 + args.initial_candidates]
-                for ci, cand in enumerate(first_round):
-                    if ci == 0:
-                        continue  # already have initial
-                    res_list = []
-                    for case in cases:
-                        try:
-                            tel, met = _run_pid_on_case(cand["pid_config"], case, family, tmp_root)
-                            passed, reason = passes_hard_filters(met, family)
-                            sc = pid_candidate_score(met, tel, family)
-                            res_list.append({"case": case, "metrics": met, "passed": passed, "score": sc, "reason": reason})
-                        except Exception as exc:
-                            res_list.append({"case": case, "metrics": {"position_rmse_m": 999}, "passed": False, "score": 1e9, "reason": str(exc)})
+                first_candidates = first_round[1:]
+                first_results = _evaluate_candidate_round(
+                    first_candidates, cases, family, tmp_root, args.workers, "initial round"
+                )
+                for cand, res_list in zip(first_candidates, first_results):
                     agg = aggregate_diagnostic(res_list)
                     evaluated.append({
                         "multipliers": cand["multipliers"],
@@ -291,6 +353,7 @@ def main():
                     topk = safe_first[: min(3, len(safe_first))]
                     rng = np.random.RandomState(args.seed + 1)
                     added = 0
+                    refinement_candidates = []
                     while added < args.refinement_candidates:
                         for t in topk:
                             if added >= args.refinement_candidates:
@@ -302,32 +365,29 @@ def main():
                                 k: (np.array(base_gains[k], dtype=float) * m).tolist()
                                 for k, m in zip(["Kp_pos","Kd_pos","Kp_att","Kd_att"], ms)
                             }}
-                            res_list = []
-                            for case in cases:
-                                try:
-                                    tel, met = _run_pid_on_case(cand["pid_config"], case, family, tmp_root)
-                                    passed, reason = passes_hard_filters(met, family)
-                                    sc = pid_candidate_score(met, tel, family)
-                                    res_list.append({"case": case, "metrics": met, "passed": passed, "score": sc, "reason": reason})
-                                except Exception as exc:
-                                    res_list.append({"case": case, "metrics": {"position_rmse_m": 999}, "passed": False, "score": 1e9, "reason": str(exc)})
-                            agg = aggregate_diagnostic(res_list)
-                            evaluated.append({
-                                "multipliers": cand["multipliers"],
-                                "pid_config": cand["pid_config"],
-                                "agg": agg,
-                                "results": res_list,
-                            })
-                            candidates_rows_global[family].append({
-                                "multipliers": str(cand["multipliers"]),
-                                "mean_rmse": agg["mean_rmse"],
-                                "mean_score": agg["mean_score"],
-                                "hard_fails": agg["hard_fails"],
-                                "all_passed": agg["all_passed"],
-                                "mean_effort": agg.get("mean_effort"),
-                                "n_cases": agg["n_cases"],
-                            })
+                            refinement_candidates.append(cand)
                             added += 1
+
+                    refinement_results = _evaluate_candidate_round(
+                        refinement_candidates, cases, family, tmp_root, args.workers, "refinement round"
+                    )
+                    for cand, res_list in zip(refinement_candidates, refinement_results):
+                        agg = aggregate_diagnostic(res_list)
+                        evaluated.append({
+                            "multipliers": cand["multipliers"],
+                            "pid_config": cand["pid_config"],
+                            "agg": agg,
+                            "results": res_list,
+                        })
+                        candidates_rows_global[family].append({
+                            "multipliers": str(cand["multipliers"]),
+                            "mean_rmse": agg["mean_rmse"],
+                            "mean_score": agg["mean_score"],
+                            "hard_fails": agg["hard_fails"],
+                            "all_passed": agg["all_passed"],
+                            "mean_effort": agg.get("mean_effort"),
+                            "n_cases": agg["n_cases"],
+                        })
 
                 # Final selection
                 chosen_info = select_final_pid(initial_pid_config, evaluated)
@@ -362,6 +422,7 @@ def main():
                         "seed": args.seed,
                         "initial_candidates": args.initial_candidates,
                         "refinement_candidates": args.refinement_candidates,
+                        "workers": args.workers,
                         "mult_range": [0.5, 2.0],
                         "rmse_thresh_used": rmse_thresh[family],
                     },
@@ -396,7 +457,10 @@ def main():
                         "initial_metrics": family_reports[family]["initial_agg"],
                         "chosen_metrics": family_reports[family].get("chosen_metrics", family_reports[family]["chosen_agg"]),
                         "diagnostic_set_size": family_reports[family]["n_cases"],
-                        "diagnostic_geoms_profiles": [(c["geometry_id"], c["perturbation_id"]) for c in family_reports[family]["diagnostic_cases"]],
+                        "diagnostic_geoms_profiles": [
+                            [c["geometry_id"], c["perturbation_id"]]
+                            for c in family_reports[family]["diagnostic_cases"]
+                        ],
                     },
                 }
                 pid_writes_deferred.append((pid_path, pid_data))
@@ -491,10 +555,18 @@ def main():
     summary = {
         "version": args.version,
         "seed": args.seed,
+        "workers": args.workers,
         "date": datetime.datetime.now().isoformat(),
         "families_processed": list(family_reports.keys()),
         "thresholds": rmse_thresh,
-        "per_family": {f: {"source": r["source"], "reason": r["reason"], "mean_rmse_chosen": r["chosen_metrics"]["mean_rmse"]} for f, r in family_reports.items()},
+        "per_family": {
+            f: {
+                "source": r["source"],
+                "reason": r["reason"],
+                "mean_rmse_chosen": r["chosen_agg"]["mean_rmse"],
+            }
+            for f, r in family_reports.items()
+        },
     }
     with open(os.path.join(pid_tuning_dir, "summary.json"), "w") as f:
         json.dump(summary, f, indent=2)
