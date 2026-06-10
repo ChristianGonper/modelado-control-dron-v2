@@ -83,7 +83,8 @@ def test_outer_force_generation_pipeline(tmp_path):
         "generate_outer_force_pid_bank.py",
         "--dataset", str(source_dir),
         "--out", str(bank_dir),
-        "--overwrite"
+        "--overwrite",
+        "--workers", "2",
     ]
     try:
         run_pid_bank()

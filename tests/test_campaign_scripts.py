@@ -100,6 +100,8 @@ def test_classic_transfer_and_summarize(tmp_dataset_dir):
     # Test of parameters forwarding (no vacuous assert)
     assert "--seed 123" in result.stdout
     assert "--initial-candidates 16" in result.stdout
+    assert "--workers 2" in result.stdout
+    assert "generate_outer_force_pid_bank.py --dataset data/classic_dataset/v1 --out data/outer_force_pid_bank/v1 --workers 2" in result.stdout
     assert "--rmse-hold 0.2" in result.stdout
     assert "Actionable" in open("tools/run_experimental_campaign.py").read()  # prereq string present
 
@@ -300,4 +302,3 @@ def test_runner_failure_propagation(tmp_path):
     res = subprocess.run(cmd, capture_output=True, text=True)
     assert res.returncode == 1
     assert "Error: One or more simulation runs failed" in res.stdout or "Error: One or more simulation runs failed" in res.stderr
-

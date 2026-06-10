@@ -6,12 +6,12 @@ Produces data/outer_force_pid_bank/<ver>/ with pids/*.yaml and pid_bank_manifest
 
 import argparse
 import copy
-import csv
 import datetime
 import json
 import os
 import sys
 import yaml
+from concurrent.futures import ProcessPoolExecutor, as_completed
 import numpy as np
 import pandas as pd
 
@@ -33,6 +33,90 @@ VARIANTS = {
     "damped": {"Kp_pos_ratio": 1.6, "Kd_pos_ratio": 2.0},
     "damped2": {"Kp_pos_ratio": 1.4, "Kd_pos_ratio": 1.8},
 }
+
+
+def _export_variant_result(telemetry, metrics, exec_dir: str):
+    os.makedirs(exec_dir, exist_ok=True)
+    try:
+        from simulador_quad.telemetry.export import export_telemetry_json
+        export_telemetry_json(
+            telemetry if isinstance(telemetry, list) else [],
+            os.path.join(exec_dir, "telemetry.json"),
+        )
+    except Exception:
+        with open(os.path.join(exec_dir, "telemetry.json"), "w") as telemetry_file:
+            json.dump(
+                telemetry if isinstance(telemetry, (list, dict)) else [],
+                telemetry_file,
+                default=float,
+            )
+    with open(os.path.join(exec_dir, "metrics.json"), "w") as metrics_file:
+        json.dump(metrics, metrics_file, default=float)
+
+
+def _evaluate_source_scenario(dataset: str, out_root: str, source_row: dict):
+    """Evaluate all outer-force variants for one source scenario."""
+    family = source_row.get("family", "hold")
+    scenario_yaml_path = os.path.join(dataset, source_row["scenario_path"])
+    if not os.path.exists(scenario_yaml_path):
+        raise FileNotFoundError(f"Scenario YAML file not found: {scenario_yaml_path}")
+    with open(scenario_yaml_path, "r") as source_file:
+        source_config = yaml.safe_load(source_file)
+
+    source_ctrl = source_config.get("controller", {})
+    source_kp_pos = np.array(source_ctrl.get("Kp_pos", [2.0, 2.0, 5.0]))
+    source_kd_pos = np.array(source_ctrl.get("Kd_pos", [1.0, 1.0, 2.0]))
+    geometry = source_row.get("geometry_id", "g0")
+    profile = source_row.get("perturbation_id", "P0_nominal")
+
+    rows = []
+    pid_writes = []
+    for variant_name, scales in VARIANTS.items():
+        pid_config = copy.deepcopy(source_ctrl)
+        pid_config["Kp_pos"] = (source_kp_pos * scales["Kp_pos_ratio"]).tolist()
+        pid_config["Kd_pos"] = (source_kd_pos * scales["Kd_pos_ratio"]).tolist()
+
+        pid_id = f"outer_{source_row['scenario_id']}_{variant_name}"
+        pid_path = os.path.join(out_root, "pids", f"{pid_id}.yaml")
+        pid_writes.append((pid_path, {
+            **pid_config,
+            "pid_id": pid_id,
+            "family": family,
+            "variant": variant_name,
+            "source_scenario_id": source_row["scenario_id"],
+        }))
+
+        variant_result_dir = os.path.join(out_root, "results", pid_id)
+        exec_dir = os.path.join(variant_result_dir, f"exec_{geometry}_{profile}")
+        telemetry, metrics = _run_outer_variant_config(
+            pid_config, source_config, exec_dir
+        )
+        score = pid_candidate_score(metrics, telemetry, family)
+        passed, _ = passes_hard_filters(metrics, family)
+        _export_variant_result(telemetry, metrics, exec_dir)
+
+        effort = metrics.get(
+            "control_effort_heuristic_mean",
+            metrics.get("collective_thrust_mean_N", 0)
+            + metrics.get("body_moment_norm_mean_Nm", 0) * 0.1,
+        )
+        rows.append({
+            "pid_id": pid_id,
+            "source_scenario_id": source_row["scenario_id"],
+            "family": family,
+            "variant": variant_name,
+            "pid_path": os.path.relpath(pid_path, out_root),
+            "result_dir": os.path.relpath(variant_result_dir, out_root),
+            "mean_score": float(score),
+            "position_rmse_m": float(metrics.get("position_rmse_m", score)),
+            "control_effort": float(effort),
+            "valid_cases": int(passed),
+            "total_cases": 1,
+            "Kp_pos": pid_config["Kp_pos"],
+            "Kd_pos": pid_config["Kd_pos"],
+            "passed_filter": bool(passed),
+        })
+    return rows, pid_writes
 
 
 def _run_outer_variant_config(pid_config: dict, source_config: dict, out_dir: str):
@@ -104,7 +188,10 @@ def main():
     parser.add_argument("--dataset", required=True, help="Source classic dataset (for families/manifest).")
     parser.add_argument("--out", required=True, help="Output bank dir.")
     parser.add_argument("--overwrite", action="store_true")
+    parser.add_argument("--workers", type=int, default=1, help="Parallel source-scenario processes.")
     args = parser.parse_args()
+    if args.workers < 1:
+        parser.error("--workers must be >= 1")
 
     if os.path.exists(args.out) and not args.overwrite:
         raise FileExistsError(f"{args.out} exists. Use --overwrite.")
@@ -151,6 +238,39 @@ def main():
     rows = []
     seed = 92000
     pid_writes_to_do = []  # defer writes until after per-scen safety check (atomicity for abort)
+
+    real_rows = src_manifest[src_manifest["scenario_path"].notna()].to_dict("records")
+    if len(real_rows) == len(src_manifest):
+        total = len(real_rows)
+        if args.workers == 1:
+            for index, source_row in enumerate(real_rows, start=1):
+                scenario_rows, pid_writes = _evaluate_source_scenario(
+                    args.dataset, args.out, source_row
+                )
+                rows.extend(scenario_rows)
+                pid_writes_to_do.extend(pid_writes)
+                print(f"[{index}/{total}] {source_row['scenario_id']}: 5 variants complete")
+        else:
+            max_workers = min(args.workers, total)
+            print(f"Evaluating {total} source scenarios with {max_workers} worker processes.")
+            ordered_results = [None] * total
+            with ProcessPoolExecutor(max_workers=max_workers) as executor:
+                future_to_index = {
+                    executor.submit(
+                        _evaluate_source_scenario, args.dataset, args.out, source_row
+                    ): index
+                    for index, source_row in enumerate(real_rows)
+                }
+                for completed, future in enumerate(as_completed(future_to_index), start=1):
+                    index = future_to_index[future]
+                    ordered_results[index] = future.result()
+                    print(f"[{completed}/{total}] source scenario complete")
+            for scenario_rows, pid_writes in ordered_results:
+                rows.extend(scenario_rows)
+                pid_writes_to_do.extend(pid_writes)
+
+        # The general fallback loop below is only needed for manifests without scenario YAMLs.
+        src_manifest = src_manifest.iloc[0:0]
 
     for _, srow in src_manifest.iterrows():
         fam = srow.get("family", "hold")
@@ -224,16 +344,7 @@ def main():
                 best_score = sc
                 best_exec_metrics = met
 
-                import json
-                try:
-                    from simulador_quad.telemetry.export import export_telemetry_json
-                    export_telemetry_json(tel if isinstance(tel, list) else [], os.path.join(exec_dir, "telemetry.json"))
-                except Exception:
-                    with open(os.path.join(exec_dir, "telemetry.json"), "w") as tf:
-                        json.dump(tel if isinstance(tel, (list, dict)) else [], tf, default=float)
-
-                with open(os.path.join(exec_dir, "metrics.json"), "w") as mf:
-                    json.dump(met, mf, default=float)
+                _export_variant_result(tel, met, exec_dir)
             else:
                 for idx, (gname, traj) in enumerate(geometries):
                     for prof in profiles:
@@ -253,18 +364,7 @@ def main():
 
                             exec_dir = os.path.join(variant_result_dir, f"exec_{gname}_{prof}")
                             os.makedirs(exec_dir, exist_ok=True)
-                            import json
-                            # Use project export if possible, otherwise simple dump
-                            try:
-                                from simulador_quad.telemetry.export import export_telemetry_json
-                                # tel here is list of TelemetrySample or dicts; simplify
-                                export_telemetry_json(tel if isinstance(tel, list) else [], os.path.join(exec_dir, "telemetry.json"))
-                            except Exception:
-                                with open(os.path.join(exec_dir, "telemetry.json"), "w") as tf:
-                                    json.dump(tel if isinstance(tel, (list, dict)) else [], tf, default=float)
-
-                            with open(os.path.join(exec_dir, "metrics.json"), "w") as mf:
-                                json.dump(met, mf, default=float)
+                            _export_variant_result(tel, met, exec_dir)
                         except Exception:
                             scores.append(1e9)
 
@@ -343,7 +443,7 @@ def main():
     # Success path: perform deferred pid yaml writes (only after all variants + safety passed for every scen)
     for pid_path, pid_dict in pid_writes_to_do:
         with open(pid_path, "w") as f:
-            yaml.dump(pid_dict, f, sort_keys=False)
+            yaml.safe_dump(pid_dict, f, sort_keys=False)
 
     pd.DataFrame(rows).to_csv(os.path.join(args.out, "pid_bank_manifest.csv"), index=False)
     print(f"Outer force PID bank (per-scenario real execution) written to {args.out}")

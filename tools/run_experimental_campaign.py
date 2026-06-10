@@ -118,6 +118,7 @@ def main():
             "--seed", str(args.tune_seed),
             "--initial-candidates", str(args.tune_initial_candidates),
             "--refinement-candidates", str(args.tune_refinement_candidates),
+            "--workers", str(args.workers),
             "--rmse-hold", str(args.tune_rmse_hold),
             "--rmse-circle", str(args.tune_rmse_circle),
             "--rmse-lissajous", str(args.tune_rmse_lissajous),
@@ -148,7 +149,7 @@ def main():
             if not os.path.exists(os.path.join("data/classic_dataset/v1", "manifest.csv")):
                 print("ERROR: Missing classic manifest. Actionable: run phases 2-4 first.")
                 sys.exit(1)
-        run_command([sys.executable, "tools/generate_outer_force_pid_bank.py", "--dataset", "data/classic_dataset/v1", "--out", "data/outer_force_pid_bank/v1"] + (["--overwrite"] if args.rerun else []), dry_run=args.dry_run)
+        run_command([sys.executable, "tools/generate_outer_force_pid_bank.py", "--dataset", "data/classic_dataset/v1", "--out", "data/outer_force_pid_bank/v1", "--workers", str(args.workers)] + (["--overwrite"] if args.rerun else []), dry_run=args.dry_run)
         run_command([sys.executable, "tools/generate_outer_force_dataset.py", "--source-dataset", "data/classic_dataset/v1", "--pid-bank", "data/outer_force_pid_bank/v1", "--out", "data/outer_force_dataset/v1"] + (["--overwrite"] if args.rerun else []), dry_run=args.dry_run)
 
     # --- PHASE 6: Position bank+ds (uses frozen) ---
