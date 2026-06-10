@@ -20,15 +20,11 @@ Implementado:
 - Tooling para generar el dataset `outer_force`, batería OOD (`generate_ood_battery.py`), batch cerrado (`run_neural_outer_force_dataset.py`), tabla comparativa (`build_comparison_closed_loop.py`) y entrenar/evaluar modelos mediante scripts en `tools/`.
 - Control neuronal alternativo en el lazo externo de posición (`neural_position`), donde la red predice ganancias variables y el lazo interno clásico estabiliza actitud.
 
-Pendiente para evidencia final de memoria:
+## Evidencia final de memoria y Alcance Consolidado
 
-- Generar localmente los artefactos `data\outer_force_pid_bank\v1`, `data\outer_force_dataset\v1` y checkpoints `outer_force_*` bajo el contrato vigente de tres salidas `desired_force_W_N[3]`; `data\` esta ignorado por defecto, asi que solo se versionaran artefactos de evidencia si se decide explicitamente.
-- Producir una tabla comparativa cerrada entre PID clásico, oráculo por escenario, `neural` outer-force y `neural_position`; los checkpoints legacy de cuatro salidas en `data\neural_control\*_v1` no son evidencia válida para `controller.type: neural`.
-
-Fuera de alcance actual:
-
-- Aerodinámica formal más allá del drag lineal.
-- Modelo de batería, sensores realistas, estimador onboard, contacto con suelo o validación con datos reales.
+- **Comparación principal**: La comparación experimental definitiva se realiza entre los PID congelados de referencia (`classic_pid_hold`, `classic_pid_circle`, `classic_pid_lissajous`, `classic_pid_waypoint`, y el baseline unificado `classic_pid_representative`) y los controladores neuronales `neural_outer_force` (MLP, GRU, LSTM). Se evalúa tanto la matriz cruzada de transferencia completa en el split `test` (92 corridas) como en OOD (40 corridas).
+- **Ramas secundarias (Tooling / Extensiones)**: El controlador de ganancias `neural_position` y el oráculo `outer_force_oracle` están completamente implementados como herramientas en el código, pero se consideran extensiones/trabajo futuro en la memoria y quedan fuera de la tabla comparativa consolidada.
+- **Uso de Git**: Los datasets masivos, telemetrías pesadas y checkpoints se gestionan localmente en `data/` (ignorada en Git). Solo se versionan el manifiesto de evidencia y las tablas consolidadas en `results/`: `comparison_all_runs.csv` para `test`/OOD, `comparison_all_runs_full.csv` para todos los splits y `comparison_summary.csv` para los agregados.
 
 ## Comandos minimos
 
@@ -74,7 +70,9 @@ uv run python tools\generate_ood_battery.py --out data\neural_ood\battery_v1 --o
 
 El banco `outer_force` ejecuta variantes del PID externo para cada escenario fuente, conserva el PID interno y los limites del YAML original, excluye candidatos inseguros y elige el experto por RMSE, esfuerzo dentro del margen del 5% y conservadurismo en empate. La evaluacion supervisada compara fuerzas ENU predichas con `desired_force_W_N` del experto; la calidad de control se compara en bucle cerrado con `position_rmse_m`, errores auxiliares, terminacion, saturacion, degradacion y porcentajes de clipping de fuerza. `run_neural_scenario.py` sustituye el controlador del YAML en memoria sin modificarlo. Los checkpoints legacy de cuatro comandos finales o seis salidas de `neural_position` no son compatibles con `controller.type: neural`.
 
-`data\neural_ood\battery_v1` contiene solo escenarios OOD generados localmente. Regenerarlo es barato y no debe confundirse con evidencia experimental final; la evidencia final requiere ejecutar los escenarios, conservar `metrics.json`/`telemetry.json` y construir `results\comparison_closed_loop_v1.csv`.
+`data\neural_ood\battery_v1` contiene solo escenarios OOD generados localmente. Regenerarlo es barato y no debe confundirse con evidencia experimental final; la evidencia final requiere ejecutar los escenarios, conservar `metrics.json`/`telemetry.json` y construir las tablas consolidadas mediante `tools/summarize_comparison.py`.
+
+La comparación consolidada distingue completar la misión (`mission_success`) de terminar sin fallo físico (`safety_success`). En trayectorias finitas, alcanzar el límite temporal no cuenta como misión completada.
 
 Para el modo alternativo `neural_position`, que programa multiplicadores de ganancias:
 

@@ -242,15 +242,18 @@ simulacion de la invocacion.
 baseline clasico, transferencia, oraculo outer-force, redes outer-force y
 redes de posicion, tanto `test` como OOD. Produce:
 
-- `comparison_all_runs.csv`: una fila por corrida encontrada.
-- `comparison_summary.csv`: agregacion por controlador, split y familia.
-- tablas LaTeX para `test` y OOD impresas por salida estandar.
+- `comparison_all_runs.csv`: subconjunto comparable (`test` y `ood`) con columnas de terminacion y exito.
+- `comparison_all_runs_full.csv`: todas las corridas encontradas, incluidos `train` y `val` con cobertura parcial.
+- `comparison_summary.csv`: agregacion por controlador, split y familia sobre el subconjunto comparable.
+- tablas LaTeX para `test` y `ood` impresas por salida estandar.
 
-La tasa de exito considera validas las terminaciones `Time limit reached` y,
-solo para `waypoint`, `Trajectory completed`. Los artefactos ausentes se
-omiten, por lo que una ejecucion correcta no garantiza que la comparacion este
-completa; antes de usarla en la memoria se deben revisar los conteos de
-`comparison_summary.csv`.
+La tasa de exito principal (`mission_success_rate`) exige completar la mision segun el tipo de trayectoria:
+`Time limit reached` solo cuenta como exito en trayectorias infinitas; `waypoint`/`line` requieren `Trajectory completed`; `composite` requiere `Composite trajectory completed`.
+`safety_success_rate` separa estabilidad fisica (sin crash ni limites violados) de completitud de mision.
+Los reportes de transferencia (`run_report_classic_transfer.csv`) distinguen `execution_status`, `mission_success`, `safety_success` y `report_provenance`.
+Un refresco (`--refresh-report-only`) marca filas como `RECOVERED` salvo que conserve un estado previo de ejecucion en vivo (`report_provenance=live`).
+`safety_success` solo acepta explicitamente `Time limit reached`, `Trajectory completed` y `Composite trajectory completed`.
+Los artefactos ausentes se omiten; antes de usar la comparacion en la memoria revisar los conteos de `comparison_summary.csv`.
 
 ```powershell
 uv run python tools\summarize_comparison.py --dataset-classic data\classic_dataset\v1 --dataset-neural data\outer_force_dataset\v1 --dataset-position data\position_gain_dataset\v1 --dataset-ood data\neural_ood\battery_v1 --out-dir results

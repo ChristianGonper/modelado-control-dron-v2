@@ -11,7 +11,7 @@ No debe convertirse en una documentacion interna del codigo. La implementacion s
 - `../docs/01_principios_tfg.md`
 - `../docs/02_requisitos_ingenieria_simulador.md`
 - `../docs/simulador/`
-- `../docs/plans/plan_experimental_y_memoria_tfg_2026-06.md`
+- `../docs/plans/SPEC.md`
 - Resultados regenerados con `metrics.metadata` trazable a commit.
 
 ## Reglas de redaccion

@@ -1,7 +1,7 @@
 [project]
 name = "simulador-quad"
 version = "0.1.0"
-description = "Add your description here"
+description = "Simulador 6DOF de cuadricóptero con comparación de control clásico PID y control neuronal por imitación"
 readme = "README.md"
 authors = [
     { name = "Christian", email = "cgonzp08@estudiantes.unileon.es" }

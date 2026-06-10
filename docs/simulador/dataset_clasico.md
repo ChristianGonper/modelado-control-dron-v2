@@ -156,18 +156,24 @@ uv run python tools\run_neural_outer_force_dataset.py --dataset data\neural_ood\
 Tabla comparativa cerrada (varios controladores):
 
 ```powershell
-uv run python tools\build_comparison_closed_loop.py --classic-report data\classic_dataset\v1\run_report.csv --classic-dataset data\classic_dataset\v1 --neural-report data\outer_force_dataset\v1\run_report_neural_mlp.csv --neural-dataset data\outer_force_dataset\v1 --out results\comparison_closed_loop_v1.csv
+uv run python tools\summarize_comparison.py --dataset-classic data/classic_dataset/v1 --dataset-neural data/outer_force_dataset/v1 --dataset-ood data/neural_ood/battery_v1 --out-dir results
 ```
 
-El agregador acepta reportes clasicos antiguos sin columna `result_dir`: en ese caso resuelve la ruta por `scenario_id` desde `manifest.csv`. Para reportes nuevos, `run_classic_dataset.py` ya escribe `result_dir` directamente.
+El consolidador `summarize_comparison.py` lee los reportes de simulación clásica y neuronal y produce:
+`results/comparison_all_runs.csv` (comparable: `test`/`ood`),
+`results/comparison_all_runs_full.csv` (todos los splits) y
+`results/comparison_summary.csv`, además de tablas LaTeX para la memoria.
 
-Para comparar el controlador clasico y el neuronal, no basta con las metricas supervisadas de fuerza. Estas comparan la fuerza de la red con `desired_force_W_N` del experto PID seleccionado. La comparacion experimental principal debe hacerse con ejecuciones en bucle cerrado y metricas comunes de simulacion, usando `position_rmse_m` como metrica principal y reportando tambien error maximo, terminacion, saturacion y clipping de fuerza.
+Los informes de transferencia se pueden refrescar sin re-simular con:
+`uv run python tools/run_classic_transfer_dataset.py --dataset <ds> --refresh-report-only ...`
+
+Para comparar el controlador clásico y el neuronal, no basta con las métricas supervisadas de fuerza. Estas comparan la fuerza de la red con `desired_force_W_N` del experto PID seleccionado. La comparación experimental principal se realiza con ejecuciones en bucle cerrado y métricas comunes de simulación (incluyendo las matrices cruzadas completas en test e OOD y el baseline representativo), usando `position_rmse_m` como métrica principal y reportando también error máximo, terminación, saturación y clipping de fuerza.
 
 ## Criterios de validez
 
 Un episodio se considera valido por los filtros duros del dataset si:
 
-- `termination_reason == "Time limit reached"` (o `"Trajectory completed"` para familias de trayectorias finitas como `waypoint`);
+- `termination_reason` coherente con el tipo de trayectoria: `Time limit reached` en trayectorias infinitas; `Trajectory completed` en `waypoint`/`line`; `Composite trajectory completed` en `composite`;
 - las metricas usadas por filtros y score son finitas;
 - `saturation_percentage <= 2.0`;
 - `degradation_percentage <= 2.0`;

@@ -53,11 +53,21 @@ uv run simulador-quad run scenarios\composite_ood.yaml --no-visualization
 
 El directorio OOD debe usar `split=ood` en `manifest.csv`. No mezclar OOD con el split `test` del dataset clasico. La evaluacion supervisada requiere telemetria compatible con targets de fuerza; el batch `run_neural_outer_force_dataset.py` ejecuta el lazo cerrado. `composite_ood` inicia en `[0,0,1.0]` (primer `hold` e `initial_state` alineados). `data\neural_ood\battery_v1` se genera localmente y esta ignorado por git; para reproducir una evidencia, regenerar la bateria y las corridas desde el commit que se cite en `metrics.metadata`.
 
-Para construir la tabla comparativa:
+Para construir las tablas comparativas y consolidar los resultados de la campaña:
 
 ```powershell
-uv run python tools\build_comparison_closed_loop.py --classic-report data\classic_dataset\v1\run_report.csv --classic-dataset data\classic_dataset\v1 --neural-report data\outer_force_dataset\v1\run_report_neural_mlp.csv --neural-dataset data\outer_force_dataset\v1 --out results\comparison_closed_loop_v1.csv
+uv run python tools\summarize_comparison.py --dataset-classic data\classic_dataset\v1 --dataset-neural data\outer_force_dataset\v1 --dataset-position data\position_gain_dataset\v1 --dataset-ood data\neural_ood\battery_v1 --out-dir results
 ```
+
+Esto generará la evidencia consolidada:
+- `results/comparison_all_runs.csv`: registro canónico comparable (`split=test` y `split=ood` únicamente), con `trajectory_type`, `termination_reason`, `mission_success`, `safety_success` y `coverage_group=comparable`.
+- `results/comparison_all_runs_full.csv`: registro completo de todos los splits encontrados (`train`, `val`, `test`, `ood`), incluyendo cobertura parcial (`coverage_group=baseline_partial`).
+- `results/comparison_summary.csv`: agregación por controlador, split y familia usando `mission_success_rate` y `safety_success_rate` sobre el subconjunto comparable.
+
+Contrato de éxito:
+- `mission_success`: trayectoria infinita termina por `Time limit reached`; `waypoint`/`line` por `Trajectory completed`; `composite` por `Composite trajectory completed`.
+- `safety_success`: sin fallo físico (actitud, crash, saturación persistente, no finitos).
+- `Time limit reached` en trayectorias finitas indica misión incompleta, aunque la simulación haya sido físicamente estable.
 
 ## Criterios generales
 
