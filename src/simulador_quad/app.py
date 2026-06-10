@@ -12,7 +12,7 @@ from simulador_quad.scenarios.loader import load_scenario, instantiate_scenario
 from simulador_quad.runner import SimulationRunner
 from simulador_quad.metrics.report import compute_metrics
 from simulador_quad.telemetry.export import export_telemetry_json, export_metrics_json
-from simulador_quad.visualization.plots import plot_telemetry
+from simulador_quad.visualization import plot_telemetry, plot_comparison
 from simulador_quad.visualization.three_d import export_trajectory_viewer_html
 
 
@@ -140,14 +140,14 @@ def build_execution_metadata(
 def run_simulation(scenario_path: str, visualization: bool = True, command: str | None = None):
     print(f"Cargando escenario: {scenario_path}")
     config = load_scenario(scenario_path)
-    
+
     # Instanciar componentes
     v_params, mixer, actuators, initial_state, trajectory, controller, wind, noise = instantiate_scenario(config)
-    
+
     # Configurar runner
     t_cfg = config['timing']
     term_cfg = config['termination']
-    
+
     runner = SimulationRunner(
         physics_dt_s=t_cfg['physics_dt_s'],
         control_dt_s=t_cfg['control_dt_s'],
@@ -162,15 +162,15 @@ def run_simulation(scenario_path: str, visualization: bool = True, command: str 
         max_attitude_angle_rad=term_cfg.get('max_attitude_angle_rad', 1.256),
         max_saturation_duration_s=term_cfg.get('max_saturation_duration_s', 1.0)
     )
-    
+
     # Ejecutar
     print("Iniciando simulación...")
     result_raw = runner.run(initial_state, controller, trajectory)
     telemetry = result_raw['telemetry']
     reason = result_raw['termination_reason']
-    
+
     print(f"Simulación terminada. Razón: {reason}")
-    
+
     # Métricas
     metadata = build_execution_metadata(
         config=config,
@@ -193,29 +193,29 @@ def run_simulation(scenario_path: str, visualization: bool = True, command: str 
                     metrics[k] = clip_stats[k]
         except Exception:
             pass  # non-fatal; stats are best-effort for observability
-    
+
     # Exportar
     out_cfg = config['output']
     os.makedirs(out_cfg['dir'], exist_ok=True)
-    
+
     tel_path = os.path.join(out_cfg['dir'], out_cfg['telemetry_file'])
     met_path = os.path.join(out_cfg['dir'], out_cfg['metrics_file'])
-    
+
     print(f"Exportando telemetría a {tel_path}...")
     export_telemetry_json(telemetry, tel_path)
-    
+
     print(f"Exportando métricas a {met_path}...")
     export_metrics_json(metrics, met_path)
-    
+
     print("Métricas clave:")
     print(f"  RMSE Posición: {metrics['position_rmse_m']:.4f} m")
     print(f"  Duración: {metrics['duration_s']:.2f} s")
-    
+
     if visualization:
         print("Generando visualizaciones...")
         figures_dir = os.path.join(out_cfg['dir'], "figures")
         plot_telemetry(tel_path, figures_dir, met_path)
-        
+
         viz_3d_path = os.path.join(out_cfg['dir'], "visualization_3d.html")
         export_trajectory_viewer_html(tel_path, viz_3d_path, met_path)
         print(f"  Visualización 3D: {viz_3d_path}")
@@ -224,7 +224,7 @@ def run_simulation(scenario_path: str, visualization: bool = True, command: str 
 def main():
     parser = argparse.ArgumentParser(description="Simulador Quadcopter 6DOF")
     subparsers = parser.add_subparsers(dest="command")
-    
+
     run_parser = subparsers.add_parser("run", help="Ejecutar un escenario")
     run_parser.add_argument("scenario", help="Ruta al archivo YAML del escenario")
     run_parser.add_argument("--no-visualization", action="store_false", dest="visualization", default=True,
@@ -233,10 +233,20 @@ def main():
     plot_parser = subparsers.add_parser("plot", help="Generar figuras desde telemetría JSON")
     plot_parser.add_argument("telemetry", help="Ruta al telemetry.json exportado por el simulador")
     plot_parser.add_argument("--metrics", help="Ruta opcional al metrics.json asociado")
-    plot_parser.add_argument("--out", required=True, help="Directorio donde se escribirán las figuras PNG")
-    
+    plot_parser.add_argument("--out", required=True, help="Directorio donde se escribirán las figuras")
+    plot_parser.add_argument("--profile", choices=["diagnostic", "report"], default="diagnostic",
+                            help="Perfil de estilo visual a aplicar (diagnostic o report)")
+    plot_parser.add_argument("--formats", nargs="+", choices=["png", "pdf"], default=None,
+                            help="Formatos de imagen a generar (ej: png pdf)")
+
+    plot_comp_parser = subparsers.add_parser("plot-comparison", help="Generar figuras comparativas agregadas desde CSV")
+    plot_comp_parser.add_argument("comparison_csv", help="Ruta al archivo CSV de comparación (comparison_all_runs.csv)")
+    plot_comp_parser.add_argument("--out", required=True, help="Directorio donde se escribirán las figuras comparativas")
+    plot_comp_parser.add_argument("--formats", nargs="+", choices=["png", "pdf"], default=["png", "pdf"],
+                                   help="Formatos de imagen a generar (default: png pdf)")
+
     args = parser.parse_args()
-    
+
     if args.command == "run":
         run_simulation(
             args.scenario,
@@ -244,10 +254,52 @@ def main():
             command=_default_run_command(args.scenario, args.visualization),
         )
     elif args.command == "plot":
-        paths = plot_telemetry(args.telemetry, args.out, args.metrics)
+        # Determine formats default based on profile if not specified
+        if args.formats is None:
+            formats = ["png", "pdf"] if args.profile == "report" else ["png"]
+        else:
+            formats = args.formats
+
+        paths = plot_telemetry(
+            args.telemetry,
+            args.out,
+            args.metrics,
+            profile=args.profile,
+            formats=formats
+        )
         print("Figuras generadas:")
         for path in paths:
             print(f"  {path}")
+    elif args.command == "plot-comparison":
+        try:
+            result = plot_comparison(
+                args.comparison_csv,
+                args.out,
+                formats=args.formats,
+            )
+        except (FileNotFoundError, ValueError) as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            sys.exit(1)
+
+        if not result.paths:
+            print("Error: no se generó ninguna figura comparativa a partir del CSV.", file=sys.stderr)
+            sys.exit(1)
+
+        print("Figuras comparativas generadas:")
+        for figure_id in result.generated:
+            print(f"  {figure_id}")
+        for path in result.paths:
+            print(f"  {path}")
+
+        if result.warnings:
+            print("Advertencias de preparación:")
+            for warning in result.warnings:
+                print(f"  {warning}")
+
+        if result.skipped:
+            print("Figuras omitidas (condicionales):")
+            for figure_id, reason in result.skipped:
+                print(f"  {figure_id}: {reason}")
     else:
         parser.print_help()
 

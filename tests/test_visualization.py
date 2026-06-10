@@ -58,6 +58,7 @@ def test_plot_telemetry_generates_standard_figures(tmp_path):
 
     expected_names = {
         "trajectory_xy.png",
+        "trajectory_3d_static.png",
         "position_time.png",
         "attitude_time.png",
         "angular_velocity_time.png",
@@ -68,6 +69,54 @@ def test_plot_telemetry_generates_standard_figures(tmp_path):
     assert {os.path.basename(path) for path in generated} == expected_names
     for path in generated:
         assert os.path.getsize(path) > 0
+
+    # Test report profile which generates both PNG and PDF
+    output_dir_report = tmp_path / "figures_report"
+    generated_report = plot_telemetry(
+        telemetry_path, output_dir_report, metrics_path, profile="report", formats=["png", "pdf"]
+    )
+    expected_report_names = {f"{name[:-4]}.{ext}" for name in expected_names for ext in ["png", "pdf"]}
+    assert {os.path.basename(path) for path in generated_report} == expected_report_names
+    for path in generated_report:
+        assert os.path.getsize(path) > 0
+
+    # B9 without clipped force must not crash
+    telemetry_force_only = []
+    for sample in telemetry:
+        force_sample = dict(sample)
+        force_sample["desired_force_W_N"] = [0.1, 0.2, 9.81]
+        telemetry_force_only.append(force_sample)
+
+    telemetry_path_force = tmp_path / "telemetry_force_only.json"
+    telemetry_path_force.write_text(json.dumps(telemetry_force_only), encoding="utf-8")
+    generated_force = plot_telemetry(telemetry_path_force, tmp_path / "figures_force", metrics_path)
+    assert "neural_outer_force.png" in {os.path.basename(path) for path in generated_force}
+
+    # B10 with wind only in some samples must not crash
+    telemetry_wind_partial = []
+    for idx, sample in enumerate(telemetry):
+        wind_sample = dict(sample)
+        if idx == 1:
+            wind_sample["perturbation"] = {"wind_W_m_s": [1.0, 2.0, 0.0]}
+        telemetry_wind_partial.append(wind_sample)
+
+    telemetry_path_wind = tmp_path / "telemetry_wind_partial.json"
+    telemetry_path_wind.write_text(json.dumps(telemetry_wind_partial), encoding="utf-8")
+    generated_wind = plot_telemetry(telemetry_path_wind, tmp_path / "figures_wind", metrics_path)
+    assert "perturbation_response.png" in {os.path.basename(path) for path in generated_wind}
+
+    # Full optional telemetry still works
+    for sample in telemetry:
+        sample["desired_force_W_N"] = [0.1, 0.2, 9.81]
+        sample["desired_force_clipped_W_N"] = [0.1, 0.2, 9.5]
+        sample["perturbation"] = {"wind_W_m_s": [1.0, 2.0, 0.0]}
+
+    telemetry_path_opt = tmp_path / "telemetry_opt.json"
+    telemetry_path_opt.write_text(json.dumps(telemetry), encoding="utf-8")
+    generated_opt = plot_telemetry(telemetry_path_opt, tmp_path / "figures_opt", metrics_path)
+    generated_names = {os.path.basename(path) for path in generated_opt}
+    assert "neural_outer_force.png" in generated_names
+    assert "perturbation_response.png" in generated_names
 
 
 def test_export_trajectory_viewer_html_creates_file(tmp_path):

@@ -1,8 +1,14 @@
 import argparse
 import os
 import json
+import re
+
 import numpy as np
 import pandas as pd
+import yaml
+
+PID_GAIN_FIELDS = ("Kp_pos", "Kd_pos", "Kp_att", "Kd_att")
+FROZEN_PID_FAMILIES = ("hold", "circle", "lissajous", "waypoint")
 
 
 def load_metrics(metrics_path):
@@ -21,6 +27,114 @@ def get_success(termination_reason, family):
     if family == "waypoint":
         valid.append("Trajectory completed")
     return 1.0 if termination_reason in valid else 0.0
+
+
+def _is_missing(value) -> bool:
+    return value is None or (isinstance(value, float) and np.isnan(value))
+
+
+def _controller_gain_signature(controller_cfg: dict) -> dict | None:
+    if not isinstance(controller_cfg, dict):
+        return None
+    gains = {field: controller_cfg[field] for field in PID_GAIN_FIELDS if field in controller_cfg}
+    return gains or None
+
+
+def _load_frozen_pid_signatures(classic_dataset_path: str) -> dict[str, dict]:
+    signatures: dict[str, dict] = {}
+    pids_dir = os.path.join(classic_dataset_path, "pids")
+    for family in FROZEN_PID_FAMILIES:
+        pid_path = os.path.join(pids_dir, f"pid_{family}_v1.yaml")
+        if not os.path.exists(pid_path):
+            continue
+        with open(pid_path, encoding="utf-8") as handle:
+            pid_data = yaml.safe_load(handle) or {}
+        signature = _controller_gain_signature(pid_data)
+        if signature:
+            signatures[family] = signature
+    return signatures
+
+
+def _match_pid_family(controller_cfg: dict, frozen_signatures: dict[str, dict]) -> str | None:
+    signature = _controller_gain_signature(controller_cfg)
+    if not signature:
+        return None
+    for family, frozen_signature in frozen_signatures.items():
+        if all(signature.get(field) == frozen_signature.get(field) for field in frozen_signature):
+            return family
+    return None
+
+
+def resolve_classic_pid_family(row, metrics, classic_dataset_path: str, dataset_root: str) -> str | None:
+    """Resolve the frozen PID family used in a run from manifest, report or scenario metadata."""
+    pid_family = row.get("pid_family")
+    if not _is_missing(pid_family):
+        return str(pid_family)
+
+    pid_id = row.get("pid_id")
+    if not _is_missing(pid_id):
+        match = re.match(r"pid_([a-z]+)_", str(pid_id))
+        if match:
+            return match.group(1)
+
+    frozen_signatures = _load_frozen_pid_signatures(classic_dataset_path)
+
+    metadata = metrics.get("metadata", {}) if metrics else {}
+    controller_cfg = metadata.get("config", {}).get("controller")
+    if not isinstance(controller_cfg, dict):
+        controller_cfg = metadata.get("controller", {}).get("parameters", {}).get("config", {})
+    matched = _match_pid_family(controller_cfg, frozen_signatures)
+    if matched:
+        return matched
+
+    scenario_path = row.get("scenario_path")
+    if not _is_missing(scenario_path):
+        full_path = os.path.join(dataset_root, scenario_path)
+        if os.path.exists(full_path):
+            with open(full_path, encoding="utf-8") as handle:
+                scenario = yaml.safe_load(handle) or {}
+            matched = _match_pid_family(scenario.get("controller", {}), frozen_signatures)
+            if matched:
+                return matched
+
+    return None
+
+
+def build_run_record(
+    *,
+    scenario_id,
+    family,
+    split,
+    controller,
+    metrics,
+    force_norm_clip_percentage=0.0,
+    force_tilt_clip_percentage=0.0,
+):
+    return {
+        "scenario_id": scenario_id,
+        "family": family,
+        "split": split,
+        "controller": controller,
+        "position_rmse_m": metrics.get("position_rmse_m"),
+        "position_max_err_m": metrics.get("position_max_err_m"),
+        "collective_thrust_mean_N": metrics.get("collective_thrust_mean_N"),
+        "body_moment_norm_mean_Nm": metrics.get("body_moment_norm_mean_Nm"),
+        "control_effort_heuristic_mean": metrics.get(
+            "control_effort_heuristic_mean",
+            metrics.get("control_effort_mean"),
+        ),
+        "saturation_percentage": metrics.get("saturation_percentage"),
+        "degradation_percentage": metrics.get("degradation_percentage"),
+        "force_norm_clip_percentage": force_norm_clip_percentage,
+        "force_tilt_clip_percentage": force_tilt_clip_percentage,
+        "success": get_success(metrics.get("termination_reason"), family),
+    }
+
+
+def _format_rmse_dispersion(mean: float, std: float, count: float) -> str:
+    if count > 1 and not np.isnan(std):
+        return f"{mean:.3f} ({std:.3f})"
+    return f"{mean:.3f}"
 
 
 def main():
@@ -53,19 +167,15 @@ def main():
             res_dir = os.path.join(args.dataset_classic, row["result_dir"])
             metrics = load_metrics(os.path.join(res_dir, "metrics.json"))
             if metrics:
-                records.append({
-                    "scenario_id": scenario_id,
-                    "family": family,
-                    "split": split,
-                    "controller": "classic_family_pid",
-                    "position_rmse_m": metrics.get("position_rmse_m"),
-                    "position_max_err_m": metrics.get("position_max_err_m"),
-                    "saturation_percentage": metrics.get("saturation_percentage"),
-                    "degradation_percentage": metrics.get("degradation_percentage"),
-                    "force_norm_clip_percentage": 0.0,
-                    "force_tilt_clip_percentage": 0.0,
-                    "success": get_success(metrics.get("termination_reason"), family)
-                })
+                records.append(
+                    build_run_record(
+                        scenario_id=scenario_id,
+                        family=family,
+                        split=split,
+                        controller=f"classic_pid_{family}",
+                        metrics=metrics,
+                    )
+                )
                 
     # --- B. Classic Cross PID (Transfer) ---
     if not manifest_df.empty:
@@ -82,19 +192,15 @@ def main():
                     res_dir = os.path.join(transfer_dir, t_scenario_id)
                     metrics = load_metrics(os.path.join(res_dir, "metrics.json"))
                     if metrics:
-                        records.append({
-                            "scenario_id": scenario_id,
-                            "family": family,
-                            "split": split,
-                            "controller": f"classic_transfer_{t_fam}",
-                            "position_rmse_m": metrics.get("position_rmse_m"),
-                            "position_max_err_m": metrics.get("position_max_err_m"),
-                            "saturation_percentage": metrics.get("saturation_percentage"),
-                            "degradation_percentage": metrics.get("degradation_percentage"),
-                            "force_norm_clip_percentage": 0.0,
-                            "force_tilt_clip_percentage": 0.0,
-                            "success": get_success(metrics.get("termination_reason"), family)
-                        })
+                        records.append(
+                            build_run_record(
+                                scenario_id=scenario_id,
+                                family=family,
+                                split=split,
+                                controller=f"classic_pid_{t_fam}",
+                                metrics=metrics,
+                            )
+                        )
                         
     # --- C. Oracle Outer-Force PID ---
     neural_manifest_path = os.path.join(args.dataset_neural, "manifest.csv")
@@ -111,19 +217,15 @@ def main():
             res_dir = os.path.join(args.dataset_neural, row["result_dir"])
             metrics = load_metrics(os.path.join(res_dir, "metrics.json"))
             if metrics:
-                records.append({
-                    "scenario_id": scenario_id,
-                    "family": family,
-                    "split": split,
-                    "controller": "outer_force_oracle",
-                    "position_rmse_m": metrics.get("position_rmse_m"),
-                    "position_max_err_m": metrics.get("position_max_err_m"),
-                    "saturation_percentage": metrics.get("saturation_percentage"),
-                    "degradation_percentage": metrics.get("degradation_percentage"),
-                    "force_norm_clip_percentage": 0.0,
-                    "force_tilt_clip_percentage": 0.0,
-                    "success": get_success(metrics.get("termination_reason"), family)
-                })
+                records.append(
+                    build_run_record(
+                        scenario_id=scenario_id,
+                        family=family,
+                        split=split,
+                        controller="outer_force_oracle",
+                        metrics=metrics,
+                    )
+                )
                 
     # --- D. Neural Outer Force (MLP, GRU, LSTM) ---
     if os.path.exists(args.dataset_neural):
@@ -162,19 +264,17 @@ def main():
                                 res_dir = opt_dir
                     metrics = load_metrics(os.path.join(res_dir, "metrics.json"))
                     if metrics:
-                        records.append({
-                            "scenario_id": scenario_id,
-                            "family": family,
-                            "split": split,
-                            "controller": f"neural_outer_force_{arch}",
-                            "position_rmse_m": metrics.get("position_rmse_m"),
-                            "position_max_err_m": metrics.get("position_max_err_m"),
-                            "saturation_percentage": metrics.get("saturation_percentage"),
-                            "degradation_percentage": metrics.get("degradation_percentage"),
-                            "force_norm_clip_percentage": metrics.get("force_norm_clip_percentage", 0.0),
-                            "force_tilt_clip_percentage": metrics.get("force_tilt_clip_percentage", 0.0),
-                            "success": get_success(metrics.get("termination_reason"), family)
-                        })
+                        records.append(
+                            build_run_record(
+                                scenario_id=scenario_id,
+                                family=family,
+                                split=split,
+                                controller=f"neural_outer_force_{arch}",
+                                metrics=metrics,
+                                force_norm_clip_percentage=metrics.get("force_norm_clip_percentage", 0.0),
+                                force_tilt_clip_percentage=metrics.get("force_tilt_clip_percentage", 0.0),
+                            )
+                        )
                         
     # --- E. Neural Position (MLP, GRU, LSTM) ---
     position_manifest_path = os.path.join(args.dataset_position, "manifest.csv")
@@ -218,19 +318,15 @@ def main():
                                 res_dir = opt_dir
                     metrics = load_metrics(os.path.join(res_dir, "metrics.json"))
                     if metrics:
-                        records.append({
-                            "scenario_id": scenario_id,
-                            "family": family,
-                            "split": split,
-                            "controller": f"neural_position_{arch}",
-                            "position_rmse_m": metrics.get("position_rmse_m"),
-                            "position_max_err_m": metrics.get("position_max_err_m"),
-                            "saturation_percentage": metrics.get("saturation_percentage"),
-                            "degradation_percentage": metrics.get("degradation_percentage"),
-                            "force_norm_clip_percentage": 0.0,
-                            "force_tilt_clip_percentage": 0.0,
-                            "success": get_success(metrics.get("termination_reason"), family)
-                        })
+                        records.append(
+                            build_run_record(
+                                scenario_id=scenario_id,
+                                family=family,
+                                split=split,
+                                controller=f"neural_position_{arch}",
+                                metrics=metrics,
+                            )
+                        )
                         
     # --- F. OOD Battery Closed-Loop Runs ---
     # Si existe el dataset OOD y hay reportes ejecutados sobre él
@@ -246,19 +342,27 @@ def main():
                 res_dir = os.path.join(args.dataset_ood, row["result_dir"])
                 metrics = load_metrics(os.path.join(res_dir, "metrics.json"))
                 if metrics:
-                    records.append({
-                        "scenario_id": scenario_id,
-                        "family": family,
-                        "split": "ood",
-                        "controller": "classic_family_pid",
-                        "position_rmse_m": metrics.get("position_rmse_m"),
-                        "position_max_err_m": metrics.get("position_max_err_m"),
-                        "saturation_percentage": metrics.get("saturation_percentage"),
-                        "degradation_percentage": metrics.get("degradation_percentage"),
-                        "force_norm_clip_percentage": 0.0,
-                        "force_tilt_clip_percentage": 0.0,
-                        "success": get_success(metrics.get("termination_reason"), family)
-                    })
+                    pid_family = resolve_classic_pid_family(
+                        row,
+                        metrics,
+                        args.dataset_classic,
+                        args.dataset_ood,
+                    )
+                    if pid_family is None:
+                        print(
+                            f"Warning: could not resolve PID family for OOD classic run "
+                            f"{scenario_id}; skipping row."
+                        )
+                        continue
+                    records.append(
+                        build_run_record(
+                            scenario_id=scenario_id,
+                            family=family,
+                            split="ood",
+                            controller=f"classic_pid_{pid_family}",
+                            metrics=metrics,
+                        )
+                    )
             # Neuronales sobre OOD
             for arch in ["mlp", "gru", "lstm"]:
                 report_file = os.path.join(args.dataset_ood, f"run_report_neural_{arch}.csv")
@@ -278,19 +382,17 @@ def main():
                                     res_dir = opt_dir
                         metrics = load_metrics(os.path.join(res_dir, "metrics.json"))
                         if metrics:
-                            records.append({
-                                "scenario_id": scenario_id,
-                                "family": family,
-                                "split": "ood",
-                                "controller": f"neural_outer_force_{arch}",
-                                "position_rmse_m": metrics.get("position_rmse_m"),
-                                "position_max_err_m": metrics.get("position_max_err_m"),
-                                "saturation_percentage": metrics.get("saturation_percentage"),
-                                "degradation_percentage": metrics.get("degradation_percentage"),
-                                "force_norm_clip_percentage": metrics.get("force_norm_clip_percentage", 0.0),
-                                "force_tilt_clip_percentage": metrics.get("force_tilt_clip_percentage", 0.0),
-                                "success": get_success(metrics.get("termination_reason"), family)
-                            })
+                            records.append(
+                                build_run_record(
+                                    scenario_id=scenario_id,
+                                    family=family,
+                                    split="ood",
+                                    controller=f"neural_outer_force_{arch}",
+                                    metrics=metrics,
+                                    force_norm_clip_percentage=metrics.get("force_norm_clip_percentage", 0.0),
+                                    force_tilt_clip_percentage=metrics.get("force_tilt_clip_percentage", 0.0),
+                                )
+                            )
             # Neuronales de posición sobre OOD
             for arch in ["mlp", "gru", "lstm"]:
                 report_file = os.path.join(args.dataset_ood, f"run_report_neural_position_{arch}.csv")
@@ -310,19 +412,15 @@ def main():
                                     res_dir = opt_dir
                         metrics = load_metrics(os.path.join(res_dir, "metrics.json"))
                         if metrics:
-                            records.append({
-                                "scenario_id": scenario_id,
-                                "family": family,
-                                "split": "ood",
-                                "controller": f"neural_position_{arch}",
-                                "position_rmse_m": metrics.get("position_rmse_m"),
-                                "position_max_err_m": metrics.get("position_max_err_m"),
-                                "saturation_percentage": metrics.get("saturation_percentage"),
-                                "degradation_percentage": metrics.get("degradation_percentage"),
-                                "force_norm_clip_percentage": 0.0,
-                                "force_tilt_clip_percentage": 0.0,
-                                "success": get_success(metrics.get("termination_reason"), family)
-                            })
+                            records.append(
+                                build_run_record(
+                                    scenario_id=scenario_id,
+                                    family=family,
+                                    split="ood",
+                                    controller=f"neural_position_{arch}",
+                                    metrics=metrics,
+                                )
+                            )
                             
     if not records:
         print("No simulation metrics collected. Summary cannot be constructed.")
@@ -366,14 +464,26 @@ def main():
     if not test_df.empty:
         print("\\begin{table}[h!]")
         print("  \\centering")
-        print("  \\caption{Comparativa de controladores en trayectoria de Test (In-Distribution).}")
+        print(
+            "  \\caption{Comparativa de controladores en trayectoria de Test (In-Distribution). "
+            "Entre paréntesis, la desviación resume la dispersión del RMSE entre escenarios del mismo grupo.}"
+        )
         print("  \\label{tab:comparativa_test}")
         print("  \\begin{tabular}{llcccccc}")
         print("    \\hline")
-        print("    \\textbf{Controlador} & \\textbf{Trayectoria} & \\textbf{Éxito (\\%)} & \\textbf{RMSE Pos. (m)} & \\textbf{Máx. Err. (m)} & \\textbf{Saturación (\\%)} & \\textbf{Norm Clip (\\%)} & \\textbf{Tilt Clip (\\%)} \\\\")
+        print(
+            "    \\textbf{Controlador} & \\textbf{Trayectoria} & \\textbf{Éxito (\\%)} "
+            "& \\textbf{RMSE medio [m] (disp. escenarios)} & \\textbf{Máx. Err. (m)} "
+            "& \\textbf{Saturación (\\%)} & \\textbf{Norm Clip (\\%)} & \\textbf{Tilt Clip (\\%)} \\\\"
+        )
         print("    \\hline")
         for _, r in test_df.sort_values(by=["controller", "family"]).iterrows():
-            print(f"    {r['controller'].replace('_', '\\_')} & {r['family']} & {r['success_rate']:.1f}\\% & {r['rmse_mean']:.3f} $\\pm$ {r['rmse_std']:.3f} & {r['rmse_max']:.3f} & {r['saturation_mean']:.1f}\\% & {r['clip_norm_mean']:.1f}\\% & {r['clip_tilt_mean']:.1f}\\% \\\\")
+            rmse_cell = _format_rmse_dispersion(r["rmse_mean"], r["rmse_std"], r["count"])
+            print(
+                f"    {r['controller'].replace('_', '\\_')} & {r['family']} & {r['success_rate']:.1f}\\% "
+                f"& {rmse_cell} & {r['rmse_max']:.3f} & {r['saturation_mean']:.1f}\\% "
+                f"& {r['clip_norm_mean']:.1f}\\% & {r['clip_tilt_mean']:.1f}\\% \\\\"
+            )
         print("    \\hline")
         print("  \\end{tabular}")
         print("\\end{table}")
@@ -385,14 +495,26 @@ def main():
     if not ood_df.empty:
         print("\\begin{table}[h!]")
         print("  \\centering")
-        print("  \\caption{Comparativa de controladores bajo escenarios OOD (Out-of-Distribution).}")
+        print(
+            "  \\caption{Comparativa de controladores bajo escenarios OOD (Out-of-Distribution). "
+            "Entre paréntesis, la desviación resume la dispersión del RMSE entre escenarios del mismo grupo.}"
+        )
         print("  \\label{tab:comparativa_ood}")
         print("  \\begin{tabular}{llcccccc}")
         print("    \\hline")
-        print("    \\textbf{Controlador} & \\textbf{Trayectoria} & \\textbf{Éxito (\\%)} & \\textbf{RMSE Pos. (m)} & \\textbf{Máx. Err. (m)} & \\textbf{Saturación (\\%)} & \\textbf{Norm Clip (\\%)} & \\textbf{Tilt Clip (\\%)} \\\\")
+        print(
+            "    \\textbf{Controlador} & \\textbf{Trayectoria} & \\textbf{Éxito (\\%)} "
+            "& \\textbf{RMSE medio [m] (disp. escenarios)} & \\textbf{Máx. Err. (m)} "
+            "& \\textbf{Saturación (\\%)} & \\textbf{Norm Clip (\\%)} & \\textbf{Tilt Clip (\\%)} \\\\"
+        )
         print("    \\hline")
         for _, r in ood_df.sort_values(by=["controller", "family"]).iterrows():
-            print(f"    {r['controller'].replace('_', '\\_')} & {r['family']} & {r['success_rate']:.1f}\\% & {r['rmse_mean']:.3f} $\\pm$ {r['rmse_std']:.3f} & {r['rmse_max']:.3f} & {r['saturation_mean']:.1f}\\% & {r['clip_norm_mean']:.1f}\\% & {r['clip_tilt_mean']:.1f}\\% \\\\")
+            rmse_cell = _format_rmse_dispersion(r["rmse_mean"], r["rmse_std"], r["count"])
+            print(
+                f"    {r['controller'].replace('_', '\\_')} & {r['family']} & {r['success_rate']:.1f}\\% "
+                f"& {rmse_cell} & {r['rmse_max']:.3f} & {r['saturation_mean']:.1f}\\% "
+                f"& {r['clip_norm_mean']:.1f}\\% & {r['clip_tilt_mean']:.1f}\\% \\\\"
+            )
         print("    \\hline")
         print("  \\end{tabular}")
         print("\\end{table}")
