@@ -1,0 +1,265 @@
+scenario_id,family,split,controller,trajectory_type,termination_reason,mission_success,safety_success,control_success,coverage_group,position_rmse_m,position_max_err_m,saturation_percentage,degradation_percentage,force_norm_clip_percentage,force_tilt_clip_percentage,success
+hold_g03_P0_nominal_s1048,hold,test,classic_pid_hold,hold,Time limit reached,True,True,True,comparable,2.049955485217524e-16,5.593039953563551e-16,0.0,0.0,0.0,0.0,1.0
+hold_g03_P0_nominal_s1048,hold,test,classic_pid_representative,hold,Time limit reached,True,True,True,comparable,2.049955485217524e-16,5.593039953563551e-16,0.0,0.0,0.0,0.0,1.0
+hold_g03_P2_wind_east_s1049,hold,test,classic_pid_hold,hold,Time limit reached,True,True,True,comparable,0.03694180417444031,0.06689152827668463,0.0,0.0,0.0,0.0,1.0
+hold_g03_P2_wind_east_s1049,hold,test,classic_pid_representative,hold,Time limit reached,True,True,True,comparable,0.03694180417444031,0.06689152827668463,0.0,0.0,0.0,0.0,1.0
+hold_g05_P5_combined_s1056,hold,test,classic_pid_hold,hold,Time limit reached,True,True,True,comparable,0.133163054940717,0.21979686167202844,0.0,0.0,0.0,0.0,1.0
+hold_g05_P5_combined_s1056,hold,test,classic_pid_representative,hold,Time limit reached,True,True,True,comparable,0.133163054940717,0.21979686167202844,0.0,0.0,0.0,0.0,1.0
+circle_g02_P0_nominal_s1066,circle,test,classic_pid_circle,circle,Time limit reached,True,True,True,comparable,0.04158615888895835,0.2584327140308481,0.0,0.0,0.0,0.0,1.0
+circle_g02_P0_nominal_s1066,circle,test,classic_pid_representative,circle,Time limit reached,True,True,True,comparable,0.04158615888895835,0.2584327140308481,0.0,0.0,0.0,0.0,1.0
+circle_g02_P5_combined_s1071,circle,test,classic_pid_circle,circle,Time limit reached,True,True,True,comparable,0.14469503907787098,0.23879526491798994,0.0,0.0,0.0,0.0,1.0
+circle_g02_P5_combined_s1071,circle,test,classic_pid_representative,circle,Time limit reached,True,True,True,comparable,0.14469503907787098,0.23879526491798994,0.0,0.0,0.0,0.0,1.0
+circle_g04_P5_combined_s1083,circle,test,classic_pid_circle,circle,Time limit reached,True,True,True,comparable,0.14969864547742512,0.4690236109721616,0.0,1.5521064301552108,0.0,0.0,1.0
+circle_g04_P5_combined_s1083,circle,test,classic_pid_representative,circle,Time limit reached,True,True,True,comparable,0.14969864547742512,0.4690236109721616,0.0,1.5521064301552108,0.0,0.0,1.0
+circle_g06_P4_noise_low_s1094,circle,test,classic_pid_circle,circle,Time limit reached,True,True,True,comparable,0.028000929624545305,0.17077010536865736,0.0,0.0,0.0,0.0,1.0
+circle_g06_P4_noise_low_s1094,circle,test,classic_pid_representative,circle,Time limit reached,True,True,True,comparable,0.028000929624545305,0.17077010536865736,0.0,0.0,0.0,0.0,1.0
+circle_g07_P2_wind_east_s1098,circle,test,classic_pid_circle,circle,Time limit reached,True,True,True,comparable,0.10063281233507052,0.6205280415727021,0.0,1.3303769401330376,0.0,0.0,1.0
+circle_g07_P2_wind_east_s1098,circle,test,classic_pid_representative,circle,Time limit reached,True,True,True,comparable,0.10063281233507052,0.6205280415727021,0.0,1.3303769401330376,0.0,0.0,1.0
+circle_g07_P3_wind_ne_s1099,circle,test,classic_pid_circle,circle,Time limit reached,True,True,True,comparable,0.10580947725418609,0.5978134703636744,0.0,1.3303769401330376,0.0,0.0,1.0
+circle_g07_P3_wind_ne_s1099,circle,test,classic_pid_representative,circle,Time limit reached,True,True,True,comparable,0.10580947725418609,0.5978134703636744,0.0,1.3303769401330376,0.0,0.0,1.0
+circle_g08_P3_wind_ne_s1105,circle,test,classic_pid_circle,circle,Time limit reached,True,True,True,comparable,0.08783281765121802,0.4630588490411835,0.0,1.3303769401330376,0.0,0.0,1.0
+circle_g08_P3_wind_ne_s1105,circle,test,classic_pid_representative,circle,Time limit reached,True,True,True,comparable,0.08783281765121802,0.4630588490411835,0.0,1.3303769401330376,0.0,0.0,1.0
+lissajous_g04_P0_nominal_s1126,lissajous,test,classic_pid_lissajous,lissajous,Time limit reached,True,True,True,comparable,0.07774354421277853,0.5685298015828313,0.0,0.0,0.0,0.0,1.0
+lissajous_g04_P0_nominal_s1126,lissajous,test,classic_pid_representative,lissajous,Time limit reached,True,True,True,comparable,0.07774354421277853,0.5685298015828313,0.0,0.0,0.0,0.0,1.0
+lissajous_g04_P1_drag_high_s1127,lissajous,test,classic_pid_lissajous,lissajous,Time limit reached,True,True,True,comparable,0.08795424361235624,0.5741950089030367,0.0,0.0,0.0,0.0,1.0
+lissajous_g04_P1_drag_high_s1127,lissajous,test,classic_pid_representative,lissajous,Time limit reached,True,True,True,comparable,0.08795424361235624,0.5741950089030367,0.0,0.0,0.0,0.0,1.0
+lissajous_g05_P0_nominal_s1132,lissajous,test,classic_pid_lissajous,lissajous,Time limit reached,True,True,True,comparable,0.06301658781908372,0.4676669561923192,0.0,0.0,0.0,0.0,1.0
+lissajous_g05_P0_nominal_s1132,lissajous,test,classic_pid_representative,lissajous,Time limit reached,True,True,True,comparable,0.06301658781908372,0.4676669561923192,0.0,0.0,0.0,0.0,1.0
+lissajous_g05_P3_wind_ne_s1135,lissajous,test,classic_pid_lissajous,lissajous,Time limit reached,True,True,True,comparable,0.07245647074216316,0.44723381512016785,0.0,0.0,0.0,0.0,1.0
+lissajous_g05_P3_wind_ne_s1135,lissajous,test,classic_pid_representative,lissajous,Time limit reached,True,True,True,comparable,0.07245647074216316,0.44723381512016785,0.0,0.0,0.0,0.0,1.0
+lissajous_g06_P2_wind_east_s1140,lissajous,test,classic_pid_lissajous,lissajous,Time limit reached,True,True,True,comparable,0.033629341862526155,0.13246799493073577,0.0,0.0,0.0,0.0,1.0
+lissajous_g06_P2_wind_east_s1140,lissajous,test,classic_pid_representative,lissajous,Time limit reached,True,True,True,comparable,0.033629341862526155,0.13246799493073577,0.0,0.0,0.0,0.0,1.0
+lissajous_g07_P0_nominal_s1144,lissajous,test,classic_pid_lissajous,lissajous,Time limit reached,True,True,True,comparable,0.050307416036523125,0.3639145968084156,0.0,0.0,0.0,0.0,1.0
+lissajous_g07_P0_nominal_s1144,lissajous,test,classic_pid_representative,lissajous,Time limit reached,True,True,True,comparable,0.050307416036523125,0.3639145968084156,0.0,0.0,0.0,0.0,1.0
+lissajous_g07_P5_combined_s1149,lissajous,test,classic_pid_lissajous,lissajous,Time limit reached,True,True,True,comparable,0.11428257699192126,0.32001367632898525,0.0,0.0,0.0,0.0,1.0
+lissajous_g07_P5_combined_s1149,lissajous,test,classic_pid_representative,lissajous,Time limit reached,True,True,True,comparable,0.11428257699192126,0.32001367632898525,0.0,0.0,0.0,0.0,1.0
+waypoint_g01_P1_drag_high_s1157,waypoint,test,classic_pid_waypoint,waypoint,Trajectory completed,True,True,True,comparable,0.03722156434970052,0.07436214675728592,0.0,0.0,0.0,0.0,1.0
+waypoint_g01_P1_drag_high_s1157,waypoint,test,classic_pid_representative,waypoint,Trajectory completed,True,True,True,comparable,0.03722156434970052,0.07436214675728592,0.0,0.0,0.0,0.0,1.0
+waypoint_g01_P3_wind_ne_s1159,waypoint,test,classic_pid_waypoint,waypoint,Trajectory completed,True,True,True,comparable,0.05777913085949662,0.11313376330825596,0.0,0.0,0.0,0.0,1.0
+waypoint_g01_P3_wind_ne_s1159,waypoint,test,classic_pid_representative,waypoint,Trajectory completed,True,True,True,comparable,0.05777913085949662,0.11313376330825596,0.0,0.0,0.0,0.0,1.0
+waypoint_g02_P3_wind_ne_s1165,waypoint,test,classic_pid_waypoint,waypoint,Trajectory completed,True,True,True,comparable,0.0748954331883023,0.1522361841393631,0.0,0.0,0.0,0.0,1.0
+waypoint_g02_P3_wind_ne_s1165,waypoint,test,classic_pid_representative,waypoint,Trajectory completed,True,True,True,comparable,0.0748954331883023,0.1522361841393631,0.0,0.0,0.0,0.0,1.0
+waypoint_g03_P0_nominal_s1168,waypoint,test,classic_pid_waypoint,waypoint,Trajectory completed,True,True,True,comparable,0.050909196862860544,0.08927653803658481,0.0,0.0,0.0,0.0,1.0
+waypoint_g03_P0_nominal_s1168,waypoint,test,classic_pid_representative,waypoint,Trajectory completed,True,True,True,comparable,0.050909196862860544,0.08927653803658481,0.0,0.0,0.0,0.0,1.0
+waypoint_g03_P5_combined_s1173,waypoint,test,classic_pid_waypoint,waypoint,Trajectory completed,True,True,True,comparable,0.10319486897576795,0.15916667472327853,0.0,0.0,0.0,0.0,1.0
+waypoint_g03_P5_combined_s1173,waypoint,test,classic_pid_representative,waypoint,Trajectory completed,True,True,True,comparable,0.10319486897576795,0.15916667472327853,0.0,0.0,0.0,0.0,1.0
+waypoint_g04_P0_nominal_s1174,waypoint,test,classic_pid_waypoint,waypoint,Trajectory completed,True,True,True,comparable,0.07455185834766591,0.1229538773099788,0.0,0.0,0.0,0.0,1.0
+waypoint_g04_P0_nominal_s1174,waypoint,test,classic_pid_representative,waypoint,Trajectory completed,True,True,True,comparable,0.07455185834766591,0.1229538773099788,0.0,0.0,0.0,0.0,1.0
+hold_g03_P0_nominal_s1048,hold,test,classic_pid_circle,hold,Time limit reached,True,True,True,comparable,7.557844259887166e-17,2.0799090912258375e-16,0.0,0.0,0.0,0.0,1.0
+hold_g03_P0_nominal_s1048,hold,test,classic_pid_lissajous,hold,Time limit reached,True,True,True,comparable,5.2840458469747034e-17,1.4220500550967845e-16,0.0,0.0,0.0,0.0,1.0
+hold_g03_P0_nominal_s1048,hold,test,classic_pid_waypoint,hold,Time limit reached,True,True,True,comparable,9.166471740896541e-17,1.8758029960103577e-16,0.0,0.0,0.0,0.0,1.0
+hold_g03_P2_wind_east_s1049,hold,test,classic_pid_circle,hold,Time limit reached,True,True,True,comparable,0.03676469622283052,0.052632046716554304,0.0,0.0,0.0,0.0,1.0
+hold_g03_P2_wind_east_s1049,hold,test,classic_pid_lissajous,hold,Time limit reached,True,True,True,comparable,0.028249469145969833,0.03662535830189536,0.0,0.0,0.0,0.0,1.0
+hold_g03_P2_wind_east_s1049,hold,test,classic_pid_waypoint,hold,Time limit reached,True,True,True,comparable,0.029583931905016896,0.0480614782557779,0.0,0.0,0.0,0.0,1.0
+hold_g05_P5_combined_s1056,hold,test,classic_pid_circle,hold,Time limit reached,True,True,True,comparable,0.13329242703529295,0.17078499228059474,0.0,0.0,0.0,0.0,1.0
+hold_g05_P5_combined_s1056,hold,test,classic_pid_lissajous,hold,Time limit reached,True,True,True,comparable,0.10295878194554468,0.13129905701042233,0.0,0.0,0.0,0.0,1.0
+hold_g05_P5_combined_s1056,hold,test,classic_pid_waypoint,hold,Time limit reached,True,True,True,comparable,0.10830580953049018,0.1551572866701414,0.0,0.0,0.0,0.0,1.0
+circle_g02_P0_nominal_s1066,circle,test,classic_pid_hold,circle,Time limit reached,True,True,True,comparable,0.09498345258398413,0.314312558362445,0.0,0.0,0.0,0.0,1.0
+circle_g02_P0_nominal_s1066,circle,test,classic_pid_lissajous,circle,Time limit reached,True,True,True,comparable,0.029971038784423896,0.208614320361528,0.0,0.0,0.0,0.0,1.0
+circle_g02_P0_nominal_s1066,circle,test,classic_pid_waypoint,circle,Time limit reached,True,True,True,comparable,0.0449549898098898,0.2559334772036399,0.0,0.0,0.0,0.0,1.0
+circle_g02_P5_combined_s1071,circle,test,classic_pid_hold,circle,Time limit reached,True,True,True,comparable,0.1549030871366852,0.3190096905597135,0.0,0.0,0.0,0.0,1.0
+circle_g02_P5_combined_s1071,circle,test,classic_pid_lissajous,circle,Time limit reached,True,True,True,comparable,0.1115731267070343,0.1973818344572101,0.0,0.22172949002217296,0.0,0.0,1.0
+circle_g02_P5_combined_s1071,circle,test,classic_pid_waypoint,circle,Time limit reached,True,True,True,comparable,0.11972923686610716,0.23662189518490695,0.0,0.0,0.0,0.0,1.0
+circle_g04_P5_combined_s1083,circle,test,classic_pid_hold,circle,Time limit reached,True,True,True,comparable,0.1659609433675988,0.43215769231585077,0.0,1.3303769401330376,0.0,0.0,1.0
+circle_g04_P5_combined_s1083,circle,test,classic_pid_lissajous,circle,Attitude angle exceeded limit (1.34 > 1.26),False,False,False,comparable,0.3413379810307788,0.7342289539406858,0.0,77.77777777777779,0.0,0.0,0.0
+circle_g04_P5_combined_s1083,circle,test,classic_pid_waypoint,circle,Time limit reached,True,True,True,comparable,0.13364170098908387,0.5582974821985685,0.0,1.7738359201773837,0.0,0.0,1.0
+circle_g06_P4_noise_low_s1094,circle,test,classic_pid_hold,circle,Time limit reached,True,True,True,comparable,0.05973356347388637,0.20702954249942573,0.0,0.0,0.0,0.0,1.0
+circle_g06_P4_noise_low_s1094,circle,test,classic_pid_lissajous,circle,Time limit reached,True,True,True,comparable,0.02085531890118716,0.13803248389498027,0.0,0.0,0.0,0.0,1.0
+circle_g06_P4_noise_low_s1094,circle,test,classic_pid_waypoint,circle,Time limit reached,True,True,True,comparable,0.030776178132676565,0.16816906271888146,0.0,0.0,0.0,0.0,1.0
+circle_g07_P2_wind_east_s1098,circle,test,classic_pid_hold,circle,Time limit reached,True,True,True,comparable,0.2361769294567582,0.755027805313625,0.0,1.1086474501108647,0.0,0.0,1.0
+circle_g07_P2_wind_east_s1098,circle,test,classic_pid_lissajous,circle,Time limit reached,True,True,True,comparable,0.08165606301586145,0.5368719568348739,0.0,1.5521064301552108,0.0,0.0,1.0
+circle_g07_P2_wind_east_s1098,circle,test,classic_pid_waypoint,circle,Time limit reached,True,True,True,comparable,0.10852415026941838,0.6218954978690933,0.0,1.5521064301552108,0.0,0.0,1.0
+circle_g07_P3_wind_ne_s1099,circle,test,classic_pid_hold,circle,Time limit reached,True,True,True,comparable,0.23812677450481404,0.7236464579562982,0.0,1.1086474501108647,0.0,0.0,1.0
+circle_g07_P3_wind_ne_s1099,circle,test,classic_pid_lissajous,circle,Time limit reached,True,True,True,comparable,0.0857824703605541,0.5275049500047349,0.0,1.5521064301552108,0.0,0.0,1.0
+circle_g07_P3_wind_ne_s1099,circle,test,classic_pid_waypoint,circle,Time limit reached,True,True,True,comparable,0.11168084459554771,0.6002334569450257,0.0,1.5521064301552108,0.0,0.0,1.0
+circle_g08_P3_wind_ne_s1105,circle,test,classic_pid_hold,circle,Time limit reached,True,True,True,comparable,0.18292640876060695,0.5444352869877598,0.0,1.1086474501108647,0.0,0.0,1.0
+circle_g08_P3_wind_ne_s1105,circle,test,classic_pid_lissajous,circle,Time limit reached,True,True,True,comparable,0.08110051211795694,0.5333158088687638,0.0,1.5521064301552108,0.0,0.0,1.0
+circle_g08_P3_wind_ne_s1105,circle,test,classic_pid_waypoint,circle,Time limit reached,True,True,True,comparable,0.09141827743707882,0.4805237642473165,0.0,1.5521064301552108,0.0,0.0,1.0
+lissajous_g04_P0_nominal_s1126,lissajous,test,classic_pid_hold,lissajous,Time limit reached,True,True,True,comparable,0.253195017787395,0.8422855282289473,0.0,0.0,0.0,0.0,1.0
+lissajous_g04_P0_nominal_s1126,lissajous,test,classic_pid_circle,lissajous,Time limit reached,True,True,True,comparable,0.10844043742610024,0.6985557141018381,0.0,0.0,0.0,0.0,1.0
+lissajous_g04_P0_nominal_s1126,lissajous,test,classic_pid_waypoint,lissajous,Time limit reached,True,True,True,comparable,0.11921384549015374,0.6902028826086298,0.0,0.0,0.0,0.0,1.0
+lissajous_g04_P1_drag_high_s1127,lissajous,test,classic_pid_hold,lissajous,Time limit reached,True,True,True,comparable,0.19941408314920744,0.8499392441828628,0.0,0.0,0.0,0.0,1.0
+lissajous_g04_P1_drag_high_s1127,lissajous,test,classic_pid_circle,lissajous,Time limit reached,True,True,True,comparable,0.11781952372698223,0.705728133923327,0.0,0.0,0.0,0.0,1.0
+lissajous_g04_P1_drag_high_s1127,lissajous,test,classic_pid_waypoint,lissajous,Time limit reached,True,True,True,comparable,0.11938805795671675,0.6973295917515763,0.0,0.0,0.0,0.0,1.0
+lissajous_g05_P0_nominal_s1132,lissajous,test,classic_pid_hold,lissajous,Time limit reached,True,True,True,comparable,0.21728983827449996,0.6877144701912941,0.0,0.0,0.0,0.0,1.0
+lissajous_g05_P0_nominal_s1132,lissajous,test,classic_pid_circle,lissajous,Time limit reached,True,True,True,comparable,0.09042888062583389,0.5698453349836476,0.0,0.0,0.0,0.0,1.0
+lissajous_g05_P0_nominal_s1132,lissajous,test,classic_pid_waypoint,lissajous,Time limit reached,True,True,True,comparable,0.09966896729829006,0.5651143963502626,0.0,0.0,0.0,0.0,1.0
+lissajous_g05_P3_wind_ne_s1135,lissajous,test,classic_pid_hold,lissajous,Time limit reached,True,True,True,comparable,0.22232211730614806,0.6755957199680125,0.0,0.0,0.0,0.0,1.0
+lissajous_g05_P3_wind_ne_s1135,lissajous,test,classic_pid_circle,lissajous,Time limit reached,True,True,True,comparable,0.10168952452506416,0.5373145253384319,0.0,0.0,0.0,0.0,1.0
+lissajous_g05_P3_wind_ne_s1135,lissajous,test,classic_pid_waypoint,lissajous,Time limit reached,True,True,True,comparable,0.10643797934286267,0.5367273022182001,0.0,0.0,0.0,0.0,1.0
+lissajous_g06_P2_wind_east_s1140,lissajous,test,classic_pid_hold,lissajous,Time limit reached,True,True,True,comparable,0.07111588206438833,0.1956013628532048,0.0,0.0,0.0,0.0,1.0
+lissajous_g06_P2_wind_east_s1140,lissajous,test,classic_pid_circle,lissajous,Time limit reached,True,True,True,comparable,0.04479424083223708,0.15982492762189401,0.0,0.0,0.0,0.0,1.0
+lissajous_g06_P2_wind_east_s1140,lissajous,test,classic_pid_waypoint,lissajous,Time limit reached,True,True,True,comparable,0.041087034011709676,0.15880224008328167,0.0,0.0,0.0,0.0,1.0
+lissajous_g07_P0_nominal_s1144,lissajous,test,classic_pid_hold,lissajous,Time limit reached,True,True,True,comparable,0.16524784642411608,0.5390916530570492,0.0,0.0,0.0,0.0,1.0
+lissajous_g07_P0_nominal_s1144,lissajous,test,classic_pid_circle,lissajous,Time limit reached,True,True,True,comparable,0.07129003842453617,0.4465586361873206,0.0,0.0,0.0,0.0,1.0
+lissajous_g07_P0_nominal_s1144,lissajous,test,classic_pid_waypoint,lissajous,Time limit reached,True,True,True,comparable,0.07739610298018618,0.44160739061970217,0.0,0.0,0.0,0.0,1.0
+lissajous_g07_P5_combined_s1149,lissajous,test,classic_pid_hold,lissajous,Time limit reached,True,True,True,comparable,0.18058551189785574,0.5204612902748478,0.0,0.0,0.0,0.0,1.0
+lissajous_g07_P5_combined_s1149,lissajous,test,classic_pid_circle,lissajous,Time limit reached,True,True,True,comparable,0.14948491112831036,0.37897207292172186,0.0,0.0,0.0,0.0,1.0
+lissajous_g07_P5_combined_s1149,lissajous,test,classic_pid_waypoint,lissajous,Time limit reached,True,True,True,comparable,0.12936470335685823,0.379763776620292,0.0,0.0,0.0,0.0,1.0
+waypoint_g01_P1_drag_high_s1157,waypoint,test,classic_pid_hold,waypoint,Trajectory completed,True,True,True,comparable,0.052367935385118455,0.11290649175921796,0.0,0.0,0.0,0.0,1.0
+waypoint_g01_P1_drag_high_s1157,waypoint,test,classic_pid_circle,waypoint,Trajectory completed,True,True,True,comparable,0.03851268074095387,0.08110376839296984,0.0,0.0,0.0,0.0,1.0
+waypoint_g01_P1_drag_high_s1157,waypoint,test,classic_pid_lissajous,waypoint,Trajectory completed,True,True,True,comparable,0.028435924468768293,0.0522626226177167,0.0,0.0,0.0,0.0,1.0
+waypoint_g01_P3_wind_ne_s1159,waypoint,test,classic_pid_hold,waypoint,Trajectory completed,True,True,True,comparable,0.08150986897931273,0.16222169420708296,0.0,0.0,0.0,0.0,1.0
+waypoint_g01_P3_wind_ne_s1159,waypoint,test,classic_pid_circle,waypoint,Trajectory completed,True,True,True,comparable,0.06385639201582093,0.1308742880283483,0.0,0.0,0.0,0.0,1.0
+waypoint_g01_P3_wind_ne_s1159,waypoint,test,classic_pid_lissajous,waypoint,Trajectory completed,True,True,True,comparable,0.04710950586572537,0.0920941938348359,0.0,0.0,0.0,0.0,1.0
+waypoint_g02_P3_wind_ne_s1165,waypoint,test,classic_pid_hold,waypoint,Trajectory completed,True,True,True,comparable,0.1336657037899169,0.22471586886809947,0.0,0.0,0.0,0.0,1.0
+waypoint_g02_P3_wind_ne_s1165,waypoint,test,classic_pid_circle,waypoint,Trajectory completed,True,True,True,comparable,0.07428949360076886,0.1542877258456343,0.0,0.0,0.0,0.0,1.0
+waypoint_g02_P3_wind_ne_s1165,waypoint,test,classic_pid_lissajous,waypoint,Trajectory completed,True,True,True,comparable,0.05015052337912792,0.09593901775645342,0.0,0.0,0.0,0.0,1.0
+waypoint_g03_P0_nominal_s1168,waypoint,test,classic_pid_hold,waypoint,Trajectory completed,True,True,True,comparable,0.14019970030498394,0.2292215179647931,0.0,0.0,0.0,0.0,1.0
+waypoint_g03_P0_nominal_s1168,waypoint,test,classic_pid_circle,waypoint,Trajectory completed,True,True,True,comparable,0.0547550906626866,0.0993914739747258,0.0,0.0,0.0,0.0,1.0
+waypoint_g03_P0_nominal_s1168,waypoint,test,classic_pid_lissajous,waypoint,Trajectory completed,True,True,True,comparable,0.02792582251027953,0.053192374843165656,0.0,0.0,0.0,0.0,1.0
+waypoint_g03_P5_combined_s1173,waypoint,test,classic_pid_hold,waypoint,Trajectory completed,True,True,True,comparable,0.14111801639721744,0.2433503576243347,0.0,0.0,0.0,0.0,1.0
+waypoint_g03_P5_combined_s1173,waypoint,test,classic_pid_circle,waypoint,Trajectory completed,True,True,True,comparable,0.12529489103307612,0.17451155554272302,0.0,0.0,0.0,0.0,1.0
+waypoint_g03_P5_combined_s1173,waypoint,test,classic_pid_lissajous,waypoint,Trajectory completed,True,True,True,comparable,0.09387972623943786,0.12150229169084313,0.0,0.0,0.0,0.0,1.0
+waypoint_g04_P0_nominal_s1174,waypoint,test,classic_pid_hold,waypoint,Trajectory completed,True,True,True,comparable,0.13628412152495464,0.23638347968221382,0.0,0.0,0.0,0.0,1.0
+waypoint_g04_P0_nominal_s1174,waypoint,test,classic_pid_circle,waypoint,Trajectory completed,True,True,True,comparable,0.07525337162614583,0.13492635623462854,0.0,0.0,0.0,0.0,1.0
+waypoint_g04_P0_nominal_s1174,waypoint,test,classic_pid_lissajous,waypoint,Trajectory completed,True,True,True,comparable,0.041801417254176146,0.07786373981890432,0.0,0.0,0.0,0.0,1.0
+hold_g03_P0_nominal_s1048_outer_expert,hold,test,neural_outer_force_mlp,hold,Time limit reached,True,True,True,comparable,0.0009335703948096973,0.0013627339034324223,0.0,0.0,0.0,0.0,1.0
+hold_g03_P2_wind_east_s1049_outer_expert,hold,test,neural_outer_force_mlp,hold,Time limit reached,True,True,True,comparable,0.022101482020128252,0.03715777174798595,0.0,0.0,0.0,0.0,1.0
+hold_g05_P5_combined_s1056_outer_expert,hold,test,neural_outer_force_mlp,hold,Time limit reached,True,True,True,comparable,0.0839957792421056,0.13299383779949528,0.0,0.0,0.0,0.0,1.0
+circle_g02_P0_nominal_s1066_outer_expert,circle,test,neural_outer_force_mlp,circle,Time limit reached,True,True,True,comparable,0.03136137621910838,0.20830515739731675,0.0,0.0,0.0,0.0,1.0
+circle_g02_P5_combined_s1071_outer_expert,circle,test,neural_outer_force_mlp,circle,Time limit reached,True,True,True,comparable,0.09054738777399605,0.20182868126010914,0.0,0.0,0.0,0.0,1.0
+circle_g04_P5_combined_s1083_outer_expert,circle,test,neural_outer_force_mlp,circle,Time limit reached,True,True,True,comparable,0.09291740177467475,0.2487673100881682,0.0,1.1086474501108647,0.0,0.0,1.0
+circle_g06_P4_noise_low_s1094_outer_expert,circle,test,neural_outer_force_mlp,circle,Time limit reached,True,True,True,comparable,0.023837429775401417,0.1385251133136357,0.0,0.0,0.0,0.0,1.0
+circle_g07_P2_wind_east_s1098_outer_expert,circle,test,neural_outer_force_mlp,circle,Time limit reached,True,True,True,comparable,0.08415470180047291,0.5199533328483381,0.0,0.22172949002217296,0.0,0.0,1.0
+circle_g07_P3_wind_ne_s1099_outer_expert,circle,test,neural_outer_force_mlp,circle,Time limit reached,True,True,True,comparable,0.08667712916834648,0.5058489165425191,0.0,0.22172949002217296,0.0,0.0,1.0
+circle_g08_P3_wind_ne_s1105_outer_expert,circle,test,neural_outer_force_mlp,circle,Time limit reached,True,True,True,comparable,0.0682848012760275,0.3755288050967503,0.0,0.22172949002217296,0.0,0.0,1.0
+lissajous_g04_P0_nominal_s1126_outer_expert,lissajous,test,neural_outer_force_mlp,lissajous,Time limit reached,True,True,True,comparable,0.07303257814551088,0.5211555522913824,0.0,0.0,0.0,0.7107952021323856,1.0
+lissajous_g04_P1_drag_high_s1127_outer_expert,lissajous,test,neural_outer_force_mlp,lissajous,Time limit reached,True,True,True,comparable,0.07204293391591365,0.5248188280636218,0.0,0.0,0.0,0.7107952021323856,1.0
+lissajous_g05_P0_nominal_s1132_outer_expert,lissajous,test,neural_outer_force_mlp,lissajous,Time limit reached,True,True,True,comparable,0.06067042977180526,0.40868918989858205,0.0,0.0,0.0,0.0,1.0
+lissajous_g05_P3_wind_ne_s1135_outer_expert,lissajous,test,neural_outer_force_mlp,lissajous,Time limit reached,True,True,True,comparable,0.0656649645025374,0.394285058122314,0.0,0.0,0.0,0.0,1.0
+lissajous_g06_P2_wind_east_s1140_outer_expert,lissajous,test,neural_outer_force_mlp,lissajous,Time limit reached,True,True,True,comparable,0.025120770311831773,0.1174086919969814,0.0,0.0,0.0,0.0,1.0
+lissajous_g07_P0_nominal_s1144_outer_expert,lissajous,test,neural_outer_force_mlp,lissajous,Time limit reached,True,True,True,comparable,0.046881200124230686,0.3174086753314076,0.0,0.0,0.0,0.0,1.0
+lissajous_g07_P5_combined_s1149_outer_expert,lissajous,test,neural_outer_force_mlp,lissajous,Time limit reached,True,True,True,comparable,0.0801662022923329,0.28898653242905686,0.0,0.0,0.0,0.0,1.0
+waypoint_g01_P1_drag_high_s1157_outer_expert,waypoint,test,neural_outer_force_mlp,waypoint,Trajectory completed,True,True,True,comparable,0.06356230799543366,0.11409244747314301,0.0,0.0,0.0,0.0,1.0
+waypoint_g01_P3_wind_ne_s1159_outer_expert,waypoint,test,neural_outer_force_mlp,waypoint,Trajectory completed,True,True,True,comparable,0.08235008928270329,0.15688033661972056,0.0,0.0,0.0,0.0,1.0
+waypoint_g02_P3_wind_ne_s1165_outer_expert,waypoint,test,neural_outer_force_mlp,waypoint,Trajectory completed,True,True,True,comparable,0.07690618456395724,0.16320095095116316,0.0,0.0,0.0,0.0,1.0
+waypoint_g03_P0_nominal_s1168_outer_expert,waypoint,test,neural_outer_force_mlp,waypoint,Trajectory completed,True,True,True,comparable,0.056255142527572924,0.09726860292672784,0.0,0.0,0.0,0.0,1.0
+waypoint_g03_P5_combined_s1173_outer_expert,waypoint,test,neural_outer_force_mlp,waypoint,Trajectory completed,True,True,True,comparable,0.09113057177521904,0.15676731139238959,0.0,0.0,0.0,0.0,1.0
+waypoint_g04_P0_nominal_s1174_outer_expert,waypoint,test,neural_outer_force_mlp,waypoint,Trajectory completed,True,True,True,comparable,0.07129330473859614,0.12077366793050634,0.0,0.0,0.0,0.0,1.0
+hold_g03_P0_nominal_s1048_outer_expert,hold,test,neural_outer_force_gru,hold,Time limit reached,True,True,True,comparable,0.00028975530787261504,0.0004392100668321596,0.0,0.0,0.0,0.0,1.0
+hold_g03_P2_wind_east_s1049_outer_expert,hold,test,neural_outer_force_gru,hold,Time limit reached,True,True,True,comparable,0.02298427416965168,0.04017245430332908,0.0,0.0,0.0,0.0,1.0
+hold_g05_P5_combined_s1056_outer_expert,hold,test,neural_outer_force_gru,hold,Time limit reached,True,True,True,comparable,0.09117197089991515,0.1547028378381385,0.0,0.0,0.0,0.0,1.0
+circle_g02_P0_nominal_s1066_outer_expert,circle,test,neural_outer_force_gru,circle,Time limit reached,True,True,True,comparable,0.03441240671797746,0.21121492982742276,0.0,0.0,0.0,0.0,1.0
+circle_g02_P5_combined_s1071_outer_expert,circle,test,neural_outer_force_gru,circle,Time limit reached,True,True,True,comparable,0.09184583061907976,0.2015702724884018,0.0,0.0,0.0,0.0,1.0
+circle_g04_P5_combined_s1083_outer_expert,circle,test,neural_outer_force_gru,circle,Time limit reached,True,True,True,comparable,0.095856735200271,0.28792024145142503,0.0,1.1086474501108647,0.0,0.0,1.0
+circle_g06_P4_noise_low_s1094_outer_expert,circle,test,neural_outer_force_gru,circle,Time limit reached,True,True,True,comparable,0.025044302140539616,0.1426847859034524,0.0,0.0,0.0,0.0,1.0
+circle_g07_P2_wind_east_s1098_outer_expert,circle,test,neural_outer_force_gru,circle,Time limit reached,True,True,True,comparable,0.14081327394236745,0.741120925110778,0.0,0.22172949002217296,0.0,0.0,1.0
+circle_g07_P3_wind_ne_s1099_outer_expert,circle,test,neural_outer_force_gru,circle,Time limit reached,True,True,True,comparable,0.13958580600462916,0.7047301220812237,0.0,0.22172949002217296,0.0,0.0,1.0
+circle_g08_P3_wind_ne_s1105_outer_expert,circle,test,neural_outer_force_gru,circle,Time limit reached,True,True,True,comparable,0.0898492600057357,0.45385639496789454,0.0,0.22172949002217296,0.0,0.0,1.0
+lissajous_g04_P0_nominal_s1126_outer_expert,lissajous,test,neural_outer_force_gru,lissajous,Time limit reached,True,True,True,comparable,0.22140012091937517,1.175934133593353,0.0,0.0,0.0,0.0,1.0
+lissajous_g04_P1_drag_high_s1127_outer_expert,lissajous,test,neural_outer_force_gru,lissajous,Time limit reached,True,True,True,comparable,0.22502845293250673,1.1975349833659799,0.0,0.0,0.0,0.0,1.0
+lissajous_g05_P0_nominal_s1132_outer_expert,lissajous,test,neural_outer_force_gru,lissajous,Time limit reached,True,True,True,comparable,0.13554714087422307,0.7774926141305861,0.0,0.0,0.0,0.0,1.0
+lissajous_g05_P3_wind_ne_s1135_outer_expert,lissajous,test,neural_outer_force_gru,lissajous,Time limit reached,True,True,True,comparable,0.12476633146086953,0.7093933549919713,0.0,0.0,0.0,0.0,1.0
+lissajous_g06_P2_wind_east_s1140_outer_expert,lissajous,test,neural_outer_force_gru,lissajous,Time limit reached,True,True,True,comparable,0.026846280962068408,0.14516399996474505,0.0,0.0,0.0,0.0,1.0
+lissajous_g07_P0_nominal_s1144_outer_expert,lissajous,test,neural_outer_force_gru,lissajous,Time limit reached,True,True,True,comparable,0.08069357836409391,0.5229724260193657,0.0,0.0,0.0,0.0,1.0
+lissajous_g07_P5_combined_s1149_outer_expert,lissajous,test,neural_outer_force_gru,lissajous,Time limit reached,True,True,True,comparable,0.08870211557859735,0.3939228175583615,0.0,0.0,0.0,0.0,1.0
+waypoint_g01_P1_drag_high_s1157_outer_expert,waypoint,test,neural_outer_force_gru,waypoint,Trajectory completed,True,True,True,comparable,0.06221855929960065,0.09963191901475395,0.0,0.0,0.0,0.0,1.0
+waypoint_g01_P3_wind_ne_s1159_outer_expert,waypoint,test,neural_outer_force_gru,waypoint,Trajectory completed,True,True,True,comparable,0.0840547136031361,0.16527199416321228,0.0,0.0,0.0,0.0,1.0
+waypoint_g02_P3_wind_ne_s1165_outer_expert,waypoint,test,neural_outer_force_gru,waypoint,Trajectory completed,True,True,True,comparable,0.0935878411782514,0.19265271176020143,0.0,0.0,0.0,0.0,1.0
+waypoint_g03_P0_nominal_s1168_outer_expert,waypoint,test,neural_outer_force_gru,waypoint,Trajectory completed,True,True,True,comparable,0.057287434594105305,0.11472370786515328,0.0,0.0,0.0,0.0,1.0
+waypoint_g03_P5_combined_s1173_outer_expert,waypoint,test,neural_outer_force_gru,waypoint,Trajectory completed,True,True,True,comparable,0.08671280716889261,0.14039484493142884,0.0,0.0,0.0,0.0,1.0
+waypoint_g04_P0_nominal_s1174_outer_expert,waypoint,test,neural_outer_force_gru,waypoint,Trajectory completed,True,True,True,comparable,0.06702611245638058,0.13818908336556215,0.0,0.0,0.0,0.0,1.0
+hold_g03_P0_nominal_s1048_outer_expert,hold,test,neural_outer_force_lstm,hold,Time limit reached,True,True,True,comparable,0.0006875804346203278,0.0010355727871046922,0.0,0.0,0.0,0.0,1.0
+hold_g03_P2_wind_east_s1049_outer_expert,hold,test,neural_outer_force_lstm,hold,Time limit reached,True,True,True,comparable,0.021687299243840334,0.03675410039611576,0.0,0.0,0.0,0.0,1.0
+hold_g05_P5_combined_s1056_outer_expert,hold,test,neural_outer_force_lstm,hold,Time limit reached,True,True,True,comparable,0.08735243603092363,0.14367805541757692,0.0,0.0,0.0,0.0,1.0
+circle_g02_P0_nominal_s1066_outer_expert,circle,test,neural_outer_force_lstm,circle,Time limit reached,True,True,True,comparable,0.05128777272162178,0.3146760627000311,0.0,0.0,0.0,0.0,1.0
+circle_g02_P5_combined_s1071_outer_expert,circle,test,neural_outer_force_lstm,circle,Time limit reached,True,True,True,comparable,0.09662243073128236,0.27842448184943314,0.0,0.0,0.0,0.0,1.0
+circle_g04_P5_combined_s1083_outer_expert,circle,test,neural_outer_force_lstm,circle,Time limit reached,True,True,True,comparable,0.10995052341065188,0.4063160576492534,0.0,0.6651884700665188,0.0,0.0,1.0
+circle_g06_P4_noise_low_s1094_outer_expert,circle,test,neural_outer_force_lstm,circle,Time limit reached,True,True,True,comparable,0.032079487999379784,0.1742483125810133,0.0,0.0,0.0,0.0,1.0
+circle_g07_P2_wind_east_s1098_outer_expert,circle,test,neural_outer_force_lstm,circle,Time limit reached,True,True,True,comparable,0.4820240386657477,1.3889500866770732,0.0,0.0,0.0,0.0,1.0
+circle_g07_P3_wind_ne_s1099_outer_expert,circle,test,neural_outer_force_lstm,circle,Time limit reached,True,True,True,comparable,0.31393683271672773,1.1868983496295675,0.0,0.0,0.0,0.0,1.0
+circle_g08_P3_wind_ne_s1105_outer_expert,circle,test,neural_outer_force_lstm,circle,Time limit reached,True,True,True,comparable,0.14370027209022015,0.7165103275550372,0.0,0.0,0.0,0.0,1.0
+lissajous_g04_P0_nominal_s1126_outer_expert,lissajous,test,neural_outer_force_lstm,lissajous,Time limit reached,True,True,True,comparable,0.2864259431121495,1.4179435000497653,0.0,0.0,0.0,0.0,1.0
+lissajous_g04_P1_drag_high_s1127_outer_expert,lissajous,test,neural_outer_force_lstm,lissajous,Time limit reached,True,True,True,comparable,0.2940637516814184,1.4487544536127686,0.0,0.0,0.0,0.0,1.0
+lissajous_g05_P0_nominal_s1132_outer_expert,lissajous,test,neural_outer_force_lstm,lissajous,Time limit reached,True,True,True,comparable,0.21704816129875432,0.9961008360946829,0.0,0.0,0.0,0.0,1.0
+lissajous_g05_P3_wind_ne_s1135_outer_expert,lissajous,test,neural_outer_force_lstm,lissajous,Time limit reached,True,True,True,comparable,0.17893271354213724,0.8802465063404632,0.0,0.0,0.0,0.0,1.0
+lissajous_g06_P2_wind_east_s1140_outer_expert,lissajous,test,neural_outer_force_lstm,lissajous,Time limit reached,True,True,True,comparable,0.02879498364865923,0.15193261918566062,0.0,0.0,0.0,0.0,1.0
+lissajous_g07_P0_nominal_s1144_outer_expert,lissajous,test,neural_outer_force_lstm,lissajous,Time limit reached,True,True,True,comparable,0.125127769015258,0.6424606931777928,0.0,0.0,0.0,0.0,1.0
+lissajous_g07_P5_combined_s1149_outer_expert,lissajous,test,neural_outer_force_lstm,lissajous,Time limit reached,True,True,True,comparable,0.10283755651393914,0.47411508739557023,0.0,0.0,0.0,0.0,1.0
+waypoint_g01_P1_drag_high_s1157_outer_expert,waypoint,test,neural_outer_force_lstm,waypoint,Trajectory completed,True,True,True,comparable,0.07094158681683242,0.11725923478554343,0.0,0.0,0.0,0.0,1.0
+waypoint_g01_P3_wind_ne_s1159_outer_expert,waypoint,test,neural_outer_force_lstm,waypoint,Trajectory completed,True,True,True,comparable,0.09023175619105746,0.16075944979129525,0.0,0.0,0.0,0.0,1.0
+waypoint_g02_P3_wind_ne_s1165_outer_expert,waypoint,test,neural_outer_force_lstm,waypoint,Trajectory completed,True,True,True,comparable,0.08862987746779816,0.16906270361699607,0.0,0.0,0.0,0.0,1.0
+waypoint_g03_P0_nominal_s1168_outer_expert,waypoint,test,neural_outer_force_lstm,waypoint,Trajectory completed,True,True,True,comparable,0.05866528392694447,0.10565440759641392,0.0,0.0,0.0,0.0,1.0
+waypoint_g03_P5_combined_s1173_outer_expert,waypoint,test,neural_outer_force_lstm,waypoint,Trajectory completed,True,True,True,comparable,0.08745343779558279,0.1390914003768224,0.0,0.0,0.0,0.0,1.0
+waypoint_g04_P0_nominal_s1174_outer_expert,waypoint,test,neural_outer_force_lstm,waypoint,Trajectory completed,True,True,True,comparable,0.06870928264009098,0.1370333656519714,0.0,0.0,0.0,0.0,1.0
+lemniscate_3d_heavy_wind,lemniscate,ood,classic_pid_hold,lemniscate,Attitude angle exceeded limit (1.30 > 1.26),False,False,False,comparable,0.47320773927949866,1.867603779785637,0.0,34.375,0.0,0.0,0.0
+lemniscate_3d_heavy_wind,lemniscate,ood,classic_pid_circle,lemniscate,Attitude angle exceeded limit (1.28 > 1.26),False,False,False,comparable,0.6411613507744653,2.7600355936705183,0.0,37.142857142857146,0.0,0.0,0.0
+lemniscate_3d_heavy_wind,lemniscate,ood,classic_pid_lissajous,lemniscate,Attitude angle exceeded limit (1.28 > 1.26),False,False,False,comparable,0.16759436308114212,0.6789861010659738,0.0,25.925925925925924,0.0,0.0,0.0
+lemniscate_3d_heavy_wind,lemniscate,ood,classic_pid_representative,lemniscate,Attitude angle exceeded limit (1.28 > 1.26),False,False,False,comparable,0.16759436308114212,0.6789861010659738,0.0,25.925925925925924,0.0,0.0,0.0
+lemniscate_3d_heavy_wind,lemniscate,ood,classic_pid_waypoint,lemniscate,Attitude angle exceeded limit (1.32 > 1.26),False,False,False,comparable,0.31098715396127696,1.3309232618107396,0.0,31.03448275862069,0.0,0.0,0.0
+lemniscate_fast_center_yaw,lemniscate,ood,classic_pid_hold,lemniscate,Time limit reached,True,True,True,comparable,0.22600046195958523,0.5676227152748765,0.0,0.0,0.0,0.0,1.0
+lemniscate_fast_center_yaw,lemniscate,ood,classic_pid_circle,lemniscate,Time limit reached,True,True,True,comparable,0.09686638129354685,0.3036713338723877,0.0,0.0,0.0,0.0,1.0
+lemniscate_fast_center_yaw,lemniscate,ood,classic_pid_lissajous,lemniscate,Time limit reached,True,True,True,comparable,0.050449301218612,0.1688416858170061,0.0,0.0,0.0,0.0,1.0
+lemniscate_fast_center_yaw,lemniscate,ood,classic_pid_representative,lemniscate,Time limit reached,True,True,True,comparable,0.050449301218612,0.1688416858170061,0.0,0.0,0.0,0.0,1.0
+lemniscate_fast_center_yaw,lemniscate,ood,classic_pid_waypoint,lemniscate,Time limit reached,True,True,True,comparable,0.09277318973553228,0.33238719914991965,0.0,0.0,0.0,0.0,1.0
+lemniscate_combined_extreme,lemniscate,ood,classic_pid_hold,lemniscate,Time limit reached,True,True,True,comparable,0.2831365854937242,0.6686755389984278,0.0,4.843304843304843,0.0,0.0,1.0
+lemniscate_combined_extreme,lemniscate,ood,classic_pid_circle,lemniscate,Time limit reached,True,True,True,comparable,0.26270176208896834,0.5437850088647754,0.0,5.698005698005698,0.0,0.0,1.0
+lemniscate_combined_extreme,lemniscate,ood,classic_pid_lissajous,lemniscate,Attitude angle exceeded limit (1.28 > 1.26),False,False,False,comparable,0.475545408945263,2.181848913848779,0.0,42.857142857142854,0.0,0.0,0.0
+lemniscate_combined_extreme,lemniscate,ood,classic_pid_representative,lemniscate,Attitude angle exceeded limit (1.28 > 1.26),False,False,False,comparable,0.475545408945263,2.181848913848779,0.0,42.857142857142854,0.0,0.0,0.0
+lemniscate_combined_extreme,lemniscate,ood,classic_pid_waypoint,lemniscate,Attitude angle exceeded limit (1.30 > 1.26),False,False,False,comparable,0.44045158198252254,1.8601705225327432,0.0,38.88888888888889,0.0,0.0,0.0
+lissajous_3d_speedy,lissajous,ood,classic_pid_hold,lissajous,Time limit reached,True,True,True,comparable,0.31841142250888965,0.9656724890469186,0.0,0.0,0.0,0.0,1.0
+lissajous_3d_speedy,lissajous,ood,classic_pid_circle,lissajous,Time limit reached,True,True,True,comparable,0.1667260848929669,0.8135385869232775,0.0,0.0,0.0,0.0,1.0
+lissajous_3d_speedy,lissajous,ood,classic_pid_lissajous,lissajous,Time limit reached,True,True,True,comparable,0.12114758474166695,0.6810640013105286,0.0,0.0,0.0,0.0,1.0
+lissajous_3d_speedy,lissajous,ood,classic_pid_representative,lissajous,Time limit reached,True,True,True,comparable,0.12114758474166695,0.6810640013105286,0.0,0.0,0.0,0.0,1.0
+lissajous_3d_speedy,lissajous,ood,classic_pid_waypoint,lissajous,Time limit reached,True,True,True,comparable,0.17227633139362786,0.8105508667163267,0.0,0.0,0.0,0.0,1.0
+lissajous_extreme_noise,lissajous,ood,classic_pid_hold,lissajous,Time limit reached,True,True,True,comparable,0.21924532745677647,0.5825565927434729,0.0,0.0,0.0,0.0,1.0
+lissajous_extreme_noise,lissajous,ood,classic_pid_circle,lissajous,Time limit reached,True,True,True,comparable,0.09489518912979512,0.48590685706716563,0.0,0.0,0.0,0.0,1.0
+lissajous_extreme_noise,lissajous,ood,classic_pid_lissajous,lissajous,Time limit reached,True,True,True,comparable,0.07326881859969246,0.3979261980911655,0.0,0.0,0.0,0.0,1.0
+lissajous_extreme_noise,lissajous,ood,classic_pid_representative,lissajous,Time limit reached,True,True,True,comparable,0.07326881859969246,0.3979261980911655,0.0,0.0,0.0,0.0,1.0
+lissajous_extreme_noise,lissajous,ood,classic_pid_waypoint,lissajous,Time limit reached,True,True,True,comparable,0.10628218852275476,0.4805670255362062,0.0,0.0,0.0,0.0,1.0
+composite_circle_to_lemniscate,composite,ood,classic_pid_hold,composite,Attitude angle exceeded limit (1.29 > 1.26),False,False,False,comparable,0.2961317607278504,1.3516459889302606,0.0,7.103825136612022,0.0,0.0,0.0
+composite_circle_to_lemniscate,composite,ood,classic_pid_circle,composite,Attitude angle exceeded limit (1.27 > 1.26),False,False,False,comparable,0.1723669633570033,1.101514909693359,0.0,6.666666666666667,0.0,0.0,0.0
+composite_circle_to_lemniscate,composite,ood,classic_pid_lissajous,composite,Attitude angle exceeded limit (1.31 > 1.26),False,False,False,comparable,0.1684528106064334,1.5362440753443676,0.0,7.344632768361582,0.0,0.0,0.0
+composite_circle_to_lemniscate,composite,ood,classic_pid_representative,composite,Attitude angle exceeded limit (1.31 > 1.26),False,False,False,comparable,0.1684528106064334,1.5362440753443676,0.0,7.344632768361582,0.0,0.0,0.0
+composite_circle_to_lemniscate,composite,ood,classic_pid_waypoint,composite,Attitude angle exceeded limit (1.28 > 1.26),False,False,False,comparable,0.2064563002668551,1.5971028596202361,0.0,7.18232044198895,0.0,0.0,0.0
+composite_aggressive_transitions,composite,ood,classic_pid_hold,composite,Composite trajectory completed,True,True,True,comparable,0.2916417652297345,0.9183964671179686,0.0,4.433497536945813,0.0,0.0,1.0
+composite_aggressive_transitions,composite,ood,classic_pid_circle,composite,Composite trajectory completed,True,True,True,comparable,0.260876448875169,0.874717451895196,0.0,3.9408866995073892,0.0,0.0,1.0
+composite_aggressive_transitions,composite,ood,classic_pid_lissajous,composite,Attitude angle exceeded limit (1.34 > 1.26),False,False,False,comparable,0.17772571341728488,0.6217300114362633,0.0,3.8461538461538463,0.0,0.0,0.0
+composite_aggressive_transitions,composite,ood,classic_pid_representative,composite,Attitude angle exceeded limit (1.34 > 1.26),False,False,False,comparable,0.17772571341728488,0.6217300114362633,0.0,3.8461538461538463,0.0,0.0,0.0
+composite_aggressive_transitions,composite,ood,classic_pid_waypoint,composite,Attitude angle exceeded limit (1.27 > 1.26),False,False,False,comparable,0.21423366847428305,0.9379326738161526,0.0,5.303030303030303,0.0,0.0,0.0
+helix_ascending_fast,waypoint,ood,classic_pid_hold,waypoint,Time limit reached,False,True,False,comparable,0.1058301143220662,0.18592988375872685,0.0,0.0,0.0,0.0,0.0
+helix_ascending_fast,waypoint,ood,classic_pid_circle,waypoint,Time limit reached,False,True,False,comparable,0.09456011299367117,0.16545278062521424,0.0,0.0,0.0,0.0,0.0
+helix_ascending_fast,waypoint,ood,classic_pid_lissajous,waypoint,Time limit reached,False,True,False,comparable,0.07015199207758693,0.11622706001877091,0.0,0.0,0.0,0.0,0.0
+helix_ascending_fast,waypoint,ood,classic_pid_waypoint,waypoint,Time limit reached,False,True,False,comparable,0.08395376760718593,0.1466092101415218,0.0,0.0,0.0,0.0,0.0
+helix_ascending_fast,waypoint,ood,classic_pid_representative,waypoint,Time limit reached,False,True,False,comparable,0.08395376760718593,0.1466092101415218,0.0,0.0,0.0,0.0,0.0
+helix_descending_noise_wind,waypoint,ood,classic_pid_hold,waypoint,Time limit reached,False,True,False,comparable,0.16676722518112902,0.2741468866639036,0.0,0.0,0.0,0.0,0.0
+helix_descending_noise_wind,waypoint,ood,classic_pid_circle,waypoint,Time limit reached,False,True,False,comparable,0.16082975626727888,0.24379375832995714,0.0,0.0,0.0,0.0,0.0
+helix_descending_noise_wind,waypoint,ood,classic_pid_lissajous,waypoint,Time limit reached,False,True,False,comparable,0.12506043274899262,0.19032835312734,0.0,0.0,0.0,0.0,0.0
+helix_descending_noise_wind,waypoint,ood,classic_pid_waypoint,waypoint,Time limit reached,False,True,False,comparable,0.1335681805763817,0.2147320300521918,0.0,0.0,0.0,0.0,0.0
+helix_descending_noise_wind,waypoint,ood,classic_pid_representative,waypoint,Time limit reached,False,True,False,comparable,0.1335681805763817,0.2147320300521918,0.0,0.0,0.0,0.0,0.0
+helix_tight_aggressive,waypoint,ood,classic_pid_hold,waypoint,Time limit reached,False,True,False,comparable,0.3505092357827968,0.6622445636549683,0.0,0.0,0.0,0.0,0.0
+helix_tight_aggressive,waypoint,ood,classic_pid_circle,waypoint,Time limit reached,False,True,False,comparable,0.35591556046738454,0.5363624444569687,0.0,0.0,0.0,0.0,0.0
+helix_tight_aggressive,waypoint,ood,classic_pid_lissajous,waypoint,Time limit reached,False,True,False,comparable,0.2735907974831436,0.38931055592470276,0.0,0.0,0.0,0.0,0.0
+helix_tight_aggressive,waypoint,ood,classic_pid_waypoint,waypoint,Time limit reached,False,True,False,comparable,0.28677409681869226,0.5007132479211817,0.0,0.0,0.0,0.0,0.0
+helix_tight_aggressive,waypoint,ood,classic_pid_representative,waypoint,Time limit reached,False,True,False,comparable,0.28677409681869226,0.5007132479211817,0.0,0.0,0.0,0.0,0.0
+lemniscate_3d_heavy_wind,lemniscate,ood,neural_outer_force_mlp,lemniscate,Time limit reached,True,True,True,comparable,0.08642553927665014,0.30231258599051114,0.0,2.564102564102564,0.0,0.0,1.0
+lemniscate_fast_center_yaw,lemniscate,ood,neural_outer_force_mlp,lemniscate,Time limit reached,True,True,True,comparable,0.09204835777676569,0.3005850603606691,0.0,0.0,0.0,0.0,1.0
+lemniscate_combined_extreme,lemniscate,ood,neural_outer_force_mlp,lemniscate,Persistent actuator saturation,False,False,False,comparable,2.2836295597209197,8.238056860657759,0.0,53.191489361702125,22.413793103448278,35.3448275862069,0.0
+lissajous_3d_speedy,lissajous,ood,neural_outer_force_mlp,lissajous,Time limit reached,True,True,True,comparable,0.1252653281588965,0.6688013706674104,0.0,0.0,0.0,3.1410622501427756,1.0
+lissajous_extreme_noise,lissajous,ood,neural_outer_force_mlp,lissajous,Time limit reached,True,True,True,comparable,0.0767469041059177,0.3612825798539986,0.0,8.547008547008547,0.0,0.34266133637921187,1.0
+composite_circle_to_lemniscate,composite,ood,neural_outer_force_mlp,composite,Composite trajectory completed,True,True,True,comparable,1.5175910215720383,5.2237863912175655,0.0,12.5,8.784176847004073,22.164048865619545,1.0
+composite_aggressive_transitions,composite,ood,neural_outer_force_mlp,composite,Composite trajectory completed,True,True,True,comparable,0.1542026151333116,0.44864537754527195,0.0,3.1746031746031744,0.0,0.0,1.0
+helix_ascending_fast,waypoint,ood,neural_outer_force_mlp,waypoint,Time limit reached,False,True,False,comparable,0.08898007160686634,0.19666543486826346,0.0,0.0,0.0,0.0,0.0
+helix_descending_noise_wind,waypoint,ood,neural_outer_force_mlp,waypoint,Time limit reached,False,True,False,comparable,0.10641335674675634,0.20429682537959531,0.0,0.2849002849002849,0.0,0.0,0.0
+helix_tight_aggressive,waypoint,ood,neural_outer_force_mlp,waypoint,Time limit reached,False,True,False,comparable,0.2222902417068868,0.40602308843157375,0.0,0.0,0.0,0.0,0.0
+lemniscate_3d_heavy_wind,lemniscate,ood,neural_outer_force_gru,lemniscate,Time limit reached,True,True,True,comparable,0.08573275090879444,0.4792695618475387,0.0,2.2792022792022792,0.0,0.0,1.0
+lemniscate_fast_center_yaw,lemniscate,ood,neural_outer_force_gru,lemniscate,Time limit reached,True,True,True,comparable,0.15882396767740037,0.6101733099858846,0.0,0.0,0.0,0.0,1.0
+lemniscate_combined_extreme,lemniscate,ood,neural_outer_force_gru,lemniscate,Persistent actuator saturation,False,False,False,comparable,0.5561330602894659,3.7591705191915628,0.0,34.375,0.0,0.0,0.0
+lissajous_3d_speedy,lissajous,ood,neural_outer_force_gru,lissajous,Time limit reached,True,True,True,comparable,0.5490430902606263,1.6059801236825866,0.0,0.0,0.0,0.0,1.0
+lissajous_extreme_noise,lissajous,ood,neural_outer_force_gru,lissajous,Time limit reached,True,True,True,comparable,0.11385550022059711,0.5754473889185641,0.0,3.418803418803419,0.0,0.0,1.0
+composite_circle_to_lemniscate,composite,ood,neural_outer_force_gru,composite,Composite trajectory completed,True,True,True,comparable,0.35820465205082164,1.425874467257134,0.0,6.686046511627906,0.0,0.0,1.0
+composite_aggressive_transitions,composite,ood,neural_outer_force_gru,composite,Composite trajectory completed,True,True,True,comparable,0.35760376800226235,1.1066469753246042,0.0,2.209944751381215,0.0,0.0,1.0
+helix_ascending_fast,waypoint,ood,neural_outer_force_gru,waypoint,Time limit reached,False,True,False,comparable,0.09201238024609083,0.17955423305853693,0.0,0.0,0.0,0.0,0.0
+helix_descending_noise_wind,waypoint,ood,neural_outer_force_gru,waypoint,Time limit reached,False,True,False,comparable,0.10230433516934279,0.19754003812174437,0.0,0.5698005698005698,0.0,0.0,0.0
+helix_tight_aggressive,waypoint,ood,neural_outer_force_gru,waypoint,Time limit reached,False,True,False,comparable,0.2603018775366166,0.4848825907191058,0.0,0.0,0.0,0.0,0.0
+lemniscate_3d_heavy_wind,lemniscate,ood,neural_outer_force_lstm,lemniscate,Time limit reached,True,True,True,comparable,0.18435666170125337,1.0140523731660713,0.0,1.9943019943019942,0.0,0.0,1.0
+lemniscate_fast_center_yaw,lemniscate,ood,neural_outer_force_lstm,lemniscate,Time limit reached,True,True,True,comparable,3.8754875074099218,9.466601487230953,0.0,0.0,0.0,0.0,1.0
+lemniscate_combined_extreme,lemniscate,ood,neural_outer_force_lstm,lemniscate,Persistent actuator saturation,False,False,False,comparable,0.3676289518107929,3.14365508925947,0.0,25.77639751552795,0.0,0.0,0.0
+lissajous_3d_speedy,lissajous,ood,neural_outer_force_lstm,lissajous,Time limit reached,True,True,True,comparable,2.902865784454664,4.551211852128553,0.0,0.0,0.0,0.0,1.0
+lissajous_extreme_noise,lissajous,ood,neural_outer_force_lstm,lissajous,Time limit reached,True,True,True,comparable,0.18930366216474906,0.8276513234642522,0.0,1.4245014245014245,0.0,0.0,1.0
+composite_circle_to_lemniscate,composite,ood,neural_outer_force_lstm,composite,Composite trajectory completed,True,True,True,comparable,0.6579003264734603,1.9347071637079476,0.0,4.3604651162790695,0.0,0.0,1.0
+composite_aggressive_transitions,composite,ood,neural_outer_force_lstm,composite,Composite trajectory completed,True,True,True,comparable,0.3946209556139889,1.0549677571924938,0.0,2.072538860103627,0.0,0.0,1.0
+helix_ascending_fast,waypoint,ood,neural_outer_force_lstm,waypoint,Time limit reached,False,True,False,comparable,0.08897450959054219,0.15752255603731383,0.0,0.0,0.0,0.0,0.0
+helix_descending_noise_wind,waypoint,ood,neural_outer_force_lstm,waypoint,Time limit reached,False,True,False,comparable,0.10204025461667664,0.200549458645872,0.0,0.2849002849002849,0.0,0.0,0.0
+helix_tight_aggressive,waypoint,ood,neural_outer_force_lstm,waypoint,Time limit reached,False,True,False,comparable,0.25567256944167555,0.6322788346379145,0.0,0.0,0.0,0.0,0.0
