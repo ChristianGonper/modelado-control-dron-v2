@@ -34,15 +34,23 @@ def main():
                         help="Feature version: 'v1' (legacy 4-out), 'outer_force_min_v1' (9) or 'outer_force_full_v1' (31).")
 
     args = parser.parse_args()
-    
+
     # Reproducibilidad
+    import random
+    import numpy as np
+    random.seed(args.seed)
+    np.random.seed(args.seed)
     torch.manual_seed(args.seed)
+    torch.cuda.manual_seed_all(args.seed)
+
+    # Comentario: El determinismo completo puede depender del dispositivo de hardware y de operaciones CUDA específicas.
+
     device = "cuda" if args.device == "auto" and torch.cuda.is_available() else args.device
     if device == "auto":
         device = "cpu"
     if device == "cuda" and not torch.cuda.is_available():
         raise RuntimeError("CUDA requested, but torch.cuda.is_available() is False")
-    
+
     os.makedirs(args.out, exist_ok=True)
 
     is_outer = args.feature_version.startswith("outer_force_")
@@ -70,29 +78,45 @@ def main():
         out_dim = 4
         ctrl_mode = "neural_legacy"
         target_ver = FEATURE_VERSION
-    
+
     if len(train_ds) == 0:
         raise ValueError("No training samples found in dataset.")
-    
+
     # 2. Normalizacion (solo con train)
     norm = Normalizer()
     norm.fit(train_ds, feature_names=feat_names, target_names=targ_names, feature_version=args.feature_version)
     norm.save(os.path.join(args.out, "normalization.json"))
-    
+
     # Aplicar normalizacion a los datasets
     train_ds.transform = norm.normalize_x
     train_ds.target_transform = norm.normalize_y
     val_ds.transform = norm.normalize_x
     val_ds.target_transform = norm.normalize_y
-    
+
     # 3. Loaders
-    train_loader = DataLoader(train_ds, batch_size=args.batch_size, shuffle=True)
+    def seed_worker(worker_id):
+        worker_seed = torch.initial_seed() % 2**32
+        import numpy as np
+        import random
+        np.random.seed(worker_seed)
+        random.seed(worker_seed)
+
+    g = torch.Generator()
+    g.manual_seed(args.seed)
+
+    train_loader = DataLoader(
+        train_ds,
+        batch_size=args.batch_size,
+        shuffle=True,
+        generator=g,
+        worker_init_fn=seed_worker
+    )
     val_loader = DataLoader(val_ds, batch_size=args.batch_size, shuffle=False)
-    
+
     # 4. Construir modelo
     input_dim = len(norm.mean_x)
     model = build_model(args.architecture, input_dim, output_dim=out_dim, config={"hidden_dim": args.hidden_dim})
-    
+
     # 5. Config (incluye campos para outer-force contract)
     config = {
         "architecture": args.architecture,
@@ -111,13 +135,13 @@ def main():
         "target_version": target_ver,
         "controller_mode": ctrl_mode,
     }
-    
+
     with open(os.path.join(args.out, "config.yaml"), "w") as f:
         yaml.dump(config, f)
-    
+
     # 6. Entrenar
     train_model(model, train_loader, val_loader, config)
-    
+
     print(f"Training complete. Artifacts saved in {args.out}")
 
 if __name__ == "__main__":

@@ -44,7 +44,15 @@ def main():
     parser.add_argument("--device", type=str, choices=["auto", "cpu", "cuda"], default="auto")
     args = parser.parse_args()
 
+    import random
+    import numpy as np
+    random.seed(args.seed)
+    np.random.seed(args.seed)
     torch.manual_seed(args.seed)
+    torch.cuda.manual_seed_all(args.seed)
+
+    # Comentario: El determinismo completo puede depender del dispositivo de hardware y de operaciones CUDA específicas.
+
     os.makedirs(args.out, exist_ok=True)
 
     device = "cuda" if args.device == "auto" and torch.cuda.is_available() else args.device
@@ -82,7 +90,23 @@ def main():
     val_ds.transform = norm.normalize_x
     val_ds.target_transform = norm.normalize_y
 
-    train_loader = DataLoader(train_ds, batch_size=args.batch_size, shuffle=True)
+    def seed_worker(worker_id):
+        worker_seed = torch.initial_seed() % 2**32
+        import numpy as np
+        import random
+        np.random.seed(worker_seed)
+        random.seed(worker_seed)
+
+    g = torch.Generator()
+    g.manual_seed(args.seed)
+
+    train_loader = DataLoader(
+        train_ds,
+        batch_size=args.batch_size,
+        shuffle=True,
+        generator=g,
+        worker_init_fn=seed_worker
+    )
     val_loader = DataLoader(val_ds, batch_size=args.batch_size, shuffle=False)
 
     input_dim = len(norm.mean_x)
