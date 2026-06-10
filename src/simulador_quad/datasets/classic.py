@@ -3,6 +3,7 @@ import yaml
 import numpy as np
 from typing import List, Dict, Any, Tuple
 from pathlib import Path
+from simulador_quad.core.fs import atomic_write_directory
 from simulador_quad.scenarios.loader import instantiate_trajectory
 
 # --- Constants v1 ---
@@ -80,8 +81,8 @@ BASE_VEHICLE = {
     "inertia_B_kg_m2": [[0.05, 0, 0], [0, 0.05, 0], [0, 0, 0.1]],
     "gravity_m_s2": 9.81,
     "rotor_template": {
-        "k_f": 1.0e-4, 
-        "k_m": 1.0e-6, 
+        "k_f": 1.0e-4,
+        "k_m": 1.0e-6,
         "omega_max_rad_s": 1500.0
     }
 }
@@ -156,7 +157,7 @@ def build_scenario_config(
     output_root: str
 ) -> Dict[str, Any]:
     profile = PROFILES[profile_id]
-    
+
     config = {
         "name": scenario_id,
         "seed": seed,
@@ -197,7 +198,7 @@ def get_geometry_variants(family: str) -> List[Tuple[str, Dict[str, Any]]]:
         altitudes = [1.5, 2.0, 3.0]
         offsets = [[0,0], [1,0], [0,1]] # [x,y]
         yaws = [0.0, np.pi/4]
-        
+
         idx = 1
         # representation of the spec
         for z in altitudes:
@@ -219,7 +220,7 @@ def get_geometry_variants(family: str) -> List[Tuple[str, Dict[str, Any]]]:
         radii = [1.0, 1.5, 2.0, 2.5]
         omegas = [0.35, 0.5, 0.65]
         heights = [2.0, 3.0, 4.0]
-        
+
         # Representative configurations
         idx = 1
         combos = [
@@ -250,7 +251,7 @@ def get_geometry_variants(family: str) -> List[Tuple[str, Dict[str, Any]]]:
             [0, 0, 2.5], [0, 0, 3.0], [0, 0, 2.0], [1, 1, 3.0],
             [0, 0, 2.5], [0, 0, 3.5], [0, 0, 2.2], [0, 0, 2.8]
         ]
-        
+
         idx = 1
         # Avoid identical frequencies to avoid degenerate paths
         for amps, oms, center in zip(amplitudes, omegas, centers):
@@ -275,7 +276,7 @@ def get_geometry_variants(family: str) -> List[Tuple[str, Dict[str, Any]]]:
             [[0,0,1], [2,2,3]],
             [[0,0,2], [1,1,3], [0,2,2], [-1,1,3], [0,0,2]]
         ]
-        
+
         variants = []
         for i, (name, wp) in enumerate(zip(names, waypoints)):
             variants.append((f"g{i+1:02d}", {
@@ -284,31 +285,31 @@ def get_geometry_variants(family: str) -> List[Tuple[str, Dict[str, Any]]]:
                 **WAYPOINT_STOP_DEFAULTS,
             }))
         return variants
-    
+
     return []
 
 def get_dataset_manifest_data(version: str = "v1") -> List[Dict[str, Any]]:
     manifest = []
     base_seed = 1042
-    
+
     family_splits = {
         "hold": ["train"] * 12 + ["val"] * 3 + ["test"] * 3,
         "circle": ["train"] * 34 + ["val"] * 7 + ["test"] * 7,
         "lissajous": ["train"] * 34 + ["val"] * 7 + ["test"] * 7,
         "waypoint": ["train"] * 25 + ["val"] * 5 + ["test"] * 6
     }
-    
+
     rng = np.random.RandomState(base_seed)
-    
+
     for family in FAMILIES:
         geometries = get_geometry_variants(family)
         slow_g, demand_g = SLOW_DEMANDING_GEOM[family]
-        
+
         if family == "hold":
             profiles_to_use = ["P0_nominal", "P2_wind_east", "P5_combined"]
         else:
             profiles_to_use = list(PROFILES.keys())
-            
+
         scenarios = []
         for g_id, g_cfg in geometries:
             for p_id in profiles_to_use:
@@ -319,7 +320,7 @@ def get_dataset_manifest_data(version: str = "v1") -> List[Dict[str, Any]]:
                     "p_id": p_id,
                     "is_diag": is_diag
                 })
-                
+
         diag_scenarios = [s for s in scenarios if s["is_diag"]]
         n_diag = len(diag_scenarios)
 
@@ -362,67 +363,91 @@ def get_dataset_manifest_data(version: str = "v1") -> List[Dict[str, Any]]:
 def write_dataset_files(version: str, output_root: str, overwrite: bool = False, reset_pids: bool = False):
     if os.path.exists(output_root) and not overwrite:
         raise FileExistsError(f"Directory {output_root} already exists. Use overwrite=True to force.")
-    
-    os.makedirs(output_root, exist_ok=True)
-    manifest_data = get_dataset_manifest_data(version=version)
-    
-    os.makedirs(os.path.join(output_root, "pids"), exist_ok=True)
-    
-    pid_configs = {}
+
+    # Read existing gains if they exist (before entering atomic write)
+    existing_pid_configs = {}
     for family in FAMILIES:
         pid_id = build_pid_id(family, version)
         pid_path = os.path.join(output_root, "pids", f"{pid_id}.yaml")
-        if not os.path.exists(pid_path) or reset_pids:
-            pid_data = {
-                "pid_id": pid_id,
-                "family": family,
-                "version": version,
-                "source": "default_initial",
-                **INITIAL_PIDS[family]
-            }
+        if os.path.exists(pid_path) and not reset_pids:
+            try:
+                with open(pid_path, 'r') as f:
+                    pid_all = yaml.safe_load(f)
+                    pid_fields = ["Kp_pos", "Kd_pos", "Kp_att", "Kd_att", "max_body_moments_Nm"]
+                    existing_pid_configs[family] = {k: pid_all[k] for k in pid_fields if k in pid_all}
+            except Exception:
+                pass
+
+    manifest_data = get_dataset_manifest_data(version=version)
+
+    def write_dataset(temp_dir):
+        os.makedirs(os.path.join(temp_dir, "pids"), exist_ok=True)
+        pid_configs = {}
+        for family in FAMILIES:
+            pid_id = build_pid_id(family, version)
+            pid_path = os.path.join(temp_dir, "pids", f"{pid_id}.yaml")
+
+            # Reuse existing if we read it successfully
+            if family in existing_pid_configs:
+                pid_data = {
+                    "pid_id": pid_id,
+                    "family": family,
+                    "version": version,
+                    "source": "restored_existing",
+                    **existing_pid_configs[family]
+                }
+            else:
+                pid_data = {
+                    "pid_id": pid_id,
+                    "family": family,
+                    "version": version,
+                    "source": "default_initial",
+                    **INITIAL_PIDS[family]
+                }
+
             with open(pid_path, 'w') as f:
                 yaml.dump(pid_data, f, sort_keys=False)
-        
-        with open(pid_path, 'r') as f:
-            pid_all = yaml.safe_load(f)
+
             pid_fields = ["Kp_pos", "Kd_pos", "Kp_att", "Kd_att", "max_body_moments_Nm"]
-            pid_configs[family] = {k: pid_all[k] for k in pid_fields if k in pid_all}
+            pid_configs[family] = {k: pid_data[k] for k in pid_fields if k in pid_data}
 
-    # Write scenarios
-    for row in manifest_data:
-        family_dir = os.path.join(output_root, "scenarios", row["family"])
-        os.makedirs(family_dir, exist_ok=True)
-        
-        pid_config = pid_configs[row["family"]]
-        
-        scenario_config = build_scenario_config(
-            row["scenario_id"], row["family"], row["trajectory_cfg"], 
-            row["perturbation_id"], pid_config, row["seed"], output_root
-        )
-        
-        yaml_path = os.path.join(family_dir, f"{row['scenario_id']}.yaml")
-        with open(yaml_path, 'w') as f:
-            yaml.dump(scenario_config, f, sort_keys=False)
-            
-        row["scenario_path"] = os.path.relpath(yaml_path, output_root)
-        row["result_dir"] = os.path.relpath(scenario_config["output"]["dir"], output_root)
-
-    # Write manifest.csv
-    import csv
-    manifest_csv = os.path.join(output_root, "manifest.csv")
-    with open(manifest_csv, 'w', newline='') as f:
-        writer = csv.DictWriter(f, fieldnames=[
-            "scenario_id", "family", "geometry_id", "perturbation_id", 
-            "pid_id", "seed", "split", "scenario_path", "result_dir"
-        ])
-        writer.writeheader()
+        # Write scenarios
         for row in manifest_data:
-            # Filter keys for CSV
-            writer.writerow({k: row[k] for k in writer.fieldnames})
+            family_dir = os.path.join(temp_dir, "scenarios", row["family"])
+            os.makedirs(family_dir, exist_ok=True)
 
-    # Write README.md
-    with open(os.path.join(output_root, "README.md"), 'w') as f:
-        f.write(f"# Classic Dataset {version}\n\nGenerated automatically.\nTotal episodes: {len(manifest_data)}\n")
+            pid_config = pid_configs[row["family"]]
+
+            scenario_config = build_scenario_config(
+                row["scenario_id"], row["family"], row["trajectory_cfg"],
+                row["perturbation_id"], pid_config, row["seed"], output_root
+            )
+
+            yaml_path = os.path.join(family_dir, f"{row['scenario_id']}.yaml")
+            with open(yaml_path, 'w') as f:
+                yaml.dump(scenario_config, f, sort_keys=False)
+
+            row["scenario_path"] = os.path.relpath(yaml_path, temp_dir)
+            row["result_dir"] = os.path.relpath(scenario_config["output"]["dir"], output_root)
+
+        # Write manifest.csv
+        import csv
+        manifest_csv = os.path.join(temp_dir, "manifest.csv")
+        with open(manifest_csv, 'w', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=[
+                "scenario_id", "family", "geometry_id", "perturbation_id",
+                "pid_id", "seed", "split", "scenario_path", "result_dir"
+            ])
+            writer.writeheader()
+            for row in manifest_data:
+                # Filter keys for CSV
+                writer.writerow({k: row[k] for k in writer.fieldnames})
+
+        # Write README.md
+        with open(os.path.join(temp_dir, "README.md"), 'w') as f:
+            f.write(f"# Classic Dataset {version}\n\nGenerated automatically.\nTotal episodes: {len(manifest_data)}\n")
+
+    atomic_write_directory(output_root, write_dataset, overwrite)
 
 # --- PID Selection / Scoring ---
 
@@ -434,39 +459,39 @@ def attitude_rms_rad_from_telemetry(telemetry: List[Any]) -> float:
         rolls.append(r)
         pitches.append(p)
         yaws.append(y)
-    
+
     rolls = np.array(rolls)
     pitches = np.array(pitches)
     yaws = np.array(yaws)
-    
+
     norm_sq = rolls**2 + pitches**2 + yaws**2
     return float(np.sqrt(np.mean(norm_sq)))
 
 def pid_candidate_score(metrics: Dict[str, Any], telemetry: List[Any], family: str) -> float:
     # Check for finite values to avoid NaN scores
     required_metrics = [
-        "position_rmse_m", "position_max_err_m", "saturation_percentage", 
+        "position_rmse_m", "position_max_err_m", "saturation_percentage",
         "degradation_percentage", "collective_thrust_mean_N", "body_moment_norm_mean_Nm"
     ]
     for k in required_metrics:
         if not np.isfinite(metrics.get(k, np.nan)):
             return 1e9 # Penalty for non-finite metrics
-            
+
     pos_rmse = metrics["position_rmse_m"]
     pos_max = metrics["position_max_err_m"]
     att_rms = attitude_rms_rad_from_telemetry(telemetry)
-    
+
     # Normalized control effort
     weight_N = BASE_VEHICLE["mass_kg"] * BASE_VEHICLE["gravity_m_s2"]
     moment_scale_Nm = 0.1
-    
+
     effort_thrust = metrics["collective_thrust_mean_N"] / weight_N
     effort_moment = metrics["body_moment_norm_mean_Nm"] / moment_scale_Nm
     effort_norm = effort_thrust + effort_moment
-    
+
     sat_frac = metrics["saturation_percentage"] / 100.0
     deg_frac = metrics["degradation_percentage"] / 100.0
-    
+
     score = (
         1.00 * pos_rmse +
         0.50 * pos_max +
@@ -480,7 +505,7 @@ def pid_candidate_score(metrics: Dict[str, Any], telemetry: List[Any], family: s
 def passes_hard_filters(metrics: Dict[str, Any], family: str) -> Tuple[bool, str]:
     # Check for finite values first for ALL metrics used in score or filters
     required_metrics = [
-        "position_rmse_m", "position_max_err_m", "saturation_percentage", 
+        "position_rmse_m", "position_max_err_m", "saturation_percentage",
         "degradation_percentage", "collective_thrust_mean_N", "body_moment_norm_mean_Nm"
     ]
     for k in required_metrics:
@@ -488,19 +513,17 @@ def passes_hard_filters(metrics: Dict[str, Any], family: str) -> Tuple[bool, str
         if val is None or not np.isfinite(val):
             return False, f"Non-finite or missing metric: {k}"
 
-    valid_terminations = ["Time limit reached"]
-    if family == "waypoint":
-        valid_terminations.append("Trajectory completed")
+    from simulador_quad.metrics.success import is_control_success
 
-    if metrics["termination_reason"] not in valid_terminations:
+    if not is_control_success(metrics["termination_reason"], family=family):
         return False, f"Invalid termination: {metrics['termination_reason']}"
 
     if metrics["saturation_percentage"] > 2.0:
         return False, f"Saturation too high: {metrics['saturation_percentage']:.2f}%"
-    
+
     if metrics["degradation_percentage"] > 2.0:
         return False, f"Degradation too high: {metrics['degradation_percentage']:.2f}%"
-    
+
     limits = {
         "hold": 0.40,
         "circle": 0.75,

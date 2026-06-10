@@ -47,6 +47,19 @@ def test_hard_filters():
     assert not ok
     assert "termination" in msg.lower()
 
+    # Pass case: composite completed
+    m_comp = metrics_ok.copy()
+    m_comp["termination_reason"] = "Composite trajectory completed"
+    ok, msg = passes_hard_filters(m_comp, "composite")
+    assert ok
+
+    # Fail case: waypoint timed out before completing mission
+    m_wp_timeout = metrics_ok.copy()
+    m_wp_timeout["termination_reason"] = "Time limit reached"
+    ok, msg = passes_hard_filters(m_wp_timeout, "waypoint")
+    assert not ok
+    assert "termination" in msg.lower()
+
 def test_pid_score():
     from simulador_quad.core.frames import get_level_quaternion
     class MockState:
