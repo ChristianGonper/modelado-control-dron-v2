@@ -51,7 +51,7 @@ Para el controlador `neural` de fuerza externa:
 
 ```powershell
 # Banco de candidatos de PID externo bajo las condiciones de cada escenario
-uv run python tools\generate_outer_force_pid_bank.py --dataset data\classic_dataset\v1 --out data\outer_force_pid_bank\v1
+uv run python tools\generate_outer_force_pid_bank.py --dataset data\classic_dataset\v1 --out data\outer_force_pid_bank\v1 --workers 8
 
 # Dataset con el experto seguro seleccionado y targets de fuerza ENU
 uv run python tools\generate_outer_force_dataset.py --source-dataset data\classic_dataset\v1 --pid-bank data\outer_force_pid_bank\v1 --out data\outer_force_dataset\v1
@@ -99,10 +99,10 @@ uv run python tools\run_experimental_campaign.py --dry-run
 uv run python tools\run_experimental_campaign.py --rerun --workers 8 --device cuda
 
 # Tuneo standalone de PIDs base (diagnostica todas, retunea solo las que lo necesiten)
-uv run python tools\tune_classic_pid.py --dataset data\classic_dataset\v1 --out data\classic_dataset\v1\pids
+uv run python tools\tune_classic_pid.py --dataset data\classic_dataset\v1 --out data\classic_dataset\v1\pids --workers 8
 
 # Forzar retuneo de todas (cambia la condicion experimental)
-uv run python tools\tune_classic_pid.py --dataset data\classic_dataset\v1 --out data\classic_dataset\v1\pids --force --rmse-hold 0.20
+uv run python tools\tune_classic_pid.py --dataset data\classic_dataset\v1 --out data\classic_dataset\v1\pids --force --rmse-hold 0.20 --workers 8
 ```
 
 La campaña (11 fases numeradas tras insercion de tune) no resuelve automáticamente las dependencias al
@@ -114,7 +114,9 @@ las fases, filtros, criterio de éxito y política de reejecución.
 
 Cambiar umbrales RMSE, presupuesto de candidatos o semilla produce una campaña experimental distinta (quedan registrados en pid_tuning/summary.json y en los YAMLs de PID). Los cuatro conceptos de PID son: inicial (default_initial), base tuneado/congelado (pid_<f>_v1.yaml con source tuned o accepted), banco neural_position (variantes solo externas a partir del base), oraculo outer-force (por escenario, pos-only).
 
-Para paralelizar simulaciones independientes en CPU se puede subir `--workers` en `run_classic_dataset.py` o `run_neural_position_dataset.py`. Con una sola GPU, lo normal es entrenar/evaluar con `--device cuda` y mantener `--workers 1` en inferencia CUDA; varios workers CUDA cargan copias independientes del modelo en la misma GPU y pueden competir por memoria.
+Tras el tuneo se deben regenerar los escenarios con `generate_classic_dataset.py --overwrite`: `run_classic_dataset.py` ejecuta las ganancias embebidas en cada YAML y rechaza escenarios que no coincidan con su PID congelado.
+
+Para paralelizar simulaciones independientes en CPU se puede subir `--workers` en `tune_classic_pid.py`, `generate_outer_force_pid_bank.py`, `run_classic_dataset.py` o `run_neural_position_dataset.py`. El banco outer-force reparte escenarios fuente independientes entre procesos y evalua las cinco variantes de cada escenario en serie. Con una sola GPU, lo normal es entrenar/evaluar con `--device cuda` y mantener `--workers 1` en inferencia CUDA; varios workers CUDA cargan copias independientes del modelo en la misma GPU y pueden competir por memoria.
 
 Para ejecutar otros escenarios:
 

@@ -103,12 +103,14 @@ uv run python tools\generate_classic_dataset.py --version v1 --out data\classic_
 Tuneo reproducible de PID base (recomendado; diagnostica todas las familias sobre train, retunea solo las necesarias segun filtros duros o RMSE medio; usa busqueda progresiva determinista con semilla 1042):
 
 ```powershell
-uv run python tools\tune_classic_pid.py --dataset data\classic_dataset\v1 --out data\classic_dataset\v1\pids
+uv run python tools\tune_classic_pid.py --dataset data\classic_dataset\v1 --out data\classic_dataset\v1\pids --workers 8
 # Forzar todas + umbrales custom (produce campana distinta)
-uv run python tools\tune_classic_pid.py --dataset data\classic_dataset\v1 --out data\classic_dataset\v1\pids --force --rmse-hold 0.20
+uv run python tools\tune_classic_pid.py --dataset data\classic_dataset\v1 --out data\classic_dataset\v1\pids --force --rmse-hold 0.20 --workers 8
 ```
 
-Los PIDs resultantes (frozen) se guardan en pids/pid_<f>_v1.yaml con source, search_config, diagnostic usado y motivo. Regenerar escenarios clasicos (fase 4 de campana o generate con overwrite) reutiliza los congelados en lugar de defaults. Los bancos neuronales (neural_position y outer) se construyen a partir de los base congelados (solo variando ganancias externas). Ver plan y spec en docs/plans/ para detalles de umbrales por defecto y reproducibilidad.
+`--workers` reparte candidatos PID independientes entre procesos CPU; cada candidato conserva sus casos diagnosticos en serie y los resultados se agregan en orden determinista. Los PIDs resultantes (frozen) se guardan en pids/pid_<f>_v1.yaml con source, search_config, diagnostic usado y motivo. Regenerar escenarios clasicos (fase 4 de campana o generate con overwrite) reutiliza los congelados en lugar de defaults. Los bancos neuronales (neural_position y outer) se construyen a partir de los base congelados (solo variando ganancias externas). Ver plan y spec en docs/plans/ para detalles de umbrales por defecto y reproducibilidad.
+
+El runner ejecuta el controlador embebido en cada YAML, no carga ganancias dinamicamente desde `pids/`. Antes de ejecutar comprueba que ambos coincidan y falla con una instruccion de regeneracion si los escenarios quedaron desactualizados tras un tuneo.
 
 Ejecutar episodios:
 
@@ -136,7 +138,7 @@ El resumen clasifica cada episodio como `VALID`, `INVALID`, `MISSING` o `ERROR` 
 Construccion del dataset de imitacion de fuerza externa:
 
 ```powershell
-uv run python tools\generate_outer_force_pid_bank.py --dataset data\classic_dataset\v1 --out data\outer_force_pid_bank\v1
+uv run python tools\generate_outer_force_pid_bank.py --dataset data\classic_dataset\v1 --out data\outer_force_pid_bank\v1 --workers 8
 uv run python tools\generate_outer_force_dataset.py --source-dataset data\classic_dataset\v1 --pid-bank data\outer_force_pid_bank\v1 --out data\outer_force_dataset\v1
 uv run python tools\train_neural_controller.py --dataset data\outer_force_dataset\v1 --architecture mlp --feature-version outer_force_min_v1 --out data\neural_control\outer_force_mlp_min_v1 --device auto
 uv run python tools\evaluate_neural_controller.py --dataset data\outer_force_dataset\v1 --run data\neural_control\outer_force_mlp_min_v1 --device auto

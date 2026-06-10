@@ -55,7 +55,7 @@ El dataset clasico es la fuente de escenarios, splits y condiciones, pero no se 
 Si ningun candidato de un escenario pasa los filtros de seguridad, la generacion falla de forma explicita. No se fabrica una demostracion valida.
 
 ```powershell
-uv run python tools\generate_outer_force_pid_bank.py --dataset data\classic_dataset\v1 --out data\outer_force_pid_bank\v1
+uv run python tools\generate_outer_force_pid_bank.py --dataset data\classic_dataset\v1 --out data\outer_force_pid_bank\v1 --workers 8
 uv run python tools\generate_outer_force_dataset.py --source-dataset data\classic_dataset\v1 --pid-bank data\outer_force_pid_bank\v1 --out data\outer_force_dataset\v1
 ```
 
