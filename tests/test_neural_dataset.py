@@ -98,7 +98,7 @@ def test_sequential_dataset_loading():
 
 
 # =============================================================================
-# Tests for outer-force datasets (Phase 2) - use observation, equivalence, dims
+# Tests for outer-force datasets - use observation, equivalence, dims
 # =============================================================================
 
 def test_outer_force_min_features_dim_and_names():

@@ -100,14 +100,15 @@ Si el directorio existe, el comando falla para no sobrescribir datasets versiona
 uv run python tools\generate_classic_dataset.py --version v1 --out data\classic_dataset\v1 --overwrite
 ```
 
-Ajustar PIDs por familia:
+Tuneo reproducible de PID base (recomendado; diagnostica todas las familias sobre train, retunea solo las necesarias segun filtros duros o RMSE medio; usa busqueda progresiva determinista con semilla 1042):
 
 ```powershell
-uv run python tools\tune_classic_pid.py --family hold --out data\classic_dataset\v1\pids --version v1
-uv run python tools\tune_classic_pid.py --family circle --out data\classic_dataset\v1\pids --version v1
-uv run python tools\tune_classic_pid.py --family lissajous --out data\classic_dataset\v1\pids --version v1
-uv run python tools\tune_classic_pid.py --family waypoint --out data\classic_dataset\v1\pids --version v1
+uv run python tools\tune_classic_pid.py --dataset data\classic_dataset\v1 --out data\classic_dataset\v1\pids
+# Forzar todas + umbrales custom (produce campana distinta)
+uv run python tools\tune_classic_pid.py --dataset data\classic_dataset\v1 --out data\classic_dataset\v1\pids --force --rmse-hold 0.20
 ```
+
+Los PIDs resultantes (frozen) se guardan en pids/pid_<f>_v1.yaml con source, search_config, diagnostic usado y motivo. Regenerar escenarios clasicos (fase 4 de campana o generate con overwrite) reutiliza los congelados en lugar de defaults. Los bancos neuronales (neural_position y outer) se construyen a partir de los base congelados (solo variando ganancias externas). Ver plan y spec en docs/plans/ para detalles de umbrales por defecto y reproducibilidad.
 
 Ejecutar episodios:
 

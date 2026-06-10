@@ -1,6 +1,6 @@
 """
 Unit and integration tests for NeuralOuterForceController + clipping + legacy rejection + equivalence.
-Per spec §Testing Strategy and plan Phase 3. All frames ENU/FRD explicit, units in names.
+Per spec §Testing Strategy. All frames ENU/FRD explicit, units in names.
 """
 
 import json
@@ -50,7 +50,7 @@ def test_neural_outer_force_controller_rejects_legacy_4out(tmp_path):
 
 
 def test_neural_outer_force_rejects_bare_legacy_checkpoint_no_config(tmp_path):
-    """Bare checkpoint (no config.yaml) with 4-output weights must still be rejected clearly (P2 review fix)."""
+    """Bare checkpoint (no config.yaml) with 4-output weights must still be rejected clearly."""
     model_dir = make_dummy_outer_force_checkpoint(tmp_path, output_dim=4, controller_mode=None, target_names=None)
     # Remove the config.yaml so the inference path is exercised
     cfg_path = model_dir / "config.yaml"
@@ -154,7 +154,7 @@ def test_neural_outer_force_clipping_tilt_boundary_and_fz_preserved(tmp_path):
         assert tilt_edge <= max_tilt + 1e-6  # enforced (horiz zeroed)
     assert np.all(np.isfinite(f_edge_limited))
 
-    # Negative / downward Fz safety (P1 review finding): must never allow Fz <= 0
+    # Negative / downward Fz safety: must never allow Fz <= 0
     # (would produce inverted attitude in classic desired_force_to_attitude).
     f_down = np.array([5.0, 0.0, -20.0])
     f_down_limited, _, c_t_down = ctrl._limit_desired_force_W_N(f_down)
@@ -246,7 +246,7 @@ def test_neural_outer_force_equivalence_when_predicts_expert_force(tmp_path):
 
 
 # =============================================================================
-# Phase 4 integration: schema + loader for new neural outer contract
+# Integration: schema + loader for neural outer contract
 # =============================================================================
 
 def test_schema_accepts_neural_outer_force_contract(tmp_path):

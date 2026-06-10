@@ -174,44 +174,48 @@ En `metadata.controller.parameters` quedan registradas las ganancias efectivas d
 
 ## Campaña Experimental Automatizada
 
-`tools/run_experimental_campaign.py` orquesta el protocolo completo con rutas y
-nombres de artefactos `v1` fijados en el propio script. Las fases son:
+`tools/run_experimental_campaign.py` orquesta el protocolo completo (flujo reproducible desde clon limpio). Las fases actuales (11 tras insercion de tuneo PID base en Fase E):
 
 | Fase | Operacion principal |
 |---|---|
 | 1 | Suite de pruebas y escenarios de sanidad |
-| 2 | Generacion, ejecucion y resumen del dataset clasico |
-| 3 | Banco y seleccion del experto outer-force |
-| 4 | Banco y dataset de ganancias de posicion |
-| 5 | Entrenamiento secuencial MLP, GRU y LSTM |
-| 6 | Evaluacion supervisada |
-| 7 | Evaluacion en bucle cerrado sobre el split `test` |
-| 8 | Generacion y evaluacion de la bateria OOD |
-| 9 | Transferencia cruzada de PID clasicos |
-| 10 | Consolidacion CSV y tablas LaTeX por salida estandar |
+| 2 | Generacion inicial del dataset clasico (PIDs default_initial) |
+| 3 | Diagnostico + tuneo condicional PID base (progresivo, solo train; congela en pids/) |
+| 4 | Regeneracion de escenarios clasicos con PIDs congelados + baseline + summarize |
+| 5 | Banco y seleccion del experto outer-force (por escenario) |
+| 6 | Banco y dataset de ganancias de posicion (neural_position, solo externas) |
+| 7 | Entrenamiento secuencial MLP, GRU y LSTM |
+| 8 | Evaluacion supervisada |
+| 9 | Evaluacion en bucle cerrado sobre el split `test` |
+| 10 | Generacion y evaluacion de la bateria OOD |
+| 11 | Transferencia cruzada + Consolidacion CSV y tablas LaTeX |
 
 Las fases se pueden ejecutar como `all`, una fase (`--phase 7`), una lista
 (`--phase 1,3,5`) o un intervalo (`--phase 1-4`). No resuelve dependencias:
 ejecutar una fase aislada exige que ya existan los artefactos de las fases
-anteriores. `--workers` controla procesos CPU de simulaciones independientes;
-el entrenamiento usa `--device`. En las evaluaciones cerradas el orquestador
-usa CPU para poder paralelizar escenarios.
+anteriores (el orquestador falla con mensaje accionable si falta prerequisito).
+`--workers` controla procesos CPU; entrenamiento usa `--device`.
 
-Antes de una campaña larga se debe inspeccionar el plan efectivo:
+Tuneo configurable desde orquestador (pasa a la herramienta):
 
 ```powershell
 uv run python tools\run_experimental_campaign.py --dry-run
 
-# Preparar datasets sin entrenar ni evaluar redes
-uv run python tools\run_experimental_campaign.py --phase 1-4 --workers 8
-
-# Ejecutar toda la campaña; reutiliza resultados ya completos
-uv run python tools\run_experimental_campaign.py --workers 8 --device cuda
+# Con parametros de tune (cambiar umbrales o presupuesto = experimento distinto)
+uv run python tools\run_experimental_campaign.py --phase 1-6 --workers 8 \
+  --tune-seed 1042 --tune-initial-candidates 32 --tune-refinement-candidates 16 \
+  --tune-rmse-hold 0.25 --tune-rmse-circle 0.35
 ```
 
-`--rerun` fuerza las simulaciones ya completadas y activa `--overwrite` en los
-generadores que lo admiten. Debe usarse conscientemente porque regenera
-artefactos experimentales.
+`--rerun` fuerza simulaciones y --overwrite en generadores, y --force en tune.
+
+Diferenciacion de PIDs (documentada en artefactos):
+- PID inicial: source default_initial (generado en fase 2).
+- PID base tuneado/congelado: pid_<familia>_v1.yaml con source tuned_progressive_search o default_initial_accepted, full tuning_info, thresholds, diagnostic set usado.
+- Banco neural_position: variantes por familia, solo Kp/Kd_pos (att = base congelado), multipliers + base_pid registrados.
+- Oraculo outer-force: por escenario (pos-only), PID interno fijo del base.
+
+Cambiar umbrales, semilla o n_candidatos produce condicion experimental distinta (registrado en pid_tuning/summary.json y YAMLs). Mantener test/OOD fuera del tuneo.
 
 ### Transferencia clasica
 
