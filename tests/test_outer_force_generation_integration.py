@@ -95,8 +95,9 @@ def test_outer_force_generation_pipeline(tmp_path):
     assert bank_manifest_path.exists()
 
     bank_manifest = pd.read_csv(bank_manifest_path)
-    assert len(bank_manifest) == 3  # conservative, base, aggressive
-    assert set(bank_manifest["variant"]) == {"conservative", "base", "aggressive"}
+    # 5 variants after extension with damped options
+    assert len(bank_manifest) == 5
+    assert set(bank_manifest["variant"]) == {"conservative", "base", "aggressive", "damped", "damped2"}
     assert all(bank_manifest["source_scenario_id"] == "hold_test_01")
 
     # Verify that variant YAML files contain float lists for Kp_pos and Kd_pos
@@ -269,6 +270,7 @@ def test_outer_force_generation_waypoint_inner_loop_and_tie_breaker(tmp_path):
     # aggressive: RMSE = 0.50, effort = 10.00, passed_filter = True
     # conservative: RMSE = 0.51, effort = 10.05, passed_filter = True  (RMSE within 5% of 0.50: 0.51 <= 0.525)
     # The selector should pick aggressive, NOT conservative, because effort 10.00 < 10.05.
+    # New damped variants are set to clearly worse so they do not interfere with the tie test.
 
     bank_manifest.loc[bank_manifest["variant"] == "base", "position_rmse_m"] = 1.0
     bank_manifest.loc[bank_manifest["variant"] == "base", "control_effort"] = 100.0
@@ -281,6 +283,13 @@ def test_outer_force_generation_waypoint_inner_loop_and_tie_breaker(tmp_path):
     bank_manifest.loc[bank_manifest["variant"] == "conservative", "position_rmse_m"] = 0.51
     bank_manifest.loc[bank_manifest["variant"] == "conservative", "control_effort"] = 10.05
     bank_manifest.loc[bank_manifest["variant"] == "conservative", "passed_filter"] = True
+
+    # Make damped variants non-competitive / invalid for this tie test
+    for v in ["damped", "damped2"]:
+        if (bank_manifest["variant"] == v).any():
+            bank_manifest.loc[bank_manifest["variant"] == v, "position_rmse_m"] = 10.0
+            bank_manifest.loc[bank_manifest["variant"] == v, "control_effort"] = 999.0
+            bank_manifest.loc[bank_manifest["variant"] == v, "passed_filter"] = False
 
     bank_manifest.to_csv(bank_manifest_path, index=False)
 

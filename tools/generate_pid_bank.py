@@ -24,10 +24,15 @@ from simulador_quad.metrics.report import compute_metrics
 
 FAMILIES = ["hold", "circle", "lissajous", "waypoint"]
 PROFILES = ["P0_nominal", "P2_wind_east", "P5_combined"]
+# Variants modify ONLY external (pos) gains.
+# Internal (att) gains and limits are taken exactly from the frozen base PID of the family.
+# Extra damped variants added to cover demanding cases without touching attitude.
 VARIANTS = {
-    "conservative": {"Kp_pos": 0.8, "Kd_pos": 1.0, "Kp_att": 0.9, "Kd_att": 1.1},
-    "base": {"Kp_pos": 1.0, "Kd_pos": 1.0, "Kp_att": 1.0, "Kd_att": 1.0},
-    "aggressive": {"Kp_pos": 1.2, "Kd_pos": 1.1, "Kp_att": 1.1, "Kd_att": 1.0},
+    "conservative": {"Kp_pos": 0.8, "Kd_pos": 1.0},
+    "base": {"Kp_pos": 1.0, "Kd_pos": 1.0},
+    "aggressive": {"Kp_pos": 1.2, "Kd_pos": 1.1},
+    "damped": {"Kp_pos": 0.9, "Kd_pos": 1.4},   # higher Kd for demanding wind/noise
+    "damped2": {"Kp_pos": 1.0, "Kd_pos": 1.3},
 }
 
 
@@ -38,11 +43,14 @@ def _load_family_pid(dataset_root: str, family: str, version: str) -> dict:
 
 
 def _scale_pid(base_pid: dict, scales: dict) -> dict:
+    # Only scale Kp/Kd_pos (external). Keep att exactly as in frozen base PID.
+    kp_scale = scales.get("Kp_pos", 1.0)
+    kd_scale = scales.get("Kd_pos", 1.0)
     return {
-        "Kp_pos": (np.array(base_pid["Kp_pos"], dtype=float) * scales["Kp_pos"]).tolist(),
-        "Kd_pos": (np.array(base_pid["Kd_pos"], dtype=float) * scales["Kd_pos"]).tolist(),
-        "Kp_att": (np.array(base_pid["Kp_att"], dtype=float) * scales["Kp_att"]).tolist(),
-        "Kd_att": (np.array(base_pid["Kd_att"], dtype=float) * scales["Kd_att"]).tolist(),
+        "Kp_pos": (np.array(base_pid["Kp_pos"], dtype=float) * kp_scale).tolist(),
+        "Kd_pos": (np.array(base_pid["Kd_pos"], dtype=float) * kd_scale).tolist(),
+        "Kp_att": list(base_pid.get("Kp_att", [4.0, 4.0, 1.0])),
+        "Kd_att": list(base_pid.get("Kd_att", [1.5, 1.5, 0.5])),
     }
 
 
@@ -109,6 +117,8 @@ def main():
 
             pid_id = f"pid_{family}_bank_{variant_name}_{args.version}"
             pid_path = os.path.join(args.out, "pids", f"{pid_id}.yaml")
+            # Record origin frozen base + the pos-only multipliers (neural_position only predicts external)
+            base_origin = base_pid.get("pid_id", f"pid_{family}_{args.version}")
             with open(pid_path, "w") as f:
                 yaml.dump(
                     {
@@ -117,6 +127,8 @@ def main():
                         "version": args.version,
                         "source": "generated_pid_bank",
                         "variant": variant_name,
+                        "base_pid": base_origin,
+                        "multipliers": scales,  # only pos keys are non-1.0
                         **pid_config,
                     },
                     f,

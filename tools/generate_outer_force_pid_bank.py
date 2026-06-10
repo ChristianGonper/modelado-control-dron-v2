@@ -7,7 +7,10 @@ Produces data/outer_force_pid_bank/<ver>/ with pids/*.yaml and pid_bank_manifest
 import argparse
 import copy
 import csv
+import datetime
+import json
 import os
+import sys
 import yaml
 import numpy as np
 import pandas as pd
@@ -27,6 +30,8 @@ VARIANTS = {
     "conservative": {"Kp_pos_ratio": 0.7, "Kd_pos_ratio": 0.9},
     "base": {"Kp_pos_ratio": 1.0, "Kd_pos_ratio": 1.0},
     "aggressive": {"Kp_pos_ratio": 1.3, "Kd_pos_ratio": 1.2},
+    "damped": {"Kp_pos_ratio": 1.6, "Kd_pos_ratio": 2.0},
+    "damped2": {"Kp_pos_ratio": 1.4, "Kd_pos_ratio": 1.8},
 }
 
 
@@ -145,6 +150,7 @@ def main():
     src_manifest = pd.read_csv(source_manifest_path)
     rows = []
     seed = 92000
+    pid_writes_to_do = []  # defer writes until after per-scen safety check (atomicity for abort)
 
     for _, srow in src_manifest.iterrows():
         fam = srow.get("family", "hold")
@@ -188,9 +194,10 @@ def main():
                 }
             pid_id = f"outer_{srow['scenario_id']}_{var_name}"
             pid_path = os.path.join(args.out, "pids", f"{pid_id}.yaml")
-            with open(pid_path, "w") as f:
-                yaml.dump({**pid_config, "pid_id": pid_id, "family": fam, "variant": var_name,
-                           "source_scenario_id": srow["scenario_id"]}, f, sort_keys=False)
+            pid_dict = {**pid_config, "pid_id": pid_id, "family": fam, "variant": var_name,
+                        "source_scenario_id": srow["scenario_id"]}
+            pid_writes_to_do.append((pid_path, pid_dict))
+            # write deferred until after per-scen 0-safe check (to avoid partial pids/ on abort)
 
             scores = []
             valid = 0
@@ -292,11 +299,54 @@ def main():
             })
             seed += 10
 
-    pd.DataFrame(rows).to_csv(os.path.join(args.out, "pid_bank_manifest.csv"), index=False)
-    print(f"Outer force PID bank (per-scenario real execution) written to {args.out}")
+    # Robustness check: every scenario must have at least one safe candidate after filters.
+    # If not, abort with COMPLETE report of all tried variants + reasons; do not write (partial) manifest
+    # that would look like a valid dataset.
+    from collections import defaultdict
+    per_scen = defaultdict(list)
+    for r in rows:
+        sid = r.get("source_scenario_id", r.get("family", "unknown"))
+        per_scen[sid].append(r)
+
+    bad_scens = {}
+    for sid, variants in per_scen.items():
+        goods = [v for v in variants if v.get("passed_filter") or v.get("valid_cases", 0) > 0]
+        if not goods:
+            bad_scens[sid] = [
+                {
+                    "variant": v.get("variant"),
+                    "passed_filter": v.get("passed_filter"),
+                    "valid_cases": v.get("valid_cases", 0),
+                    "mean_score": v.get("mean_score"),
+                    "position_rmse_m": v.get("position_rmse_m"),
+                    "control_effort": v.get("control_effort"),
+                }
+                for v in variants
+            ]
+
+    if bad_scens:
+        fail_path = os.path.join(args.out, "outer_force_bank_failure_report.json")
+        failure = {
+            "status": "no_safe_candidate_for_some_scenarios",
+            "bad_scenarios": bad_scens,
+            "note": "Complete list of tried variants and filter outcomes per scenario. No pid_bank_manifest.csv was written.",
+            "date": datetime.datetime.now().isoformat(),
+        }
+        with open(fail_path, "w") as ff:
+            json.dump(failure, ff, indent=2, default=float)
+        print(f"ERROR: {len(bad_scens)} scenario(s) have zero safe outer PID candidates after all variants and hard filters.", file=sys.stderr)
+        print(f"Full report written to {fail_path}", file=sys.stderr)
+        print("Aborting without writing pid_bank_manifest.csv to avoid partial 'valid-looking' dataset.", file=sys.stderr)
+        # Do not write the manifest or any pids (atomicity: no partial on abort)
+        sys.exit(1)
+
+    # Success path: perform deferred pid yaml writes (only after all variants + safety passed for every scen)
+    for pid_path, pid_dict in pid_writes_to_do:
+        with open(pid_path, "w") as f:
+            yaml.dump(pid_dict, f, sort_keys=False)
 
     pd.DataFrame(rows).to_csv(os.path.join(args.out, "pid_bank_manifest.csv"), index=False)
-    print(f"Outer force PID bank (REAL execution + scoring) written to {args.out}")
+    print(f"Outer force PID bank (per-scenario real execution) written to {args.out}")
 
 
 if __name__ == "__main__":
