@@ -3,6 +3,7 @@ import subprocess
 import pytest
 import pandas as pd
 import shutil
+import yaml
 
 @pytest.fixture
 def tmp_dataset_dir(tmp_path):
@@ -72,3 +73,32 @@ def test_classic_dataset_workflow(tmp_dataset_dir):
         assert "Max position error" in str(hold_p0["invalid_reason"])
     assert hold_p0["is_valid"] == (hold_p0["status"] == "VALID")
     assert hold_p0["rmse_m"] > 0
+
+
+def test_classic_runner_rejects_scenarios_with_stale_pid(tmp_dataset_dir):
+    gen_cmd = [
+        "uv", "run", "python", "tools/generate_classic_dataset.py",
+        "--version", "test_v1",
+        "--out", tmp_dataset_dir,
+        "--overwrite",
+    ]
+    assert subprocess.run(gen_cmd, capture_output=True, text=True).returncode == 0
+
+    pid_path = os.path.join(tmp_dataset_dir, "pids", "pid_hold_test_v1.yaml")
+    with open(pid_path, encoding="utf-8") as f:
+        pid_data = yaml.safe_load(f)
+    pid_data["Kp_pos"] = [9.0, 9.0, 9.0]
+    with open(pid_path, "w", encoding="utf-8") as f:
+        yaml.safe_dump(pid_data, f, sort_keys=False)
+
+    run_cmd = [
+        "uv", "run", "python", "tools/run_classic_dataset.py",
+        "--dataset", tmp_dataset_dir,
+        "--family", "hold",
+        "--limit", "1",
+        "--no-visualization",
+    ]
+    result = subprocess.run(run_cmd, capture_output=True, text=True)
+    assert result.returncode == 1
+    assert "do not contain their frozen PID gains" in result.stderr
+    assert "generate_classic_dataset.py" in result.stderr

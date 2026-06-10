@@ -1,8 +1,39 @@
 import argparse
 import os
+import sys
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import pandas as pd
+import yaml
 from simulador_quad.app import run_simulation
+
+
+PID_FIELDS = ("Kp_pos", "Kd_pos", "Kp_att", "Kd_att", "max_body_moments_Nm")
+
+
+def _find_stale_scenarios(rows, dataset):
+    """Return scenarios whose embedded controller differs from their frozen PID."""
+    pid_cache = {}
+    stale = []
+    for row in rows:
+        if not row.get("pid_id"):
+            continue
+        pid_id = row["pid_id"]
+        if pid_id not in pid_cache:
+            pid_path = os.path.join(dataset, "pids", f"{pid_id}.yaml")
+            with open(pid_path, encoding="utf-8") as f:
+                pid_data = yaml.safe_load(f) or {}
+            pid_cache[pid_id] = {key: pid_data[key] for key in PID_FIELDS if key in pid_data}
+
+        scenario_path = os.path.join(dataset, row["scenario_path"])
+        if not os.path.exists(scenario_path):
+            continue
+        with open(scenario_path, encoding="utf-8") as f:
+            scenario = yaml.safe_load(f) or {}
+        controller = scenario.get("controller", {})
+        expected = pid_cache[pid_id]
+        if any(controller.get(key) != value for key, value in expected.items()):
+            stale.append(row["scenario_id"])
+    return stale
 
 
 def _run_row(row, dataset, no_visualization, rerun):
@@ -68,6 +99,25 @@ def main():
     report = []
 
     rows = [row.to_dict() for _, row in df.iterrows()]
+    try:
+        stale_scenarios = _find_stale_scenarios(rows, args.dataset)
+    except Exception as exc:
+        print(f"Error validating scenario PID consistency: {exc}", file=sys.stderr)
+        sys.exit(1)
+    if stale_scenarios:
+        examples = ", ".join(stale_scenarios[:3])
+        print(
+            f"Error: {len(stale_scenarios)} scenario YAML(s) do not contain their frozen PID gains "
+            f"(examples: {examples}).",
+            file=sys.stderr,
+        )
+        print(
+            "Regenerate scenarios before running: "
+            f"uv run python tools/generate_classic_dataset.py --version v1 --out {args.dataset} --overwrite",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
     if args.workers == 1:
         for index, row in enumerate(rows, start=1):
             print(f"[{index}/{total}] Running {row['scenario_id']}...")
@@ -106,7 +156,6 @@ def main():
     # Exit with error if any scenario failed in this run
     if any(r["status"].startswith("FAILED") for r in report):
         print("Error: One or more simulation runs failed.")
-        import sys
         sys.exit(1)
 
 if __name__ == "__main__":
