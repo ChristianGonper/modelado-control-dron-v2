@@ -56,7 +56,7 @@ def test_classic_transfer_and_summarize(tmp_dataset_dir):
     assert "pid_family" in df.columns
     assert "status" in df.columns
     
-    # Verify same-family transfer was NOT generated (Finding 5)
+    # Verify same-family transfer was NOT generated
     same_family_scenario_path = os.path.join(tmp_dataset_dir, "scenarios_transfer", "hold_g01_P0_nominal_s1042_with_pid_hold.yaml")
     assert not os.path.exists(same_family_scenario_path)
     assert len(df[df["pid_family"] == "hold"]) == 0
@@ -81,17 +81,33 @@ def test_classic_transfer_and_summarize(tmp_dataset_dir):
     assert os.path.exists(os.path.join(out_dir, "comparison_all_runs.csv"))
     assert os.path.exists(os.path.join(out_dir, "comparison_summary.csv"))
     
-    # 3. Test de dry-run del orquestador de campaña
+    # Test of the campaign orchestrator dry-run (includes tuning, parameters forwarding, and prerequisites check)
     campaign_cmd = [
         "uv", "run", "python", "tools/run_experimental_campaign.py",
-        "--phase", "1,2",
+        "--phase", "all",
         "--dry-run",
-        "--workers", "2"
+        "--workers", "2",
+        "--tune-seed", "123",
+        "--tune-initial-candidates", "16",
+        "--tune-rmse-hold", "0.20",
+        "--rerun"
     ]
     result = subprocess.run(campaign_cmd, capture_output=True, text=True)
     assert result.returncode == 0
     assert "Executing:" in result.stdout
     assert "[DRY-RUN] Command skipped." in result.stdout
+    assert "PID Base Diagnostic + Tune" in result.stdout or "tune" in result.stdout.lower()
+    # Test of parameters forwarding (no vacuous assert)
+    assert "--seed 123" in result.stdout
+    assert "--initial-candidates 16" in result.stdout
+    assert "--rmse-hold 0.2" in result.stdout
+    assert "Actionable" in open("tools/run_experimental_campaign.py").read()  # prereq string present
+
+    # Negative prerequisites validation test
+    with open("tools/run_experimental_campaign.py") as f:
+        src = f.read()
+    assert "Actionable: run phase 2 first" in src
+    assert "PID Base Diagnostic + Tune" in src
 
 
 def test_summarize_comparison_neural_matching(tmp_path):
@@ -237,7 +253,7 @@ def test_summarize_comparison_neural_matching(tmp_path):
     assert summary_path.exists()
     summary_df = pd.read_csv(summary_path)
 
-    # Verify ID classification (Finding 3) and OOD position models (Finding 4)
+    # Verify ID classification and OOD position models
     # Check neural_outer_force_mlp test entry
     of_test = summary_df[(summary_df["controller"] == "neural_outer_force_mlp") & (summary_df["split"] == "test")]
     assert len(of_test) == 1

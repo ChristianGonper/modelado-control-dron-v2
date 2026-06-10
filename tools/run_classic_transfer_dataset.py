@@ -177,7 +177,7 @@ def main():
     report_df.to_csv(report_path, index=False)
     print(f"Transfer run report saved to {report_path}")
 
-    # Exit with error if any scenario failed in this run (Finding 1)
+    # Exit with error if any scenario failed in this run
     if any(r["status"].startswith("FAILED") for r in report):
         print("Error: One or more simulation runs failed.")
         import sys
