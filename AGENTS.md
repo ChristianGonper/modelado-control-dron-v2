@@ -10,7 +10,7 @@ Este repositorio contiene el TFG de un simulador 6DOF de cuadricóptero para com
 - `docs/02_requisitos_ingenieria_simulador.md`: requisitos fisicos y de ingenieria del simulador.
 - `docs/03_criterios_ingenieria_software.md`: criterios de software cientifico, pruebas y reproducibilidad.
 - `docs/simulador/`: documentacion viva del estado actual implementado.
-- `TFG_Memoria/`: memoria LaTeX del TFG y reglas locales de redaccion.
+- `TFG_Memoria/`: memoria LaTeX del TFG.
 - `README.md`: entrada principal del repositorio.
 
 Si cambia el comportamiento, el alcance, los comandos, los escenarios, la telemetria, las metricas o la arquitectura del simulador, actualiza tambien `README.md` y los documentos afectados en `docs/simulador/`.

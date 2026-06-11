@@ -435,7 +435,8 @@ Actualizar:
 
 - `docs/reviews/README.md` para senalar la auditoria mas reciente y marcar las
   antiguas como historicas;
-- `TFG_Memoria/AGENTS.md` para eliminar la referencia rota al plan activo;
+- `.agents/skills/redactar-latex-academico/` para mantener criterios de
+  redaccion academica y LaTeX reutilizables;
 - `README.md` y `docs/simulador/` para reflejar el artefacto comparativo
   canonico y el alcance final;
 - `docs/simulador/trazabilidad.md` para distinguir `tooling implementado` de
@@ -588,7 +589,7 @@ implementada, evaluada y carente de resultados.
 1. Corregir la presentacion de `rmse_std`.
 2. Mejorar y documentar semillas de entrenamiento.
 3. Actualizar README, documentacion viva, trazabilidad e indice de reviews.
-4. Corregir `TFG_Memoria/AGENTS.md` y `pyproject.toml`.
+4. Alinear la skill de redaccion academica y `pyproject.toml`.
 5. Actualizar la memoria solo con conclusiones respaldadas por la evidencia
    final.
 
@@ -679,7 +680,8 @@ artefactos y alcance reales.
   - Aceptacion: reviews, reglas de memoria, trazabilidad y descripcion del
     proyecto reflejan el estado actual.
   - Verificacion: busqueda de referencias rotas y contradicciones conocidas.
-  - Archivos: `docs/reviews/README.md`, `TFG_Memoria/AGENTS.md`,
+  - Archivos: `docs/reviews/README.md`,
+    `.agents/skills/redactar-latex-academico/`,
     `pyproject.toml` y documentos vivos afectados.
 
 - [ ] T13. Verificacion integral.
