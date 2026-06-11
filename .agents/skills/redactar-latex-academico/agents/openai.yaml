@@ -1,0 +1,4 @@
+interface:
+  display_name: "Redactar LaTeX academico"
+  short_description: "Redacta y revisa documentos academicos LaTeX"
+  default_prompt: "Usa $redactar-latex-academico para redactar o revisar esta parte del documento."

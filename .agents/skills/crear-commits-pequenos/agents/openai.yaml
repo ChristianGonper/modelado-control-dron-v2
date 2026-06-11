@@ -1,0 +1,4 @@
+interface:
+  display_name: "Crear commits pequenos"
+  short_description: "Divide y crea commits pequenos y expresivos"
+  default_prompt: "Usa $crear-commits-pequenos para revisar los cambios y crear commits pequenos."
