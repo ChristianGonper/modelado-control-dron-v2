@@ -1,6 +1,7 @@
 import argparse
 import os
 import json
+import re
 import numpy as np
 import pandas as pd
 import yaml
@@ -10,6 +11,9 @@ from simulador_quad.metrics.success import (
     resolve_trajectory_type,
     trajectory_type_from_config,
 )
+
+PID_GAIN_FIELDS = ("Kp_pos", "Kd_pos", "Kp_att", "Kd_att")
+FROZEN_PID_FAMILIES = ("hold", "circle", "lissajous", "waypoint")
 
 
 def load_metrics(metrics_path):
@@ -76,12 +80,111 @@ def build_record(
         "coverage_group": coverage_group_for_split(split),
         "position_rmse_m": metrics.get("position_rmse_m"),
         "position_max_err_m": metrics.get("position_max_err_m"),
+        "collective_thrust_mean_N": metrics.get("collective_thrust_mean_N"),
+        "body_moment_norm_mean_Nm": metrics.get("body_moment_norm_mean_Nm"),
+        "control_effort_heuristic_mean": metrics.get(
+            "control_effort_heuristic_mean",
+            metrics.get("control_effort_mean"),
+        ),
         "saturation_percentage": metrics.get("saturation_percentage"),
         "degradation_percentage": metrics.get("degradation_percentage"),
         "force_norm_clip_percentage": metrics.get("force_norm_clip_percentage", 0.0),
         "force_tilt_clip_percentage": metrics.get("force_tilt_clip_percentage", 0.0),
         "success": float(mission_success),
     }
+
+
+def build_run_record(
+    *,
+    scenario_id: str,
+    family: str,
+    split: str,
+    controller: str,
+    metrics: dict,
+    trajectory_type: str | None = None,
+) -> dict:
+    """Build a comparison record while preserving the current success semantics."""
+    return build_record(
+        scenario_id=scenario_id,
+        family=family,
+        split=split,
+        controller=controller,
+        metrics=metrics,
+        trajectory_type=trajectory_type or resolve_trajectory_type(family=family),
+    )
+
+
+def _is_missing(value) -> bool:
+    return value is None or bool(pd.isna(value))
+
+
+def _controller_gain_signature(controller_cfg: dict) -> dict | None:
+    if not isinstance(controller_cfg, dict):
+        return None
+    gains = {field: controller_cfg[field] for field in PID_GAIN_FIELDS if field in controller_cfg}
+    return gains or None
+
+
+def _load_frozen_pid_signatures(classic_dataset_path: str) -> dict[str, dict]:
+    signatures: dict[str, dict] = {}
+    pids_dir = os.path.join(classic_dataset_path, "pids")
+    for family in FROZEN_PID_FAMILIES:
+        pid_path = os.path.join(pids_dir, f"pid_{family}_v1.yaml")
+        if not os.path.exists(pid_path):
+            continue
+        with open(pid_path, encoding="utf-8") as handle:
+            pid_data = yaml.safe_load(handle) or {}
+        signature = _controller_gain_signature(pid_data)
+        if signature:
+            signatures[family] = signature
+    return signatures
+
+
+def _match_pid_family(controller_cfg: dict, frozen_signatures: dict[str, dict]) -> str | None:
+    signature = _controller_gain_signature(controller_cfg)
+    if not signature:
+        return None
+    for family, frozen_signature in frozen_signatures.items():
+        if all(signature.get(field) == frozen_signature.get(field) for field in frozen_signature):
+            return family
+    return None
+
+
+def resolve_classic_pid_family(row, metrics, classic_dataset_path: str, dataset_root: str) -> str | None:
+    """Resolve the frozen PID family from manifest, report, metrics or scenario metadata."""
+    pid_family = row.get("pid_family")
+    if not _is_missing(pid_family):
+        return str(pid_family)
+
+    pid_id = row.get("pid_id")
+    if not _is_missing(pid_id):
+        match = re.match(r"pid_([a-z]+)_", str(pid_id))
+        if match:
+            return match.group(1)
+
+    frozen_signatures = _load_frozen_pid_signatures(classic_dataset_path)
+    metadata = metrics.get("metadata", {}) if metrics else {}
+    controller_cfg = metadata.get("config", {}).get("controller")
+    if not isinstance(controller_cfg, dict):
+        controller_cfg = metadata.get("controller", {}).get("parameters", {}).get("config", {})
+    matched = _match_pid_family(controller_cfg, frozen_signatures)
+    if matched:
+        return matched
+
+    scenario_path = row.get("scenario_path")
+    if not _is_missing(scenario_path):
+        full_path = os.path.join(dataset_root, str(scenario_path))
+        if os.path.exists(full_path):
+            with open(full_path, encoding="utf-8") as handle:
+                scenario = yaml.safe_load(handle) or {}
+            return _match_pid_family(scenario.get("controller", {}), frozen_signatures)
+    return None
+
+
+def _format_rmse_dispersion(mean: float, std: float, count: float) -> str:
+    if count > 1 and not np.isnan(std):
+        return f"{mean:.3f} ({std:.3f})"
+    return f"{mean:.3f}"
 
 
 def main():
@@ -356,6 +459,42 @@ def main():
                                 representative_record = transfer_record.copy()
                                 representative_record["controller"] = "classic_pid_representative"
                                 records.append(representative_record)
+            else:
+                # Fall back to direct classic OOD runs when no transfer matrix is available.
+                for _, row in ood_df.iterrows():
+                    scenario_id = row["scenario_id"]
+                    family = row["family"]
+                    res_dir = os.path.join(args.dataset_ood, row["result_dir"])
+                    metrics = load_metrics(os.path.join(res_dir, "metrics.json"))
+                    if not metrics:
+                        continue
+                    pid_family = resolve_classic_pid_family(
+                        row,
+                        metrics,
+                        args.dataset_classic,
+                        args.dataset_ood,
+                    )
+                    if pid_family is None:
+                        print(
+                            f"Warning: could not resolve PID family for OOD classic run "
+                            f"{scenario_id}; skipping row."
+                        )
+                        continue
+                    trajectory_type = load_trajectory_type(
+                        args.dataset_ood,
+                        row.get("scenario_path"),
+                        family,
+                    )
+                    records.append(
+                        build_record(
+                            scenario_id=scenario_id,
+                            family=family,
+                            split="ood",
+                            controller=f"classic_pid_{pid_family}",
+                            metrics=metrics,
+                            trajectory_type=trajectory_type,
+                        )
+                    )
 
             # Neuronales sobre OOD
             for arch in ["mlp", "gru", "lstm"]:
@@ -497,14 +636,15 @@ def main():
     if not test_df.empty:
         print("\\begin{table}[h!]")
         print("  \\centering")
-        print("  \\caption{Comparativa de controladores en trayectoria de Test (In-Distribution). La columna Desv. Escen. representa la dispersión del rendimiento entre escenarios del grupo, no incertidumbre temporal.}")
+        print("  \\caption{Comparativa de controladores en trayectoria de Test (In-Distribution). Entre paréntesis, la desviación representa la dispersión del RMSE entre escenarios del grupo, no incertidumbre temporal.}")
         print("  \\label{tab:comparativa_test}")
-        print("  \\begin{tabular}{llccccccc}")
+        print("  \\begin{tabular}{llcccccc}")
         print("    \\hline")
-        print("    \\textbf{Controlador} & \\textbf{Trayectoria} & \\textbf{Éxito (\\%)} & \\textbf{RMSE Medio (m)} & \\textbf{Desv. Escen. (m)} & \\textbf{Máx. Err. (m)} & \\textbf{Saturación (\\%)} & \\textbf{Norm Clip (\\%)} & \\textbf{Tilt Clip (\\%)} \\\\")
+        print("    \\textbf{Controlador} & \\textbf{Trayectoria} & \\textbf{Éxito (\\%)} & \\textbf{RMSE medio [m] (disp. escenarios)} & \\textbf{Máx. Err. (m)} & \\textbf{Saturación (\\%)} & \\textbf{Norm Clip (\\%)} & \\textbf{Tilt Clip (\\%)} \\\\")
         print("    \\hline")
         for _, r in test_df.sort_values(by=["controller", "family"]).iterrows():
-            print(f"    {r['controller'].replace('_', '\\_')} & {r['family']} & {r['success_rate']:.1f}\\% & {r['rmse_mean']:.3f} & {r['rmse_std']:.3f} & {r['rmse_max']:.3f} & {r['saturation_mean']:.1f}\\% & {r['clip_norm_mean']:.1f}\\% & {r['clip_tilt_mean']:.1f}\\% \\\\")
+            rmse_cell = _format_rmse_dispersion(r["rmse_mean"], r["rmse_std"], r["count"])
+            print(f"    {r['controller'].replace('_', '\\_')} & {r['family']} & {r['success_rate']:.1f}\\% & {rmse_cell} & {r['rmse_max']:.3f} & {r['saturation_mean']:.1f}\\% & {r['clip_norm_mean']:.1f}\\% & {r['clip_tilt_mean']:.1f}\\% \\\\")
         print("    \\hline")
         print("  \\end{tabular}")
         print("\\end{table}")
@@ -516,14 +656,15 @@ def main():
     if not ood_df.empty:
         print("\\begin{table}[h!]")
         print("  \\centering")
-        print("  \\caption{Comparativa de controladores bajo escenarios OOD (Out-of-Distribution). La columna Desv. Escen. representa la dispersión del rendimiento entre escenarios del grupo, no incertidumbre temporal.}")
+        print("  \\caption{Comparativa de controladores bajo escenarios OOD (Out-of-Distribution). Entre paréntesis, la desviación representa la dispersión del RMSE entre escenarios del grupo, no incertidumbre temporal.}")
         print("  \\label{tab:comparativa_ood}")
-        print("  \\begin{tabular}{llccccccc}")
+        print("  \\begin{tabular}{llcccccc}")
         print("    \\hline")
-        print("    \\textbf{Controlador} & \\textbf{Trayectoria} & \\textbf{Éxito (\\%)} & \\textbf{RMSE Medio (m)} & \\textbf{Desv. Escen. (m)} & \\textbf{Máx. Err. (m)} & \\textbf{Saturación (\\%)} & \\textbf{Norm Clip (\\%)} & \\textbf{Tilt Clip (\\%)} \\\\")
+        print("    \\textbf{Controlador} & \\textbf{Trayectoria} & \\textbf{Éxito (\\%)} & \\textbf{RMSE medio [m] (disp. escenarios)} & \\textbf{Máx. Err. (m)} & \\textbf{Saturación (\\%)} & \\textbf{Norm Clip (\\%)} & \\textbf{Tilt Clip (\\%)} \\\\")
         print("    \\hline")
         for _, r in ood_df.sort_values(by=["controller", "family"]).iterrows():
-            print(f"    {r['controller'].replace('_', '\\_')} & {r['family']} & {r['success_rate']:.1f}\\% & {r['rmse_mean']:.3f} & {r['rmse_std']:.3f} & {r['rmse_max']:.3f} & {r['saturation_mean']:.1f}\\% & {r['clip_norm_mean']:.1f}\\% & {r['clip_tilt_mean']:.1f}\\% \\\\")
+            rmse_cell = _format_rmse_dispersion(r["rmse_mean"], r["rmse_std"], r["count"])
+            print(f"    {r['controller'].replace('_', '\\_')} & {r['family']} & {r['success_rate']:.1f}\\% & {rmse_cell} & {r['rmse_max']:.3f} & {r['saturation_mean']:.1f}\\% & {r['clip_norm_mean']:.1f}\\% & {r['clip_tilt_mean']:.1f}\\% \\\\")
         print("    \\hline")
         print("  \\end{tabular}")
         print("\\end{table}")
