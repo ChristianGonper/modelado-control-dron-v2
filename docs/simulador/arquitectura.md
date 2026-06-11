@@ -38,7 +38,10 @@ El simulador esta organizado como codigo cientifico simple. Las carpetas separan
 - `runner.py`: orquestacion multi-rate, ZOH, telemetria y terminacion.
 - `telemetry/export.py`: exportacion JSON.
 - `metrics/report.py`: metricas agregadas con magnitudes fisicas separadas por unidades.
-- `visualization/plots.py`: figuras PNG a partir de `telemetry.json`.
+- `visualization/plots.py`: figuras por episodio a partir de `telemetry.json`.
+- `visualization/comparison.py`: figuras comparativas C1–C7 desde `comparison_all_runs.csv`.
+- `visualization/style.py`: paleta, estilos por controlador y perfiles `diagnostic`/`report`.
+- `visualization/export.py`: exportación PNG/PDF a 300 dpi.
 - `visualization/three_d.py`: visor interactivo HTML 3D basado en Plotly.
 - `tools/generate_classic_dataset.py`: genera estructura `data/classic_dataset/<version>/` con `manifest.csv`, `pids/` y escenarios YAML.
 - `tools/tune_classic_pid.py`: ajusta un PID clasico por familia en el perfil nominal con drag y actuadores.

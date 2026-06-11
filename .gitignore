@@ -10,6 +10,7 @@ __pycache__/
 
 # Project specific
 .tmp_cli_test/
+results/
 
 # OS
 .DS_Store

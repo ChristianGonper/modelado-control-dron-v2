@@ -114,14 +114,14 @@ Cada escenario usado en la memoria debe conservar:
   - `termination_reason`;
   - `metadata`.
 - `telemetry.json`.
-- Figuras estandar:
-  - `trajectory_xy.png`
-  - `position_time.png`
-  - `attitude_time.png`
-  - `angular_velocity_time.png`
-  - `tracking_error.png`
-  - `rotor_speeds.png`
-  - `control_effort.png`
+- Figuras estandar por episodio (`plot` o `run` con visualizacion):
+  - `trajectory_xy`, `position_time`, `attitude_time`, `angular_velocity_time`, `tracking_error`, `rotor_speeds`, `control_effort`
+  - Con `--profile report --formats png pdf`, las mismas figuras se exportan en PNG y PDF a 300 dpi.
+- Figuras comparativas de campaña (`plot-comparison` sobre `comparison_all_runs.csv`):
+  - `c1_rmse_comparison`, `c2_success_rate`, `c3_generalization_ood`, `c4_pid_transfer`, `c5_tracking_vs_effort`, `c6_saturation_clipping`, `c7_error_distribution`
+  - La CLI lista también las figuras omitidas cuando faltan datos (p. ej. C3 sin split `ood`).
+  - C4 y C5 usan solo `split=test`. C5 separa empuje colectivo [N] y norma de momentos [N·m]; no usa el índice heurístico `|T| + ||τ||`.
+  - Las filas `classic_family_pid` ambiguas se omiten con advertencia; no se infiere el PID desde la familia de trayectoria.
 - Conclusion tecnica breve:
   - causa de terminacion;
   - error de seguimiento;

@@ -16,7 +16,8 @@ Implementado:
 - Mixer de cuadricóptero, actuadores con saturación, retardo puro opcional y lag de primer orden sobre `omega`.
 - Drag lineal simplificado, viento constante y ruido gaussiano de observación en posición/velocidad.
 - Referencias analíticas (`hold`, `circle`, `lissajous`, `lemniscate`), misión secuencial state-aware con parada en cada punto (`waypoint`), y **trayectorias compuestas** (`composite`) que permiten encadenar secuencias con transiciones lineales automáticas.
-- Escenarios YAML, telemetría JSON, métricas JSON con unidades físicas explícitas, figuras PNG y visor 3D HTML.
+- Escenarios YAML, telemetría JSON, métricas JSON con unidades físicas explícitas, figuras PNG/PDF (300 dpi) y visor 3D HTML.
+- Postproceso visual con perfiles `diagnostic`/`report`, figuras por episodio (`plot`) y comparativas agregadas de campaña (`plot-comparison`).
 - Tooling para generar el dataset `outer_force`, batería OOD (`generate_ood_battery.py`), batch cerrado (`run_neural_outer_force_dataset.py`), tabla comparativa (`build_comparison_closed_loop.py`) y entrenar/evaluar modelos mediante scripts en `tools/`.
 - Control neuronal alternativo en el lazo externo de posición (`neural_position`), donde la red predice ganancias variables y el lazo interno clásico estabiliza actitud.
 
@@ -37,6 +38,8 @@ uv sync
 uv run pytest
 uv run simulador-quad run scenarios\hover_clean.yaml --no-visualization
 uv run simulador-quad plot results\hover_clean\telemetry.json --metrics results\hover_clean\metrics.json --out results\hover_clean\figures
+uv run simulador-quad plot results\hover_clean\telemetry.json --metrics results\hover_clean\metrics.json --out results\hover_clean\figures_report --profile report --formats png pdf
+uv run simulador-quad plot-comparison results\comparison_all_runs.csv --out results\figures_comparison --formats png pdf
 ```
 
 Para generar y ejecutar el dataset clasico `v1`:
@@ -109,8 +112,9 @@ La campaña (11 fases numeradas tras insercion de tune) no resuelve automáticam
 ejecutar fases aisladas. Usar --phase 1-4 para preparar baseline congelado. La transferencia genera `scenarios_transfer/`,
 `results_transfer/` y `run_report_classic_transfer.csv`; el resumen genera
 `results\comparison_all_runs.csv` y `results\comparison_summary.csv`, mientras
-que las tablas LaTeX se imprimen por salida estándar. La guía de uso documenta
-las fases, filtros, criterio de éxito y política de reejecución.
+que las tablas LaTeX se imprimen por salida estándar. Las figuras comparativas
+C1–C7 se generan con `plot-comparison` a partir del CSV agregado. La guía de uso
+documenta las fases, filtros, criterio de éxito y política de reejecución.
 
 Cambiar umbrales RMSE, presupuesto de candidatos o semilla produce una campaña experimental distinta (quedan registrados en pid_tuning/summary.json y en los YAMLs de PID). Los cuatro conceptos de PID son: inicial (default_initial), base tuneado/congelado (pid_<f>_v1.yaml con source tuned o accepted), banco neural_position (variantes solo externas a partir del base), oraculo outer-force (por escenario, pos-only).
 

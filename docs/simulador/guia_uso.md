@@ -32,7 +32,7 @@ Cada escenario define su directorio de salida en `output.dir`. Por defecto, el s
 - `telemetry.json`: historia temporal de estado, observación, referencia, comando y rotores.
 - `metrics.json`: resumen numérico de seguimiento, esfuerzo de control, saturación y terminación.
 - `visualization_3d.html`: visor interactivo 3D de la trayectoria (basado en Plotly).
-- `figures/`: subdirectorio con figuras PNG estándar (`trajectory_xy.png`, `position_time.png`, etc.).
+- `figures/`: subdirectorio con figuras estándar (`trajectory_xy.png`, `position_time.png`, etc.) en PNG y, con perfil `report`, también en PDF a 300 dpi.
 
 Si se desea omitir la generación de gráficos (por ejemplo, para ejecuciones masivas), se puede usar la bandera:
 
@@ -46,13 +46,25 @@ En trayectorias finitas `line` / `waypoint`, `"Trajectory completed"` es una ter
 
 Si el YAML contiene parametros fisicos invalidos, el simulador falla antes de ejecutar. El mensaje indica la ruta del campo, por ejemplo `Invalid vehicle.mass_kg: expected positive kg value, got -1.0`.
 
-El comando `plot` sigue estando disponible para regenerar figuras desde un JSON existente:
+El comando `plot` regenera figuras desde un `telemetry.json` existente:
 
 ```powershell
 uv run simulador-quad plot results\hover_clean\telemetry.json --metrics results\hover_clean\metrics.json --out results\hover_clean\figures
+uv run simulador-quad plot results\hover_clean\telemetry.json --metrics results\hover_clean\metrics.json --out results\hover_clean\figures_report --profile report --formats png pdf
 ```
 
-El argumento `--metrics` es opcional, pero permite anotar información como el RMSE.
+- `--metrics`: opcional; permite anotar información como el RMSE en perfiles de diagnóstico.
+- `--profile`: `diagnostic` (por defecto) o `report` (tipografía y tamaño para memoria).
+- `--formats`: lista de formatos (`png`, `pdf`). Si se omite, `report` exporta PNG y PDF; `diagnostic` solo PNG.
+
+Para figuras agregadas de campaña (C1–C7) a partir de `comparison_all_runs.csv`:
+
+```powershell
+uv run python tools\summarize_comparison.py --out-dir results
+uv run simulador-quad plot-comparison results\comparison_all_runs.csv --out results\figures_comparison --formats png pdf
+```
+
+Las figuras comparativas distinguen cada PID congelado por familia (`classic_pid_hold`, `classic_pid_circle`, etc.), incluyen evaluaciones cruzadas con la misma identidad de PID y reportan qué figuras se omitieron cuando faltan splits o columnas. C1–C7 son condicionales: por ejemplo, C3 requiere filas `test` y `ood`, y C5 requiere `collective_thrust_mean_N` y `body_moment_norm_mean_Nm`. C5 se publica como dos paneles con eje Y compartido: RMSE frente a empuje colectivo medio [N] y RMSE frente a norma media de momentos [N·m].
 
 ## Generar dataset clasico
 
@@ -127,13 +139,17 @@ Las metricas supervisadas miden error de fuerza de imitacion. En ejecucion cerra
 
 Figuras generadas (tanto en `run` automático como en `plot` manual):
 
-- `trajectory_xy.png`: trayectoria real y referencia en el plano horizontal ENU.
-- `position_time.png`: componentes `X_W`, `Y_W`, `Z_W` frente al tiempo.
-- `attitude_time.png`: roll, pitch y yaw en grados, calculados desde `orientation_WB` con el convenio ENU/FRD del simulador.
-- `angular_velocity_time.png`: componentes `p`, `q`, `r` de `angular_velocity_B_rad_s` en `rad/s`.
-- `tracking_error.png`: norma del error de posición `||p_ref - p||`.
-- `rotor_speeds.png`: velocidades de rotor aplicadas en `rad/s`.
-- `control_effort.png`: empuje colectivo, momentos de cuerpo y un indice heuristico agregado para diagnostico visual.
+- `trajectory_xy`: trayectoria real y referencia en el plano horizontal ENU.
+- `trajectory_3d_static`: trayectoria 3D estatica en mundo ENU.
+- `position_time`: componentes `X_W`, `Y_W`, `Z_W` frente al tiempo.
+- `attitude_time`: roll, pitch y yaw en grados, calculados desde `orientation_WB` con el convenio ENU/FRD del simulador.
+- `angular_velocity_time`: componentes `p`, `q`, `r` de `angular_velocity_B_rad_s` en `rad/s`.
+- `tracking_error`: norma del error de posicion `||p_ref - p||` sin umbrales inventados.
+- `rotor_speeds`: velocidades de rotor aplicadas en `rad/s`.
+- `control_effort`: empuje colectivo y momentos de cuerpo.
+- `neural_outer_force` y `perturbation_response`: solo si la telemetria incluye fuerza deseada y/o viento.
+
+Con `--profile report --formats png pdf`, cada figura base se exporta en PNG y PDF a 300 dpi.
 
 ### Visor 3D Interactivo
 
