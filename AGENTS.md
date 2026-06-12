@@ -13,6 +13,8 @@ Este repositorio contiene el TFG de un simulador 6DOF de cuadricóptero para com
 - `TFG_Memoria/`: memoria LaTeX del TFG.
 - `README.md`: entrada principal del repositorio.
 
+`docs/html/` es una instantánea didáctica adicional identificada por su huella Git. No es fuente de verdad, no sustituye al Markdown y solo se actualiza cuando el usuario lo solicita.
+
 Si cambia el comportamiento, el alcance, los comandos, los escenarios, la telemetria, las metricas o la arquitectura del simulador, actualiza tambien `README.md` y los documentos afectados en `docs/simulador/`.
 Si se cambia la narrativa, estructura, bibliografia, figuras o resultados usados en la memoria, actualiza tambien `TFG_Memoria/` y deja claro si el cambio procede de evidencia experimental o de redaccion pendiente.
 
