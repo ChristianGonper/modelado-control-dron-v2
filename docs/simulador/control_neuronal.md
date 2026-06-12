@@ -38,7 +38,7 @@ El lazo interno no se aprende. Utiliza las ganancias de actitud y limites del co
 - error de velocidad ENU `[3]`;
 - aceleracion de referencia ENU `[3]`.
 
-`outer_force_full_v1` tiene 31 entradas e incorpora estado observado, referencia, errores y representacion continua del yaw para estudiar arquitecturas de mayor capacidad.
+`outer_force_full_v1` tiene 31 entradas e incorpora estado observado, referencia, errores y representación continua del yaw. Esta variante está implementada, pero queda fuera del alcance experimental principal por ahora.
 
 El target `desired_force_W_v1` se calcula con el mismo metodo del controlador clasico, `compute_desired_force_W(...)`, aplicado a la observacion y a las ganancias del experto seleccionado. La normalizacion de entradas y targets se ajusta exclusivamente con el split `train`.
 
@@ -68,7 +68,7 @@ uv run python tools\train_neural_controller.py --dataset data\outer_force_datase
 uv run python tools\evaluate_neural_controller.py --dataset data\outer_force_dataset\v1 --run data\neural_control\outer_force_mlp_min_v1 --device auto
 ```
 
-El script tambien soporta `gru` y `lstm`, y `outer_force_full_v1` permite comparar un vector de entrada mas completo. El entrenamiento produce `config.yaml`, `normalization.json` y checkpoints. La evaluacion outer-force escribe metricas de error de fuerza por split bajo `metrics/*_force_metrics.json`.
+El script también soporta `gru` y `lstm`, que forman parte de la comparación principal con control de fuerza. El entrenamiento produce `config.yaml`, `normalization.json` y checkpoints. La evaluación outer-force escribe métricas de error de fuerza por split bajo `metrics/*_force_metrics.json`.
 
 Estas metricas miden fidelidad de imitacion del experto, no seguimiento de trayectoria. La comparacion de control exige una ejecucion cerrada:
 
@@ -121,9 +121,15 @@ Con `clip_to_classic_limits: true`, el controlador limita la norma de fuerza a `
 
 Un checkpoint legacy que produce cuatro comandos finales o un checkpoint `neural_position` de seis salidas se rechaza al cargarse como `neural`. Por tanto, los modelos anteriores no deben reutilizarse como outer-force sin regenerar dataset y entrenar de nuevo.
 
-## Arquitectura recurrente outer-force
+## Arquitecturas outer-force comparadas
 
-GRU/LSTM estan soportados en entrenamiento (`tools/train_neural_controller.py`). Para la evidencia final del TFG se prioriza **MLP + `outer_force_min_v1`**. Una segunda arquitectura recurrente outer-force es extension opcional; no es requisito para la comparacion principal frente al clasico.
+La comparación experimental principal incluye MLP, GRU y LSTM entrenadas con el
+pipeline outer-force y las features seleccionadas para el trabajo. La MLP actúa
+como referencia de menor complejidad, mientras que GRU y LSTM permiten estudiar
+el efecto de incorporar una ventana temporal con memoria recurrente. Las tres
+arquitecturas deben evaluarse con métricas supervisadas y en bucle cerrado bajo
+las mismas condiciones `test` y OOD. El entrenamiento con las 31 entradas de
+`outer_force_full_v1` queda fuera de esta comparación por ahora.
 
 ## Modo conservado `neural_position`
 
