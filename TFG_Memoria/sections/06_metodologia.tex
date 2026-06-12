@@ -1,5 +1,48 @@
-La metodologia experimental se estructura en escenarios nominales, escenarios perturbados y escenarios fuera de distribucion. Cada experimento registra telemetria, metricas de seguimiento, estado de terminacion y metadatos suficientes para reproducir la ejecucion.
+\subsection{Preguntas e hipótesis experimentales}
 
-Las simulaciones independientes se ejecutaran en CPU con paralelismo de 16 trabajadores. Los entrenamientos neuronales se ejecutaran de forma secuencial en GPU cuando este disponible. Esta separacion evita mezclar trabajos masivos de simulacion con procesos de entrenamiento que compiten por memoria de GPU.
+La campaña responderá a preguntas medibles sobre especialización de los PIDs,
+transferencia entre familias, fidelidad de imitación, generalización OOD y
+efecto de la memoria recurrente. Cada pregunta se asociará con comparaciones y
+métricas definidas antes de interpretar los resultados.
 
-El protocolo comparara PID especifico, PIDs transferidos, experto por escenario y redes neuronales. En presencia de viento o perturbaciones, el maestro de imitacion debe ser valido bajo la condicion concreta del escenario; si el experto falla, la demostracion no se usara como evidencia de aprendizaje robusto.
+\subsection{Diseño del dataset clásico}
+
+El dataset clásico contiene 150 episodios repartidos entre \textit{hold},
+\textit{circle}, \textit{lissajous} y \textit{waypoint}, con perfiles nominales
+y perturbados. Los splits estratificados permiten entrenamiento y evaluación
+in-distribution, pero no constituyen por sí solos una prueba fuerte de
+generalización.
+
+\subsection{Diseño del dataset de imitación}
+
+Cada condición clásica se vuelve a ejecutar con variantes del PID externo y se
+conserva una demostración segura seleccionada por un criterio reproducible. El
+manifiesto, las ganancias y la telemetría permiten trazar cada muestra hasta el
+escenario y experto de procedencia.
+
+\subsection{Configuración de entrenamiento}
+
+Se documentarán arquitectura, entradas, tamaño oculto, longitud de ventana,
+normalización, optimizador, semillas, dispositivo y criterio de parada. También
+se indicarán los parámetros probados y se explicará cómo se mantiene `test` y
+OOD fuera de las decisiones de entrenamiento.
+
+\subsection{Escenarios test, transferencia y OOD}
+
+La evaluación separa el split `test`, la transferencia cruzada de PIDs y una
+batería fuera de distribución con nuevas trayectorias y composiciones. Esta
+separación evita presentar como generalización fuerte una partición que conserva
+las mismas familias del entrenamiento.
+
+\subsection{Métricas y criterios de éxito}
+
+Se utilizarán RMSE, MAE, error máximo, saturación, degradación y clipping de
+fuerza, junto con éxito de misión y seguridad. Completar una trayectoria finita
+y evitar un fallo físico son criterios distintos y se informarán por separado.
+
+\subsection{Campaña automatizada y reproducibilidad}
+
+La campaña orquesta pruebas, generación, tuneo, entrenamiento, evaluación
+cerrada, OOD, transferencia y consolidación en once fases. Los resultados usados
+en la memoria deberán conservar rutas, comandos y metadatos suficientes para
+reconstruir la condición experimental.

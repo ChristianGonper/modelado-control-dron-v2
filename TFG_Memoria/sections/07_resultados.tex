@@ -1,3 +1,41 @@
-Pendiente de ejecucion experimental completa. Este apartado incluira tablas agregadas y figuras reproducibles para comparar error de seguimiento, tasa de fallo, degradacion fuera de distribucion y diferencia entre oraculo y red.
+\subsection{Comprobaciones previas}
 
-No deben incorporarse conclusiones hasta que existan resultados generados por la campana experimental documentada.
+Pendiente de cerrar la evidencia experimental definitiva. Antes de comparar
+controladores se verificará la cobertura de la campaña, la validez de las
+ejecuciones y la coherencia de sus metadatos.
+
+\subsection{Rendimiento en test}
+
+Se compararán los PIDs congelados, el baseline representativo y las redes
+outer-force MLP, GRU y LSTM por familia. Las tablas distinguirán precisión,
+éxito de misión, seguridad y actuación.
+
+\subsection{Transferencia de los controladores clásicos}
+
+La matriz cruzada mostrará cómo se degrada cada PID especializado al aplicarse a
+otras familias. Este resultado establecerá el baseline de transferencia frente
+al que debe evaluarse la política aprendida.
+
+\subsection{Rendimiento fuera de distribución}
+
+Se analizarán lemniscatas, trayectorias compuestas y otras condiciones OOD
+mediante RMSE, éxito, seguridad y degradación. No se incorporarán conclusiones
+hasta verificar que las ejecuciones pertenecen a una misma revisión y campaña.
+
+\subsection{Comparación entre MLP, GRU y LSTM}
+
+Se estudiará si la memoria recurrente aporta mejoras consistentes o introduce
+degradaciones en determinadas familias. La interpretación combinará métricas
+agregadas con resultados por escenario.
+
+\subsection{Saturación, degradación y clipping}
+
+Se comprobará cuándo el rendimiento depende de límites físicos, degradación del
+mezclador o protecciones de fuerza. Esta lectura es necesaria para separar el
+comportamiento aprendido del soporte proporcionado por el sistema híbrido.
+
+\subsection{Síntesis de resultados}
+
+El capítulo cerrará respondiendo de forma compacta a cada pregunta experimental.
+Las explicaciones causales que excedan la evidencia se reservarán para la
+discusión y se formularán con cautela.

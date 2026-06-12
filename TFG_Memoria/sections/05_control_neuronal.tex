@@ -1,5 +1,47 @@
-Los controladores neuronales se entrenan mediante aprendizaje por imitacion a partir de demostraciones generadas por controladores expertos. Se consideran dos modos.
+\subsection{Formulación híbrida outer-force}
 
-El modo \textit{neural} predice directamente la fuerza deseada del lazo externo, manteniendo un controlador interno clasico para actitud y actuacion. El modo \textit{neural position} predice ajustes de las ganancias del controlador de posicion. Para cada modo se entrenaran arquitecturas MLP, GRU y LSTM.
+El controlador neuronal principal sustituye solo el lazo externo y predice la
+fuerza deseada \(\texttt{desired\_force\_W\_N[3]}\) en mundo ENU. El mismo lazo
+interno clásico convierte esa fuerza y la guiñada de referencia en empuje y
+momentos, lo que conserva interpretabilidad y estabilidad estructural.
 
-La evaluacion separara fidelidad supervisada y comportamiento en bucle cerrado. La primera mide si la red imita el objetivo del dataset; la segunda mide si dicha imitacion produce control estable y preciso al integrarse en el simulador.
+\subsection{Construcción del experto por escenario}
+
+Para cada escenario se ejecuta un banco de variantes del PID externo manteniendo
+fijos el PID interno, el vehículo, la trayectoria, la semilla y las
+perturbaciones. Se descartan candidatos inseguros y se selecciona por RMSE,
+esfuerzo dentro de un margen del 5\,\% y conservadurismo en caso de empate.
+
+\subsection{Dataset, entradas y objetivos}
+
+La configuración mínima utiliza errores de posición, errores de velocidad y
+aceleración de referencia obtenidos de la observación del controlador. El
+objetivo es la fuerza ENU del experto seleccionado; usar observaciones en vez
+del estado verdadero evita fuga de información bajo ruido.
+
+\subsection{Normalización y entrenamiento}
+
+La normalización se ajusta exclusivamente con el split de entrenamiento y se
+reutiliza durante validación, prueba e inferencia. El entrenamiento supervisado
+emplea error cuadrático, Adam y parada temprana, pero su calidad final debe
+comprobarse también en bucle cerrado.
+
+\subsection{MLP, GRU y LSTM implementadas}
+
+La MLP procesa cada muestra sin memoria explícita y sirve como referencia de
+menor complejidad. GRU y LSTM reciben ventanas temporales y permiten estudiar si
+la información secuencial mejora la imitación y el control.
+
+\subsection{Inferencia cerrada y protecciones}
+
+Antes de entrar al PID interno, la fuerza neuronal puede limitarse por norma,
+inclinación solicitada y componente vertical mínima. Los porcentajes de clipping
+se reportarán para no atribuir a la red una estabilidad proporcionada por estas
+protecciones.
+
+\subsection{Extensiones fuera de la comparación principal}
+
+El repositorio conserva el modo \texttt{neural\_position}, que predice
+multiplicadores de ganancias externas, además de rutas neuronales heredadas.
+Estas extensiones se documentarán brevemente, pero no se mezclarán con la
+comparación consolidada de controladores outer-force.

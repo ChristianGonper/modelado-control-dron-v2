@@ -18,12 +18,17 @@
 \clearpage
 \hypersetup{pageanchor=true}
 \pagenumbering{roman}
+\renewcommand{\totalpaginas}{\pageref*{LastRomanPage}}
 \input{sections/00_agradecimientos}
 \input{sections/00_resumen}
 \input{sections/00_indices}
+\input{sections/00_abreviaturas}
+\input{sections/00_declaracion_ia}
+\label{LastRomanPage}
 
 \clearpage
 \pagenumbering{arabic}
+\renewcommand{\totalpaginas}{\pageref*{LastPage}}
 
 \section{Introducción}
 \label{sec:introduccion}
@@ -33,7 +38,7 @@
 \label{sec:estado-arte}
 \input{sections/02_estado_arte}
 
-\section{Modelo físico del cuadricóptero}
+\section{Simulador 6DOF desarrollado}
 \label{sec:modelo-fisico}
 \input{sections/03_modelo_fisico}
 
@@ -62,13 +67,11 @@
 \input{sections/09_conclusiones}
 
 \clearpage
-\renewcommand{\refname}{Bibliografia}
+\renewcommand{\refname}{Bibliografía}
 \bibliographystyle{IEEEtran}
 \phantomsection
-\addcontentsline{toc}{section}{Bibliografia}
+\addcontentsline{toc}{section}{Bibliografía}
 \bibliography{refs}
-
-\input{sections/00_abreviaturas}
 
 \myappendix{Comandos y trazabilidad experimental}
 \input{appendices/a_comandos}

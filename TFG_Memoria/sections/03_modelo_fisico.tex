@@ -1,3 +1,64 @@
-El simulador representa el cuadricóptero como un cuerpo rígido con seis grados de libertad. La posición y velocidad lineal se expresan en el marco inercial local \(\frameW\), con convención ENU. Las magnitudes de cuerpo se expresan en el marco \(\frameB\), con convención FRD.
+\subsection{Requisitos, convenciones e hipótesis}
 
-La cinemática y dinámica se desarrollarán a partir de las ecuaciones de Newton–Euler, usando cuaterniones para representar la orientación. Este apartado incluirá la ecuación traslacional, la ecuación rotacional, el modelo de actuadores, el mezclador de rotores, las saturaciones y las perturbaciones consideradas.
+El vehículo se representa mediante posición y velocidad en mundo ENU, actitud
+con el cuaternión \(q_{WB}\) y velocidad angular en cuerpo FRD. El origen del
+sistema cuerpo coincide con el centro de gravedad y el empuje sustentador actúa
+en la dirección \(-Z_B\).
+
+\subsection{Cinemática y dinámica del cuerpo rígido}
+
+Se desarrollarán las ecuaciones traslacionales, rotacionales y cinemáticas que
+forman el modelo 6DOF. La formulación se conectará con un fragmento breve de la
+implementación para mostrar la correspondencia entre ecuaciones, marcos y
+unidades.
+
+\subsection{Actuadores y mezclador}
+
+El modelo distingue intención de control, comando de rotor y actuación aplicada
+tras retardo, lag y saturación. Se explicará la relación cuadrática entre
+velocidad, empuje y par, junto con la asignación de empuje colectivo y momentos
+a los cuatro rotores.
+
+\subsection{Perturbaciones y límites físicos}
+
+El simulador incorpora drag lineal, viento constante y ruido gaussiano de
+observación en posición y velocidad. Estos términos permiten estudiar robustez
+de forma controlada, pero no deben interpretarse como aerodinámica o sensores
+realistas.
+
+\subsection{Trayectorias y escenarios reproducibles}
+
+Las familias \textit{hold}, \textit{circle}, \textit{lissajous},
+\textit{waypoint}, \textit{lemniscate} y \textit{composite} proporcionan
+referencias nominales y fuera de distribución. Los escenarios YAML fijan
+vehículo, estado inicial, trayectoria, controlador, perturbaciones, tiempos y
+salidas sin modificar el código.
+
+\subsection{Integración multirrate y flujo de simulación}
+
+Cada ciclo enlaza referencia, observación, controlador, mezclador, actuadores,
+telemetría e integración RK4. Los periodos de física, control y telemetría son
+independientes y el comando se mantiene entre actualizaciones mediante un
+retenedor de orden cero.
+
+\subsection{Telemetría, métricas y reproducibilidad}
+
+Cada ejecución exporta la evolución temporal y un resumen de seguimiento,
+actuación, saturación, degradación y terminación. Los metadatos conservan la
+configuración efectiva, el comando, el entorno, los hashes relevantes y el
+estado Git para poder auditar la evidencia.
+
+\subsection{Verificación del simulador}
+
+Las pruebas automáticas verifican convenciones ENU/FRD, actitud, dinámica,
+actuadores, mezclador, trayectorias, runner y métricas. Esta evidencia demuestra
+coherencia interna y previene regresiones, pero no sustituye una validación con
+datos de vuelo real.
+
+\subsection{Decisiones de implementación}
+
+Python se utiliza por la madurez de su ecosistema científico, su integración con
+PyTorch y la claridad con la que permite expresar modelos y experimentos. El uso
+de herramientas abiertas facilita inspección, reproducción y extensión por
+otros estudiantes e investigadores; el código completo está disponible en el
+repositorio del proyecto\footnote{\url{https://github.com/ChristianGonper/modelado-control-dron-v2}}.

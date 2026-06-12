@@ -1,3 +1,34 @@
-El control clasico se formula como una arquitectura en cascada. El lazo externo de posicion genera una fuerza deseada en el marco del mundo, mientras que el lazo interno de actitud y velocidad angular aproxima la orientacion y los momentos necesarios para producir dicha fuerza.
+\subsection{Arquitectura en cascada}
 
-Se distinguiran tres usos del PID: controlador especifico de una familia de trayectorias, controlador transferido a una familia distinta y controlador experto seleccionado para un escenario concreto. Esta distincion es esencial para separar rendimiento especializado, capacidad de transferencia y techo de imitacion.
+El controlador clásico usa un lazo externo de posición para producir una fuerza
+deseada en mundo ENU y un lazo interno para aproximar la actitud, el empuje y los
+momentos necesarios. Esta división se conserva después en el controlador
+neuronal para mantener una base común de estabilización angular.
+
+\subsection{Ecuaciones, ganancias y límites}
+
+Se desarrollarán los errores de posición, velocidad y actitud, así como las
+ganancias y saturaciones efectivas. Aunque se utiliza la denominación PID en la
+comparación, la implementación actual corresponde a una estructura PD en cascada
+con términos de referencia y compensación gravitatoria.
+
+\subsection{Alternativas de sintonización}
+
+Se revisarán ajuste manual, Ziegler--Nichols, métodos basados en modelo y
+búsquedas numéricas. La elección final se justificará por la necesidad de
+evaluar candidatos directamente sobre escenarios simulados reproducibles y con
+restricciones de seguridad.
+
+\subsection{Sintonización y congelación de controladores}
+
+El tuneo progresivo determinista utiliza únicamente escenarios de entrenamiento,
+aplica filtros duros y registra semilla, presupuesto y criterio de selección.
+Los PIDs aceptados se congelan por familia antes de generar la evidencia de
+baseline y de transferencia.
+
+\subsection{Baseline y transferencia cruzada}
+
+La comparación distingue PIDs especializados, PIDs aplicados a otras familias y
+un baseline representativo. Esta matriz permite separar rendimiento ajustado de
+capacidad de transferencia y proporciona una referencia adecuada para valorar
+las políticas neuronales.

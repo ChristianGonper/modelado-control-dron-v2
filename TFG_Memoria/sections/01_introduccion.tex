@@ -1,5 +1,36 @@
-Este trabajo estudia el seguimiento de trayectorias de un cuadricóptero mediante control clásico y control neuronal por imitación. El objetivo no es demostrar que una red neuronal supera siempre a un controlador PID optimizado, sino analizar en qué condiciones una política aprendida puede generalizar mejor que controladores ajustados para familias concretas de trayectorias.
+\subsection{Motivación y contexto}
 
-Como parte del alcance se desarrolla un simulador propio de seis grados de libertad. La decisión responde a la necesidad de controlar las hipótesis físicas, los sistemas de referencia, la telemetría y la trazabilidad de los experimentos. Frente a simuladores existentes, normalmente más cerrados, más extensos o menos adaptados a un estudio acotado de control, el simulador desarrollado permite ligar directamente modelo físico, escenarios, datasets y métricas.
+El seguimiento autónomo de trayectorias exige combinar un modelo dinámico, una
+estrategia de control y un procedimiento de evaluación coherentes. Este trabajo
+parte de la necesidad de comparar control clásico y control neuronal bajo las
+mismas hipótesis físicas y condiciones experimentales.
 
-La memoria presenta el modelo dinámico, la estrategia de control clásico, los controladores neuronales entrenados por imitación, la generación de escenarios y el protocolo experimental usado para comparar controladores en trayectorias nominales, transferencia entre familias y condiciones fuera de distribución.
+\subsection{Problema y pregunta de investigación}
+
+La pregunta central es si una política neuronal entrenada por imitación puede
+condensar demostraciones de distintos expertos y transferirse mejor que
+controladores clásicos especializados. La comparación no busca demostrar una
+superioridad universal, sino identificar bajo qué condiciones aparecen ventajas,
+degradaciones o fallos.
+
+\subsection{Objetivos}
+
+El objetivo general es construir un banco de simulación 6DOF trazable y usarlo
+para comparar controladores clásicos con redes MLP, GRU y LSTM que imitan la
+fuerza deseada del lazo externo. Los objetivos específicos abarcan modelado,
+implementación, verificación, generación de expertos, entrenamiento y evaluación
+en condiciones de prueba y fuera de distribución.
+
+\subsection{Alcance, hipótesis y limitaciones}
+
+El simulador representa un cuerpo rígido con cuaterniones, actuadores
+simplificados, drag lineal, viento constante y ruido de observación básico. No
+se pretende validar vuelo real ni modelar aerodinámica formal, batería, sensores
+realistas o un estimador onboard completo.
+
+\subsection{Contribuciones y estructura de la memoria}
+
+La contribución principal es una comparación reproducible que enlaza modelo,
+escenarios, datasets, controladores y métricas. La memoria avanza desde los
+fundamentos hacia el simulador y los controladores, define después la metodología
+experimental y termina con resultados, discusión y conclusiones.
