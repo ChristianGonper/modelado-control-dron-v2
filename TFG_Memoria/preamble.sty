@@ -25,13 +25,15 @@
 \setlength{\parskip}{0pt}
 
 \usepackage{graphicx}
+\usepackage{etoolbox}
 \usepackage{fancyhdr}
 \usepackage{lastpage}
 \pagestyle{fancy}
 \fancyhf{}
+\newcommand{\totalpaginas}{\pageref*{LastPage}}
 \lhead{\includegraphics[height=1.2cm]{Figuras/ule.jpg}}
-\chead{Escuela de Ingenierias \\ Industrial, Informatica y Aeroespacial}
-\rhead{Pagina \textbf{\thepage} de \textbf{\pageref*{LastPage}}}
+\chead{Escuela de Ingenierías \\ Industrial, Informática y Aeroespacial}
+\rhead{Página \thepage\ de \totalpaginas}
 \lfoot{Autor: \autorTFG}
 \rfoot{\gradoTFG}
 \renewcommand{\headrulewidth}{1pt}
@@ -67,9 +69,11 @@
 \usepackage{chngcntr}
 \counterwithin{figure}{section}
 \counterwithin{table}{section}
+\AtBeginEnvironment{figure}{\centering}
+\AtBeginEnvironment{table}{\centering}
 \DeclareCaptionFont{fuenteimg}{\normalfont\fontsize{12pt}{12pt}\selectfont}
-\captionsetup[figure]{font=fuenteimg,labelsep=period}
-\captionsetup[table]{font=fuenteimg,labelsep=period}
+\captionsetup[figure]{font=fuenteimg,labelsep=period,position=bottom,skip=12pt}
+\captionsetup[table]{font=fuenteimg,labelsep=period,position=top,skip=12pt}
 \captionsetup[subfigure]{font=fuenteimg,labelsep=period,justification=centering}
 
 % Listas, codigo y enlaces.
@@ -90,9 +94,9 @@
 \usepackage{textcase}
 \usepackage{tocloft}
 \AddToHook{cmd/section/before}{\clearpage}
-\titleformat{\section}{\normalfont\fontsize{28pt}{28pt}\selectfont\bfseries}{\thesection.}{0.5em}{}
-\titleformat{\subsection}{\normalfont\fontsize{14pt}{14pt}\selectfont\bfseries\MakeTextUppercase}{\thesubsection.}{0.5em}{}
-\titleformat{\subsubsection}{\normalfont\fontsize{12pt}{12pt}\selectfont\bfseries}{\thesubsubsection.}{0.5em}{}
+\titleformat{\section}{\normalfont\fontsize{28pt}{28pt}\selectfont\bfseries\raggedright}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\normalfont\fontsize{14pt}{14pt}\selectfont\bfseries\raggedright\MakeTextUppercase}{\thesubsection.}{0.5em}{}
+\titleformat{\subsubsection}{\normalfont\fontsize{12pt}{12pt}\selectfont\bfseries\raggedright}{\thesubsubsection.}{0.5em}{}
 \titlespacing*{\section}{0pt}{0pt}{12pt}
 \titlespacing*{\subsection}{0pt}{18pt}{12pt}
 \titlespacing*{\subsubsection}{0pt}{12pt}{8pt}
