@@ -25,6 +25,7 @@
 \setlength{\parskip}{0pt}
 
 \usepackage{graphicx}
+\graphicspath{{Figuras/}{Figuras/diagramas/}}
 \usepackage{etoolbox}
 \usepackage{fancyhdr}
 \usepackage{lastpage}
@@ -80,15 +81,34 @@
 \usepackage{enumitem}
 \usepackage{xcolor}
 \usepackage{listings}
-\lstset{
+\definecolor{codigoFondo}{HTML}{F7F8FA}
+\definecolor{codigoMarco}{HTML}{AAB2BD}
+\definecolor{codigoTexto}{HTML}{20242A}
+\definecolor{codigoComentario}{HTML}{3A6B35}
+\definecolor{codigoPalabraClave}{HTML}{1F4E79}
+\definecolor{codigoCadena}{HTML}{8A3B12}
+\definecolor{codigoNumeroLinea}{HTML}{68707A}
+\lstdefinestyle{codigoTFG}{
   basicstyle=\ttfamily\small,
+  backgroundcolor=\color{codigoFondo},
+  rulecolor=\color{codigoMarco},
+  identifierstyle=\color{codigoTexto},
+  keywordstyle=\color{codigoPalabraClave}\bfseries,
+  commentstyle=\color{codigoComentario}\itshape,
+  stringstyle=\color{codigoCadena},
   breaklines=true,
   columns=fullflexible,
   frame=single,
   numbers=left,
-  numberstyle=\tiny,
+  numberstyle=\tiny\color{codigoNumeroLinea},
+  numbersep=8pt,
+  xleftmargin=1.5em,
+  framexleftmargin=1em,
+  keepspaces=true,
+  showstringspaces=false,
   captionpos=b
 }
+\lstset{style=codigoTFG}
 
 \usepackage{titlesec}
 \usepackage{textcase}
