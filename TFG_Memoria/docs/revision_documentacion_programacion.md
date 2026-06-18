@@ -34,11 +34,27 @@ código, pruebas y escenarios.
 - `docs/simulador/trazabilidad.md` permite justificar cada decisión mediante
   código, pruebas, escenarios y métricas.
 - `docs/simulador/dataset_clasico.md` y `control_neuronal.md` describen la cadena
-  experimental desde los PIDs congelados hasta la comparación outer-force.
-- `results/comparison_summary.csv` contiene la comparación consolidada de PIDs y
-  redes MLP, GRU y LSTM en `test` y OOD.
+  experimental desde los controladores congelados hasta la comparación de
+  predicción de fuerza deseada.
+- `results/comparison_summary.csv` contiene la comparación consolidada de
+  controladores clásicos y redes MLP, GRU y LSTM en prueba y fuera de la
+  distribución de entrenamiento.
 
 ## Riesgos y decisiones narrativas
+
+### Pregunta experimental y niveles de evaluación
+
+La pregunta central debe formularse como la posibilidad de condensar un banco
+de controladores PD especializados en una política neuronal común y valorar su
+transferencia. La evidencia implementada permite separar cuatro niveles:
+
+1. prueba en familias conocidas;
+2. transferencia cruzada de los controladores PD;
+3. variaciones y composiciones de capacidades conocidas;
+4. trayectorias completamente nuevas.
+
+La memoria y las visualizaciones no deben agrupar los dos últimos niveles bajo
+una única media fuera de la distribución de entrenamiento.
 
 ### Denominación PID frente a implementación PD
 
@@ -50,13 +66,14 @@ o artefactos.
 
 ### Alcance de los controladores neuronales
 
-La comparación principal incluye controladores outer-force MLP, GRU y LSTM; las
-tres arquitecturas forman parte del trabajo. `neural_position`, que predice
+La comparación principal incluye controladores de predicción de fuerza deseada
+MLP, GRU y LSTM; las tres arquitecturas forman parte del trabajo.
+`neural_position`, que predice
 log-multiplicadores, y el entrenamiento `outer_force_full_v1` con 31 variables
 están implementados, pero quedan fuera del alcance experimental principal por
 ahora.
 
-### Oráculo outer-force
+### Experto de fuerza deseada
 
 El experto seleccionado genera las demostraciones y sirve como referencia
 supervisada, pero no aparece como baseline cerrado en
@@ -73,8 +90,9 @@ los metadatos no registran un árbol sucio o un commit distinto.
 ### Generalización
 
 Los splits `train`, `val` y `test` mantienen las mismas familias de trayectorias;
-por tanto, `test` mide rendimiento in-distribution. Las afirmaciones de
-generalización deben apoyarse en la batería OOD separada.
+por tanto, `test` mide rendimiento dentro de la distribución de entrenamiento.
+Las afirmaciones de generalización deben apoyarse en la batería separada fuera
+de distribución.
 
 ### Éxito de misión y seguridad
 
@@ -82,6 +100,24 @@ La documentación distingue correctamente `mission_success` de
 `safety_success`. La memoria debe conservar esta separación, especialmente en
 trayectorias finitas donde alcanzar el límite temporal no implica completar la
 misión.
+
+## Decisiones implementadas que todavía requieren justificación
+
+La documentación y el código permiten describir las siguientes decisiones, pero
+no aportan todavía una defensa académica o una explicación suficiente del
+autor:
+
+- masa, inercia, geometría y coeficientes de propulsión del vehículo;
+- número concreto de geometrías, perfiles, episodios y ratios de partición;
+- pesos, umbrales, multiplicadores y presupuesto de la búsqueda progresiva;
+- límite de actitud de terminación, inclinación neuronal máxima, factor de
+  empuje y componente vertical mínima;
+- elección de nueve variables frente a las 31 disponibles;
+- tamaño oculto, longitud de secuencia, tamaño de lote, tasa de aprendizaje y
+  paciencia de parada temprana.
+
+Estos elementos deben tratarse como preguntas explícitas del guion y no como
+constantes que puedan presentarse sin explicación.
 
 ## Fragmentos de código recomendados
 
@@ -93,7 +129,7 @@ cuerpo de la memoria:
 - `src/simulador_quad/control/classic.py::compute_desired_force_W`: lazo externo
   clásico y compensación gravitatoria.
 - `src/simulador_quad/ml/dataset.py`: definición de entradas mínimas y objetivo
-  outer-force.
+  de fuerza deseada.
 - `tools/generate_outer_force_dataset.py`: criterio reproducible de selección
   del experto.
 - `src/simulador_quad/metrics/success.py`: diferencia entre completar una misión
@@ -101,3 +137,15 @@ cuerpo de la memoria:
 
 El resto de la implementación debe referenciarse mediante el repositorio, sin
 convertir la memoria en documentación exhaustiva del código.
+
+## Visualizaciones comparativas disponibles
+
+El repositorio permite generar comparaciones de RMSE, tasa de éxito,
+transferencia cruzada, seguimiento frente a esfuerzo, saturación, clipping y
+distribuciones de error. La selección final debe incluir además:
+
+- un mapa de calor de transferencia de controladores PD;
+- resultados separados para composiciones y trayectorias nuevas;
+- una comparación entre error supervisado de fuerza y rendimiento de posición
+  en bucle cerrado;
+- una tabla síntesis que responda cada pregunta experimental.

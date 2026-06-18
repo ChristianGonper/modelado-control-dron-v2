@@ -2,10 +2,10 @@
 
 ## Procedimiento de redacción
 
-La memoria debe construirse principalmente a partir de las ideas, decisiones y
-opiniones que el usuario verbalice sobre el trabajo realizado. El agente
-transformará esas explicaciones en redacción académica, podrá completarlas con
-información técnica contrastada cuando resulten insuficientes y avisará al
+La memoria debe construirse a partir de las ideas, decisiones y opiniones que el
+usuario verbalice, la evidencia del repositorio, las fuentes académicas y las
+propuestas razonadas de la IA. El agente transformará esas aportaciones en
+redacción académica, podrá proponer argumentos o alternativas y avisará al
 usuario de cualquier ampliación relevante o justificación que siga faltando.
 
 Cuando sea necesario explicar una implementación concreta, se formularán
@@ -42,7 +42,8 @@ decisiones:
 - las trayectorias, perturbaciones, escenarios, splits y mecanismos de
   comparación escogidos;
 - las políticas de penalización, filtros de seguridad y criterios de éxito;
-- la frontera híbrida outer-force y las features seleccionadas;
+- la frontera híbrida de predicción de fuerza deseada y las variables de entrada
+  seleccionadas;
 - el tamaño, parámetros y entrenamiento de MLP, GRU y LSTM;
 - los hiperparámetros probados y el criterio usado para seleccionar modelos;
 - las métricas elegidas y la relación entre resultados, objetivos y
@@ -54,8 +55,8 @@ implementación, evidencia y limitaciones.
 ## Alcance neuronal acordado
 
 La comparación principal incluye MLP, GRU y LSTM que sustituyen el lazo externo
-y predicen la fuerza deseada outer-force. Las tres arquitecturas forman parte
-del trabajo.
+y predicen la fuerza deseada en el sistema ENU. Las tres arquitecturas forman
+parte del trabajo.
 
 Por ahora quedan fuera del alcance experimental principal:
 
@@ -74,5 +75,11 @@ trabajo futuro, pero no deben confundirse con la comparación principal.
   identificar artefactos, scripts o nombres heredados.
 - Se permiten snippets breves cuando ayuden a explicar una decisión; para el
   resto del código se enlazará el repositorio mediante una nota al pie.
+- En la memoria se utilizará «predicción de fuerza deseada» en lugar de
+  `outer-force`. No se usará «predicción de empuje» porque la red no produce
+  directamente el empuje colectivo ni los comandos de rotor.
+- Los términos se introducirán primero en español. Los acrónimos ingleses
+  aceptados, como OOD, se definirán junto al término y se añadirán de inmediato
+  a la lista de abreviaturas.
 - La declaración de uso de IA no se actualizará durante la redacción ordinaria.
   El usuario proporcionará al final el relato completo de herramientas y usos.

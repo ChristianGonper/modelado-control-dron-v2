@@ -4,85 +4,58 @@
 
 Esta carpeta contiene la memoria LaTeX del TFG sobre un simulador 6DOF de
 cuadricóptero para comparar control clásico y control neuronal por imitación.
-El agente debe trabajar aquí con criterio académico y contrastar siempre la
-redacción con la evidencia disponible en la raíz del repositorio.
+La redacción debe mantener criterio académico y corresponderse con la evidencia
+del repositorio.
 
-## Contexto que debes consultar
+## Fuentes de verdad
 
-- `../README.md`: entrada general, alcance y comandos principales.
-- `../docs/01_principios_tfg.md`: principios académicos y de trazabilidad.
-- `../docs/02_requisitos_ingenieria_simulador.md`: requisitos físicos.
-- `../docs/03_criterios_ingenieria_software.md`: criterios de software científico.
-- `../docs/simulador/`: documentación viva del simulador implementado.
+- `../README.md` y `../docs/`: alcance, requisitos y estado del simulador.
 - `../src/`, `../scenarios/`, `../tests/`, `../tools/`, `../data/` y
-  `../results/`: código y evidencia experimental.
-- `docs/requisitos_reglamento.md`: requisitos extraídos del reglamento de TFG.
-- `docs/indice_detallado_memoria.md`: estructura narrativa prevista.
-- `docs/criterios_redaccion_y_decisiones.md`: procedimiento de redacción y
-  decisiones que deben justificarse durante el desarrollo de la memoria.
-- `docs/revision_documentacion_programacion.md`: revisión y riesgos narrativos
-  de la documentación técnica del repositorio.
+  `../results/`: implementación y evidencia experimental.
+- `docs/requisitos_reglamento.md`: requisitos formales del TFG.
+- `docs/indice_detallado_memoria.md`: estructura prevista de la memoria.
+- `docs/metodologia_redaccion.md`: proceso para redactar y revisar apartados.
+- `docs/criterios_redaccion_y_decisiones.md`: criterios académicos y decisiones.
+- `docs/plan_fuentes.md`, `docs/plan_figuras_diagramas.md` y
+  `docs/referencias_cruzadas_pendientes.md`: planificación de fuentes, material
+  gráfico y referencias pendientes.
 
 No uses `../docs/html/` como fuente de verdad.
 
-## Principios de trabajo
+## Reglas esenciales
 
-- Escribe siempre en español correcto, con tildes.
-- La memoria debe contar una historia cohesionada. Al inicio deben quedar claros
-  el problema, la pregunta de comparación, los objetivos, el método y el alcance.
-- Ninguna decisión relevante de ingeniería aeroespacial, control, redes
-  neuronales o metodología experimental debe presentarse como arbitraria.
-  Explica su motivación, alternativas consideradas, implementación y efecto
-  esperado o medido.
-- No inventes resultados, referencias, decisiones ni capacidades del simulador.
-- Distingue hechos verificados, interpretaciones y contenido pendiente.
-- Mantén trazabilidad entre objetivos, modelo, implementación, escenarios,
-  métricas y resultados.
+- Escribe en español correcto y respeta la estructura, macros y estilo LaTeX.
 - Prioriza dinámica, control, escenarios, datasets, entrenamiento y resultados;
   evita convertir la memoria en documentación extensa de software.
+- No inventes resultados, referencias, decisiones ni capacidades. Distingue
+  hechos verificados, interpretaciones, propuestas y contenido pendiente.
+- Justifica las decisiones relevantes y mantén trazabilidad entre objetivos,
+  modelo, implementación, escenarios, métricas y resultados.
 - Mantén mundo ENU y cuerpo FRD, con unidades, signos e hipótesis explícitos.
-- Cita fuentes reales y verificadas; identifica la procedencia de figuras,
+- Cita fuentes reales y verificadas e identifica la procedencia de figuras,
   tablas, datos y resultados.
-- Respeta la estructura, macros y estilo LaTeX existentes. Compila y revisa el
-  PDF tras cambios relevantes.
-- Se permiten fragmentos breves de código cuando aclaren una decisión física o
-  metodológica. Para el resto, enlaza el repositorio mediante una nota al pie.
-- Declara como pendiente cualquier afirmación que aún no tenga evidencia.
+- Introduce los términos técnicos primero en español y registra los nuevos
+  acrónimos en `sections/00_abreviaturas.tex`.
+- Registra referencias aún inestables en
+  `docs/referencias_cruzadas_pendientes.md`.
+- Compila y revisa el PDF después de cambios relevantes.
+- No modifiques la declaración de uso de IA hasta la revisión final.
 - No hagas commits salvo petición explícita del usuario.
 
-## Herramientas de apoyo
+## Herramientas de exploración
 
-### Exploración del código
+- Para localizar código, seguir flujos e identificar archivos concretos, usa la
+  CLI `grok` mediante `grok --model grok-composer-2.5-fast "..."`.
+  Formula preguntas dirigidas y verifica después los archivos señalados.
+- Cuando la exploración requiera mayor criterio, una revisión crítica o una
+  opinión razonada, usa `agy`. Contrasta sus
+  conclusiones con la implementación y la evidencia del repositorio.
+- Usa Context7 para documentación actualizada de LaTeX, paquetes y herramientas,
+  priorizando fuentes oficiales compatibles con la configuración del proyecto.
 
-Para explorar el código, formula primero preguntas dirigidas a la CLI `grok`.
-Pídele que identifique el flujo, los módulos relevantes y las rutas concretas.
-Usa su respuesta como mapa y verifica directamente solo los archivos necesarios;
-no llenes el contexto recorriendo decenas de archivos sin una pregunta concreta.
+## Flujo de redacción
 
-### NotebookLM
-
-La CLI `nlm` da acceso a NotebookLM. Úsala para procesar documentación extensa
-o conjuntos de artículos académicos, responder preguntas concretas y generar
-informes ampliados. Solicita citas en formato IEEE cuando el resultado vaya a
-servir para la memoria. Verifica siempre las afirmaciones y citas en las fuentes
-originales antes de incorporarlas.
-
-### Context7
-
-Usa Context7 cuando sea necesario consultar documentación actualizada de LaTeX,
-sus paquetes o herramientas relacionadas. Prioriza documentación oficial y
-aplica únicamente soluciones compatibles con la configuración real del proyecto.
-
-## Procedimiento de redacción
-
-- Para redactar decisiones, metodología y desarrollo, parte normalmente de las
-  ideas, opiniones y explicaciones verbalizadas por el usuario.
-- Convierte esas explicaciones en texto académico y señala al usuario cuando
-  falte información o una justificación resulte insuficiente. Puedes añadir
-  contexto técnico, pero distingue lo aportado y compruébalo.
-- También puede redactarse directamente mediante IA cuando el usuario lo pida,
-  siempre con trazabilidad y sin inventar decisiones.
-- Durante la redacción, pide de forma habitual a `grok` búsquedas dirigidas sobre
-  aspectos concretos del código que deban explicarse o verificarse.
-- No modifiques ni mantengas incrementalmente la declaración de uso de IA. Se
-  redactará al final a partir del relato completo proporcionado por el usuario.
+Trabaja apartado por apartado según `docs/metodologia_redaccion.md`. Parte de las
+decisiones del usuario y de evidencia verificable; usa las herramientas
+anteriores solo como apoyo. Señala la información o justificación que falte y
+revisa la coherencia local antes de avanzar.
