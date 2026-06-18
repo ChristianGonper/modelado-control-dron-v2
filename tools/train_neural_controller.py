@@ -19,7 +19,12 @@ from simulador_quad.ml.train import train_model
 
 def main():
     parser = argparse.ArgumentParser(description="Train a neural controller by imitation.")
-    parser.add_argument("--dataset", type=str, required=True, help="Path to classic dataset root.")
+    parser.add_argument(
+        "--dataset",
+        type=str,
+        required=True,
+        help="Dataset root with manifest.csv and telemetry for the selected feature version.",
+    )
     parser.add_argument("--architecture", type=str, choices=["mlp", "gru", "lstm"], default="mlp", help="Model architecture.")
     parser.add_argument("--out", type=str, required=True, help="Output directory for artifacts.")
     parser.add_argument("--epochs", type=int, default=100, help="Number of epochs.")

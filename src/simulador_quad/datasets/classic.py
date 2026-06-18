@@ -703,7 +703,7 @@ def select_final_pid(
     evaluated: List[Dict[str, Any]],
     initial_mult: List[float] = (1.0, 1.0, 1.0, 1.0),
 ) -> Dict[str, Any]:
-    """Select per spec: best mean score among safe (all hard passed in diag), then within 5% lowest effort, then closest to initial.
+    """Select the best safe mean score, then effort within 5%, then proximity to the initial PID.
     evaluated: list of per-cand {'multipliers':, 'pid_config':, 'agg': agg_dict_from_aggregate, 'results': [...] }
     Returns dict with chosen, source, reason, metrics etc.
     """

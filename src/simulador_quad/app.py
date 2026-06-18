@@ -182,9 +182,7 @@ def run_simulation(scenario_path: str, visualization: bool = True, command: str 
     )
     metrics = compute_metrics(telemetry, reason, metadata)
 
-    # Surface runtime outer-force clip stats (spec-required for closed-loop evaluation / Success Criteria)
-    # This makes force_*_clip_percentage available in metrics.json for NeuralOuterForceController runs
-    # (tool-specific path per original plan preference; does not alter classic metrics/report.py)
+    # Add controller-specific clipping statistics to the common metrics payload.
     if hasattr(controller, "get_clip_stats"):
         try:
             clip_stats = controller.get_clip_stats()
@@ -192,7 +190,7 @@ def run_simulation(scenario_path: str, visualization: bool = True, command: str 
                 if k in clip_stats:
                     metrics[k] = clip_stats[k]
         except Exception:
-            pass  # non-fatal; stats are best-effort for observability
+            pass  # Controller diagnostics must not invalidate an otherwise complete run.
 
     # Exportar
     out_cfg = config['output']

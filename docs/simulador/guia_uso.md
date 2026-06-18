@@ -190,7 +190,7 @@ En `metadata.controller.parameters` quedan registradas las ganancias efectivas d
 
 ## Campaña Experimental Automatizada
 
-`tools/run_experimental_campaign.py` orquesta el protocolo completo (flujo reproducible desde clon limpio). Las fases actuales (11 tras insercion de tuneo PID base en Fase E):
+`tools/run_experimental_campaign.py` orquesta el protocolo completo. Las 11 fases actuales son:
 
 | Fase | Operacion principal |
 |---|---|
@@ -236,8 +236,9 @@ Cambiar umbrales, semilla o n_candidatos produce condicion experimental distinta
 ### Transferencia clasica
 
 `tools/run_classic_transfer_dataset.py` ejecuta cada escenario seleccionado con
-los PID disponibles de las otras familias; excluye el PID de la familia
-original. Lee `manifest.csv` y `pids/pid_<familia>_*.yaml`, guarda los YAML
+los PID disponibles de otras familias. Por defecto excluye la combinacion
+nativa; `--include-native` la incorpora, como hace la fase 11 de la campana.
+Lee `manifest.csv` y `pids/pid_<familia>_*.yaml`, guarda los YAML
 materializados en `scenarios_transfer/`, las ejecuciones en
 `results_transfer/` y el indice `run_report_classic_transfer.csv`.
 

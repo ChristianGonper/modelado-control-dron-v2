@@ -111,7 +111,7 @@ uv run pytest tests\test_neural_dataset.py tests\test_neural_models.py tests\tes
 Despues de ejecutar:
 
 - `telemetry.json` y `metrics.json` existen para los escenarios ejecutados.
-- Las siete figuras PNG estándar existen y tienen contenido.
+- Las ocho figuras PNG base existen y tienen contenido; las figuras neuronales y de perturbaciones aparecen cuando la telemetria aporta esos campos.
 - La documentacion no contradice `loader.py`, `export.py`, `report.py` ni el CLI.
 - La validacion de escenarios no contradice `schema.py`.
 - La documentacion del dataset no contradice `src/simulador_quad/datasets/classic.py` ni los scripts en `tools/`.

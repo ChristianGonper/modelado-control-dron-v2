@@ -21,11 +21,12 @@ Implementado:
 - Tooling para generar el dataset `outer_force`, batería OOD (`generate_ood_battery.py`), batch cerrado (`run_neural_outer_force_dataset.py`), tabla comparativa (`build_comparison_closed_loop.py`) y entrenar/evaluar modelos mediante scripts en `tools/`.
 - Control neuronal alternativo en el lazo externo de posición (`neural_position`), donde la red predice ganancias variables y el lazo interno clásico estabiliza actitud.
 
-## Evidencia final de memoria y Alcance Consolidado
+## Evidencia versionada y alcance consolidado
 
-- **Comparación principal**: La comparación experimental definitiva se realiza entre los PID congelados de referencia (`classic_pid_hold`, `classic_pid_circle`, `classic_pid_lissajous`, `classic_pid_waypoint`, y el baseline unificado `classic_pid_representative`) y los controladores neuronales `neural_outer_force` (MLP, GRU, LSTM). Se evalúa tanto la matriz cruzada de transferencia completa en el split `test` (92 corridas) como en OOD (40 corridas).
-- **Ramas secundarias (Tooling / Extensiones)**: El controlador de ganancias `neural_position` y el oráculo `outer_force_oracle` están completamente implementados como herramientas en el código, pero se consideran extensiones/trabajo futuro en la memoria y quedan fuera de la tabla comparativa consolidada.
-- **Uso de Git**: Los datasets masivos, telemetrías pesadas y checkpoints se gestionan localmente en `data/` (ignorada en Git). Solo se versionan el manifiesto de evidencia y las tablas consolidadas en `results/`: `comparison_all_runs.csv` para `test`/OOD, `comparison_all_runs_full.csv` para todos los splits y `comparison_summary.csv` para los agregados.
+- **Comparacion principal**: `results/evidence_manifest.csv` declara la procedencia de los PID congelados (`classic_pid_hold`, `classic_pid_circle`, `classic_pid_lissajous`, `classic_pid_waypoint` y `classic_pid_representative`) y de los controladores `neural_outer_force` MLP, GRU y LSTM. La matriz de transferencia clasica registrada contiene 92 corridas `test` y 40 OOD; no son los conteos totales de la comparacion consolidada.
+- **Snapshot versionado**: los CSV incorporados en el commit `fe2e075` el 2026-06-10 contienen 264 corridas comparables: 184 `test` y 80 `ood`. `comparison_all_runs_full.csv` contiene 518 filas al incluir `train` y `val`. Estas cifras describen ese snapshot y deben volver a calcularse si se regenera la campaña.
+- **Ramas secundarias**: el pipeline `neural_position` esta implementado, pero el manifiesto versionado declara cero corridas consolidadas y lo mantiene fuera de la comparacion principal. `outer_force_oracle` esta implementado como generador de demostraciones para entrenamiento, no como controlador incluido en la tabla comparativa final.
+- **Uso de Git**: `data/` se ignora mediante `data/.gitignore`; telemetrias y checkpoints no estan versionados. En `results/` se versionan `evidence_manifest.csv`, `comparison_all_runs.csv`, `comparison_all_runs_full.csv` y `comparison_summary.csv`. Las conclusiones experimentales requieren contrastar esos agregados con la evidencia descrita por el manifiesto.
 
 ## Comandos minimos
 
@@ -140,8 +141,7 @@ uv run simulador-quad run scenarios\composite_ood.yaml --no-visualization
 - `docs/simulador/validacion.md`: clasificacion de escenarios y criterios de aceptacion.
 - `docs/simulador/dataset_clasico.md`: generacion, ejecucion y resumen del dataset clasico.
 - `docs/simulador/control_neuronal.md`: entrenamiento, evaluacion e inferencia del controlador neuronal por imitacion.
-- `docs/plans/`: specs vigentes de saneamiento y trabajo futuro inmediato.
-- `docs/plans/archived/`: planes historicos no vigentes.
+- `docs/plans/archived/`: planes historicos no vigentes; no describen funcionalidad actual.
 - `docs/reviews/`: auditorias y revisiones tecnicas.
 
 ## Estructura principal

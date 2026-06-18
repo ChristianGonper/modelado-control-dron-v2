@@ -439,8 +439,8 @@ class NeuralOuterForceController(Controller):
 
         Final hard guarantee: the returned force always has Fz >= 0.20 * mass * g
         (positive upward lift). Non-positive vertical requests are projected to this
-        safe minimum before being passed to the classic attitude converter
-        (prevents inverted/zero-lift desired attitudes on the real vehicle).
+        minimum before being passed to the classic attitude converter. This
+        prevents inverted or zero-lift desired attitudes in the simulator.
         """
         f = np.asarray(f_W, dtype=float).copy()
         clipped_norm = False
@@ -474,7 +474,7 @@ class NeuralOuterForceController(Controller):
 
         # Final hard safety guard: never emit Fz <= 0 (or very small positive) to the
         # classic attitude converter. A non-positive vertical force produces an
-        # inverted or zero-lift desired attitude, which is unsafe for the real vehicle.
+        # inverted or zero-lift desired attitude.
         min_safe_fz = self.mass * self.g * 0.20  # at least 20% of hover thrust upward
         if f[2] <= min_safe_fz:
             clipped_tilt = True

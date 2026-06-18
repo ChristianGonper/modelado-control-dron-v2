@@ -94,14 +94,17 @@ Los umbrales numericos de RMSE y error maximo son iniciales. Deben revisarse cua
 | `scenarios/neural_ood_lemniscate.yaml` | OOD / generalizacion | Verificar una trayectoria analitica no incluida en el dataset clasico base. | Viento bajo y ruido bajo. | `1234` | Con controlador clasico debe ejecutarse sin fallo fisico. Con controlador neuronal, usar como evidencia OOD en bucle cerrado y reportar terminacion, RMSE, saturacion y degradacion sin mezclarlo con `test`. |
 | `scenarios/composite_ood.yaml` | OOD compuesto | Verificar concatenacion de hold, circle y waypoint con transiciones lineales automaticas. El estado inicial coincide con el primer punto de ruta para no mezclar despegue con seguimiento OOD. | Sin viento, sin ruido, sin drag. | `42` | Con controlador clasico debe ejecutarse sin fallo fisico. Con controlador neuronal, reportar terminacion, RMSE, saturacion, degradacion y clipping de fuerza si aplica. |
 
-## Resultados historicos
+## Resultados y evidencia versionada
 
-Los directorios actuales en `results/` son utiles para inspeccion y comparacion durante desarrollo, pero no deben tratarse como evidencia final de memoria sin regenerarlos desde los YAML actuales.
+Los subdirectorios generados localmente bajo `results/` son utiles para inspeccion durante desarrollo, pero no deben tratarse como evidencia final sin comprobar su trazabilidad. La excepcion actual son los cuatro CSV admitidos por `results/.gitignore`: `evidence_manifest.csv`, `comparison_all_runs.csv`, `comparison_all_runs_full.csv` y `comparison_summary.csv`.
+
+Ese snapshot fue incorporado en el commit `fe2e075` el 2026-06-10. El manifiesto declara la procedencia y los comandos manuales; los agregados contienen 264 corridas comparables (184 `test`, 80 `ood`) y 518 filas en el registro completo. Estos conteos estan fechados y no deben presentarse como invariantes del pipeline.
 
 Motivos:
 
 - Los artefactos generados antes de la metadata fuerte no registraban commit, estado del arbol, comando exacto ni hash de `uv.lock`.
-- Algunos resultados pueden proceder de versiones anteriores de escenarios o codigo.
+- Los agregados no incluyen la telemetria pesada ni los checkpoints, que permanecen en `data/` ignorado por Git.
+- Otros resultados locales pueden proceder de versiones anteriores de escenarios o codigo.
 - Por ejemplo, la duración registrada en resultados históricos puede no coincidir con el YAML actual (especialmente en trayectorias finitas como `waypoint`).
 
 Para usar un resultado en memoria:
@@ -125,7 +128,8 @@ Cada escenario usado en la memoria debe conservar:
   - `metadata`.
 - `telemetry.json`.
 - Figuras estandar por episodio (`plot` o `run` con visualizacion):
-  - `trajectory_xy`, `position_time`, `attitude_time`, `angular_velocity_time`, `tracking_error`, `rotor_speeds`, `control_effort`
+  - `trajectory_xy`, `trajectory_3d_static`, `position_time`, `attitude_time`, `angular_velocity_time`, `tracking_error`, `rotor_speeds`, `control_effort`;
+  - `neural_outer_force` y `perturbation_response` solo cuando existen los campos opcionales necesarios.
   - Con `--profile report --formats png pdf`, las mismas figuras se exportan en PNG y PDF a 300 dpi.
 - Figuras comparativas de campaña (`plot-comparison` sobre `comparison_all_runs.csv`):
   - `c1_rmse_comparison`, `c2_success_rate`, `c3_generalization_ood`, `c4_pid_transfer`, `c5_tracking_vs_effort`, `c6_saturation_clipping`, `c7_error_distribution`

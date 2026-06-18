@@ -1,6 +1,6 @@
 # Control neuronal por imitacion
 
-Este documento describe los dos modos neuronales implementados. El modo principal para la nueva comparacion es `controller.type: "neural"`, que sustituye solo el lazo externo de posicion por una red de fuerza. El modo `neural_position` se conserva como alternativa que programa ganancias del PID externo.
+Este documento describe los dos modos neuronales implementados. El modo principal de la comparacion versionada es `controller.type: "neural"`, que sustituye solo el lazo externo de posicion por una red de fuerza. El modo `neural_position` se conserva como alternativa que programa ganancias del PID externo.
 
 ## Controlador `neural` outer-force
 

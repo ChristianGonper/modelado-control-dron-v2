@@ -28,6 +28,12 @@ Implementado:
 - Generacion de dataset `outer_force` mediante banco de PIDs externos, seleccion segura de experto por escenario y targets `desired_force_W_N`.
 - Soporte de trayectorias compuestas (`composite`) y transiciones automáticas en línea recta con frenado para validación OOD.
 
+Snapshot verificable del 2026-06-18:
+
+- `215` pruebas pasan con `uv run pytest -q`.
+- Las ayudas de `simulador-quad` y de los 21 scripts de `tools/` cargan con `--help`.
+- Los CSV versionados en `results/` proceden del commit `fe2e075` del 2026-06-10 y contienen 264 corridas comparables (184 `test`, 80 `ood`). Son un snapshot, no un recuento invariable del codigo.
+
 No implementado todavia:
 
 - Aerodinamica formal mas alla del drag lineal.
@@ -42,7 +48,7 @@ No implementado todavia:
 - [Validacion](validacion.md): clasificacion de escenarios, criterios de aceptacion y evidencias para la memoria.
 - [Dataset clasico](dataset_clasico.md): fuente reproducible de escenarios y telemetria para construir expertos neuronales.
 - [Control neuronal](control_neuronal.md): dataset `outer_force`, entrenamiento, evaluacion supervisada, OOD e inferencia hibrida en bucle cerrado.
-- [Mantenimiento documental](mantenimiento.md): checklist para actualizar esta documentacion despues de cambios agresivos.
+- [Mantenimiento documental](mantenimiento.md): checklist para actualizar esta documentacion despues de cambios de contrato.
 
 ## Comandos minimos
 
@@ -61,9 +67,13 @@ uv run python tools\train_neural_controller.py --dataset data\outer_force_datase
 Las figuras generadas tienen nombres estables:
 
 - `trajectory_xy.png`
+- `trajectory_3d_static.png`
 - `position_time.png`
 - `attitude_time.png`
 - `angular_velocity_time.png`
 - `tracking_error.png`
 - `rotor_speeds.png`
 - `control_effort.png`
+
+Si la telemetria contiene los campos correspondientes, se añaden
+`neural_outer_force.png` y `perturbation_response.png`.
