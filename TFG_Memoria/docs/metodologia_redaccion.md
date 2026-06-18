@@ -18,7 +18,9 @@ preparará una ficha breve con:
 4. evidencia del repositorio que debe verificarse mediante una consulta dirigida
    a `grok` y lectura de las rutas necesarias;
 5. afirmaciones externas que requieren bibliografía;
-6. ecuaciones, snippets, figuras o tablas previstas;
+6. ecuaciones, snippets, figuras o tablas previstas; para cada diagrama, formato
+   fuente e intención, mensaje, elementos, relaciones y procedimiento de
+   reproducción que se registrarán en su ficha;
 7. conexión de entrada con el apartado anterior y conclusión que prepara el
    siguiente.
 

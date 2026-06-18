@@ -7,12 +7,20 @@
   transferido, MLP, GRU y LSTM.
 - No se dependerá únicamente del color: se combinarán marcadores, patrones o
   etiquetas.
-- Los diagramas se conservarán en SVG como fuente editable y se exportarán a PDF
-  para incluirlos con `graphicx` y `pdflatex`.
+- Los diagramas podrán realizarse en SVG, TikZ u otro formato original integrado
+  en LaTeX. Se elegirá el formato que mejor conserve precisión, editabilidad y
+  estabilidad de compilación.
+- Cada diagrama conservará su fuente editable y una ficha reproducible con el
+  mismo nombre base, según `../Figuras/diagramas/README.md`.
 - Los snippets serán breves y usarán el estilo `codigoTFG` definido en
   `preamble.sty`.
 
 ## Diagramas explicativos previstos
+
+La columna «Finalidad» fija la intención mínima. Antes de realizar cada diagrama
+se ampliará en su ficha con el mensaje, elementos, relaciones, convenciones,
+fuentes y método de reproducción. La ficha se mantendrá sincronizada cuando el
+diagrama cambie.
 
 | Capítulo | Diagrama | Finalidad |
 |---|---|---|
@@ -42,7 +50,11 @@
    cerrado.
 10. Tabla síntesis que responda cada pregunta experimental.
 
-## Prompts iniciales para diagramas SVG
+## Especificaciones iniciales reproducibles
+
+Estas especificaciones pueden usarse como prompt para SVG o traducirse a TikZ u
+otro formato. La ficha definitiva debe registrar la técnica realmente utilizada
+y cualquier decisión añadida durante su elaboración.
 
 ### Control híbrido de predicción de fuerza
 
@@ -51,7 +63,8 @@
 > MLP/GRU/LSTM que predice una fuerza deseada tridimensional en ENU, después un
 > bloque de límites de fuerza e inclinación, y finalmente un controlador clásico
 > interno que genera empuje colectivo y momentos. Diferenciar claramente lo
-> aprendido de lo clásico. Entregar SVG editable sin efectos rasterizados.
+> aprendido de lo clásico. Conservar una fuente editable y una exportación apta
+> para la memoria.
 
 ### Flujo experimental
 
@@ -59,7 +72,7 @@
 > dataset clásico, sintonización y banco de PD, selección de demostraciones,
 > entrenamiento MLP/GRU/LSTM, evaluación supervisada, evaluación en bucle
 > cerrado y comparación en cuatro niveles. Usar etiquetas en español, formas
-> simples y SVG editable.
+> simples y una fuente editable.
 
 ### Camino hacia vuelo real
 
@@ -67,4 +80,4 @@
 > hasta vuelo real: mejora del modelo, identificación, sensores, estimador de
 > estado, controlador, validación progresiva y percepción visual con conciencia
 > situacional. Presentar los pasos como trabajo futuro, sin sugerir que ya están
-> implementados. Entregar SVG editable.
+> implementados. Conservar una fuente editable.

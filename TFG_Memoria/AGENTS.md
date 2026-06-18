@@ -34,6 +34,9 @@ No uses `../docs/html/` como fuente de verdad.
 - Mantén mundo ENU y cuerpo FRD, con unidades, signos e hipótesis explícitos.
 - Cita fuentes reales y verificadas e identifica la procedencia de figuras,
   tablas, datos y resultados.
+- Los diagramas pueden realizarse en SVG, TikZ u otro formato original integrado
+  en LaTeX. Conserva la fuente editable y una ficha que describa su intención,
+  contenido, convenciones y procedimiento de reproducción.
 - Introduce los términos técnicos primero en español y registra los nuevos
   acrónimos en `sections/00_abreviaturas.tex`.
 - Registra referencias aún inestables en
@@ -48,8 +51,8 @@ No uses `../docs/html/` como fuente de verdad.
   CLI `grok` mediante `grok --model grok-composer-2.5-fast "..."`.
   Formula preguntas dirigidas y verifica después los archivos señalados.
 - Cuando la exploración requiera mayor criterio, una revisión crítica o una
-  opinión razonada, usa `agy`. Contrasta sus
-  conclusiones con la implementación y la evidencia del repositorio.
+  opinión razonada, usa `agy -p "..."`. Contrasta sus conclusiones con la
+  implementación y la evidencia del repositorio.
 - Usa Context7 para documentación actualizada de LaTeX, paquetes y herramientas,
   priorizando fuentes oficiales compatibles con la configuración del proyecto.
 
