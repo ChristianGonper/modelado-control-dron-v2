@@ -1,34 +1,29 @@
-\subsection{Arquitectura en cascada}
+\subsection{Arquitectura PD en cascada}
 
-El controlador clásico usa un lazo externo de posición para producir una fuerza
-deseada en mundo ENU y un lazo interno para aproximar la actitud, el empuje y los
-momentos necesarios. Esta división se conserva después en el controlador
-neuronal para mantener una base común de estabilización angular.
+Se explicará cómo el lazo externo convierte errores de posición y velocidad en
+una fuerza deseada y cómo el lazo interno genera actitud, empuje y momentos.
+Esta arquitectura servirá también como base común del controlador híbrido.
 
 \subsection{Ecuaciones, ganancias y límites}
 
-Se desarrollarán los errores de posición, velocidad y actitud, así como las
-ganancias y saturaciones efectivas. Aunque se utiliza la denominación PID en la
-comparación, la implementación actual corresponde a una estructura PD en cascada
-con términos de referencia y compensación gravitatoria.
+Se documentarán los términos proporcionales y derivativos, referencias,
+compensación gravitatoria y saturaciones. Se aclarará que la implementación es
+PD, aunque algunos artefactos históricos conserven la denominación PID.
 
-\subsection{Alternativas de sintonización}
+\subsection{Elección del método de sintonización}
 
-Se revisarán ajuste manual, Ziegler--Nichols, métodos basados en modelo y
-búsquedas numéricas. La elección final se justificará por la necesidad de
-evaluar candidatos directamente sobre escenarios simulados reproducibles y con
-restricciones de seguridad.
+Se compararán las alternativas presentadas en el estado del arte con las
+necesidades del experimento. La decisión final deberá explicar por qué se
+prefiere evaluar candidatos directamente en escenarios reproducibles.
 
-\subsection{Sintonización y congelación de controladores}
+\subsection{Algoritmo de búsqueda progresiva}
 
-El tuneo progresivo determinista utiliza únicamente escenarios de entrenamiento,
-aplica filtros duros y registra semilla, presupuesto y criterio de selección.
-Los PIDs aceptados se congelan por familia antes de generar la evidencia de
-baseline y de transferencia.
+Se describirán diagnóstico, generación de candidatos, filtros duros,
+penalizaciones, refinamiento y selección. Multiplicadores, pesos, umbrales,
+presupuesto y semilla deberán quedar justificados.
 
-\subsection{Baseline y transferencia cruzada}
+\subsection{Controladores congelados y transferencia cruzada}
 
-La comparación distingue PIDs especializados, PIDs aplicados a otras familias y
-un baseline representativo. Esta matriz permite separar rendimiento ajustado de
-capacidad de transferencia y proporciona una referencia adecuada para valorar
-las políticas neuronales.
+Se explicará cómo se congela un controlador por familia sin utilizar prueba para
+tomar decisiones. La aplicación cruzada de esos controladores establecerá la
+referencia de especialización y transferencia.

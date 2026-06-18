@@ -1,30 +1,33 @@
-\subsection{Interpretación respecto a los objetivos}
+\subsection{Interpretación respecto a objetivos y pregunta central}
 
-La discusión relacionará los resultados con la pregunta inicial y distinguirá
-especialización, transferencia y generalización. Se separarán las afirmaciones
-demostradas de los indicios que requieren más evidencia.
+Se integrarán los resultados para distinguir conclusiones demostradas, indicios
+y cuestiones que permanecen abiertas.
 
-\subsection{Control clásico frente a imitación}
+\subsection{Dependencia del experto y del conjunto de datos}
 
-Se contrastarán la interpretabilidad y especialización del PID con la capacidad
-de las redes para condensar demostraciones diversas. También se considerarán la
-dependencia del experto y el papel del lazo interno clásico compartido.
+Se dejará explícito que la red imita fuerzas del experto y no minimiza
+directamente el error de posición. Por tanto, sus capacidades y fallos dependen
+de las demostraciones, incluidas posibles degradaciones del experto ante viento
+u otras perturbaciones.
+
+\subsection{Valor y límites del enfoque híbrido}
+
+Se discutirá qué interpretación y estructura aeroespacial se conserva al
+mantener el lazo interno clásico. También se delimitará qué parte del
+comportamiento procede de la red y cuál de las protecciones compartidas.
 
 \subsection{Papel de la arquitectura neuronal}
 
-Las diferencias entre MLP, GRU y LSTM se interpretarán a la luz de sus
-mecanismos y de las trayectorias ensayadas. No se atribuirá causalidad a la
-arquitectura cuando la evidencia solo permita observar una correlación.
+Las diferencias entre MLP, GRU y LSTM se interpretarán según sus mecanismos y
+los escenarios ensayados, sin atribuir causalidad más allá de la evidencia.
 
 \subsection{Validez, limitaciones y amenazas}
 
-Se tratarán fidelidad física, representatividad de escenarios, semillas,
-evidencia local no versionada y ausencia de validación real. Las conclusiones se
-limitarán explícitamente al banco de simulación y a las condiciones evaluadas.
+Se tratarán fidelidad física, representatividad del conjunto de datos,
+hiperparámetros, semillas y ausencia de validación real.
 
-\subsection{Reproducibilidad y software abierto}
+\subsection{Implicaciones para la reproducibilidad}
 
-Se valorará cómo escenarios declarativos, metadatos, pruebas y herramientas
-abiertas sostienen el rigor experimental. La infraestructura software se
-presentará como soporte del estudio, no como sustituto de la aportación física y
-de control.
+Se valorará brevemente cómo escenarios declarativos y metadatos sostienen el
+rigor experimental, remitiendo el detalle de implementación y pruebas a los
+apartados metodológicos o al repositorio.

@@ -1,64 +1,54 @@
 \subsection{Requisitos, convenciones e hipótesis}
 
-El vehículo se representa mediante posición y velocidad en mundo ENU, actitud
-con el cuaternión \(q_{WB}\) y velocidad angular en cuerpo FRD. El origen del
-sistema cuerpo coincide con el centro de gravedad y el empuje sustentador actúa
-en la dirección \(-Z_B\).
+Se fijarán el estado del vehículo, los sistemas mundo ENU y cuerpo FRD, los
+signos, las unidades y las hipótesis simplificadoras. Estas convenciones
+precederán a cualquier ecuación o resultado.
+
+\subsection{Vehículo de referencia y parámetros físicos}
+
+Se presentarán masa, geometría, inercia, propulsión y frecuencias del vehículo
+de referencia. Cada valor deberá justificarse como representativo, académico o
+derivado de una fuente, indicando su efecto sobre el comportamiento.
 
 \subsection{Cinemática y dinámica del cuerpo rígido}
 
-Se desarrollarán las ecuaciones traslacionales, rotacionales y cinemáticas que
-forman el modelo 6DOF. La formulación se conectará con un fragmento breve de la
-implementación para mostrar la correspondencia entre ecuaciones, marcos y
-unidades.
+Se desarrollarán las ecuaciones traslacionales, rotacionales y de actitud
+implementadas. Un fragmento breve mostrará la correspondencia entre formulación,
+marcos, unidades y código.
 
-\subsection{Actuadores y mezclador}
+\subsection{Actuadores, mezclador y límites de actuación}
 
-El modelo distingue intención de control, comando de rotor y actuación aplicada
-tras retardo, lag y saturación. Se explicará la relación cuadrática entre
-velocidad, empuje y par, junto con la asignación de empuje colectivo y momentos
-a los cuatro rotores.
+Se explicarán la relación entre velocidad de rotor, empuje y par, la asignación
+del mezclador, los retardos y la saturación. También se describirá qué ocurre
+cuando la demanda no resulta físicamente realizable.
 
-\subsection{Perturbaciones y límites físicos}
+\subsection{Perturbaciones, observación y seguridad}
 
-El simulador incorpora drag lineal, viento constante y ruido gaussiano de
-observación en posición y velocidad. Estos términos permiten estudiar robustez
-de forma controlada, pero no deben interpretarse como aerodinámica o sensores
-realistas.
+Se justificarán drag lineal, viento, ruido de observación y criterios de
+terminación. Los límites de actitud, impacto y saturación persistente deberán
+presentarse con su motivación y limitaciones.
 
 \subsection{Trayectorias y escenarios reproducibles}
 
-Las familias \textit{hold}, \textit{circle}, \textit{lissajous},
-\textit{waypoint}, \textit{lemniscate} y \textit{composite} proporcionan
-referencias nominales y fuera de distribución. Los escenarios YAML fijan
-vehículo, estado inicial, trayectoria, controlador, perturbaciones, tiempos y
-salidas sin modificar el código.
+Cada familia de trayectoria se explicará por la capacidad de seguimiento que
+permite evaluar. Los escenarios YAML se presentarán como contrato reproducible
+de vehículo, trayectoria, perturbaciones, controlador y ejecución.
 
-\subsection{Integración multirrate y flujo de simulación}
+\subsection{Flujo multirrate de simulación}
 
-Cada ciclo enlaza referencia, observación, controlador, mezclador, actuadores,
-telemetría e integración RK4. Los periodos de física, control y telemetría son
-independientes y el comando se mantiene entre actualizaciones mediante un
-retenedor de orden cero.
+Se describirá el ciclo completo entre referencia, observación, control,
+mezclador, actuadores, dinámica y telemetría. Se justificará la separación de
+frecuencias y la retención de orden cero.
 
-\subsection{Telemetría, métricas y reproducibilidad}
+\subsection{Telemetría, métricas, verificación y trazabilidad}
 
-Cada ejecución exporta la evolución temporal y un resumen de seguimiento,
-actuación, saturación, degradación y terminación. Los metadatos conservan la
-configuración efectiva, el comando, el entorno, los hashes relevantes y el
-estado Git para poder auditar la evidencia.
+Se explicarán las variables registradas, los metadatos reproducibles y las
+pruebas de coherencia interna. Se distinguirá de forma explícita entre
+verificación del simulador y validación con datos reales.
 
-\subsection{Verificación del simulador}
+\subsection{Elección del entorno de implementación}
 
-Las pruebas automáticas verifican convenciones ENU/FRD, actitud, dinámica,
-actuadores, mezclador, trayectorias, runner y métricas. Esta evidencia demuestra
-coherencia interna y previene regresiones, pero no sustituye una validación con
-datos de vuelo real.
-
-\subsection{Decisiones de implementación}
-
-Python se utiliza por la madurez de su ecosistema científico, su integración con
-PyTorch y la claridad con la que permite expresar modelos y experimentos. El uso
-de herramientas abiertas facilita inspección, reproducción y extensión por
-otros estudiantes e investigadores; el código completo está disponible en el
-repositorio del proyecto\footnote{\url{https://github.com/ChristianGonper/modelado-control-dron-v2}}.
+Se justificará brevemente Python por los requisitos científicos y experimentales
+que permite satisfacer. La comparación de plataformas se remitirá al estado del
+arte y los detalles internos al repositorio; el código completo está disponible en el
+proyecto\footnote{\url{https://github.com/ChristianGonper/modelado-control-dron-v2}}.

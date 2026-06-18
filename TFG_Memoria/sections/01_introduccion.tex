@@ -1,36 +1,30 @@
 \subsection{Motivación y contexto}
 
-El seguimiento autónomo de trayectorias exige combinar un modelo dinámico, una
-estrategia de control y un procedimiento de evaluación coherentes. Este trabajo
-parte de la necesidad de comparar control clásico y control neuronal bajo las
-mismas hipótesis físicas y condiciones experimentales.
+Este apartado presentará el seguimiento autónomo de trayectorias como un problema
+que combina dinámica, control y evaluación. Motivará la posibilidad de condensar
+un banco de controladores especializados en una política neuronal común.
 
 \subsection{Problema y pregunta de investigación}
 
-La pregunta central es si una política neuronal entrenada por imitación puede
-condensar demostraciones de distintos expertos y transferirse mejor que
-controladores clásicos especializados. La comparación no busca demostrar una
-superioridad universal, sino identificar bajo qué condiciones aparecen ventajas,
-degradaciones o fallos.
+La pregunta central estudiará si una red entrenada mediante demostraciones de
+controladores PD especializados puede mantener un comportamiento competitivo y
+transferirse a variaciones, composiciones y trayectorias nuevas. Se delimitará
+qué significa especialización, transferencia y generalización en este trabajo.
 
 \subsection{Objetivos}
 
-El objetivo general es construir un banco de simulación 6DOF trazable y usarlo
-para comparar controladores clásicos con redes MLP, GRU y LSTM que imitan la
-fuerza deseada del lazo externo. Los objetivos específicos abarcan modelado,
-implementación, verificación, generación de expertos, entrenamiento y evaluación
-en condiciones de prueba y fuera de distribución.
+El objetivo general y los objetivos específicos se formularán como resultados
+verificables. Cada uno se conectará posteriormente con una decisión
+metodológica, una comparación y una evidencia concreta.
 
 \subsection{Alcance, hipótesis y limitaciones}
 
-El simulador representa un cuerpo rígido con cuaterniones, actuadores
-simplificados, drag lineal, viento constante y ruido de observación básico. No
-se pretende validar vuelo real ni modelar aerodinámica formal, batería, sensores
-realistas o un estimador onboard completo.
+Se delimitarán el modelo 6DOF, los actuadores, las perturbaciones y los sensores
+simplificados utilizados. También se declarará por qué la evaluación en este
+banco no constituye todavía una validación de vuelo real.
 
 \subsection{Contribuciones y estructura de la memoria}
 
-La contribución principal es una comparación reproducible que enlaza modelo,
-escenarios, datasets, controladores y métricas. La memoria avanza desde los
-fundamentos hacia el simulador y los controladores, define después la metodología
-experimental y termina con resultados, discusión y conclusiones.
+Se resumirán el banco de simulación trazable, la campaña reproducible y la
+comparación escalonada desarrollados. El cierre explicará cómo cada capítulo
+contribuye a responder la pregunta central.

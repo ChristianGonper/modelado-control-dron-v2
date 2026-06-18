@@ -1,41 +1,40 @@
-\subsection{Comprobaciones previas}
+\subsection{Cobertura y comprobaciones previas}
 
-Pendiente de cerrar la evidencia experimental definitiva. Antes de comparar
-controladores se verificará la cobertura de la campaña, la validez de las
-ejecuciones y la coherencia de sus metadatos.
+Antes de comparar controladores se verificará la cobertura de la campaña, la
+validez de las ejecuciones y la coherencia de los metadatos.
 
-\subsection{Rendimiento en test}
+\subsection{Rendimiento en familias conocidas}
 
-Se compararán los PIDs congelados, el baseline representativo y las redes
-outer-force MLP, GRU y LSTM por familia. Las tablas distinguirán precisión,
-éxito de misión, seguridad y actuación.
+Se compararán controladores PD nativos y redes MLP, GRU y LSTM dentro de la
+distribución de entrenamiento mediante precisión, éxito, seguridad y actuación.
 
-\subsection{Transferencia de los controladores clásicos}
+\subsection{Transferencia cruzada de controladores PD}
 
-La matriz cruzada mostrará cómo se degrada cada PID especializado al aplicarse a
-otras familias. Este resultado establecerá el baseline de transferencia frente
-al que debe evaluarse la política aprendida.
+Una matriz cruzada mostrará cómo se degrada cada controlador especializado al
+aplicarse a otras familias y establecerá el baseline de transferencia.
 
-\subsection{Rendimiento fuera de distribución}
+\subsection{Variaciones y composiciones de familias conocidas}
 
-Se analizarán lemniscatas, trayectorias compuestas y otras condiciones OOD
-mediante RMSE, éxito, seguridad y degradación. No se incorporarán conclusiones
-hasta verificar que las ejecuciones pertenecen a una misma revisión y campaña.
+Se presentarán por separado los escenarios que combinan o modifican capacidades
+ya presentes en el entrenamiento.
+
+\subsection{Trayectorias completamente nuevas}
+
+Se evaluarán de forma independiente las familias geométricas nuevas para
+representar una prueba más exigente de generalización.
 
 \subsection{Comparación entre MLP, GRU y LSTM}
 
-Se estudiará si la memoria recurrente aporta mejoras consistentes o introduce
-degradaciones en determinadas familias. La interpretación combinará métricas
-agregadas con resultados por escenario.
+Se analizará si la memoria recurrente aporta ventajas consistentes según la
+categoría de evaluación, evitando depender de una única media agregada.
 
-\subsection{Saturación, degradación y clipping}
+\subsection{Fidelidad de imitación, actuación y protecciones}
 
-Se comprobará cuándo el rendimiento depende de límites físicos, degradación del
-mezclador o protecciones de fuerza. Esta lectura es necesaria para separar el
-comportamiento aprendido del soporte proporcionado por el sistema híbrido.
+Se relacionará el error supervisado de fuerza con el comportamiento en bucle
+cerrado. También se mostrarán esfuerzo, saturación, degradación y activación de
+protecciones.
 
-\subsection{Síntesis de resultados}
+\subsection{Síntesis de respuestas experimentales}
 
-El capítulo cerrará respondiendo de forma compacta a cada pregunta experimental.
-Las explicaciones causales que excedan la evidencia se reservarán para la
-discusión y se formularán con cautela.
+El capítulo cerrará respondiendo de forma compacta a cada pregunta experimental,
+sin introducir explicaciones causales que excedan la evidencia.

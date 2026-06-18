@@ -1,48 +1,60 @@
 \subsection{Preguntas e hipótesis experimentales}
 
-La campaña responderá a preguntas medibles sobre especialización de los PIDs,
-transferencia entre familias, fidelidad de imitación, generalización OOD y
-efecto de la memoria recurrente. Cada pregunta se asociará con comparaciones y
-métricas definidas antes de interpretar los resultados.
+La pregunta central se dividirá en comparaciones medibles sobre especialización,
+transferencia, imitación, generalización y memoria recurrente. Cada pregunta se
+asociará antes del análisis con métricas y evidencia esperada.
 
-\subsection{Diseño del dataset clásico}
+\subsection{Diseño global de la campaña}
 
-El dataset clásico contiene 150 episodios repartidos entre \textit{hold},
-\textit{circle}, \textit{lissajous} y \textit{waypoint}, con perfiles nominales
-y perturbados. Los splits estratificados permiten entrenamiento y evaluación
-in-distribution, pero no constituyen por sí solos una prueba fuerte de
-generalización.
+Se presentará el flujo completo entre verificación, generación de datos,
+sintonización, selección de demostraciones, entrenamiento y evaluación. También
+se explicará cómo se evita utilizar prueba para tomar decisiones.
 
-\subsection{Diseño del dataset de imitación}
+\subsection{Diseño del conjunto de datos clásico}
 
-Cada condición clásica se vuelve a ejecutar con variantes del PID externo y se
-conserva una demostración segura seleccionada por un criterio reproducible. El
-manifiesto, las ganancias y la telemetría permiten trazar cada muestra hasta el
-escenario y experto de procedencia.
+Se justificarán familias, geometrías, perturbaciones, número de episodios,
+semilla y particiones de entrenamiento, validación y prueba. No bastará con
+describir los 150 escenarios: deberá explicarse por qué son adecuados.
 
-\subsection{Configuración de entrenamiento}
+\subsection{Diseño del conjunto de datos de imitación}
 
-Se documentarán arquitectura, entradas, tamaño oculto, longitud de ventana,
-normalización, optimizador, semillas, dispositivo y criterio de parada. También
-se indicarán los parámetros probados y se explicará cómo se mantiene `test` y
-OOD fuera de las decisiones de entrenamiento.
+Se mostrará cómo cada escenario clásico se transforma en una demostración de
+fuerza deseada segura y trazable. Se explicará qué distribución de
+comportamientos aprende realmente la red.
 
-\subsection{Escenarios test, transferencia y OOD}
+\subsection{Configuración y comparación del entrenamiento}
 
-La evaluación separa el split `test`, la transferencia cruzada de PIDs y una
-batería fuera de distribución con nuevas trayectorias y composiciones. Esta
-separación evita presentar como generalización fuerte una partición que conserva
-las mismas familias del entrenamiento.
+Se fijarán hiperparámetros, semillas, dispositivo y criterios de selección para
+comparar MLP, GRU y LSTM bajo condiciones equivalentes. Se documentará la
+experimentación utilizada para tomar estas decisiones.
 
-\subsection{Métricas y criterios de éxito}
+\subsection{Evaluación en familias conocidas y transferencia clásica}
 
-Se utilizarán RMSE, MAE, error máximo, saturación, degradación y clipping de
-fuerza, junto con éxito de misión y seguridad. Completar una trayectoria finita
-y evitar un fallo físico son criterios distintos y se informarán por separado.
+Se definirá la comparación dentro de la distribución de entrenamiento (ID) y la
+matriz cruzada de controladores PD. Este nivel establecerá el rendimiento
+especializado y la referencia que pretende condensar la red.
 
-\subsection{Campaña automatizada y reproducibilidad}
+\subsection{Evaluación fuera de la distribución de entrenamiento}
 
-La campaña orquesta pruebas, generación, tuneo, entrenamiento, evaluación
-cerrada, OOD, transferencia y consolidación en once fases. Los resultados usados
-en la memoria deberán conservar rutas, comandos y metadatos suficientes para
-reconstruir la condición experimental.
+\subsubsection{Variaciones y composiciones de familias conocidas}
+
+Se evaluarán condiciones que combinan o modifican capacidades presentes en el
+entrenamiento. Cada escenario deberá indicar qué componentes son conocidos y
+qué novedad introduce.
+
+\subsubsection{Trayectorias completamente nuevas}
+
+Se evaluarán familias geométricas nuevas, separándolas de las composiciones para
+no mezclar niveles distintos de generalización.
+
+\subsection{Métricas, criterios de éxito y análisis}
+
+Se definirán métricas de seguimiento, actuación, saturación, degradación,
+protecciones, éxito de misión y seguridad. Cada métrica incluirá unidad,
+interpretación y limitaciones.
+
+\subsection{Reproducibilidad y validez de la evidencia}
+
+Se establecerán los comandos, configuraciones, hashes y metadatos necesarios
+para aceptar un resultado. También se explicarán los criterios para excluir
+ejecuciones incompletas o no comparables.

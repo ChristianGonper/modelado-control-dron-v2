@@ -1,47 +1,41 @@
-\subsection{Formulación híbrida outer-force}
+\subsection{Formulación híbrida de predicción de fuerza deseada}
 
-El controlador neuronal principal sustituye solo el lazo externo y predice la
-fuerza deseada \(\texttt{desired\_force\_W\_N[3]}\) en mundo ENU. El mismo lazo
-interno clásico convierte esa fuerza y la guiñada de referencia en empuje y
-momentos, lo que conserva interpretabilidad y estabilidad estructural.
+La red sustituye únicamente el lazo externo y predice una fuerza deseada
+tridimensional en ENU. Se justificará por qué no produce directamente empuje y
+momentos y por qué se conserva el lazo interno PD.
 
-\subsection{Construcción del experto por escenario}
+\subsection{Construcción y selección de demostraciones}
 
-Para cada escenario se ejecuta un banco de variantes del PID externo manteniendo
-fijos el PID interno, el vehículo, la trayectoria, la semilla y las
-perturbaciones. Se descartan candidatos inseguros y se selecciona por RMSE,
-esfuerzo dentro de un margen del 5\,\% y conservadurismo en caso de empate.
+Se explicará cómo se generan variantes del controlador externo y cómo se elige
+una demostración segura por escenario. El margen de selección, el esfuerzo y el
+desempate conservador deberán defenderse explícitamente.
 
-\subsection{Dataset, entradas y objetivos}
+\subsection{Tensores, variables de entrada, objetivos y secuencias}
 
-La configuración mínima utiliza errores de posición, errores de velocidad y
-aceleración de referencia obtenidos de la observación del controlador. El
-objetivo es la fuerza ENU del experto seleccionado; usar observaciones en vez
-del estado verdadero evita fuga de información bajo ruido.
+Se aplicarán los conceptos de tensores y secuencias al conjunto de datos real.
+Se justificará la elección de nueve variables, el objetivo de fuerza deseada y
+la ventana temporal utilizada por las redes recurrentes.
 
-\subsection{Normalización y entrenamiento}
+\subsection{Arquitecturas y parámetros de MLP, GRU y LSTM}
 
-La normalización se ajusta exclusivamente con el split de entrenamiento y se
-reutiliza durante validación, prueba e inferencia. El entrenamiento supervisado
-emplea error cuadrático, Adam y parada temprana, pero su calidad final debe
-comprobarse también en bucle cerrado.
+Se describirán estructura, activaciones, unidades ocultas, capas y número de
+parámetros de cada red. También se indicará qué decisiones proceden de
+experimentación y cuáles requieren todavía una defensa adicional.
 
-\subsection{MLP, GRU y LSTM implementadas}
+\subsection{Normalización, entrenamiento y selección del modelo}
 
-La MLP procesa cada muestra sin memoria explícita y sirve como referencia de
-menor complejidad. GRU y LSTM reciben ventanas temporales y permiten estudiar si
-la información secuencial mejora la imitación y el control.
+Se documentarán normalización, pérdida, optimizador, lotes, tasa de aprendizaje,
+parada temprana y selección de checkpoints. Se distinguirá fidelidad de
+imitación de rendimiento de seguimiento en bucle cerrado.
 
-\subsection{Inferencia cerrada y protecciones}
+\subsection{Inferencia en bucle cerrado y protecciones}
 
-Antes de entrar al PID interno, la fuerza neuronal puede limitarse por norma,
-inclinación solicitada y componente vertical mínima. Los porcentajes de clipping
-se reportarán para no atribuir a la red una estabilidad proporcionada por estas
-protecciones.
+Se explicarán los límites de norma, inclinación y componente vertical aplicados
+a la fuerza predicha. Las métricas de activación de estas protecciones impedirán
+atribuir a la red una estabilidad proporcionada por el sistema híbrido.
 
-\subsection{Extensiones fuera de la comparación principal}
+\subsection{Alternativas implementadas fuera de la comparación}
 
-El repositorio conserva el modo \texttt{neural\_position}, que predice
-multiplicadores de ganancias externas, además de rutas neuronales heredadas.
-Estas extensiones se documentarán brevemente, pero no se mezclarán con la
-comparación consolidada de controladores outer-force.
+Se documentarán brevemente \texttt{neural\_position} y el conjunto ampliado de
+31 variables. Ambas rutas se reservarán como extensiones y no se mezclarán con
+la comparación principal.

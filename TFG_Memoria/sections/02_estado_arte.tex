@@ -1,40 +1,49 @@
-\subsection{Modelado y simulación de cuadricópteros}
+\subsection{Simulación de cuadricópteros y elección de un banco propio}
 
-Este apartado revisará las formulaciones habituales de cuerpo rígido 6DOF y las
-ecuaciones de Newton--Euler empleadas para cuadricópteros. También justificará
-qué efectos físicos se conservan en el simulador y cuáles se simplifican dentro
-del alcance académico del trabajo.
+Se revisarán plataformas comerciales y abiertas relevantes, incluidas MATLAB,
+Simulink y RotorPy, atendiendo únicamente a las capacidades relacionadas
+con este trabajo. Esta comparación preparará la decisión de construir un banco
+acotado, adaptable y completamente trazable.
 
-\subsection{Representación de actitud e integración numérica}
+\subsection{Modelado dinámico, actitud e integración}
 
-Se explicará el uso de cuaterniones para evitar singularidades y la necesidad de
-conservar su norma durante la integración. Se presentará RK4 y la simulación
-multirrate como base para separar física, control y telemetría.
+Se presentarán las ecuaciones de Newton--Euler para un cuerpo rígido 6DOF, los
+sistemas de referencia, los cuaterniones y la integración RK4. La aplicación
+concreta de estas bases se reservará para el simulador desarrollado.
 
-\subsection{Control clásico de cuadricópteros}
+\subsection{Control clásico y métodos de sintonización}
 
-Se describirá el control en cascada con lazo externo de posición y lazo interno
-de actitud, apoyándose en bibliografía de sistemas UAV~\cite{beard2012small}.
-También se revisarán métodos clásicos de sintonización y sus limitaciones para
-una campaña con múltiples familias de trayectorias y perturbaciones.
+Se explicará el control PD en cascada de posición y actitud~\cite{beard2012small}. También se
+revisarán métodos clásicos y numéricos de sintonización para preparar la
+justificación posterior de la búsqueda progresiva empleada.
 
-\subsection{Aprendizaje por imitación aplicado al control}
+\subsection{Aprendizaje por imitación y control híbrido}
 
-El aprendizaje por imitación se presentará como un problema supervisado en el
-que una política aprende acciones generadas por un experto. Se relacionará con
-métodos como DAgger~\cite{ross2011dagger}, dejando claro que este TFG no emplea
-aprendizaje por refuerzo y que la evaluación debe cerrarse sobre el simulador.
+Se definirán experto, demostración, clonación de comportamiento y desplazamiento
+de distribución, situando métodos como DAgger~\cite{ross2011dagger}. Se justificará la imitación y la conservación de un lazo
+clásico interno como una frontera coherente con el carácter aeroespacial del
+trabajo.
 
-\subsection{Arquitecturas neuronales consideradas}
+\subsection{Fundamentos de redes neuronales}
 
-Se explicarán las bases de MLP, GRU y LSTM y se incorporarán las referencias
-originales o de consolidación de cada arquitectura. La diferencia central será
-la ausencia de memoria explícita en la MLP frente al tratamiento secuencial y
-las compuertas de las redes recurrentes.
+\subsubsection{Tensores, capas y no linealidad}
+
+Se explicarán tensores, capas lineales, lotes, secuencias y la necesidad de
+funciones de activación no lineales. Se situará la unidad lineal rectificada
+(ReLU) utilizada en la implementación.
+
+\subsubsection{Perceptrón multicapa}
+
+Se presentará el perceptrón multicapa (MLP) como arquitectura sin memoria
+explícita y referencia de menor complejidad.
+
+\subsubsection{Redes recurrentes GRU y LSTM}
+
+Se explicarán el estado oculto, las ventanas temporales y las compuertas de GRU
+y LSTM, junto con sus diferencias conceptuales.
 
 \subsection{Posicionamiento del trabajo}
 
-La revisión concluirá conectando los fundamentos con la decisión de implementar
-un simulador propio y trazable. La discusión se centrará en adecuación al
-objetivo, control de hipótesis y reproducibilidad, sin convertir el capítulo en
-una enumeración extensa de herramientas software.
+El capítulo concluirá situando la aportación entre control clásico, control
+completamente aprendido y enfoques híbridos. Se explicará qué hueco cubre el
+banco personalizado y cómo conserva trazabilidad física y experimental.
