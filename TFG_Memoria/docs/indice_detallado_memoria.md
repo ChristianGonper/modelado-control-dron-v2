@@ -268,7 +268,8 @@ ecuaciones o resultados.
 - ¿Cómo se definen mundo ENU, cuerpo FRD, signos y unidades?
 - ¿Qué hipótesis simplificadoras se adoptan?
 
-**Elementos previstos.** Diagrama SVG de marcos ENU/FRD y tabla de convenciones.
+**Elementos previstos.** Diagrama reproducible de marcos ENU/FRD y tabla de
+convenciones.
 
 ## 3.2 Vehículo de referencia y parámetros físicos
 
@@ -296,9 +297,16 @@ implementado.
 - ¿Cómo se calculan aceleraciones lineales, angulares y evolución de actitud?
 - ¿Cómo se transforman fuerzas entre ENU y FRD?
 - ¿Cómo se conserva la norma del cuaternión?
+- ¿Por qué se emplea RK4 de paso fijo frente a Euler o integradores adaptativos?
+- ¿Cómo se relaciona el paso temporal con las escalas dinámicas de actitud y
+  actuadores, la estabilidad numérica, el error y el coste computacional?
 
 **Elementos previstos.** Ecuaciones completas y snippet breve que demuestre su
 correspondencia con `dynamics/rigid_body.py`.
+
+**Pendiente principal.** Justificar la elección de RK4 y del paso de integración
+mediante bibliografía, análisis numérico o evidencia experimental suficiente;
+no asumir que el orden formal del método garantiza por sí solo su adecuación.
 
 ## 3.4 Actuadores, mezclador y límites de actuación
 
@@ -362,7 +370,7 @@ estado y telemetría.
 - ¿Cómo se aplica la retención de orden cero?
 - ¿En qué orden se actualizan observación, control, actuadores y dinámica?
 
-**Elementos previstos.** Diagrama SVG del ciclo multirrate.
+**Elementos previstos.** Diagrama reproducible del ciclo multirrate.
 
 **Pendiente principal.** Justificar los periodos concretos, la retención de orden
 cero y el orden de actualización por su efecto numérico y sobre el control, no
@@ -373,6 +381,10 @@ por la estructura interna del programa.
 **Función narrativa.** Declarar la telemetría necesaria para el análisis y las
 comprobaciones que sostienen la coherencia interna del simulador, sin convertir
 el apartado en documentación de pruebas de software.
+
+Este apartado tratará variables registradas, coherencia física y verificación
+interna. Las métricas usadas para comparar controladores y sus umbrales se
+definirán exclusivamente en 6.8.
 
 **Preguntas que debe responder.**
 
@@ -430,7 +442,9 @@ fuerza deseada.
 congelados.
 
 **Pendiente principal.** Justificar la elección de PD frente a PID, los términos
-incluidos y omitidos, las ganancias y cada saturación o límite relevante.
+incluidos y omitidos, las ganancias y cada saturación o límite relevante. Debe
+discutirse el error estacionario esperable ante perturbaciones constantes y qué
+mecanismos físicos o de control compensan, o no, la ausencia de acción integral.
 
 ## 4.3 Elección del método de sintonización
 
@@ -461,7 +475,8 @@ triviales.
 - ¿Qué evita que el tuneo favorezca una solución insegura?
 
 **Elementos previstos.** Diagrama del algoritmo, pseudocódigo y tabla de pesos,
-umbrales y justificaciones.
+umbrales y justificaciones. La organización interna de scripts, clases y
+funciones se remitirá al repositorio o al Anejo 1.
 
 **Pendiente principal.** Justificar multiplicadores, presupuesto, semilla,
 filtros, penalizaciones y umbrales; distinguir criterios fundamentados de
@@ -494,7 +509,7 @@ qué esta frontera resulta adecuada.
 - ¿Cómo conserva el lazo interno una base de ingeniería aeroespacial?
 - ¿Qué comparabilidad y protecciones aporta el diseño híbrido?
 
-**Elementos previstos.** Diagrama SVG del controlador híbrido.
+**Elementos previstos.** Diagrama reproducible del controlador híbrido.
 
 **Pendiente principal.** Justificar la frontera híbrida frente a predecir
 actuación directa u otras variables, indicando ventajas, alternativas y límites
@@ -530,6 +545,8 @@ real, sin repetir la teoría del apartado 2.5.
 - ¿Por qué se emplean errores y aceleración de referencia?
 - ¿Por qué el objetivo es fuerza deseada y no error de posición?
 - ¿Qué información aporta una ventana de 20 muestras?
+- ¿Qué duración física representa esa ventana y cómo se relaciona con retardo,
+  dinámica de actuadores, frecuencia de control y coste o latencia de inferencia?
 
 **Pendiente principal.** Justificar formalmente la selección de variables y la
 longitud de secuencia.
@@ -634,7 +651,7 @@ datos y evaluaciones.
 - ¿Qué decisiones solo pueden usar entrenamiento o validación?
 - ¿Cómo se evita contaminar prueba?
 
-**Elementos previstos.** Diagrama SVG de la campaña completa.
+**Elementos previstos.** Diagrama reproducible de la campaña completa.
 
 ## 6.3 Diseño del conjunto de datos clásico
 
@@ -647,10 +664,14 @@ experimento.
 - ¿Por qué se generan 150 episodios?
 - ¿Por qué `hold` utiliza menos perturbaciones?
 - ¿Cómo y por qué se dividen entrenamiento, validación y prueba?
+- ¿Cómo se evita la fuga de información entre particiones cuando las muestras y
+  ventanas de un mismo episodio están temporalmente correlacionadas?
 - ¿Qué papel tiene la semilla?
 
 **Pendiente principal.** Justificar conteos, ratios y selección concreta de
-geometrías y perfiles.
+geometrías y perfiles. La partición deberá realizarse y verificarse a nivel de
+episodios completos, no repartiendo muestras o ventanas correlacionadas de un
+mismo episodio entre entrenamiento, validación y prueba.
 
 ## 6.4 Diseño del conjunto de datos de imitación
 
@@ -701,6 +722,16 @@ exclusión.
 
 **Función narrativa.** Separar dos niveles distintos de novedad.
 
+**Preguntas que debe responder.**
+
+- ¿Qué PD congelado y transferido constituye el baseline operativo en cada
+  escenario OOD?
+- ¿Se incluye además un PD sintonizado específicamente para la condición nueva
+  como referencia de especialización, sin confundirlo con capacidad de
+  transferencia?
+- ¿Cómo se garantiza que ambas referencias usan las mismas condiciones y
+  protecciones que las redes?
+
 ### 6.7.1 Variaciones y composiciones de familias conocidas
 
 Evaluará geometrías, exigencias o composiciones que reutilizan capacidades
@@ -713,7 +744,8 @@ Evaluará familias geométricas nuevas, como la lemniscata, separándolas de las
 composiciones. Debe aclararse por qué constituyen una prueba más fuerte.
 
 **Elementos previstos.** Tabla de clasificación de cada escenario y comparación
-equivalente con PD transferidos.
+equivalente con PD transferidos; cuando exista evidencia trazable, se añadirá un
+PD específico como cota de especialización claramente diferenciada.
 
 ## 6.8 Métricas, criterios de éxito y análisis
 
