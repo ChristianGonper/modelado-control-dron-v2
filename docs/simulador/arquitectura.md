@@ -90,7 +90,9 @@ Cada muestra de `telemetry.json` contiene:
 
 ## Validacion de escenarios
 
-Antes de ejecutar o instanciar un escenario, `validate_scenario_config` comprueba los parametros fisicos que afectan directamente a la validez del resultado: masa, gravedad, inercia, drag, rotores, tiempos y estado inicial. Los errores incluyen la ruta del campo, por ejemplo `vehicle.rotors[0].omega_max_rad_s`.
+Antes de ejecutar o instanciar un escenario, `validate_scenario_config` comprueba los parametros fisicos que afectan directamente a la validez del resultado: masa, gravedad, inercia, drag, rotores, tiempos, limites opcionales de terminacion y estado inicial. Los errores incluyen la ruta del campo, por ejemplo `vehicle.rotors[0].omega_max_rad_s`.
+
+Los limites de posicion y velocidad no son configurables desde YAML. `SimulationRunner` aplica sus constantes internas de `100.0 m` por componente y `50.0 m/s` por componente; el esquema rechaza `termination.max_position_m` y `termination.max_speed_m_s`.
 
 Si `initial_state.orientation_WB` es `null`, el cargador genera una actitud nivelada a partir de `yaw_rad`. Si se proporciona un cuaternion, debe ser finito y unitario; la validacion lo rechaza en lugar de normalizarlo silenciosamente.
 

@@ -92,6 +92,14 @@ def test_invalid_timing_fails_early(field):
     _expect_invalid(config, f"timing.{field}")
 
 
+@pytest.mark.parametrize("field", ["max_position_m", "max_speed_m_s"])
+def test_unsupported_termination_bounds_fail_early(field):
+    config = _valid_config()
+    config["termination"][field] = 10.0
+
+    _expect_invalid(config, f"termination.{field}")
+
+
 def test_invalid_orientation_quaternion_fails_early():
     config = _valid_config()
     config["initial_state"]["orientation_WB"] = [1.0, 1.0, 0.0, 0.0]

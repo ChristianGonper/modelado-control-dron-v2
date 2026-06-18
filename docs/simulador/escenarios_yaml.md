@@ -6,6 +6,7 @@ La estructura admitida por el cargador actual es:
 
 ```yaml
 name: "Nombre del escenario"
+description: "Descripcion opcional"
 seed: 42
 
 vehicle: {}
@@ -33,10 +34,12 @@ Al ejecutar un escenario con `uv run simulador-quad run <fichero.yaml>`, el YAML
 
 ```yaml
 name: "Hover Clean"
+description: "Ensayo nominal de mantenimiento de posicion"
 seed: 42
 ```
 
 - `name`: nombre humano del experimento. Se copia a `metrics.metadata.scenario_name`.
+- `description`: texto opcional conservado en `metrics.metadata.config`; no modifica la simulacion.
 - `seed`: semilla usada por el ruido de observacion. Si falta, se usa `42`.
 
 ## `vehicle`
@@ -370,10 +373,10 @@ termination:
 
 - `max_duration_s`: duracion maxima del episodio. Debe ser positiva.
 - `z_min_m`: limite inferior de altura en mundo ENU. Debe ser finito.
-- `max_attitude_angle_rad`: inclinacion maxima permitida. Si falta, se usa `1.256`; si se proporciona, debe ser positiva.
+- `max_attitude_angle_rad`: inclinacion maxima permitida. Si falta, se usa `1.256` (~72 deg); si se proporciona, debe ser positiva.
 - `max_saturation_duration_s`: tiempo maximo con saturacion persistente. Si falta, se usa `1.0`; si se proporciona, debe ser positivo.
 
-El runner tambien tiene limites internos de posicion y velocidad, pero el CLI actual no los carga desde YAML.
+Los limites de posicion y velocidad no forman parte del contrato YAML. El esquema rechaza `termination.max_position_m` y `termination.max_speed_m_s`. El runner mantiene limites internos fijos de `100.0 m` por componente y `50.0 m/s` por componente, con terminaciones `"Out of position bounds"` y `"Out of velocity bounds"` respectivamente.
 
 ## Validacion fisica v1
 
@@ -385,6 +388,7 @@ La validacion implementada en `src/simulador_quad/scenarios/schema.py` cubre par
 - exactamente cuatro rotores;
 - posicion de rotor `[3]`, `turning_direction` en `{-1, 1}`, `k_f > 0`, `k_m >= 0`, `omega_max_rad_s > 0`, `time_constant_s >= 0` y `delay_s >= 0`;
 - tiempos `physics_dt_s`, `control_dt_s`, `telemetry_dt_s` y `max_duration_s` positivos;
+- limites de terminacion opcionales (`max_attitude_angle_rad`, `max_saturation_duration_s`) positivos, `z_min_m` finito y rechazo de los campos no soportados `max_position_m` y `max_speed_m_s`;
 - estado inicial con vectores `[3]` finitos y cuaternion `orientation_WB` nulo o unitario;
 - controlador clasico con ganancias `Kp_pos`, `Kd_pos`, `Kp_att`, `Kd_att` opcionales como vectores `[3]` finitos y no negativos;
 - controlador neuronal con `checkpoint_path`, `normalization_path` y `architecture` validos;

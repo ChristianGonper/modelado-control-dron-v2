@@ -299,7 +299,7 @@ def test_loader_instantiates_neural_outer_force(tmp_path):
             ]
         },
         "timing": {"physics_dt_s": 0.002, "control_dt_s": 0.01, "telemetry_dt_s": 0.01},
-        "termination": {"max_duration_s": 1.0, "max_attitude_angle_rad": 1.0, "max_saturation_duration_s": 0.5, "max_position_m": 10.0, "max_speed_m_s": 5.0, "z_min_m": -0.1},
+        "termination": {"max_duration_s": 1.0, "max_attitude_angle_rad": 1.0, "max_saturation_duration_s": 0.5, "z_min_m": -0.1},
         "initial_state": {"position_W_m": [0,0,1], "velocity_W_m_s": [0,0,0], "angular_velocity_B_rad_s": [0,0,0]},
         "trajectory": {"type": "hold", "position_W_m": [0,0,1], "yaw_rad": 0.0},
         "controller": {

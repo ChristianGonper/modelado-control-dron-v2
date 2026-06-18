@@ -102,8 +102,15 @@ def _validate_timing(config: Mapping[str, Any]) -> None:
         _positive(f"timing.{field}", timing.get(field), "s value")
 
     termination = _require_mapping(config, "termination")
+    for field in ("max_position_m", "max_speed_m_s"):
+        if field in termination:
+            raise _invalid(
+                f"termination.{field}",
+                "unsupported field; position and velocity limits are internal runner constants",
+                termination.get(field),
+            )
     _positive("termination.max_duration_s", termination.get("max_duration_s"), "s value")
-    for field in ("max_attitude_angle_rad", "max_saturation_duration_s", "max_position_m", "max_speed_m_s"):
+    for field in ("max_attitude_angle_rad", "max_saturation_duration_s"):
         if field in termination:
             _positive(f"termination.{field}", termination.get(field), "value")
     if "z_min_m" in termination:
@@ -158,7 +165,7 @@ def _validate_controller(config: Mapping[str, Any]) -> None:
                 raise _invalid("controller.multiplier_clip", "[positive_min, max] with max >= min", controller.get("multiplier_clip"))
 
     if c_type == "neural":
-        # Outer-force neural (new contract): feature_version + tilt limit mandatory
+        # Outer-force requires an explicit feature contract and tilt limit.
         fv = controller.get("feature_version")
         if fv not in ("outer_force_min_v1", "outer_force_full_v1"):
             raise _invalid("controller.feature_version", "one of ('outer_force_min_v1', 'outer_force_full_v1')", fv)
