@@ -77,89 +77,84 @@ trazable, entre especialización clásica, transferencia clásica e imitación n
 
 La hipótesis central sostiene que una política neuronal única, entrenada por
 imitación para predecir la fuerza deseada del lazo externo, puede mantener un
-desempeño competitivo frente al PD nativo en condiciones conocidas y transferir
+capacidad competitiva frente al PD nativo en condiciones conocidas y transferir
 mejor que los PD especializados aplicados fuera de su familia, conservando el
 lazo interno clásico común. Esta hipótesis es experimental: su aceptación o
-rechazo dependerá conjuntamente del éxito de misión, la seguridad, el error de
-seguimiento, el esfuerzo de control y el uso de protecciones.
+rechazo dependerá conjuntamente de la capacidad para completar las trayectorias,
+el error de seguimiento, el esfuerzo de control y el uso de protecciones.
 
-El objetivo general es desarrollar un banco 6DOF reproducible que permita
-determinar si un controlador neuronal por imitación puede sustituir un conjunto
-de controladores PD en cascada especializados y mejorar su transferencia a
-condiciones no empleadas para entrenarlo.
+El objetivo general es desarrollar un entorno reproducible de simulación 6DOF
+que permita determinar si un controlador neuronal por imitación puede sustituir
+un conjunto amplio de controladores PD especializados y ofrecer una mejor
+capacidad de transferencia a trayectorias y condiciones no empleadas durante el
+entrenamiento.
 
 Este objetivo se descompone en los siguientes objetivos específicos:
 
 \begin{enumerate}
-  \item formular e implementar un modelo 6DOF de cuerpo rígido, con convenciones
-  ENU/FRD, actuadores limitados, perturbaciones simplificadas y ejecución
-  multirrate explícitas;
-  \item definir familias de trayectorias y escenarios declarativos que permitan
-  repetir condiciones de entrenamiento, validación y prueba;
+  \item formular e implementar un modelo 6DOF de cuerpo rígido para un
+  cuadricóptero, con sistemas de referencia apropiados, actuadores limitados,
+  perturbaciones simplificadas y distintos pasos temporales de ejecución;
+  \item definir familias de trayectorias y escenarios que permitan repetir las
+  condiciones experimentales;
   \item implementar un PD en cascada y obtener, mediante una búsqueda
-  determinista restringida al conjunto de entrenamiento, un controlador
-  congelado por familia;
-  \item cuantificar la especialización y la transferencia del banco clásico al
-  aplicar cada controlador a familias distintas de la nativa;
-  \item generar demostraciones trazables seleccionando, para cada escenario, un
-  experto externo seguro sin modificar el lazo interno ni las condiciones
-  físicas;
+  determinista restringida a los escenarios de entrenamiento, un controlador
+  experto especializado para cada familia;
+  \item valorar la especialización del banco clásico y su capacidad de
+  transferencia al aplicar cada controlador a familias distintas de la nativa;
   \item entrenar MLP, GRU y LSTM para predecir la fuerza deseada y comparar la
   ausencia o presencia de memoria temporal bajo un protocolo común;
-  \item evaluar la fidelidad supervisada y, de forma separada, el seguimiento en
-  bucle cerrado en condiciones ID y en dos niveles de novedad OOD; y
-  \item conservar configuraciones, semillas, metadatos y criterios de exclusión
-  suficientes para reconstruir la evidencia aceptada.
+  \item evaluar la calidad de la predicción supervisada y, de forma separada,
+  el seguimiento en bucle cerrado en condiciones ID y OOD; y
+  \item conservar evidencia trazable suficiente para reconstruir los
+  experimentos y sus resultados.
 \end{enumerate}
-
-El cumplimiento no se deduce de que el software ejecute. Cada objetivo se
-vincula con comparaciones y métricas definidas antes de los resultados en el
-apartado metodológico dedicado a los conjuntos de datos y las métricas.
 
 \subsubsection*{Alcance y limitaciones}
 
 El vehículo se representa como un cuerpo rígido de seis grados de libertad. La
-posición y la velocidad se expresan en un marco mundo East--North--Up (ENU); la
-velocidad angular, los momentos y la geometría de rotores emplean un marco de
-cuerpo Forward--Right--Down (FRD). La actitud se propaga mediante un cuaternión
-y la dinámica mediante las ecuaciones de Newton--Euler integradas con RK4 de
-paso fijo. El modelo incluye gravedad, una fuerza de resistencia lineal,
+posición y la velocidad se expresan en el sistema de referencia mundo
+East--North--Up (ENU); la velocidad angular, los momentos y la geometría de
+rotores emplean el sistema de referencia cuerpo Forward--Right--Down (FRD). La
+actitud se propaga mediante un cuaternión y la dinámica mediante las ecuaciones
+de Newton--Euler integradas con RK4 de paso fijo. El modelo incluye gravedad,
+una fuerza de resistencia lineal,
 velocidad de viento constante, ruido gaussiano de posición y velocidad, ley
 cuadrática de rotor, retardo puro, dinámica de primer orden y saturación.
 
 Estas elecciones constituyen hipótesis de modelado, no propiedades generales de
-un cuadricóptero real. Se supone masa e inercia constantes, estructura rígida y
-parámetros conocidos. No se modelan flexibilidad, efecto suelo, interacción
-entre rotores, aerodinámica no lineal del fuselaje, turbulencia ni descarga de
-batería. El viento no constituye un campo atmosférico y el drag lineal no
-procede de una identificación aerodinámica. La observación solo incorpora ruido
-sintético en posición y velocidad; no existen modelos de IMU, GNSS, cámaras ni
-un estimador de estado a bordo.
+un cuadricóptero real. Se suponen masa e inercia constantes, un sólido rígido y
+parámetros conocidos. No se modelan flexibilidad, efecto suelo, interferencia
+entre rotores, aerodinámica no lineal, turbulencia ni descarga de
+batería. El viento no constituye un campo atmosférico real y la resistencia
+lineal no procede de una identificación aerodinámica. La observación solo
+incorpora ruido sintético en posición y velocidad; no se modelan de forma
+concreta una IMU, un receptor GNSS ni un estimador de estado a bordo.
 
-Los límites de altura, actitud, estado finito y saturación persistente acotan la
-región donde una ejecución se considera válida. Las redes se entrenan por
-clonación supervisada de la fuerza calculada por expertos PD: no minimizan
-directamente el error de posición y pueden heredar sus sesgos. Además, la ruta
-híbrida conserva estabilización y protecciones clásicas. En consecuencia, los
-resultados solo son válidos para los escenarios, parámetros, semillas y
-presupuesto de entrenamiento descritos; no demuestran comportamiento seguro en
-hardware.
+Los límites de altura y actitud, junto con la persistencia de la saturación,
+acotan la región donde una ejecución se considera válida. Las redes se entrenan
+mediante clonación supervisada de la fuerza calculada por expertos PD, es decir, no
+minimizan directamente el error de posición y pueden heredar los sesgos de esos
+expertos ante perturbaciones externas. Además, la ruta neuronal conserva la
+estabilización del lazo interno PD y las protecciones clásicas. En consecuencia,
+los resultados solo son válidos para los escenarios, los parámetros del
+vehículo y las semillas descritos; no demuestran un comportamiento seguro en
+hardware de vuelo real.
 
 \subsection{Estructura del documento}
 \label{subsec:estructura-documento}
 
 La aportación del trabajo es la integración trazable de cuatro elementos: un
 simulador 6DOF acotado, un banco de PD en cascada especializados, un proceso de
-selección de demostraciones por escenario y una comparación escalonada de MLP,
-GRU y LSTM en bucle cerrado. El interés no reside en proponer una nueva
-arquitectura neuronal, sino en construir una comparación donde pueda separarse
-qué procede del experto, qué aprende la red y qué aportan las protecciones
-compartidas.
+selección de expertos por familia y escenario y una comparación de MLP, GRU y
+LSTM en bucle cerrado. El interés reside en construir una comparación que
+permita distinguir qué propiedades proceden del PD experto, qué aprende la red,
+qué aporta el lazo interno clásico y cuáles son los límites del enfoque.
 
 Tras esta introducción, el estado del arte reúne los fundamentos y alternativas
-bibliográficas, incluida la programación de ganancias como antecedente clásico.
+bibliográficas de control, incluida la programación de ganancias.
 La metodología presenta de forma integrada el simulador, el PD en cascada, la
 predicción neuronal de fuerza, los conjuntos de datos, las métricas y el
-protocolo reproducible. El capítulo de resultados experimentales presenta e
-interpreta la evidencia sin modificar esos criterios. Finalmente, las
+procedimiento reproducible. El capítulo de resultados experimentales presenta e
+interpreta la evidencia. Finalmente, las
 conclusiones valoran la hipótesis y los objetivos y delimitan el trabajo futuro.

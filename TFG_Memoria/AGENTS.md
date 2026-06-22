@@ -53,3 +53,9 @@ Trabaja apartado por apartado según `docs/metodologia_redaccion.md`. Parte de l
 decisiones del usuario y de evidencia verificable; usa las herramientas
 anteriores solo como apoyo. Señala la información o justificación que falte y
 revisa la coherencia local antes de avanzar.
+
+Salvo que el usuario indique lo contrario, cada verbalización se entiende como
+una revisión autoral apoyada en una versión preliminar redactada previamente por
+un agente. Usa esa versión como base de estructura y contraste, pero da prioridad
+a las decisiones, correcciones y preferencias expresadas en la verbalización; no
+la trates como una transcripción literal ni como una redacción desde cero.
