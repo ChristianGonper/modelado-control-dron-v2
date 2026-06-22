@@ -15,8 +15,7 @@ preparará una ficha breve con:
 1. propósito narrativo y relación con la hipótesis central;
 2. preguntas concretas que debe responder;
 3. decisiones del usuario que deben quedar reflejadas;
-4. evidencia del repositorio que debe verificarse mediante una consulta dirigida
-   a `grok` y lectura de las rutas necesarias;
+4. evidencia del repositorio;
 5. afirmaciones externas que requieren bibliografía;
 6. ecuaciones, snippets, figuras o tablas previstas; para cada diagrama, formato
    fuente e intención, mensaje, elementos, relaciones y procedimiento de
@@ -30,10 +29,9 @@ preparará una ficha breve con:
    alternativas descartadas y valoraciones personales relevantes.
 2. **Completar y contrastar.** La IA puede proponer explicaciones, detectar
    huecos y añadir contexto técnico, indicando qué elementos son propuestas.
-3. **Verificar implementación.** Pedir a `grok` una búsqueda concreta y comprobar
-   directamente solo los archivos necesarios.
+3. **Verificar implementación.** Comprobar los archivos necesarios.
 4. **Cubrir fuentes.** Consultar `plan_fuentes.md`; si intervienen varias fuentes
-   extensas, preparar después el trabajo con NotebookLM.
+   extensas, preparar después el trabajo con herramienta de búsqueda.
 5. **Redactar.** Separar fundamentos externos, decisiones propias,
    implementación, evidencia y limitaciones.
 6. **Cerrar localmente.** Revisar terminología, acrónimos, referencias,

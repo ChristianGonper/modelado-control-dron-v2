@@ -1,11 +1,11 @@
-# Plan de fuentes previo a NotebookLM
+# Plan de fuentes
 
 ## Criterio
 
-Antes de reunir artículos o iniciar un análisis extenso con NotebookLM, debe
-quedar claro qué afirmación se pretende respaldar. Se priorizarán fuentes
-originales, libros académicos reconocidos, artículos revisados por pares y
-documentación oficial para describir herramientas.
+Antes de reunir artículos o iniciar un análisis extenso con la herramienta, 
+debe quedar claro qué afirmación se pretende respaldar. Se priorizarán 
+fuentes originales, libros académicos reconocidos, artículos revisados 
+por pares y documentación oficial para describir herramientas.
 
 ## Fuentes prioritarias
 
@@ -13,7 +13,7 @@ documentación oficial para describir herramientas.
 
 - Modelos 6DOF de cuerpo rígido y ecuaciones de Newton--Euler aplicadas a
   cuadricópteros.
-- Convenciones de marcos de referencia y representación de actitud mediante
+- Convenciones de sistemas de referencia y representación de actitud mediante
   cuaterniones.
 - Integración RK4 y simulación con distintas frecuencias de física y control.
 - Valores físicos representativos de cuadricópteros de aproximadamente
@@ -71,7 +71,7 @@ a un controlador completamente aprendido.
 - Navegación visual, reconocimiento a bordo y conciencia situacional.
 - Sim-to-real, identificación de parámetros y robustificación de datasets.
 
-## Entregable deseado antes de usar NotebookLM
+## Entregable deseado antes de usar la herramienta
 
 Para cada bloque se reunirá:
 
@@ -82,5 +82,5 @@ Para cada bloque se reunirá:
    protegido de forma inapropiada;
 5. dudas que requieran comparar varias fuentes.
 
-Después podrá prepararse un notebook temático y solicitar un informe con citas
+Después podrá prepararse un cuaderno temático y solicitar un informe con citas
 IEEE propuestas, que deberán verificarse contra las fuentes originales.
