@@ -1,31 +1,38 @@
 \subsection{Motivación}
 \label{subsec:motivacion-contexto}
 
-El seguimiento autónomo de trayectorias de un cuadricóptero combina tres
-problemas inseparables: representar su movimiento tridimensional, calcular una
-actuación que estabilice el vehículo y comprobar el comportamiento bajo
-condiciones comparables. La dificultad no reside únicamente en reducir un error
-instantáneo. El controlador debe actuar sobre un sistema acoplado, limitado por
-los actuadores y expuesto a perturbaciones, mientras conserva la estabilidad de
-la actitud y completa la misión prescrita.
+El seguimiento autónomo de trayectorias de un cuadricóptero exige disponer de
+una estimación suficiente de su estado respecto al entorno y a la referencia, y
+transformar el error de seguimiento en una actuación que estabilice el vehículo
+mientras lo conduce por el recorrido prescrito. La dificultad no reside
+únicamente en reducir el error instantáneo respecto a una posición fija, sino que la
+referencia evoluciona con el tiempo y el controlador actúa sobre la dinámica
+acoplada de un sólido rígido, limitada por los actuadores y expuesta a
+perturbaciones internas y externas. Debe coordinar, por tanto, el movimiento de
+traslación y la actitud sin perder la estabilidad ni incumplir la misión.
 
 % CITA PENDIENTE [CIT-001]: los cuadricópteros son sistemas subactuados y acoplados cuyo seguimiento exige coordinar traslación y actitud
 Esta naturaleza acoplada motiva el uso de una arquitectura de control en dos
 niveles. En este trabajo, un PD en cascada transforma primero los errores de
-posición y velocidad en una fuerza deseada y, después, convierte esa fuerza en
-una actitud, un empuje colectivo y unos momentos de cuerpo. Ajustar un único
-controlador para todas las maniobras puede exigir un compromiso entre respuestas
-de distinta naturaleza. Por ello se construye un banco con un PD especializado
-para cada familia de trayectorias y se estudia si una política neuronal común
-puede condensar las demostraciones de esos expertos.
+posición y velocidad en una fuerza deseada en el sistema de referencia ENU. El lazo
+interno convierte esa fuerza, junto con la referencia de guiñada, en una
+actitud deseada, un empuje colectivo y unos momentos de cuerpo; a continuación,
+el mezclador distribuye estos mandos entre los cuatro rotores. Ajustar un único
+controlador para maniobras de distinta naturaleza puede imponer un compromiso
+entre, por ejemplo, mantener una posición y recorrer una geometría exigente. La
+especialización evita parte de ese compromiso, pero multiplica el coste de
+ajuste, validación y selección de ganancias. Por ello se construye un banco con
+un PD especializado para cada familia de trayectorias y se estudia si una
+política neuronal común puede condensar las demostraciones de esos expertos.
 
 La comparación requiere un entorno donde modelo, referencias, perturbaciones,
 semillas, límites y métricas permanezcan bajo control. El simulador 6DOF
-desarrollado proporciona ese contrato experimental: los controladores comparten
+desarrollado proporciona ese contrato experimental, los controladores comparten
 el mismo vehículo, la misma observación y la misma cadena de actuación; cada
 ejecución conserva la configuración efectiva y la telemetría necesaria para
-auditarla. El banco no pretende sustituir la validación en vuelo, sino aislar el
-contraste experimental dentro de unas hipótesis explícitas y reproducibles.
+revisar y reproducir el experimento. El banco no pretende sustituir una futura
+validación en vuelo, sino aislar el contraste experimental dentro de unas
+hipótesis explícitas y reproducibles.
 
 % FIGURA PENDIENTE [FIG-001]: resumir la hipótesis central mediante el banco de PD, la generación de demostraciones, la política neuronal común y los niveles de evaluación
 
@@ -33,38 +40,37 @@ contraste experimental dentro de unas hipótesis explícitas y reproducibles.
 
 El problema central del trabajo consiste en determinar si una única política
 neuronal, entrenada a partir de demostraciones generadas por controladores PD
-ajustados para distintas familias de trayectorias y perturbaciones, puede
-sustituir ese banco de controladores. La comparación debe establecer si la
-política mantiene un comportamiento competitivo en las condiciones conocidas y
-si transfiere mejor a variaciones, composiciones y trayectorias nuevas.
+ajustados para distintas familias de trayectorias, puede sustituir ese banco de
+controladores cuando se evalúa bajo las mismas referencias y perturbaciones. La
+comparación debe establecer si la política mantiene un comportamiento
+competitivo en las condiciones conocidas y si transfiere mejor a variaciones,
+composiciones y trayectorias nuevas.
 
 La comparación distingue tres referencias. El \emph{PD especializado} es el
 controlador congelado para la familia a la que pertenece el escenario. Un
 \emph{PD transferido} es uno de esos mismos controladores aplicado, sin
 reajuste, a otra familia o condición. La ruta neuronal principal sustituye el
-lazo externo y realiza una \emph{predicción de fuerza deseada}: a partir de la
-observación y la referencia produce un vector tridimensional en el marco mundo
+lazo externo y realiza una \emph{predicción de fuerza deseada}, esto es, a partir de la
+observación y la referencia produce un vector tridimensional en el sistema de referencia
 ENU, mientras conserva el lazo interno clásico. Por tanto, la red no ordena
 directamente velocidades de rotor ni momentos de cuerpo.
 
 Se denomina rendimiento competitivo a conservar, en bucle cerrado, la
-completitud de misión y la seguridad con errores de seguimiento y uso de las
-protecciones comparables a la referencia pertinente. No se fija en la
-introducción un margen numérico a posteriori; las métricas y criterios se
+completitud de misión y la seguridad, y a obtener errores de seguimiento,
+esfuerzo de control y uso de protecciones comparables a la referencia
+pertinente. Las métricas y criterios se
 predefinen en el \apartadoref{subsec:datos-metricas}. La transferencia se
 evalúa al aplicar un controlador fuera de la condición para la que fue ajustado.
 La evaluación separa condiciones dentro de la distribución de entrenamiento
 (ID) de condiciones fuera de la distribución de entrenamiento (OOD). Entre las
-últimas se distinguen variaciones o composiciones de capacidades conocidas y
+últimas se distinguen composiciones de trayectorias conocidas y
 familias geométricas completamente nuevas.
 
-El estudio no intenta demostrar estabilidad formal de la política aprendida,
-superioridad universal de una arquitectura, robustez frente a cualquier
-perturbación ni aptitud para vuelo real. Tampoco atribuye a la red la seguridad
-aportada por el lazo interno, las saturaciones o el recorte de fuerza. Su alcance
-es una comparación experimental, sobre el mismo modelo y con evidencia
-trazable, entre especialización clásica, transferencia clásica e imitación
-neuronal.
+El estudio no intenta demostrar una superioridad universal de una arquitectura, 
+robustez frente a cualquier perturbación ni aptitud para vuelo real. Tampoco atribuye 
+a la red la seguridad aportada por el lazo interno, las saturaciones o el límite de 
+fuerza. Su alcance es una comparación experimental, sobre el mismo modelo y con evidencia
+trazable, entre especialización clásica, transferencia clásica e imitación neuronal.
 
 \subsection{Hipótesis y objetivos}
 \label{subsec:hipotesis-objetivos}
