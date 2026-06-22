@@ -12,7 +12,7 @@ perciban como fragmentos aislados.
 La unidad normal de redacción será una subsección. Antes de escribirla se
 preparará una ficha breve con:
 
-1. propósito narrativo y relación con la pregunta central;
+1. propósito narrativo y relación con la hipótesis central;
 2. preguntas concretas que debe responder;
 3. decisiones del usuario que deben quedar reflejadas;
 4. evidencia del repositorio que debe verificarse mediante una consulta dirigida
@@ -50,7 +50,7 @@ Al terminar una sección principal se releerá completa para:
 - comprobar que la conclusión de cada bloque prepara el siguiente;
 - actualizar la lista de acrónimos y el plan de figuras.
 
-Al cerrar un capítulo se revisará además su relación con la pregunta central y
+Al cerrar un capítulo se revisará además su relación con la hipótesis central y
 con los capítulos anterior y posterior.
 
 ## Gestión de referencias cruzadas

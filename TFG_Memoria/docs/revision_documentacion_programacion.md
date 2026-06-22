@@ -28,7 +28,8 @@ código, pruebas y escenarios.
 ## Aspectos especialmente útiles para la memoria
 
 - `docs/02_requisitos_ingenieria_simulador.md` contiene la formulación física y
-  las ecuaciones que deben desarrollarse en el capítulo del simulador.
+  las ecuaciones que deben desarrollarse en el apartado metodológico del
+  simulador.
 - `docs/simulador/arquitectura.md` ofrece el flujo real de una simulación y los
   contratos de datos principales.
 - `docs/simulador/trazabilidad.md` permite justificar cada decisión mediante
@@ -42,11 +43,12 @@ código, pruebas y escenarios.
 
 ## Riesgos y decisiones narrativas
 
-### Pregunta experimental y niveles de evaluación
+### Hipótesis experimental y niveles de evaluación
 
-La pregunta central debe formularse como la posibilidad de condensar un banco
-de controladores PD especializados en una política neuronal común y valorar su
-transferencia. La evidencia implementada permite separar cuatro niveles:
+La hipótesis central debe formularse como la posibilidad de condensar un banco
+de controladores PD especializados en una política neuronal común, mantener un
+desempeño competitivo y mejorar la transferencia frente a los PD aplicados fuera
+de su familia. La evidencia implementada permite separar cuatro niveles:
 
 1. prueba en familias conocidas;
 2. transferencia cruzada de los controladores PD;

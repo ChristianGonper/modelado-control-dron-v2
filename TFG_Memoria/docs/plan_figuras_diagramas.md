@@ -24,16 +24,16 @@ diagrama cambie.
 
 | Capítulo | Diagrama | Finalidad |
 |---|---|---|
-| Introducción | Pregunta y estrategia experimental | Mostrar banco de PD, imitación y niveles de evaluación. |
-| Estado del arte | Taxonomía de enfoques de control | Situar PD, control aprendido e híbrido. |
-| Simulador | Marcos ENU y FRD | Fijar signos, ejes y dirección de empuje. |
-| Simulador | Flujo multirrate | Explicar referencia, control, mezclador, actuadores, dinámica y telemetría. |
-| Simulador | Arquitectura del banco propio | Contrastar control y trazabilidad con plataformas no adaptadas al objetivo. |
-| Control clásico | Control PD en cascada | Mostrar lazo externo de posición y lazo interno de actitud. |
-| Control clásico | Búsqueda progresiva | Mostrar diagnóstico, candidatos, filtros, refinamiento y congelación. |
-| Control neuronal | Predicción de fuerza deseada | Mostrar entradas, MLP/GRU/LSTM, protecciones y lazo interno común. |
-| Metodología | Flujo completo de campaña | Conectar datasets, tuneo, entrenamiento y comparaciones. |
-| Metodología | Niveles de evaluación | Separar familias vistas, transferencia, composiciones y trayectorias nuevas. |
+| Introducción | `FIG-001` Hipótesis y estrategia experimental | Mostrar banco de PD, imitación y niveles de evaluación. Ficha creada; figura pendiente. |
+| Estado del arte | Taxonomía de enfoques de control | Situar PD, programación de ganancias, control aprendido e híbrido. |
+| Metodología 3.1 | `FIG-002` Marcos ENU y FRD | Fijar signos, ejes y dirección de empuje. Ficha creada; figura pendiente. |
+| Metodología 3.1 | `FIG-003` Flujo multirrate | Explicar referencia, control, mezclador, actuadores, dinámica y telemetría. Ficha creada; figura pendiente. |
+| Metodología 3.1 | Arquitectura del banco propio | Contrastar control y trazabilidad con plataformas no adaptadas al objetivo. |
+| Metodología 3.2 | `FIG-004` Control PD en cascada | Mostrar lazo externo de posición y lazo interno de actitud. Ficha creada; figura pendiente. |
+| Metodología 3.2 | `FIG-005` Búsqueda progresiva | Mostrar diagnóstico, candidatos, filtros, refinamiento y congelación. Ficha creada; figura pendiente. |
+| Metodología 3.3 | `FIG-006` Predicción de fuerza deseada | Mostrar entradas, MLP/GRU/LSTM, protecciones y lazo interno común. Ficha creada; figura pendiente. |
+| Metodología 3.5 | `FIG-007` Flujo completo de campaña | Conectar datasets, tuneo, entrenamiento y comparaciones. Ficha creada; figura pendiente. |
+| Metodología 3.5 | `FIG-008` Niveles de evaluación | Separar familias vistas, transferencia, composiciones y trayectorias nuevas. Ficha creada; figura pendiente. |
 | Trabajo futuro | Paso hacia dron real | Mostrar sensores, estimación, control y percepción a bordo. |
 
 ## Gráficas y tablas previstas para resultados
