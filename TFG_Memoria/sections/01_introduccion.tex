@@ -1,30 +1,159 @@
-\subsection{Motivación y contexto}
+\subsection{Motivación}
+\label{subsec:motivacion-contexto}
 
-Este apartado presentará el seguimiento autónomo de trayectorias como un problema
-que combina dinámica, control y evaluación. Motivará la posibilidad de condensar
-un banco de controladores especializados en una política neuronal común.
+El seguimiento autónomo de trayectorias de un cuadricóptero combina tres
+problemas inseparables: representar su movimiento tridimensional, calcular una
+actuación que estabilice el vehículo y comprobar el comportamiento bajo
+condiciones comparables. La dificultad no reside únicamente en reducir un error
+instantáneo. El controlador debe actuar sobre un sistema acoplado, limitado por
+los actuadores y expuesto a perturbaciones, mientras conserva la estabilidad de
+la actitud y completa la misión prescrita.
 
-\subsection{Problema y pregunta de investigación}
+% CITA PENDIENTE [CIT-001]: los cuadricópteros son sistemas subactuados y acoplados cuyo seguimiento exige coordinar traslación y actitud
+Esta naturaleza acoplada motiva el uso de una arquitectura de control en dos
+niveles. En este trabajo, un PD en cascada transforma primero los errores de
+posición y velocidad en una fuerza deseada y, después, convierte esa fuerza en
+una actitud, un empuje colectivo y unos momentos de cuerpo. Ajustar un único
+controlador para todas las maniobras puede exigir un compromiso entre respuestas
+de distinta naturaleza. Por ello se construye un banco con un PD especializado
+para cada familia de trayectorias y se estudia si una política neuronal común
+puede condensar las demostraciones de esos expertos.
 
-La pregunta central estudiará si una red entrenada mediante demostraciones de
-controladores PD especializados puede mantener un comportamiento competitivo y
-transferirse a variaciones, composiciones y trayectorias nuevas. Se delimitará
-qué significa especialización, transferencia y generalización en este trabajo.
+La comparación requiere un entorno donde modelo, referencias, perturbaciones,
+semillas, límites y métricas permanezcan bajo control. El simulador 6DOF
+desarrollado proporciona ese contrato experimental: los controladores comparten
+el mismo vehículo, la misma observación y la misma cadena de actuación; cada
+ejecución conserva la configuración efectiva y la telemetría necesaria para
+auditarla. El banco no pretende sustituir la validación en vuelo, sino aislar el
+contraste experimental dentro de unas hipótesis explícitas y reproducibles.
 
-\subsection{Objetivos}
+% FIGURA PENDIENTE [FIG-001]: resumir la hipótesis central mediante el banco de PD, la generación de demostraciones, la política neuronal común y los niveles de evaluación
 
-El objetivo general y los objetivos específicos se formularán como resultados
-verificables. Cada uno se conectará posteriormente con una decisión
-metodológica, una comparación y una evidencia concreta.
+\subsubsection*{Problema abordado}
 
-\subsection{Alcance, hipótesis y limitaciones}
+El problema central del trabajo consiste en determinar si una única política
+neuronal, entrenada a partir de demostraciones generadas por controladores PD
+ajustados para distintas familias de trayectorias y perturbaciones, puede
+sustituir ese banco de controladores. La comparación debe establecer si la
+política mantiene un comportamiento competitivo en las condiciones conocidas y
+si transfiere mejor a variaciones, composiciones y trayectorias nuevas.
 
-Se delimitarán el modelo 6DOF, los actuadores, las perturbaciones y los sensores
-simplificados utilizados. También se declarará por qué la evaluación en este
-banco no constituye todavía una validación de vuelo real.
+La comparación distingue tres referencias. El \emph{PD especializado} es el
+controlador congelado para la familia a la que pertenece el escenario. Un
+\emph{PD transferido} es uno de esos mismos controladores aplicado, sin
+reajuste, a otra familia o condición. La ruta neuronal principal sustituye el
+lazo externo y realiza una \emph{predicción de fuerza deseada}: a partir de la
+observación y la referencia produce un vector tridimensional en el marco mundo
+ENU, mientras conserva el lazo interno clásico. Por tanto, la red no ordena
+directamente velocidades de rotor ni momentos de cuerpo.
 
-\subsection{Contribuciones y estructura de la memoria}
+Se denomina rendimiento competitivo a conservar, en bucle cerrado, la
+completitud de misión y la seguridad con errores de seguimiento y uso de las
+protecciones comparables a la referencia pertinente. No se fija en la
+introducción un margen numérico a posteriori; las métricas y criterios se
+predefinen en el \apartadoref{subsec:datos-metricas}. La transferencia se
+evalúa al aplicar un controlador fuera de la condición para la que fue ajustado.
+La evaluación separa condiciones dentro de la distribución de entrenamiento
+(ID) de condiciones fuera de la distribución de entrenamiento (OOD). Entre las
+últimas se distinguen variaciones o composiciones de capacidades conocidas y
+familias geométricas completamente nuevas.
 
-Se resumirán el banco de simulación trazable, la campaña reproducible y la
-comparación escalonada desarrollados. El cierre explicará cómo cada capítulo
-contribuye a responder la pregunta central.
+El estudio no intenta demostrar estabilidad formal de la política aprendida,
+superioridad universal de una arquitectura, robustez frente a cualquier
+perturbación ni aptitud para vuelo real. Tampoco atribuye a la red la seguridad
+aportada por el lazo interno, las saturaciones o el recorte de fuerza. Su alcance
+es una comparación experimental, sobre el mismo modelo y con evidencia
+trazable, entre especialización clásica, transferencia clásica e imitación
+neuronal.
+
+\subsection{Hipótesis y objetivos}
+\label{subsec:hipotesis-objetivos}
+
+La hipótesis central sostiene que una política neuronal única, entrenada por
+imitación para predecir la fuerza deseada del lazo externo, puede mantener un
+desempeño competitivo frente al PD nativo en condiciones conocidas y transferir
+mejor que los PD especializados aplicados fuera de su familia, conservando el
+lazo interno clásico común. Esta hipótesis es experimental: su aceptación o
+rechazo dependerá conjuntamente del éxito de misión, la seguridad, el error de
+seguimiento, el esfuerzo de control y el uso de protecciones.
+
+El objetivo general es desarrollar un banco 6DOF reproducible que permita
+determinar si un controlador neuronal por imitación puede sustituir un conjunto
+de controladores PD en cascada especializados y mejorar su transferencia a
+condiciones no empleadas para entrenarlo.
+
+Este objetivo se descompone en los siguientes objetivos específicos:
+
+\begin{enumerate}
+  \item formular e implementar un modelo 6DOF de cuerpo rígido, con convenciones
+  ENU/FRD, actuadores limitados, perturbaciones simplificadas y ejecución
+  multirrate explícitas;
+  \item definir familias de trayectorias y escenarios declarativos que permitan
+  repetir condiciones de entrenamiento, validación y prueba;
+  \item implementar un PD en cascada y obtener, mediante una búsqueda
+  determinista restringida al conjunto de entrenamiento, un controlador
+  congelado por familia;
+  \item cuantificar la especialización y la transferencia del banco clásico al
+  aplicar cada controlador a familias distintas de la nativa;
+  \item generar demostraciones trazables seleccionando, para cada escenario, un
+  experto externo seguro sin modificar el lazo interno ni las condiciones
+  físicas;
+  \item entrenar MLP, GRU y LSTM para predecir la fuerza deseada y comparar la
+  ausencia o presencia de memoria temporal bajo un protocolo común;
+  \item evaluar la fidelidad supervisada y, de forma separada, el seguimiento en
+  bucle cerrado en condiciones ID y en dos niveles de novedad OOD; y
+  \item conservar configuraciones, semillas, metadatos y criterios de exclusión
+  suficientes para reconstruir la evidencia aceptada.
+\end{enumerate}
+
+El cumplimiento no se deduce de que el software ejecute. Cada objetivo se
+vincula con comparaciones y métricas definidas antes de los resultados en el
+apartado metodológico dedicado a los conjuntos de datos y las métricas.
+
+\subsubsection*{Alcance y limitaciones}
+
+El vehículo se representa como un cuerpo rígido de seis grados de libertad. La
+posición y la velocidad se expresan en un marco mundo East--North--Up (ENU); la
+velocidad angular, los momentos y la geometría de rotores emplean un marco de
+cuerpo Forward--Right--Down (FRD). La actitud se propaga mediante un cuaternión
+y la dinámica mediante las ecuaciones de Newton--Euler integradas con RK4 de
+paso fijo. El modelo incluye gravedad, una fuerza de resistencia lineal,
+velocidad de viento constante, ruido gaussiano de posición y velocidad, ley
+cuadrática de rotor, retardo puro, dinámica de primer orden y saturación.
+
+Estas elecciones constituyen hipótesis de modelado, no propiedades generales de
+un cuadricóptero real. Se supone masa e inercia constantes, estructura rígida y
+parámetros conocidos. No se modelan flexibilidad, efecto suelo, interacción
+entre rotores, aerodinámica no lineal del fuselaje, turbulencia ni descarga de
+batería. El viento no constituye un campo atmosférico y el drag lineal no
+procede de una identificación aerodinámica. La observación solo incorpora ruido
+sintético en posición y velocidad; no existen modelos de IMU, GNSS, cámaras ni
+un estimador de estado a bordo.
+
+Los límites de altura, actitud, estado finito y saturación persistente acotan la
+región donde una ejecución se considera válida. Las redes se entrenan por
+clonación supervisada de la fuerza calculada por expertos PD: no minimizan
+directamente el error de posición y pueden heredar sus sesgos. Además, la ruta
+híbrida conserva estabilización y protecciones clásicas. En consecuencia, los
+resultados solo son válidos para los escenarios, parámetros, semillas y
+presupuesto de entrenamiento descritos; no demuestran comportamiento seguro en
+hardware.
+
+\subsection{Estructura del documento}
+\label{subsec:estructura-documento}
+
+La aportación del trabajo es la integración trazable de cuatro elementos: un
+simulador 6DOF acotado, un banco de PD en cascada especializados, un proceso de
+selección de demostraciones por escenario y una comparación escalonada de MLP,
+GRU y LSTM en bucle cerrado. El interés no reside en proponer una nueva
+arquitectura neuronal, sino en construir una comparación donde pueda separarse
+qué procede del experto, qué aprende la red y qué aportan las protecciones
+compartidas.
+
+Tras esta introducción, el estado del arte reúne los fundamentos y alternativas
+bibliográficas, incluida la programación de ganancias como antecedente clásico.
+La metodología presenta de forma integrada el simulador, el PD en cascada, la
+predicción neuronal de fuerza, los conjuntos de datos, las métricas y el
+protocolo reproducible. El capítulo de resultados experimentales presenta e
+interpreta la evidencia sin modificar esos criterios. Finalmente, las
+conclusiones valoran la hipótesis y los objetivos y delimitan el trabajo futuro.

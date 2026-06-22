@@ -1,21 +1,24 @@
-\subsection{Simulación de cuadricópteros y elección de un banco propio}
+\subsection{Simulación y modelado de cuadricópteros}
 
 Se revisarán plataformas comerciales y abiertas relevantes, incluidas MATLAB,
-Simulink y RotorPy, atendiendo únicamente a las capacidades relacionadas
-con este trabajo. Esta comparación preparará la decisión de construir un banco
-acotado, adaptable y completamente trazable.
+Simulink y RotorPy, atendiendo únicamente a las capacidades relacionadas con
+este trabajo. Esta comparación preparará la decisión de construir un banco
+acotado, adaptable y completamente trazable. También se presentarán las
+ecuaciones de Newton--Euler para un cuerpo rígido 6DOF, los sistemas de
+referencia, los cuaterniones y la integración RK4. La aplicación concreta de
+estas bases se reservará para la metodología.
 
-\subsection{Modelado dinámico, actitud e integración}
+\subsection{Control clásico en cascada y programación de ganancias}
 
-Se presentarán las ecuaciones de Newton--Euler para un cuerpo rígido 6DOF, los
-sistemas de referencia, los cuaterniones y la integración RK4. La aplicación
-concreta de estas bases se reservará para el simulador desarrollado.
-
-\subsection{Control clásico y métodos de sintonización}
-
-Se explicará el control PD en cascada de posición y actitud~\cite{beard2012small}. También se
-revisarán métodos clásicos y numéricos de sintonización para preparar la
-justificación posterior de la búsqueda progresiva empleada.
+Se explicará el control PD en cascada de posición y actitud~\cite{beard2012small}.
+También se revisarán métodos clásicos y numéricos de sintonización para preparar
+la justificación posterior de la búsqueda progresiva empleada. La programación
+de ganancias (\emph{gain scheduling}) se presentará como una técnica clásica que
+selecciona o interpola parámetros del controlador según el punto de operación.
+Su motivación se relacionará con el uso de controladores externos
+especializados, sin identificarla con la ruta neuronal principal: esta predice
+fuerza deseada, mientras que la alternativa \texttt{neural\_position} sí
+programa ganancias externas.
 
 \subsection{Aprendizaje por imitación y control híbrido}
 
@@ -24,23 +27,21 @@ de distribución, situando métodos como DAgger~\cite{ross2011dagger}. Se justif
 clásico interno como una frontera coherente con el carácter aeroespacial del
 trabajo.
 
-\subsection{Fundamentos de redes neuronales}
+\subsection{Redes neuronales para control}
 
-\subsubsection{Tensores, capas y no linealidad}
+\subsubsection{Redes feedforward}
 
 Se explicarán tensores, capas lineales, lotes, secuencias y la necesidad de
 funciones de activación no lineales. Se situará la unidad lineal rectificada
-(ReLU) utilizada en la implementación.
+(ReLU) utilizada en la implementación y se presentará el perceptrón multicapa
+(MLP) como arquitectura sin memoria explícita y referencia de menor complejidad.
 
-\subsubsection{Perceptrón multicapa}
+\subsubsection{Redes recurrentes}
 
-Se presentará el perceptrón multicapa (MLP) como arquitectura sin memoria
-explícita y referencia de menor complejidad.
-
-\subsubsection{Redes recurrentes GRU y LSTM}
-
-Se explicarán el estado oculto, las ventanas temporales y las compuertas de GRU
-y LSTM, junto con sus diferencias conceptuales.
+Se partirá de la red neuronal recurrente básica y de los conceptos de estado
+oculto y ventanas temporales. A continuación, mediante epígrafes sin numerar, se
+presentarán LSTM y GRU, sus mecanismos de compuerta y sus diferencias
+conceptuales.
 
 \subsection{Posicionamiento del trabajo}
 

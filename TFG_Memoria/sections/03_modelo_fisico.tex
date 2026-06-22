@@ -1,54 +1,198 @@
-\subsection{Requisitos, convenciones e hipótesis}
+\subsection{Modelo físico y simulador 6DOF}
+\label{subsec:modelo-simulador}
 
-Se fijarán el estado del vehículo, los sistemas mundo ENU y cuerpo FRD, los
-signos, las unidades y las hipótesis simplificadoras. Estas convenciones
-precederán a cualquier ecuación o resultado.
+\subsubsection*{Requisitos, convenciones e hipótesis}
 
-\subsection{Vehículo de referencia y parámetros físicos}
+El simulador debe proporcionar a ambos controladores el mismo problema físico y
+la misma cadena de actuación. El estado es
+$\bm{x}=(\posW,\velW,\quatWB,\omegaB)$: posición y velocidad en el marco mundo
+$\frameW$, orientación del cuerpo respecto del mundo y velocidad angular en el
+marco de cuerpo $\frameB$. La entrada dinámica aplicada está formada por la
+fuerza total de los rotores y el momento total, ambos expresados en cuerpo. La
+salida experimental incluye el estado verdadero, la observación entregada al
+controlador, la referencia, el mando solicitado y la actuación aplicada.
 
-Se presentarán masa, geometría, inercia, propulsión y frecuencias del vehículo
-de referencia. Cada valor deberá justificarse como representativo, académico o
-derivado de una fuente, indicando su efecto sobre el comportamiento.
+El marco $\frameW$ sigue la convención ENU: $x$ apunta al Este, $y$ al Norte y
+$z$ hacia arriba. El marco $\frameB$ es FRD: $x_B$ apunta hacia delante, $y_B$ a
+la derecha y $z_B$ hacia abajo. Por ello, un rotor genera empuje en dirección
+$-z_B$. La matriz $\bm{R}_{WB}(\quatWB)$ transforma vectores de cuerpo a mundo,
+y $\quatWB$ se almacena en orden escalar--vector. Las magnitudes se expresan en
+SI: m, s, kg, N, N\,m y rad; los ángulos solo se convierten a grados para
+visualización.
 
-\subsection{Cinemática y dinámica del cuerpo rígido}
+% FIGURA PENDIENTE [FIG-002]: fijar los ejes ENU y FRD, la orientación del cuadricóptero y el signo del empuje
 
-Se desarrollarán las ecuaciones traslacionales, rotacionales y de actitud
-implementadas. Un fragmento breve mostrará la correspondencia entre formulación,
-marcos, unidades y código.
+Se supone un cuerpo rígido de masa e inercia constantes, centro de masas fijo y
+gravedad uniforme. Los rotores se representan mediante relaciones algebraicas y
+una dinámica temporal simplificada. No se modelan aerodinámica formal,
+flexibilidad ni sensores físicos. Estas hipótesis permiten aislar la comparación
+de control, pero limitan cualquier extrapolación fuera del banco.
 
-\subsection{Actuadores, mezclador y límites de actuación}
+\subsubsection*{Vehículo de referencia y parámetros físicos}
 
-Se explicarán la relación entre velocidad de rotor, empuje y par, la asignación
-del mezclador, los retardos y la saturación. También se describirá qué ocurre
-cuando la demanda no resulta físicamente realizable.
+La campaña v1 emplea un cuadricóptero académico de \SI{1}{kg}, gravedad
+\SI{9.81}{m.s^{-2}} e inercia diagonal
+$\bm{I}_B=\operatorname{diag}(0.05,0.05,0.10)\,\si{kg.m^2}$. Los cuatro rotores
+ocupan las posiciones $(\pm0.17,\pm0.17,0)$~m, con sentidos de giro alternos.
+Cada rotor utiliza $k_f=10^{-4}$, $k_m=10^{-6}$ y
+$\omega_{\max}=\SI{1500}{rad.s^{-1}}$. El valor máximo teórico por rotor es,
+por tanto, $k_f\omega_{\max}^2=\SI{225}{N}$; este límite pertenece al modelo y
+no debe interpretarse como especificación de un vehículo comercial.
 
-\subsection{Perturbaciones, observación y seguridad}
+% CITA PENDIENTE [CIT-002]: criterio físico o fuente de referencia para masa, geometría, inercia y coeficientes de propulsión del vehículo académico
+Los valores se mantienen constantes para que las diferencias observadas
+procedan del controlador y del escenario, no de vehículos distintos. Sin una
+identificación o una fuente de plataforma concreta, constituyen parámetros de
+un caso académico controlado. Su validez se limita a comprobar coherencia
+interna y reproducibilidad; no permiten afirmar representatividad cuantitativa
+de un dron real.
 
-Se justificarán drag lineal, viento, ruido de observación y criterios de
-terminación. Los límites de actitud, impacto y saturación persistente deberán
-presentarse con su motivación y limitaciones.
+\subsubsection*{Cinemática y dinámica del cuerpo rígido}
 
-\subsection{Trayectorias y escenarios reproducibles}
+Sean $\bm{F}_B$ y $\bm{\tau}_B$ la fuerza y el momento aplicados en cuerpo. La
+dinámica traslacional implementada es
+\begin{align}
+ \dot{\posW} &= \velW,\\
+ m\dot{\velW} &= \bm{R}_{WB}\bm{F}_B+\bm{F}_{d,W}
+                 +[0\;0\;-mg]^\mathsf{T},
+ \label{eq:dinamica-traslacional}
+\end{align}
+donde $\bm{F}_{d,W}$ es el drag descrito en el
+\apartadoref{subsec:modelo-simulador}. La rotación sigue
+\begin{align}
+ \dot{\quatWB} &= \tfrac{1}{2}\quatWB\otimes[0\;\omegaB^\mathsf{T}]^\mathsf{T},\\
+ \dot{\omegaB} &= \bm{I}_B^{-1}
+ \left(\bm{\tau}_B-\omegaB\times\bm{I}_B\omegaB\right).
+ \label{eq:dinamica-rotacional}
+\end{align}
+La normalización del cuaternión se aplica en las evaluaciones intermedias y al
+final de cada paso para contener la deriva numérica de su norma.
 
-Cada familia de trayectoria se explicará por la capacidad de seguimiento que
-permite evaluar. Los escenarios YAML se presentarán como contrato reproducible
-de vehículo, trayectoria, perturbaciones, controlador y ejecución.
+El estado avanza mediante Runge--Kutta explícito de cuarto orden (RK4) y paso
+fijo de \SI{0.01}{s}. El mando aplicado se mantiene durante el paso. Esta
+elección ofrece una discretización determinista y un coste predecible para la
+campaña.
+% CITA PENDIENTE [CIT-003]: propiedades y condiciones de uso de RK4 de paso fijo en integración de ecuaciones diferenciales ordinarias
+No se ha realizado todavía un estudio de convergencia temporal que demuestre que
+\SI{0.01}{s} sea suficiente para todas las condiciones; por ello el paso se
+declara parte del protocolo y no una garantía general de exactitud.
 
-\subsection{Flujo multirrate de simulación}
+\subsubsection*{Actuadores, mezclador y límites de actuación}
 
-Se describirá el ciclo completo entre referencia, observación, control,
-mezclador, actuadores, dinámica y telemetría. Se justificará la separación de
-frecuencias y la retención de orden cero.
+Para el rotor $i$, la velocidad aplicada determina empuje y par de reacción
+mediante
+\begin{equation}
+ T_i=k_f\omega_i^2,\qquad Q_i=s_i k_m\omega_i^2,
+ \label{eq:rotor-cuadratico}
+\end{equation}
+donde $s_i\in\{-1,1\}$ representa el sentido de giro. La fuerza es
+$\bm{F}_{i,B}=[0\;0\;-T_i]^\mathsf{T}$ y su contribución al momento incluye
+$\bm{r}_{i,B}\times\bm{F}_{i,B}$ y $[0\;0\;Q_i]^\mathsf{T}$.
+% CITA PENDIENTE [CIT-004]: fundamento de la ley cuadrática empuje/par de rotor y asignación de fuerzas en un cuadricóptero
 
-\subsection{Telemetría, métricas, verificación y trazabilidad}
+El mezclador construye una matriz de asignación con estas contribuciones y
+resuelve la demanda de empuje colectivo y momentos. Si la solución exige
+empujes negativos, desplaza el conjunto para conservar la distribución relativa;
+después limita cada rotor al intervalo realizable y marca la degradación del
+mando. La conversión final usa $\omega_i=\sqrt{T_i/k_f}$.
 
-Se explicarán las variables registradas, los metadatos reproducibles y las
-pruebas de coherencia interna. Se distinguirá de forma explícita entre
-verificación del simulador y validación con datos reales.
+La dinámica de cada rotor combina un retardo puro discretizado y un lag de
+primer orden. En el perfil nominal, la constante de tiempo es \SI{0.03}{s} y el
+retardo \SI{0.01}{s}; el perfil combinado aumenta ambos a \SI{0.05}{s} y
+\SI{0.02}{s}. La saturación se aplica a $[0,\omega_{\max}]$ y queda registrada.
+% CITA PENDIENTE [CIT-005]: justificación del modelo de primer orden, el retardo y sus valores para los actuadores simplificados
+Estos parámetros son elecciones operativas de v1, no una identificación de
+motor, hélice y variador concretos.
 
-\subsection{Elección del entorno de implementación}
+\subsubsection*{Perturbaciones, observación y seguridad}
 
-Se justificará brevemente Python por los requisitos científicos y experimentales
-que permite satisfacer. La comparación de plataformas se remitirá al estado del
-arte y los detalles internos al repositorio; el código completo está disponible en el
-proyecto\footnote{\url{https://github.com/ChristianGonper/modelado-control-dron-v2}}.
+El drag lineal se calcula en cuerpo a partir de la velocidad relativa al viento,
+$\bm{v}_{r,B}=\bm{R}_{WB}^{\mathsf{T}}(\velW-\bm{v}_{w,W})$, y vuelve a mundo:
+\begin{equation}
+ \bm{F}_{d,W}=\bm{R}_{WB}\left(-\bm{D}_B\bm{v}_{r,B}\right).
+ \label{eq:drag-lineal}
+\end{equation}
+Su signo es disipativo. Los perfiles emplean diagonales base
+$(0.10,0.10,0.05)$ o elevadas $(0.20,0.20,0.10)$, viento constante y ruido
+gaussiano independiente sobre posición y velocidad. El controlador recibe la
+observación perturbada; la dinámica y la evaluación conservan el estado
+verdadero.
+
+% CITA PENDIENTE [CIT-006]: alcance y limitaciones de representar resistencia, viento y ruido mediante modelos lineales, constantes y gaussianos
+Estos mecanismos permiten variar de forma controlada disipación, sesgo externo y
+calidad de observación, pero no reproducen turbulencia ni sensores reales. Los
+perfiles concretos son niveles heurísticos del banco y se someten al mismo
+tratamiento para todos los controladores.
+
+El episodio termina si $z_W<0$, si roll o pitch superan \SI{1.256}{rad}, si la
+saturación persiste más de \SI{2}{s}, si aparecen valores no finitos o si alguna
+componente de posición o velocidad excede los límites internos de \SI{100}{m} y
+\SI{50}{m.s^{-1}}. Los \SI{1.256}{rad} separan una actitud extrema de la región
+de operación prevista, pero no equivalen a un límite certificado de vuelco.
+% CITA PENDIENTE [CIT-007]: criterio defendible para el límite de actitud y los umbrales de seguridad de la campaña
+
+\subsubsection*{Trayectorias y escenarios reproducibles}
+
+Las cuatro familias de entrenamiento ejercitan capacidades diferentes.
+\texttt{hold} exige mantener posición y yaw; el círculo combina aceleración
+centrípeta y avance continuo; Lissajous introduce movimiento periódico acoplado
+en varios ejes; y \texttt{waypoint} exige desplazamientos finitos, frenado,
+asentamiento y permanencia antes de avanzar. Las trayectorias analíticas entregan
+posición, velocidad y aceleración suaves. Las misiones por puntos usan perfiles
+trapezoidales o triangulares con parada intermedia y no escalones crudos de
+posición.
+
+Cada YAML fija vehículo, estado inicial, trayectoria, controlador,
+perturbaciones, semilla, periodos, terminación y directorio de salida. El estado
+inicial coincide con la referencia en $t=0$, con velocidades nulas y actitud
+nivelada, de modo que el conjunto principal evalúa seguimiento y no captura
+desde un error inicial arbitrario. La razón experimental de cada geometría y
+conteo se desarrolla en el \apartadoref{subsec:datos-metricas}; las
+composiciones y lemniscatas se reservan para OOD.
+
+\subsubsection*{Flujo multirrate de simulación}
+
+La física se actualiza cada \SI{0.01}{s}, el control cada \SI{0.02}{s} y la
+telemetría cada \SI{0.1}{s}. En cada instante se obtiene la referencia, se forma
+la observación y, cuando corresponde, se calcula un mando nuevo. El mezclador y
+los actuadores producen las fuerzas aplicadas; RK4 avanza el estado y la
+telemetría captura las variables en su propio calendario. Entre dos ciclos de
+control se aplica retención de orden cero del mando solicitado.
+
+% FIGURA PENDIENTE [FIG-003]: representar el orden de referencia, observación, control, mezclador, actuadores, RK4 y telemetría con sus tres periodos
+% CITA PENDIENTE [CIT-008]: justificación de la retención de orden cero y de la separación multirrate en simulación digital de control
+La separación evita recalcular la política a la frecuencia de integración y
+reduce el volumen de telemetría sin cambiar la dinámica. Los valores concretos
+son parte del diseño v1; falta todavía un análisis de sensibilidad frente a
+otros periodos.
+
+\subsubsection*{Telemetría, verificación y trazabilidad}
+
+Cada muestra conserva tiempo, estado verdadero, observación, referencia, mando
+solicitado, objetivo de rotor, actuación aplicada y causa de terminación. De este
+modo pueden distinguirse error de seguimiento, ruido observado, degradación del
+mezclador, retardo y saturación. El resumen añade estadísticos con unidades y
+metadatos: escenario, semilla, controlador, configuración original y efectiva,
+comando, versión del paquete, plataforma, estado Git y hashes del escenario y
+de \texttt{uv.lock}.
+
+Las pruebas automáticas comprueban, entre otros contratos, norma del cuaternión,
+signo del empuje ENU/FRD, dinámica, RK4, mezclador, saturación, perturbaciones,
+ejecución multirrate, terminaciones y telemetría. Estas pruebas verifican que la
+implementación sea coherente con sus ecuaciones y contratos. No validan la
+fidelidad del modelo frente a datos de vuelo; tal validación requeriría
+identificación y comparación experimental externa.
+
+\subsubsection*{Elección del entorno de implementación}
+
+Python permite expresar el modelo con operaciones vectoriales, declarar
+escenarios legibles y compartir el mismo entorno con el entrenamiento en
+PyTorch. \texttt{uv} fija dependencias y comandos, mientras YAML separa los
+parámetros experimentales del código. La elección facilita inspección,
+automatización y trazabilidad, requisitos centrales de este banco.
+
+No se afirma que Python sea la opción de mayor rendimiento ni que el simulador
+sea apto para tiempo real. La ejecución interpretada y el propósito académico
+acotado limitan la escala y fidelidad alcanzables. La comparación con otras
+plataformas corresponde al estado del arte; la organización interna completa
+se remite al repositorio\footnote{\url{https://github.com/ChristianGonper/modelado-control-dron-v2}}.

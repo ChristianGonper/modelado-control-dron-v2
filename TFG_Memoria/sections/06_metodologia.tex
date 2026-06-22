@@ -1,60 +1,208 @@
-\subsection{Preguntas e hipótesis experimentales}
+\subsection{Conjuntos de datos y métricas de desempeño}
+\label{subsec:datos-metricas}
 
-La pregunta central se dividirá en comparaciones medibles sobre especialización,
-transferencia, imitación, generalización y memoria recurrente. Cada pregunta se
-asociará antes del análisis con métricas y evidencia esperada.
+\subsubsection*{Contrastes e hipótesis operativas}
 
-\subsection{Diseño global de la campaña}
+La campaña se diseña antes de interpretar resultados y descompone la hipótesis
+central en cinco contrastes operativos. Estas hipótesis son direccionales, pero
+no se dan por confirmadas hasta disponer de evidencia completa y comparable.
 
-Se presentará el flujo completo entre verificación, generación de datos,
-sintonización, selección de demostraciones, entrenamiento y evaluación. También
-se explicará cómo se evita utilizar prueba para tomar decisiones.
+\begin{table}[H]
+\caption{Contrastes e hipótesis operativas predefinidos.}
+\label{tab:hipotesis-operativas}
+\begin{tabularx}{\textwidth}{p{0.08\textwidth} X X}
+\toprule
+ID & Contraste & Hipótesis operativa \\
+\midrule
+H1 & Especialización clásica por familia & El PD nativo reduce la degradación frente a PD no nativos sin perder seguridad. \\
+H2 & Transferencia de los PD congelados & La transferencia cruzada es desigual y deja margen para una política común. \\
+H3 & Fidelidad de imitación y seguimiento cerrado & Una pérdida supervisada baja es necesaria, pero no suficiente, para rendimiento cerrado competitivo. \\
+H4 & Transferencia neuronal a condiciones OOD & La política común puede combinar comportamientos vistos, pero se degradará más ante geometrías completamente nuevas. \\
+H5 & Efecto de la memoria temporal & GRU o LSTM pueden beneficiarse de historia bajo ruido y retardo, sin asumir cuál será superior. \\
+\bottomrule
+\end{tabularx}
+\end{table}
 
-\subsection{Diseño del conjunto de datos clásico}
+Cada hipótesis se juzga con éxito de misión, seguridad, error de seguimiento,
+actuación y uso de protecciones; no mediante una única media global. La síntesis
+de resultados declarará la cobertura y la incertidumbre disponible para cada
+contraste.
 
-Se justificarán familias, geometrías, perturbaciones, número de episodios,
-semilla y particiones de entrenamiento, validación y prueba. No bastará con
-describir los 150 escenarios: deberá explicarse por qué son adecuados.
+\subsubsection*{Diseño del conjunto de datos clásico}
 
-\subsection{Diseño del conjunto de datos de imitación}
+El conjunto v1 contiene 150 episodios: 18 de \texttt{hold}, 48 de círculo, 48
+de Lissajous y 36 de \texttt{waypoint}. Sus particiones por familia son
+12/3/3, 34/7/7, 34/7/7 y 25/5/6 para entrenamiento, validación y prueba. En
+total resultan 105 episodios de entrenamiento, 22 de validación y 23 de prueba.
+La asignación se genera de forma determinista con semilla base 1042 y cada
+escenario recibe una semilla identificable.
 
-Se mostrará cómo cada escenario clásico se transforma en una demostración de
-fuerza deseada segura y trazable. Se explicará qué distribución de
-comportamientos aprende realmente la red.
+Las familias se eligen para cubrir equilibrio estacionario, seguimiento
+periódico planar, movimiento periódico multieje y misiones finitas con frenado.
+Cada una combina geometrías de distinta exigencia con perfiles de drag, viento,
+ruido y actuadores. \texttt{hold} usa 18 combinaciones y menos perfiles porque
+su referencia constante no introduce la diversidad geométrica de las familias
+dinámicas; esta reducción evita sobrerrepresentar muestras estacionarias, aunque
+su efecto sobre el equilibrio del conjunto debe revisarse.
 
-\subsection{Configuración y comparación del entrenamiento}
+Los conteos, geometrías y niveles concretos son una cobertura diseñada para v1,
+no el resultado de un cálculo de potencia estadística.
+% CITA PENDIENTE [CIT-016]: criterio experimental o análisis de cobertura para justificar familias, conteos, ratios y perfiles del dataset clásico
+La partición se asigna a escenarios completos antes de extraer muestras. Todas
+las muestras y ventanas de un episodio heredan su split, por lo que una secuencia
+temporal no se reparte entre entrenamiento, validación y prueba. La semilla hace
+repetibles geometrías, perturbaciones y ruido, pero un único sorteo no cuantifica
+por sí solo variabilidad entre semillas.
 
-Se fijarán hiperparámetros, semillas, dispositivo y criterios de selección para
-comparar MLP, GRU y LSTM bajo condiciones equivalentes. Se documentará la
-experimentación utilizada para tomar estas decisiones.
+\subsubsection*{Diseño del conjunto de datos de imitación}
 
-\subsection{Evaluación en familias conocidas y transferencia clásica}
+Cada fila del manifiesto clásico origina un grupo de candidatos externos. El
+banco registra escenario fuente, variante, ganancias, ruta de resultados,
+seguridad, RMSE y esfuerzo. El selector conserva únicamente candidatos que
+superan los filtros del \apartadoref{subsec:control-neuronal-imitacion}; copia la
+telemetría del elegido y materializa un YAML con sus ganancias exactas. El
+manifiesto resultante mantiene familia, geometría, perturbación, semilla, split,
+experto y procedencia.
 
-Se definirá la comparación dentro de la distribución de entrenamiento (ID) y la
-matriz cruzada de controladores PD. Este nivel establecerá el rendimiento
-especializado y la referencia que pretende condensar la red.
+Las muestras se extraen de la observación que vio el experto y su
+$\bm{F}_{d,W}$ solicitada. Por tanto, la distribución aprendida es la de estados
+visitados por expertos seguros seleccionados, no la distribución de todos los
+estados físicamente posibles. El filtrado reduce demostraciones fallidas, pero
+también elimina ejemplos de recuperación. Esta dependencia se considera al
+interpretar cualquier diferencia entre error supervisado y bucle cerrado.
 
-\subsection{Evaluación fuera de la distribución de entrenamiento}
+\subsubsection*{Métricas, criterios de éxito y análisis}
 
-\subsubsection{Variaciones y composiciones de familias conocidas}
+Para las muestras $e_k=\|\bm{p}_{r,k}-\bm{p}_k\|_2$, se calculan
+\begin{equation}
+ e_{\mathrm{RMSE}}=\sqrt{\frac{1}{N}\sum e_k^2},\qquad
+ e_{\mathrm{MAE}}=\frac{1}{N}\sum e_k,\qquad
+ e_{\max}=\max e_k.
+\end{equation}
+RMSE penaliza errores grandes, MAE describe el error medio en m y el máximo
+detecta excursiones puntuales. Se informan por familia y escenario, no solo como
+una media global.
 
-Se evaluarán condiciones que combinan o modifican capacidades presentes en el
-entrenamiento. Cada escenario deberá indicar qué componentes son conocidos y
-qué novedad introduce.
+La actuación se describe separadamente mediante empuje colectivo en N, norma de
+momentos en N\,m y velocidad de rotor en rad/s. El índice heredado
+$|T|+\|\tau\|$ mezcla unidades y se limita a diagnóstico; no se presenta como
+esfuerzo físico total. Saturación y degradación son porcentajes de muestras en
+que la cadena de actuación alcanza límites. Para redes se añaden porcentajes de
+recorte de norma e inclinación de fuerza.
 
-\subsubsection{Trayectorias completamente nuevas}
+El éxito de seguridad acepta únicamente terminación por límite temporal,
+trayectoria completada o composición completada. El éxito de misión depende del
+tipo de trayectoria: las referencias infinitas deben alcanzar el límite
+temporal; \texttt{line}/\texttt{waypoint} deben completar su misión y una
+composición debe emitir su terminación específica. Así se evita clasificar como
+éxito una misión finita estable pero incompleta.
 
-Se evaluarán familias geométricas nuevas, separándolas de las composiciones para
-no mezclar niveles distintos de generalización.
+% CITA PENDIENTE [CIT-017]: respaldo del uso e interpretación de RMSE, MAE, error máximo y métricas de saturación en seguimiento de trayectorias
+Los umbrales duros usados para seleccionar PD son heurísticos y se fijan antes
+de observar prueba. Las conclusiones deberán mostrar su sensibilidad cuando una
+clasificación dependa de valores próximos al 2\,\% o a los límites de error.
 
-\subsection{Métricas, criterios de éxito y análisis}
+\subsection{Protocolo experimental y reproducibilidad}
+\label{subsec:protocolo-reproducibilidad}
 
-Se definirán métricas de seguimiento, actuación, saturación, degradación,
-protecciones, éxito de misión y seguridad. Cada métrica incluirá unidad,
-interpretación y limitaciones.
+\subsubsection*{Diseño global de la campaña}
 
-\subsection{Reproducibilidad y validez de la evidencia}
+La campaña sigue once fases: pruebas y escenarios de sanidad; generación del
+dataset clásico inicial; diagnóstico y ajuste condicional de PD; congelación y
+regeneración del baseline; generación y selección de expertos de fuerza;
+generación de la alternativa de ganancias; entrenamiento de MLP, GRU y LSTM;
+evaluación supervisada; evaluación cerrada en prueba; generación y evaluación
+OOD; y transferencia clásica con consolidación de tablas.
 
-Se establecerán los comandos, configuraciones, hashes y metadatos necesarios
-para aceptar un resultado. También se explicarán los criterios para excluir
-ejecuciones incompletas o no comparables.
+% FIGURA PENDIENTE [FIG-007]: mostrar el flujo completo, artefactos de entrada y salida y fronteras entre train, val, test y OOD
+El split de entrenamiento puede intervenir en ajuste, normalización y
+optimización de pesos. Validación selecciona checkpoint y, si se documenta, los
+hiperparámetros. Prueba y OOD se reservan para evaluación; no pueden modificar
+ganancias, normalización, arquitectura, umbrales ni criterios de éxito. La
+regeneración de artefactos conserva manifiestos y configuraciones para detectar
+una dependencia indebida.
+
+\subsubsection*{Configuración y comparación del entrenamiento}
+
+Las tres arquitecturas comparten dataset, nueve entradas, tres objetivos,
+normalización de entrenamiento, MSE, Adam, tasa $10^{-3}$, lote 64, máximo de
+100 épocas, paciencia 10 y semilla 42. Comparten también el criterio de guardar
+el menor MSE de validación. MLP usa una muestra actual; GRU y LSTM usan ventanas
+de 20 muestras. Todas emplean 64 unidades ocultas, aunque el número de parámetros
+y el coste difieren por arquitectura.
+
+El dispositivo se registra y la opción automática selecciona CUDA si está
+disponible. Se siembran Python, NumPy, PyTorch y los trabajadores del cargador;
+el determinismo completo puede depender de operaciones y hardware CUDA. Una
+comparación se acepta como equivalente solo si las configuraciones guardadas no
+presentan diferencias adicionales y si las tres ejecuciones acceden a las
+mismas particiones.
+
+No consta una búsqueda versionada común de anchura, longitud, tasa o paciencia.
+En consecuencia, v1 compara configuraciones por defecto igualadas, no el mejor
+modelo posible de cada familia. Esta limitación impide atribuir una eventual
+diferencia exclusivamente al mecanismo MLP, GRU o LSTM.
+
+\subsubsection*{Evaluación en familias conocidas y transferencia clásica}
+
+La evaluación ID utiliza los 23 episodios completos de prueba: 3
+\texttt{hold}, 7 círculos, 7 Lissajous y 6 \texttt{waypoint}. En cada escenario
+se ejecutan el PD nativo y las tres redes bajo idéntica configuración física. La
+red común se compara primero con el experto especializado de esa familia, que es
+la referencia más exigente para afirmar sustitución del banco.
+
+La transferencia clásica aplica los cuatro PD congelados a cada uno de los 23
+escenarios, incluida la combinación nativa. Esto produce $23\times4=92$
+ejecuciones y una matriz controlador--familia. Las combinaciones no nativas
+cuantifican transferencia sin reajuste; la diagonal vuelve a medir
+especialización. La comparación exige conservar trayectoria, semilla,
+perturbaciones, vehículo, terminaciones y cadena de actuación.
+
+\subsubsection*{Evaluación fuera de la distribución de entrenamiento}
+
+OOD contiene escenarios cuyos episodios no intervienen en ajuste,
+normalización, entrenamiento ni selección de checkpoint. Para cada escenario se
+ejecutan redes y PD congelados transferidos bajo la misma condición. El baseline
+operativo principal es el conjunto de PD disponibles sin reajuste. Si se genera
+un PD específico con datos de la condición nueva, se presentará aparte como cota
+de especialización y nunca como evidencia de transferencia.
+
+% FIGURA PENDIENTE [FIG-008]: separar visualmente evaluación ID, transferencia clásica, composiciones OOD y familias geométricas nuevas
+
+\subsubsection*{Variaciones y composiciones de familias conocidas}
+
+Este nivel modifica exigencia o combina capacidades presentes: Lissajous más
+rápidas o ruidosas, secuencias compuestas de espera, waypoint y círculo, y
+misiones helicoidales aproximadas por waypoints. Aunque la combinación completa
+sea nueva, sus primitivas pertenecen al vocabulario del entrenamiento. Cada fila
+del manifiesto OOD registra qué geometría, perturbación o transición cambia.
+
+\subsubsection*{Trayectorias completamente nuevas}
+
+Las lemniscatas introducen una familia geométrica no incluida en las cuatro
+familias de entrenamiento. Se ensayan variantes tridimensionales, rápidas y con
+perturbaciones combinadas. Esta categoría es una prueba más fuerte porque no
+solo altera parámetros de una primitiva conocida; cambia la estructura de la
+referencia. Mantenerla separada evita que un promedio de OOD oculte la diferencia
+entre recombinación y novedad geométrica.
+
+\subsubsection*{Reproducibilidad y validez de la evidencia}
+
+Una ejecución entra en la evidencia si dispone de configuración materializada,
+\texttt{telemetry.json} y \texttt{metrics.json} legibles, valores finitos,
+terminación interpretable y metadatos coherentes. El manifiesto de evidencia y
+los reportes de lote deben cuadrar con los conteos esperados. Los resultados
+ausentes, fallidos, pertenecientes a otra revisión o generados con condiciones
+incomparables se excluyen y se contabilizan; no se rellenan ni se sustituyen de
+forma silenciosa.
+
+Los metadatos conservan escenario, semilla, controlador, parámetros efectivos,
+comando, versión de Python y paquete, plataforma, estado Git y hashes del YAML y
+de \texttt{uv.lock}. Los checkpoints guardan arquitectura, dimensiones,
+hiperparámetros y normalización. Un cambio de umbral, semilla, presupuesto,
+dataset o protección define una condición experimental distinta.
+
+La campaña se orquesta mediante una interfaz por fases, pero los comandos
+extensos se remiten al Anejo 1. La reproducibilidad aquí significa poder
+reconstruir los artefactos y detectar sus condiciones; no garantiza igualdad
+bit a bit entre dispositivos ni corrige las limitaciones físicas del modelo.

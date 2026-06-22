@@ -1,7 +1,7 @@
 \documentclass[12pt,a4paper]{article}
 
-\newcommand{\tituloTFG}{Simulador 6DOF de cuadricóptero para comparación de control clásico y neuronal por imitación}
-\newcommand{\tituloTFGEnglish}{6DOF quadcopter simulator for comparing classical and imitation-learning neural control}
+\newcommand{\tituloTFG}{Control híbrido en cascada de un cuadricóptero: sustitución neuronal de controladores especializados del lazo externo}
+\newcommand{\tituloTFGEnglish}{Cascaded hybrid control of a quadcopter: neural replacement of specialized outer-loop controllers}
 \newcommand{\autorTFG}{Christian González Pérez}
 \newcommand{\tutorTFGa}{José Ramón Rodríguez Ossorio}
 \newcommand{\tutorTFGb}{Guzmán González Mateos}
@@ -38,28 +38,16 @@
 \label{sec:estado-arte}
 \input{sections/02_estado_arte}
 
-\section{Simulador 6DOF desarrollado}
-\label{sec:modelo-fisico}
-\input{sections/03_modelo_fisico}
-
-\section{Control clásico}
-\label{sec:control-clasico}
-\input{sections/04_control_clasico}
-
-\section{Control neuronal por imitación}
-\label{sec:control-neuronal}
-\input{sections/05_control_neuronal}
-
-\section{Metodología experimental}
+\section{Metodología}
 \label{sec:metodologia}
+\input{sections/03_modelo_fisico}
+\input{sections/04_control_clasico}
+\input{sections/05_control_neuronal}
 \input{sections/06_metodologia}
 
-\section{Resultados}
+\section{Resultados experimentales}
 \label{sec:resultados}
 \input{sections/07_resultados}
-
-\section{Discusión}
-\label{sec:discusion}
 \input{sections/08_discusion}
 
 \section{Conclusiones y trabajo futuro}

@@ -1,40 +1,45 @@
-\subsection{Cobertura y comprobaciones previas}
+\subsection{Cobertura y comprobaciones de validez}
+\label{subsec:resultados-cobertura}
 
 Antes de comparar controladores se verificará la cobertura de la campaña, la
 validez de las ejecuciones y la coherencia de los metadatos.
 
-\subsection{Rendimiento en familias conocidas}
+\subsection{Referencia clásica y especialización}
+\label{subsec:resultados-referencia-clasica}
 
-Se compararán controladores PD nativos y redes MLP, GRU y LSTM dentro de la
+Se caracterizará el rendimiento de los PD nativos y una matriz cruzada mostrará
+cómo se degrada cada controlador especializado al aplicarse a otras familias.
+Esta evidencia establecerá tanto la referencia de especialización como el
+baseline de transferencia sin reajuste.
+
+\subsection{Desempeño neuronal en condiciones conocidas}
+\label{subsec:resultados-neuronal-id}
+
+Se compararán los PD nativos y las redes MLP, GRU y LSTM dentro de la
 distribución de entrenamiento mediante precisión, éxito, seguridad y actuación.
+La fidelidad supervisada de fuerza se relacionará con el comportamiento en
+bucle cerrado y con la activación de las protecciones compartidas.
 
-\subsection{Transferencia cruzada de controladores PD}
+\subsection{Transferencia y generalización fuera de distribución}
+\label{subsec:resultados-transferencia-ood}
 
-Una matriz cruzada mostrará cómo se degrada cada controlador especializado al
-aplicarse a otras familias y establecerá el baseline de transferencia.
+Se presentarán por separado las variaciones y composiciones de capacidades
+conocidas y las familias geométricas completamente nuevas. Las redes se
+compararán con los PD congelados transferidos sin reajuste para valorar la
+hipótesis de una política común más transferible.
 
-\subsection{Variaciones y composiciones de familias conocidas}
-
-Se presentarán por separado los escenarios que combinan o modifican capacidades
-ya presentes en el entrenamiento.
-
-\subsection{Trayectorias completamente nuevas}
-
-Se evaluarán de forma independiente las familias geométricas nuevas para
-representar una prueba más exigente de generalización.
-
-\subsection{Comparación entre MLP, GRU y LSTM}
+\subsubsection*{Comparación entre MLP, GRU y LSTM}
 
 Se analizará si la memoria recurrente aporta ventajas consistentes según la
 categoría de evaluación, evitando depender de una única media agregada.
 
-\subsection{Fidelidad de imitación, actuación y protecciones}
+\subsubsection*{Actuación y protecciones}
 
-Se relacionará el error supervisado de fuerza con el comportamiento en bucle
-cerrado. También se mostrarán esfuerzo, saturación, degradación y activación de
-protecciones.
+Se mostrarán esfuerzo, saturación, degradación y activación de protecciones para
+evitar atribuir a la política aprendida la seguridad aportada por límites
+clásicos compartidos.
 
-\subsection{Síntesis de respuestas experimentales}
+\subsubsection*{Síntesis de los contrastes}
 
-El capítulo cerrará respondiendo de forma compacta a cada pregunta experimental,
-sin introducir explicaciones causales que excedan la evidencia.
+El bloque de evidencia cerrará sintetizando H1--H5 sin introducir explicaciones
+causales que excedan los datos disponibles.

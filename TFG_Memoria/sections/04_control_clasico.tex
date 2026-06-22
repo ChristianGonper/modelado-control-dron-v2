@@ -1,29 +1,141 @@
-\subsection{Arquitectura PD en cascada}
+\subsection{Control clásico en cascada}
+\label{subsec:control-clasico-cascada}
 
-Se explicará cómo el lazo externo convierte errores de posición y velocidad en
-una fuerza deseada y cómo el lazo interno genera actitud, empuje y momentos.
-Esta arquitectura servirá también como base común del controlador híbrido.
+\subsubsection*{Arquitectura PD en cascada}
 
-\subsection{Ecuaciones, ganancias y límites}
+El controlador clásico cumple tres funciones: referencia interpretable,
+generador de demostraciones y lazo interno compartido por la ruta neuronal. Su
+arquitectura separa traslación y actitud. El lazo externo recibe la observación
+de posición y velocidad y la referencia cinemática; su salida es una fuerza
+deseada $\bm{F}_{d,W}$ en ENU. El lazo interno convierte su dirección y el yaw de
+referencia en una orientación deseada y calcula los momentos FRD necesarios para
+seguirla.
 
-Se documentarán los términos proporcionales y derivativos, referencias,
-compensación gravitatoria y saturaciones. Se aclarará que la implementación es
-PD, aunque algunos artefactos históricos conserven la denominación PID.
+% FIGURA PENDIENTE [FIG-004]: mostrar el PD en cascada desde errores de posición y velocidad hasta fuerza ENU, actitud deseada, empuje y momentos FRD
+La separación hace explícita la variable que posteriormente aprenderá la red.
+También conserva una interfaz común: tanto el lazo externo clásico como el
+neuronal entregan $\bm{F}_{d,W}$ al mismo conversor geométrico y al mismo PD de
+actitud. La comparación no elimina por ello toda la estructura clásica; estudia
+la sustitución del nivel traslacional.
 
-\subsection{Elección del método de sintonización}
+\subsubsection*{Ecuaciones, ganancias y límites}
 
-Se compararán las alternativas presentadas en el estado del arte con las
-necesidades del experimento. La decisión final deberá explicar por qué se
-prefiere evaluar candidatos directamente en escenarios reproducibles.
+Con $\bm{e}_p=\bm{p}_r-\bm{p}$ y
+$\bm{e}_v=\bm{v}_r-\bm{v}$, el lazo externo calcula
+\begin{align}
+ \bm{a}_d &= \bm{K}_{p,p}\bm{e}_p+\bm{K}_{d,p}\bm{e}_v+\bm{a}_r,\\
+ \bm{F}_{d,W} &= m\left(\bm{a}_d-[0\;0\;-g]^\mathsf{T}\right).
+ \label{eq:pd-fuerza-deseada}
+\end{align}
+Las multiplicaciones por las ganancias diagonales se realizan componente a
+componente. La aceleración de referencia actúa como prealimentación y el término
+gravitatorio proporciona la fuerza de equilibrio vertical.
 
-\subsection{Algoritmo de búsqueda progresiva}
+La norma de $\bm{F}_{d,W}$ define el empuje colectivo, limitado a
+$[0,2.5mg]$. Como $z_B$ apunta hacia abajo, el eje deseado es
+$\bm{z}_{B,d}=-\bm{F}_{d,W}/\|\bm{F}_{d,W}\|$. Junto con el yaw se construye
+$\bm{R}_{WB,d}$ y su cuaternión. Para el cuaternión de error de signo escalar no
+negativo, la aproximación vectorial empleada es
+$\bm{e}_q=2\bm{q}_{e,v}$. El momento solicitado es
+\begin{equation}
+ \bm{\tau}_B=\bm{K}_{p,a}\bm{e}_q+
+ \bm{K}_{d,a}(-\omegaB)+
+ \omegaB\times\bm{I}_B\omegaB,
+ \label{eq:pd-actitud}
+\end{equation}
+y se satura por componente.
 
-Se describirán diagnóstico, generación de candidatos, filtros duros,
-penalizaciones, refinamiento y selección. Multiplicadores, pesos, umbrales,
-presupuesto y semilla deberán quedar justificados.
+Los valores iniciales comunes son
+$\bm{K}_{p,p}=(2,2,5)$,
+$\bm{K}_{d,p}=(1,1,2)$,
+$\bm{K}_{p,a}=(4,4,1)$ y
+$\bm{K}_{d,a}=(1.5,1.5,0.5)$. La configuración inicial de \texttt{waypoint}
+eleva parte de estas ganancias. Los valores definitivos no se toman de estos
+defaults: se congelan por familia mediante el proceso del
+\apartadoref{subsec:control-clasico-cascada} y quedan registrados en los YAML del
+banco. El límite por defecto de momentos es $(10,10,2)$~N\,m.
 
-\subsection{Controladores congelados y transferencia cruzada}
+% CITA PENDIENTE [CIT-009]: fundamento del control PD en cascada de posición y actitud para cuadricópteros
+La ausencia de término integral evita introducir un estado adicional y permite
+que la acción aprendida dependa de errores y referencia observables en el
+contrato mínimo. A cambio, un viento constante u otro sesgo puede producir error
+estacionario: la prealimentación gravitatoria compensa el peso, pero no estima
+fuerzas externas desconocidas. La decisión PD frente a PID y los valores
+iniciales deben considerarse una elección de diseño de v1 hasta incorporar la
+valoración del autor y evidencia comparativa.
 
-Se explicará cómo se congela un controlador por familia sin utilizar prueba para
-tomar decisiones. La aplicación cruzada de esos controladores establecerá la
-referencia de especialización y transferencia.
+\subsubsection*{Elección del método de sintonización}
+
+El objetivo del ajuste no es identificar un único óptimo analítico, sino obtener
+un controlador seguro por familia bajo el mismo modelo, perturbaciones y límites
+que sostienen la campaña. Por esta razón se evalúan candidatos directamente en
+un conjunto diagnóstico de escenarios reproducibles y se seleccionan con
+métricas de seguimiento, actitud, actuación y seguridad.
+
+% CITA PENDIENTE [CIT-010]: comparación de ajuste manual, Ziegler--Nichols, métodos basados en modelo y optimización numérica para controladores de cuadricópteros
+El ajuste manual depende de iteración no registrada; Ziegler--Nichols se formuló
+para supuestos que no representan de forma directa los lazos acoplados y las
+restricciones de esta campaña; y un diseño basado en modelo requeriría fijar una
+linealización y un criterio distinto para cada condición. Estas observaciones
+deben respaldarse bibliográficamente y no implican que tales métodos sean
+inadecuados en general. La búsqueda adoptada prioriza trazabilidad y evaluación
+en escenario, con la limitación de que su resultado depende del espacio,
+presupuesto y función de puntuación elegidos.
+
+\subsubsection*{Algoritmo de búsqueda progresiva}
+
+La búsqueda comienza con un diagnóstico por familia sobre filas de
+entrenamiento: dos geometrías, una lenta y otra exigente, combinadas con perfiles
+nominal, viento Este y perturbación combinada cuando existen. Si el controlador
+inicial supera todos los filtros duros y el RMSE medio queda por debajo del
+umbral familiar, se acepta sin reajuste. Los umbrales son 0.25, 0.35 y
+\SI{0.45}{m} para \texttt{hold}, círculo y Lissajous; \texttt{waypoint} se
+decide mediante sus filtros de misión y el umbral configurado en la campaña.
+
+Cuando es necesario ajustar, se multiplican de forma conjunta los cuatro
+bloques $\bm{K}_{p,p}$, $\bm{K}_{d,p}$, $\bm{K}_{p,a}$ y $\bm{K}_{d,a}$. La
+primera ronda contiene 32 candidatos log-uniformes en $[0.5,2]$, generados con
+semilla 1042. Los mejores candidatos seguros centran 16 perturbaciones locales,
+también limitadas a ese intervalo. Incluido el candidato base, el presupuesto
+nominal es de 49 evaluaciones por familia.
+
+Cada caso recibe la puntuación heurística
+\begin{equation}
+ J=e_{\mathrm{rms}}+0.5e_{\max}+0.2a_{\mathrm{rms}}
+ +0.1u_h+2s+2d,
+ \label{eq:score-pd}
+\end{equation}
+donde $s$ y $d$ son fracciones de saturación y degradación, y
+$u_h=\overline{T}/(mg)+\overline{\|\tau\|}/0.1$ es un índice adimensional de
+diagnóstico. Antes de comparar $J$, se rechaza cualquier candidato con valores
+no finitos, misión no completada, saturación o degradación superior al 2\,\%, o
+error máximo superior a 0.40, 0.75, 0.90 y \SI{0.80}{m} según la familia.
+
+Entre soluciones seguras se minimiza la puntuación; dentro del 5\,\% de la mejor
+se prefiere menor esfuerzo y, en empate, proximidad al controlador inicial.
+Esta jerarquía impide compensar un fallo de seguridad con una mejora media de
+seguimiento.
+
+% FIGURA PENDIENTE [FIG-005]: representar diagnóstico, búsqueda global, filtros duros, refinamiento local, selección y congelación
+Los pesos, umbrales, intervalo, presupuesto, semilla y margen del 5\,\% son
+decisiones heurísticas reproducibles, no constantes derivadas de una teoría de
+control. Falta un análisis de sensibilidad que determine cuánto condicionan el
+banco obtenido. La memoria los declara explícitamente para que los resultados no
+se interpreten como un óptimo global.
+
+\subsubsection*{Controladores congelados y transferencia cruzada}
+
+El ajuste solo consulta el split de entrenamiento. Una vez elegido el candidato,
+sus ganancias, fuente, conjunto diagnóstico, semilla, umbrales y resumen de
+selección se guardan como \texttt{pid\_<familia>\_v1.yaml}. La regeneración de
+escenarios utiliza estos archivos sin reajustarlos con validación, prueba u OOD.
+Se denomina especialización a este vínculo entre una familia y el PD congelado
+con datos de entrenamiento de esa familia.
+
+La transferencia cruzada materializa cada escenario de prueba con los cuatro PD
+congelados, manteniendo vehículo, trayectoria, perturbaciones, semilla y límites.
+La diagonal corresponde al PD nativo; las combinaciones no nativas miden cuánto
+se degrada un ajuste al cambiar de familia. Esta matriz establece tanto el coste
+de mantener un banco especializado como la referencia operativa que una política
+neuronal común debe igualar o mejorar. Su diseño cuantitativo se fija en el
+\apartadoref{subsec:protocolo-reproducibilidad}.
