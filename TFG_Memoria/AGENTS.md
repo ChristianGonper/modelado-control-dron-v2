@@ -25,13 +25,11 @@ No uses `../docs/html/` como fuente de verdad.
 ## Reglas esenciales
 
 - Escribe en español correcto y respeta la estructura, macros y estilo LaTeX.
-- Prioriza dinámica, control, escenarios, datasets, entrenamiento y resultados;
-  evita convertir la memoria en documentación extensa de software.
+- Evita convertir la memoria en documentación extensa de software.
 - No inventes resultados, referencias, decisiones ni capacidades. Distingue
   hechos verificados, interpretaciones, propuestas y contenido pendiente.
 - Justifica las decisiones relevantes y mantén trazabilidad entre objetivos,
   modelo, implementación, escenarios, métricas y resultados.
-- Mantén mundo ENU y cuerpo FRD, con unidades, signos e hipótesis explícitos.
 - Cita fuentes reales y verificadas e identifica la procedencia de figuras,
   tablas, datos y resultados.
 - Los diagramas pueden realizarse en SVG, TikZ u otro formato original integrado
@@ -41,18 +39,11 @@ No uses `../docs/html/` como fuente de verdad.
   acrónimos en `sections/00_abreviaturas.tex`.
 - Registra referencias aún inestables en
   `docs/referencias_cruzadas_pendientes.md`.
-- Compila y revisa el PDF después de cambios relevantes.
 - No modifiques la declaración de uso de IA hasta la revisión final.
 - No hagas commits salvo petición explícita del usuario.
 
 ## Herramientas de exploración
 
-- Para localizar código, seguir flujos e identificar archivos concretos, usa la
-  CLI `grok` mediante `grok --model grok-composer-2.5-fast "..."`.
-  Formula preguntas dirigidas y verifica después los archivos señalados.
-- Cuando la exploración requiera mayor criterio, una revisión crítica o una
-  opinión razonada, usa `agy -p "..."`. Contrasta sus conclusiones con la
-  implementación y la evidencia del repositorio.
 - Usa Context7 para documentación actualizada de LaTeX, paquetes y herramientas,
   priorizando fuentes oficiales compatibles con la configuración del proyecto.
 
