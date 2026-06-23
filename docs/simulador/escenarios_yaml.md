@@ -51,10 +51,10 @@ vehicle:
   gravity_m_s2: 9.81
   linear_drag_coefficient: [0.1, 0.1, 0.05]
   rotors:
-    - {position_B_m: [0.17, 0.17, 0], turning_direction: -1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 1500, time_constant_s: 0.05, delay_s: 0.01}
-    - {position_B_m: [0.17, -0.17, 0], turning_direction: 1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 1500, time_constant_s: 0.05, delay_s: 0.01}
-    - {position_B_m: [-0.17, 0.17, 0], turning_direction: 1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 1500, time_constant_s: 0.05, delay_s: 0.01}
-    - {position_B_m: [-0.17, -0.17, 0], turning_direction: -1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 1500, time_constant_s: 0.05, delay_s: 0.01}
+    - {position_B_m: [0.17, 0.17, 0], turning_direction: -1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 500, time_constant_s: 0.05, delay_s: 0.01}
+    - {position_B_m: [0.17, -0.17, 0], turning_direction: 1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 500, time_constant_s: 0.05, delay_s: 0.01}
+    - {position_B_m: [-0.17, 0.17, 0], turning_direction: 1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 500, time_constant_s: 0.05, delay_s: 0.01}
+    - {position_B_m: [-0.17, -0.17, 0], turning_direction: -1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 500, time_constant_s: 0.05, delay_s: 0.01}
 ```
 
 - `mass_kg`: masa del vehiculo. Debe ser positiva.
@@ -69,7 +69,7 @@ Campos de cada rotor:
 - `turning_direction`: signo `1` o `-1` para el par de reaccion de yaw.
 - `k_f`: coeficiente de empuje, `N/(rad/s)^2`. Debe ser positivo.
 - `k_m`: coeficiente de par, `Nm/(rad/s)^2`. Debe ser finito y no negativo.
-- `omega_max_rad_s`: velocidad angular maxima del rotor. Debe ser positiva.
+- `omega_max_rad_s`: velocidad angular maxima del rotor. Debe ser positiva. En los escenarios oficiales y plantillas actuales se usa `500 rad/s`, que con `k_f = 1.0e-4` limita el empuje maximo a `25 N` por rotor.
 - `time_constant_s`: constante de tiempo del lag de primer orden aplicado sobre `omega`. Debe ser finita y no negativa.
 - `delay_s`: retardo puro antes del lag. Si falta, se usa `0.0`; si se proporciona, debe ser finito y no negativo.
 
@@ -439,10 +439,10 @@ vehicle:
   inertia_B_kg_m2: [[0.05, 0, 0], [0, 0.05, 0], [0, 0, 0.1]]
   linear_drag_coefficient: [0, 0, 0]
   rotors:
-    - {position_B_m: [0.17, 0.17, 0], turning_direction: -1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 1000, time_constant_s: 0.0, delay_s: 0.0}
-    - {position_B_m: [0.17, -0.17, 0], turning_direction: 1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 1000, time_constant_s: 0.0, delay_s: 0.0}
-    - {position_B_m: [-0.17, 0.17, 0], turning_direction: 1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 1000, time_constant_s: 0.0, delay_s: 0.0}
-    - {position_B_m: [-0.17, -0.17, 0], turning_direction: -1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 1000, time_constant_s: 0.0, delay_s: 0.0}
+    - {position_B_m: [0.17, 0.17, 0], turning_direction: -1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 500, time_constant_s: 0.0, delay_s: 0.0}
+    - {position_B_m: [0.17, -0.17, 0], turning_direction: 1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 500, time_constant_s: 0.0, delay_s: 0.0}
+    - {position_B_m: [-0.17, 0.17, 0], turning_direction: 1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 500, time_constant_s: 0.0, delay_s: 0.0}
+    - {position_B_m: [-0.17, -0.17, 0], turning_direction: -1, k_f: 1.0e-4, k_m: 1.0e-6, omega_max_rad_s: 500, time_constant_s: 0.0, delay_s: 0.0}
 
 initial_state:
   position_W_m: [0, 0, 1]

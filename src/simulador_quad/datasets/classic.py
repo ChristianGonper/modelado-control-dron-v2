@@ -83,7 +83,7 @@ BASE_VEHICLE = {
     "rotor_template": {
         "k_f": 1.0e-4,
         "k_m": 1.0e-6,
-        "omega_max_rad_s": 1500.0
+        "omega_max_rad_s": 500.0
     }
 }
 

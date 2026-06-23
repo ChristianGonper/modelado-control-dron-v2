@@ -64,7 +64,7 @@ def test_write_dataset(tmp_path):
     from simulador_quad.scenarios.loader import load_scenario
     config = load_scenario(str(first_path))
     assert config["name"] == manifest_df.iloc[0]["scenario_id"]
-    assert config["vehicle"]["rotors"][0]["omega_max_rad_s"] == 1500.0
+    assert config["vehicle"]["rotors"][0]["omega_max_rad_s"] == 500.0
 
     waypoint_row = manifest_df[manifest_df["family"] == "waypoint"].iloc[0]
     waypoint_path = output_dir / waypoint_row["scenario_path"]
