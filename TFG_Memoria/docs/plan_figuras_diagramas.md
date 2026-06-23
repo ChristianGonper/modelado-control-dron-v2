@@ -24,7 +24,7 @@ diagrama cambie.
 
 | Capítulo | Diagrama | Finalidad |
 |---|---|---|
-| Introducción | `FIG-001` Hipótesis y estrategia experimental | Mostrar banco de PD, imitación y niveles de evaluación. Ficha creada; figura pendiente. |
+| Introducción | `FIG-001` Hipótesis y estrategia experimental | Mostrar banco de PD, selección de expertos, imitación y comparación de las tres referencias en ID y OOD. Ficha revisada; figura pendiente. |
 | Estado del arte | Taxonomía de enfoques de control | Situar PD, programación de ganancias, control aprendido e híbrido. |
 | Metodología 3.1 | `FIG-002` Marcos ENU y FRD | Fijar signos, ejes y dirección de empuje. Ficha creada; figura pendiente. |
 | Metodología 3.1 | `FIG-003` Flujo multirrate | Explicar referencia, control, mezclador, actuadores, dinámica y telemetría. Ficha creada; figura pendiente. |

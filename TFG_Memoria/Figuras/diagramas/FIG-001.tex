@@ -1,0 +1,94 @@
+\documentclass[tikz,border=10pt]{standalone}
+\usetikzlibrary{positioning, arrows.meta, patterns, calc}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage{amsmath, amssymb, bm}
+
+\newcommand{\forceW}{\bm{F}_{\mathcal{W}}}
+
+\begin{document}
+\begin{tikzpicture}[
+  node distance=0.8cm and 1.2cm,
+  align=center,
+  font=\sffamily\small,
+  % Estilos de cajas
+  box/.style={draw, rectangle, rounded corners=3pt, minimum width=2.5cm, minimum height=1.1cm, thick, fill=white},
+  specialized/.style={box, solid, draw=black},
+  transferred/.style={box, dashed, draw=black},
+  neural/.style={box, solid, draw=black, fill=black!5, pattern=north west lines, pattern color=black!25},
+  % Estilos de flechas
+  line/.style={draw, -{Stealth[scale=1.2]}, thick},
+  dashline/.style={draw, -{Stealth[scale=1.2]}, thick, dashed}
+]
+
+% ==========================================
+% ETAPA 1: GENERACIÓN DE DATOS Y ENTRENAMIENTO
+% ==========================================
+\node[box] (trayectorias) {Familias de\\Trayectorias\\(Escenarios)};
+\node[specialized, right=of trayectorias] (expertos) {Banco de\\Expertos PD};
+\node[box, right=of expertos] (seleccion) {Selección de\\Experto};
+\node[box, right=of seleccion] (fuerza) {Obtención\\de Fuerza\\$\forceW$ [N] (ENU)};
+\node[neural, right=of fuerza] (entrenamiento) {Entrenamiento\\MLP / GRU / LSTM};
+
+\draw[line] (trayectorias) -- (expertos);
+\draw[line] (expertos) -- (seleccion);
+\draw[line] (seleccion) -- (fuerza);
+\draw[line] (fuerza) -- (entrenamiento);
+
+% Etiqueta del bloque superior
+\node[anchor=south west, font=\sffamily\bfseries\large, text=black!80] at ($(trayectorias.north west) + (0,0.4)$) {Etapa 1: Generación de Datos y Entrenamiento de las Redes Neuronales};
+
+% Línea divisoria de franjas
+\draw[dashed, color=gray!40, thick] ($(trayectorias.south west) + (-0.5,-0.45)$) -- ($(entrenamiento.south east) + (0.5,-0.45)$);
+
+% ==========================================
+% ETAPA 2: COMPARACIÓN EXPERIMENTAL
+% ==========================================
+\node[box, yshift=-3.8cm] (eval) at (trayectorias) {Escenarios de\\Evaluación\\(ID y OOD)};
+
+% Tres controladores en paralelo
+\node[specialized, right=1.6cm of eval] (pd_esp) {PD\\Especializado};
+\node[transferred, above=0.3cm of pd_esp] (pd_trans) {PD\\Transferido};
+\node[neural, below=0.3cm of pd_esp] (ctrl_neuronal) {Controlador\\Neuronal};
+
+\draw[line] (eval.east) -- ++(0.6,0) |- (pd_trans.west);
+\draw[line] (eval.east) -- (pd_esp.west);
+\draw[line] (eval.east) -- ++(0.6,0) |- (ctrl_neuronal.west);
+
+% Simulador común
+\node[box, minimum width=3.2cm, right=1.6cm of pd_esp] (simulador) {Simulador 6DOF Común\\(Modelo cuadricóptero,\\lazo interno clásico,\\perturbaciones y límites)};
+
+\draw[line] (pd_trans.east) -| ($(simulador.west) + (-0.6,0.35)$) -- ($(simulador.west) + (0,0.35)$);
+\draw[line] (pd_esp.east) -- (simulador.west);
+\draw[line] (ctrl_neuronal.east) -| ($(simulador.west) + (-0.6,-0.35)$) -- ($(simulador.west) + (0,-0.35)$);
+
+% Comparación y métricas
+\node[box, right=1.2cm of simulador] (comparacion) {Evaluación\\Comparativa\\(Métricas de éxito,\\error y esfuerzo)};
+
+\draw[line] (simulador) -- (comparacion);
+
+% Etiqueta del bloque inferior
+\node[anchor=south west, font=\sffamily\bfseries\large, text=black!80] at ($(eval.north west) + (0,1.3)$) {Etapa 2: Comparación Experimental en Bucle Cerrado};
+
+% Flecha de transferencia de conocimiento (líneas rectas ortogonales por debajo)
+\draw[dashline, color=black!60] (entrenamiento.south) -- ++(0,-5.55) -- node[midway, above, font=\sffamily\scriptsize\itshape, text=black!70] {Parámetros aprendidos} ++(-11.12,0) -- (ctrl_neuronal.south);
+
+% ==========================================
+% LEYENDA EXPLÍCITA
+% ==========================================
+\node[draw=gray!30, fill=gray!3, rounded corners=2pt, below=2.3cm of simulador, xshift=-1cm, inner sep=8pt, minimum width=13.3cm, minimum height=0.55cm] (leyenda) {};
+\node[anchor=west, font=\sffamily\scriptsize\bfseries] at ($(leyenda.west) + (0.2,0)$) (l_title) {Leyenda:};
+
+\draw[thick, solid] ($(l_title.east) + (0.3,0)$) -- ++(0.5,0) 
+  node[right, font=\sffamily\scriptsize] {PD Especializado};
+
+\draw[thick, dashed] ($(l_title.east) + (4.4,0)$) -- ++(0.5,0) 
+  node[right, font=\sffamily\scriptsize] {PD Transferido};
+
+\draw[thick, draw=black, fill=black!5, pattern=north west lines, pattern color=black!25] ($(l_title.east) + (8.4,-0.08)$) rectangle ++(0.5,0.18);
+\node[anchor=west, font=\sffamily\scriptsize] at ($(l_title.east) + (9.0,0)$) {Controlador Neuronal};
+
+\end{tikzpicture}
+\end{document}

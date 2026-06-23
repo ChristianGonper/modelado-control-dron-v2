@@ -5,7 +5,7 @@ El seguimiento autónomo de trayectorias de un cuadricóptero exige disponer de
 una estimación suficiente de su estado respecto al entorno y a la referencia, y
 transformar el error de seguimiento en una actuación que estabilice el vehículo
 mientras lo conduce por el recorrido prescrito. La dificultad no reside
-únicamente en reducir el error instantáneo respecto a una posición fija, sino que la
+únicamente en reducir el error instantáneo respecto a una posición fija: la
 referencia evoluciona con el tiempo y el controlador actúa sobre la dinámica
 acoplada de un sólido rígido, limitada por los actuadores y expuesta a
 perturbaciones internas y externas. Debe coordinar, por tanto, el movimiento de
@@ -17,7 +17,9 @@ niveles. En este trabajo, un PD en cascada transforma primero los errores de
 posición y velocidad en una fuerza deseada en el sistema de referencia ENU. El lazo
 interno convierte esa fuerza, junto con la referencia de guiñada, en una
 actitud deseada, un empuje colectivo y unos momentos de cuerpo; a continuación,
-el mezclador distribuye estos mandos entre los cuatro rotores. Ajustar un único
+el mezclador distribuye estos mandos entre los cuatro rotores.
+% CITA PENDIENTE [CIT-018]: compromiso de un ajuste fijo ante condiciones de operación diferentes y motivación de controladores especializados o programación de ganancias
+Ajustar un único
 controlador para maniobras de distinta naturaleza puede imponer un compromiso
 entre, por ejemplo, mantener una posición y recorrer una geometría exigente. La
 especialización evita parte de ese compromiso, pero multiplica el coste de
@@ -27,14 +29,20 @@ política neuronal común puede condensar las demostraciones de esos expertos.
 
 La comparación requiere un entorno donde modelo, referencias, perturbaciones,
 semillas, límites y métricas permanezcan bajo control. El simulador 6DOF
-desarrollado proporciona ese contrato experimental, los controladores comparten
+desarrollado proporciona ese contrato experimental: los controladores comparten
 el mismo vehículo, la misma observación y la misma cadena de actuación; cada
 ejecución conserva la configuración efectiva y la telemetría necesaria para
 revisar y reproducir el experimento. El banco no pretende sustituir una futura
 validación en vuelo, sino aislar el contraste experimental dentro de unas
 hipótesis explícitas y reproducibles.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{FIG-001}
+  \caption{Esquema conceptual de la hipótesis y de la estrategia experimental del trabajo. Fuente: elaboración propia.}
+  \label{fig:estrategia-experimental}
+\end{figure}
 
-% FIGURA PENDIENTE [FIG-001]: resumir la hipótesis central mediante el banco de PD, la generación de demostraciones, la política neuronal común y los niveles de evaluación
+En la \figref{fig:estrategia-experimental} se detalla visualmente esta aproximación experimental estructurada en dos etapas. La primera etapa ilustra la generación de datos a partir del banco de expertos clásicos para entrenar las redes neuronales. La segunda etapa muestra la evaluación comparativa paralela en el simulador 6DOF bajo las mismas condiciones (tanto conocidas ID como de transferencia OOD), contrastando las tres referencias de control.
 
 \subsubsection*{Problema abordado}
 
@@ -50,10 +58,10 @@ La comparación distingue tres referencias. El \emph{PD especializado} es el
 controlador congelado para la familia a la que pertenece el escenario. Un
 \emph{PD transferido} es uno de esos mismos controladores aplicado, sin
 reajuste, a otra familia o condición. La ruta neuronal principal sustituye el
-lazo externo y realiza una \emph{predicción de fuerza deseada}, esto es, a partir de la
-observación y la referencia produce un vector tridimensional en el sistema de referencia
-ENU, mientras conserva el lazo interno clásico. Por tanto, la red no ordena
-directamente velocidades de rotor ni momentos de cuerpo.
+lazo externo y realiza una \emph{predicción de fuerza deseada}; a partir de la
+observación y la referencia, produce un vector tridimensional en el sistema de
+referencia ENU mientras conserva el lazo interno clásico. Por tanto, la red no
+ordena directamente velocidades de rotor ni momentos de cuerpo.
 
 Se denomina rendimiento competitivo a conservar, en bucle cerrado, la
 completitud de misión y la seguridad, y a obtener errores de seguimiento,
@@ -67,25 +75,27 @@ La evaluación separa condiciones dentro de la distribución de entrenamiento
 familias geométricas completamente nuevas.
 
 El estudio no intenta demostrar una superioridad universal de una arquitectura, 
-robustez frente a cualquier perturbación ni aptitud para vuelo real. Tampoco atribuye 
-a la red la seguridad aportada por el lazo interno, las saturaciones o el límite de 
-fuerza. Su alcance es una comparación experimental, sobre el mismo modelo y con evidencia
-trazable, entre especialización clásica, transferencia clásica e imitación neuronal.
+robustez frente a cualquier perturbación ni aptitud para vuelo real. Tampoco
+atribuye a la red la acción estabilizadora del lazo interno ni las protecciones
+impuestas mediante saturaciones y límites de fuerza. Su alcance es una
+comparación experimental, sobre el mismo modelo y con evidencia trazable, entre
+especialización clásica, transferencia clásica e imitación neuronal.
 
 \subsection{Hipótesis y objetivos}
 \label{subsec:hipotesis-objetivos}
 
 La hipótesis central sostiene que una política neuronal única, entrenada por
-imitación para predecir la fuerza deseada del lazo externo, puede mantener un
-capacidad competitiva frente al PD nativo en condiciones conocidas y transferir
-mejor que los PD especializados aplicados fuera de su familia, conservando el
-lazo interno clásico común. Esta hipótesis es experimental: su aceptación o
-rechazo dependerá conjuntamente de la capacidad para completar las trayectorias,
-el error de seguimiento, el esfuerzo de control y el uso de protecciones.
+imitación para predecir la fuerza deseada del lazo externo, puede alcanzar una
+capacidad de seguimiento competitiva frente al PD especializado de cada familia
+en condiciones conocidas y transferir mejor que los PD aplicados fuera de su
+familia, conservando el lazo interno clásico común. Esta hipótesis es
+experimental: su aceptación o rechazo dependerá conjuntamente de la capacidad
+para completar las trayectorias, el error de seguimiento, el esfuerzo de control
+y el uso de protecciones.
 
 El objetivo general es desarrollar un entorno reproducible de simulación 6DOF
 que permita determinar si un controlador neuronal por imitación puede sustituir
-un conjunto amplio de controladores PD especializados y ofrecer una mejor
+un banco de controladores PD especializados y ofrecer una mejor
 capacidad de transferencia a trayectorias y condiciones no empleadas durante el
 entrenamiento.
 
@@ -94,7 +104,7 @@ Este objetivo se descompone en los siguientes objetivos específicos:
 \begin{enumerate}
   \item formular e implementar un modelo 6DOF de cuerpo rígido para un
   cuadricóptero, con sistemas de referencia apropiados, actuadores limitados,
-  perturbaciones simplificadas y distintos pasos temporales de ejecución;
+  perturbaciones simplificadas y frecuencias de actualización diferenciadas;
   \item definir familias de trayectorias y escenarios que permitan repetir las
   condiciones experimentales;
   \item implementar un PD en cascada y obtener, mediante una búsqueda
@@ -118,9 +128,9 @@ East--North--Up (ENU); la velocidad angular, los momentos y la geometría de
 rotores emplean el sistema de referencia cuerpo Forward--Right--Down (FRD). La
 actitud se propaga mediante un cuaternión y la dinámica mediante las ecuaciones
 de Newton--Euler integradas con RK4 de paso fijo. El modelo incluye gravedad,
-una fuerza de resistencia lineal,
-velocidad de viento constante, ruido gaussiano de posición y velocidad, ley
-cuadrática de rotor, retardo puro, dinámica de primer orden y saturación.
+una fuerza de resistencia lineal, velocidad de viento constante, ruido gaussiano
+de posición y velocidad, ley cuadrática de rotor, retardo puro, dinámica de
+primer orden y saturación.
 
 Estas elecciones constituyen hipótesis de modelado, no propiedades generales de
 un cuadricóptero real. Se suponen masa e inercia constantes, un sólido rígido y
@@ -133,7 +143,7 @@ concreta una IMU, un receptor GNSS ni un estimador de estado a bordo.
 
 Los límites de altura y actitud, junto con la persistencia de la saturación,
 acotan la región donde una ejecución se considera válida. Las redes se entrenan
-mediante clonación supervisada de la fuerza calculada por expertos PD, es decir, no
+mediante clonación supervisada de la fuerza calculada por expertos PD; no
 minimizan directamente el error de posición y pueden heredar los sesgos de esos
 expertos ante perturbaciones externas. Además, la ruta neuronal conserva la
 estabilización del lazo interno PD y las protecciones clásicas. En consecuencia,
@@ -152,9 +162,9 @@ permita distinguir qué propiedades proceden del PD experto, qué aprende la red
 qué aporta el lazo interno clásico y cuáles son los límites del enfoque.
 
 Tras esta introducción, el estado del arte reúne los fundamentos y alternativas
-bibliográficas de control, incluida la programación de ganancias.
-La metodología presenta de forma integrada el simulador, el PD en cascada, la
-predicción neuronal de fuerza, los conjuntos de datos, las métricas y el
-procedimiento reproducible. El capítulo de resultados experimentales presenta e
-interpreta la evidencia. Finalmente, las
+bibliográficas sobre modelado, control clásico y aprendizaje por imitación,
+incluida la programación de ganancias. La metodología presenta de forma
+integrada el simulador, el PD en cascada, la predicción neuronal de fuerza, los
+conjuntos de datos, las métricas y el procedimiento reproducible. El capítulo de
+resultados experimentales presenta e interpreta la evidencia. Finalmente, las
 conclusiones valoran la hipótesis y los objetivos y delimitan el trabajo futuro.

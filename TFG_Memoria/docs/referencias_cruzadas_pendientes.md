@@ -14,7 +14,7 @@ referencias LaTeX estables cuando los apartados de destino estén redactados.
 | Metodología 3.3: entrenamiento | Resultados 4.3 | Debe distinguirse imitación de fuerza de error de seguimiento. |
 | Metodología 3.5: niveles de evaluación | Resultados 4.2--4.4 | Las categorías de evaluación deben conservarse sin mezclarse. |
 | Resultados 4.2--4.4 | Discusión 4.5 | Cada contraste debe enlazarse con su interpretación y limitaciones. |
-| Introducción 1.2 | Metodología 3.4 (`subsec:datos-metricas`) | La definición cualitativa de desempeño competitivo queda enlazada; revisar cuando se congelen umbrales finales. |
+| Introducción 1.1 | Metodología 3.4 (`subsec:datos-metricas`) | La definición cualitativa de rendimiento competitivo queda enlazada; revisar cuando se congelen umbrales finales. |
 | Metodología 3.1: trayectorias | Metodología 3.4 | Falta cerrar la justificación autoral de conteos y geometrías. |
 | Metodología 3.2: banco congelado | Metodología 3.5 (`subsec:protocolo-reproducibilidad`) | Comprobar las 92 ejecuciones contra el manifiesto final. |
 | Metodología 3.3: protecciones | Resultados 4.3 y 4.4 | Añadir referencias estables cuando se redacte el análisis de clipping y actuación. |

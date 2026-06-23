@@ -25,9 +25,10 @@ specialized outer-loop controllers.
 ## Hipótesis central
 
 > Una política neuronal única, entrenada por imitación para predecir la fuerza
-> deseada del lazo externo, puede mantener un desempeño competitivo frente al PD
-> nativo en condiciones conocidas y transferir mejor que los PD especializados
-> aplicados fuera de su familia, conservando el lazo interno clásico común.
+> deseada del lazo externo, puede alcanzar una capacidad de seguimiento
+> competitiva frente al PD especializado de cada familia en condiciones
+> conocidas y transferir mejor que los PD aplicados fuera de su familia,
+> conservando el lazo interno clásico común.
 
 La hipótesis se evaluará de forma multidimensional. No bastará una pérdida
 supervisada baja ni una única media agregada: se considerarán éxito de misión,
@@ -47,8 +48,8 @@ seguridad, error de seguimiento, actuación y uso de protecciones.
 - La memoria distinguirá condiciones dentro de la distribución de entrenamiento
   (ID) y fuera de ella (OOD), separando recombinación de capacidades conocidas y
   novedad geométrica.
-- No se atribuirá a la red la estabilización o seguridad aportada por el lazo
-  interno, las saturaciones o el recorte de fuerza.
+- No se atribuirán a la red la acción estabilizadora del lazo interno ni las
+  protecciones impuestas mediante saturaciones o recorte de fuerza.
 
 ## Fronteras entre capítulos
 
