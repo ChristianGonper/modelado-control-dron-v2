@@ -29,6 +29,9 @@ diagrama cambie.
 | Metodología 3.1 | `FIG-002` Marcos ENU y FRD | Fijar signos, ejes y dirección de empuje. Ficha creada; figura pendiente. |
 | Metodología 3.1 | `FIG-003` Flujo multirrate | Explicar referencia, control, mezclador, actuadores, dinámica y telemetría. Ficha creada; figura pendiente. |
 | Metodología 3.1 | Arquitectura del banco propio | Contrastar control y trazabilidad con plataformas no adaptadas al objetivo. |
+| Metodología 3.1 | `FIG-011` Configuración de rotores | Mostrar configuración en X, orden de rotores y signo de giro usado por el mixer. Ficha creada; figura pendiente. |
+| Metodología 3.1 | `FIG-009` Familias de trayectorias | Mostrar de un vistazo qué capacidad exige `hold`, `circle`, `lissajous` y `waypoint`. Ficha creada; figura pendiente. |
+| Metodología 3.1 | `FIG-010` Perfiles de waypoint | Explicar perfil trapezoidal/triangular y relación entre posición, velocidad y aceleración escalar. Ficha creada; figura pendiente. |
 | Metodología 3.2 | `FIG-004` Control PD en cascada | Mostrar lazo externo de posición y lazo interno de actitud. Ficha creada; figura pendiente. |
 | Metodología 3.2 | `FIG-005` Búsqueda progresiva | Mostrar diagnóstico, candidatos, filtros, refinamiento y congelación. Ficha creada; figura pendiente. |
 | Metodología 3.3 | `FIG-006` Predicción de fuerza deseada | Mostrar entradas, MLP/GRU/LSTM, protecciones y lazo interno común. Ficha creada; figura pendiente. |
