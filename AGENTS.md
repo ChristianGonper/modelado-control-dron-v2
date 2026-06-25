@@ -1,5 +1,7 @@
 # AGENTS.md
 
+Para cualquier tarea relacionada con LaTeX, memoria, redaccion academica, bibliografia, figuras o capitulos del TFG, trabaja desde `TFG_Memoria/` y consulta sus instrucciones y documentacion relevante.
+
 ## Proposito del repo
 
 Este repositorio contiene el TFG de un simulador 6DOF de cuadricóptero para comparar control clásico y control neuronal por imitación.
