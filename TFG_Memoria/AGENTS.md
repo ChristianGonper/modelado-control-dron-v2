@@ -39,6 +39,9 @@ No uses `../docs/html/` como fuente de verdad.
   métricas, resultados y conclusiones.
 - Conserva las fuentes editables de figuras y diagramas, junto con su ficha de
   intención, convenciones y reproducción cuando proceda.
+- No elimines comentarios editoriales de `CITA PENDIENTE`, `FIGURA PENDIENTE`
+  o notas de autor salvo petición explícita; si una cita o figura se resuelve,
+  actualiza la planificación correspondiente antes de retirar la marca.
 - Registra nuevas referencias cruzadas inestables en
   `docs/referencias_cruzadas_pendientes.md` y nuevas necesidades bibliográficas
   en `docs/citas_pendientes_redaccion.md`.
@@ -91,6 +94,8 @@ No uses `../docs/html/` como fuente de verdad.
   `docs/citas_pendientes_redaccion.md`; no añadas citas no verificadas.
 - Para figuras o diagramas: revisa `docs/plan_figuras_diagramas.md` y las fichas
   de `Figuras/diagramas/`; si propones una figura nueva, crea o actualiza su
-  ficha con intención, contenido, convenciones y fuente de reproducción.
+  ficha con intención, contenido, convenciones y fuente de reproducción. No
+  registres descripciones de figuras en documentos laterales si ya existe una
+  ficha `Figuras/diagramas/FIG-xxx.md`; usa la ficha y sincroniza el plan.
 - Para referencias cruzadas todavía inestables: registra o actualiza
   `docs/referencias_cruzadas_pendientes.md`.
