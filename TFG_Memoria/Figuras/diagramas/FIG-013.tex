@@ -1,0 +1,98 @@
+\documentclass[tikz,border=10pt]{standalone}
+\usetikzlibrary{positioning, arrows.meta, calc, babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage{amsmath, amssymb, bm}
+
+\begin{document}
+\begin{tikzpicture}[
+  node distance=0.6cm and 0.8cm,
+  align=center,
+  font=\sffamily\small,
+  % Estilos de celdas de la cola
+  padcell/.style={draw, rectangle, minimum size=0.6cm, fill=orange!15, thick},
+  realcell/.style={draw, rectangle, minimum size=0.6cm, fill=blue!15, thick},
+  % Estilos de bloques
+  box/.style={draw, rectangle, rounded corners=2pt, minimum width=2.5cm, minimum height=1.0cm, thick, fill=white},
+  % Estilos de flechas
+  line/.style={draw, -{Stealth[scale=1.2]}, thick}
+]
+
+  % ==========================================
+  % PANEL 1: INICIALIZACIÓN / ARRANQUE (k=0)
+  % ==========================================
+  \node[font=\sffamily\bfseries\large, text=black!80, anchor=west] (titulo1) at (0, 3.5) {1. Inicialización en el arranque ($k = 0$)};
+  
+  % Cola de 20 elementos de padding (dibujamos extremos y puntos suspensivos)
+  \node[padcell] (c0_0) at (0.3, 2.5) {$\bm{x}_{0}$};
+  \node[padcell, right=0.05cm of c0_0] (c0_1) {$\bm{x}_{0}$};
+  \node[padcell, right=0.05cm of c0_1] (c0_2) {$\bm{x}_{0}$};
+  \node[draw, rectangle, dashed, minimum width=1.5cm, minimum height=0.6cm, right=0.05cm of c0_2, fill=orange!5] (c0_mid) {$\dots$ (20 réplicas)};
+  \node[padcell, right=0.05cm of c0_mid] (c0_18) {$\bm{x}_{0}$};
+  \node[padcell, right=0.05cm of c0_18] (c0_19) {$\bm{x}_{0}$};
+
+  % Etiquetas de la cola
+  \node[above=0.1cm of c0_0, font=\sffamily\scriptsize] {Posición 0 (Cola)};
+  \node[above=0.1cm of c0_19, font=\sffamily\scriptsize] {Posición 19 (Cabeza)};
+  \draw[thick, <->] ($(c0_0.south west) + (0,-0.2)$) -- node[below, font=\sffamily\scriptsize] {Ventana de tamaño $L = 20$} ($(c0_19.south east) + (0,-0.2)$);
+
+  % Entrada inicial
+  \node[box, fill=white, left=2.4cm of c0_0] (input0) {Muestra inicial\\$\bm{x}_{\text{norm}, 0} \in \mathbb{R}^9$};
+  \draw[line] (input0.east) -- node[above, font=\sffamily\scriptsize\itshape] {Relleno izq.\\(\texttt{appendleft})} (c0_0.west);
+
+  % ==========================================
+  % PANEL 2: ESTADO ESTACIONARIO (k >= 19)
+  % ==========================================
+  \node[font=\sffamily\bfseries\large, text=black!80, anchor=west] (titulo2) at (0, 0.2) {2. Estado estacionario continuo ($k \ge 19$, $\Delta t = 0.02$ s)};
+  
+  % Cola de 20 elementos reales
+  \node[realcell] (c1_0) at (0.3, -0.8) {$\bm{x}_{k-19}$};
+  \node[realcell, right=0.05cm of c1_0] (c1_1) {$\bm{x}_{k-18}$};
+  \node[realcell, right=0.05cm of c1_1] (c1_2) {$\bm{x}_{k-17}$};
+  \node[draw, rectangle, dashed, minimum width=1.5cm, minimum height=0.6cm, right=0.05cm of c1_2, fill=blue!3] (c1_mid) {$\dots$};
+  \node[realcell, right=0.05cm of c1_mid] (c1_18) {$\bm{x}_{k-1}$};
+  \node[realcell, right=0.05cm of c1_18] (c1_19) {$\bm{x}_{k}$};
+
+  % Entrada de muestra actual
+  \node[box, fill=white, right=1.2cm of c1_19] (input1) {Nueva muestra\\$\bm{x}_{\text{norm}, k} \in \mathbb{R}^9$};
+  \draw[line] (input1.west) -- node[above, font=\sffamily\scriptsize\itshape] {\texttt{append}} (c1_19.east);
+
+  % Salida (descarte)
+  \draw[line] (c1_0.west) -- ++(-0.6,0) node[left, font=\sffamily\scriptsize\color{red!80!black}] {Descarte\\ FIFO};
+
+  % ==========================================
+  % INFERENCIA RECURRENTE (GRU/LSTM)
+  % ==========================================
+  \node[box, fill=purple!5, draw=purple!80!black, below=1.2cm of c1_mid, minimum width=3.8cm, minimum height=1.1cm] (inferencia) {
+    \textbf{Inferencia Recurrente}\\
+    Tensor agrupado \texttt{stack}:\\
+    $[1, 20, 9] \in \mathbb{R}^{B \times L \times D}$
+  };
+
+  % Red recurrente y salida
+  \node[box, fill=purple!10, draw=purple!80!black, right=1.2cm of inferencia] (nn) {
+    \textbf{Modelo GRU / LSTM}\\
+    Predicción de Fuerza
+  };
+
+  \node[box, fill=gray!5, right=1.2cm of nn] (salida) {
+    \textbf{Salida}\\
+    $\widehat{\bm{F}}_{d,W,k}$
+  };
+
+  % Conexiones de inferencia
+  \draw[line] ($(c1_mid.south) + (0,-0.1)$) -- (inferencia.north);
+  \draw[line] (inferencia.east) -- (nn.west);
+  \draw[line] (nn.east) -- (salida.west);
+
+  % Leyenda de colores (Desplazada a la derecha para no tapar etiquetas)
+  \node[draw=gray!30, fill=gray!3, rounded corners=2pt, right=2.2cm of c0_19, yshift=0.3cm, inner sep=4pt, font=\sffamily\scriptsize] (leyenda) {
+    \textbf{Leyenda de la Cola:}\\
+    \tikz\draw[padcell, minimum size=0.3cm] (0,0) node {}; Relleno por repetición (Padding)\\
+    \tikz\draw[realcell, minimum size=0.3cm] (0,0) node {}; Muestras normalizadas reales
+  };
+
+\end{tikzpicture}
+\end{document}

@@ -1,0 +1,93 @@
+\documentclass[tikz,border=10pt]{standalone}
+\usetikzlibrary{positioning, arrows.meta, calc, 3d, babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage{amsmath, amssymb, bm}
+
+% Definición de macros de marcos de referencia
+\newcommand{\frameW}{\mathcal{W}}
+\newcommand{\frameB}{\mathcal{B}}
+
+\begin{document}
+\begin{tikzpicture}[
+  % Proyección isométrica/perspectiva simplificada
+  % x: adelante-izquierda (Norte), y: derecha (Este), z: vertical (Arriba)
+  x={(-0.6cm,-0.45cm)}, y={(0.8cm,-0.1cm)}, z={(0cm,0.95cm)},
+  scale=1.3,
+  align=center,
+  font=\sffamily\small,
+  % Estilos de ejes
+  axisW/.style={-{Stealth[scale=1.2]}, line width=1.5pt},
+  axisB/.style={-{Stealth[scale=1.2]}, line width=1.5pt},
+  force/.style={-{Stealth[scale=1.5]}, line width=2.2pt, color=orange!90!black}
+]
+
+  % ==========================================
+  % SISTEMA MUNDO W (ENU) - CENTRADO EN ORIGEN (0,0,0)
+  % ==========================================
+  \coordinate (OW) at (0,0,0);
+  
+  % Ejes ENU
+  \draw[axisW, color=green!60!black] (OW) -- (0,3,0) node[right, yshift=0.1cm] {$x_W$ (Este)};
+  \draw[axisW, color=blue!70!black] (OW) -- (3,0,0) node[left, xshift=-0.1cm] {$y_W$ (Norte)};
+  \draw[axisW, color=red!70!black] (OW) -- (0,0,3) node[above] {$z_W$ (Arriba)};
+  
+  % Etiqueta del origen Mundo
+  \node[circle, fill=black, inner sep=1.5pt, label={below:$\mathcal{O}_W$}] at (OW) {};
+  \node[anchor=south west, font=\sffamily\bfseries, text=black!70] at (-0.5, -2.7, 3.0) {Sistema de referencia $\frameW$ (ENU)};
+
+  % ==========================================
+  % SISTEMA CUERPO B (FRD) - DESPLAZADO Y ROTADO
+  % ==========================================
+  % Posición del centro de masas (CM) - mayor separación vertical para evitar solapamientos
+  \coordinate (OB) at (1.5, 7.0, 4.2);
+
+  % Dibujamos la trayectoria punteada que conecta OW con OB
+  \draw[draw=black!30, dashed, -{Stealth}, line width=1.0pt] (OW) -- (OB) 
+    node[midway, above left, font=\sffamily\scriptsize\itshape, text=black!50] {$\bm{r}_{WB}$ (Posición)};
+
+  % Vectores unitarios aproximados rotados (para dar sensación de pitch/roll)
+  \coordinate (uxB) at ($(OB) + (1.8, -0.3, -0.4)$); % Delante
+  \coordinate (uyB) at ($(OB) + (0.2, 1.8, -0.3)$);  % Derecha
+  \coordinate (uzB) at ($(OB) + (0.4, 0.3, -1.8)$);  % Abajo
+  
+  % Ejes FRD
+  \draw[axisB, color=cyan!80!black] (OB) -- (uxB) node[below] {$x_B$ (Delante)};
+  \draw[axisB, color=magenta!80!black] (OB) -- (uyB) node[right] {$y_B$ (Derecha)};
+  \draw[axisB, color=violet!80!black] (OB) -- (uzB) node[below] {$z_B$ (Abajo)};
+
+  % Etiqueta del origen Cuerpo - ubicada a la izquierda para no pisar el vector de fuerza
+  \node[circle, fill=black, inner sep=1.5pt, label={above left:$\mathcal{O}_B$ (CM)}] at (OB) {};
+  \node[anchor=south west, font=\sffamily\bfseries, text=black!70] at ($(OB) + (0.5, 1.2, 1.0)$) {Sistema de referencia $\frameB$ (FRD)};
+
+  % ==========================================
+  % REPRESENTACIÓN ESQUEMÁTICA DEL CUADRICÓPTERO (Rotado)
+  % ==========================================
+  % Brazos en X alineados con la rotación del cuerpo
+  \coordinate (R0) at ($(OB) + 0.45*(1.8, -0.3, -0.4) + 0.45*(0.2, 1.8, -0.3)$);  % del-der
+  \coordinate (R1) at ($(OB) + 0.45*(1.8, -0.3, -0.4) - 0.45*(0.2, 1.8, -0.3)$);  % del-izq
+  \coordinate (R2) at ($(OB) - 0.45*(1.8, -0.3, -0.4) + 0.45*(0.2, 1.8, -0.3)$);  % tras-der
+  \coordinate (R3) at ($(OB) - 0.45*(1.8, -0.3, -0.4) - 0.45*(0.2, 1.8, -0.3)$);  % tras-izq
+
+  % Brazos de la estructura
+  \draw[line width=3.0pt, color=gray!70] (R1) -- (R2);
+  \draw[line width=3.0pt, color=gray!70] (R0) -- (R3);
+  \draw[line width=4.5pt, color=black!75] (OB) circle (0.15cm); % Centro de masas cuerpo
+
+  % Motores y Hélices
+  \foreach \r in {R0, R1, R2, R3} {
+    \draw[fill=gray!40, draw=black!60, line width=0.8pt] (\r) circle (0.08cm);
+    \draw[fill=white!95!black, opacity=0.65, draw=black!30] (\r) ellipse (0.3cm and 0.07cm);
+  }
+
+  % ==========================================
+  % VECTOR DE EMPUJE EN -z_B (Dirección opuesta a z_B)
+  % ==========================================
+  % Flecha más larga y etiqueta desplazada para evitar colisión de textos
+  \coordinate (force_dir) at ($(OB) - 0.85*(0.4, 0.3, -1.8)$); % -z_B vector
+  \draw[force] (OB) -- (force_dir) node[above, xshift=0.1cm, yshift=0.1cm, font=\sffamily\bfseries] {$\bm{F}_{\text{emp}}$\\(Empuje en $-z_B$)};
+
+\end{tikzpicture}
+\end{document}

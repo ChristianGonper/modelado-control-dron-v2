@@ -1,0 +1,122 @@
+\documentclass[tikz,border=10pt]{standalone}
+\usetikzlibrary{positioning, arrows.meta, calc, patterns, babel, fit, backgrounds}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage{amsmath, amssymb, bm}
+
+\begin{document}
+\begin{tikzpicture}[
+  node distance=0.8cm and 1.0cm,
+  align=center,
+  font=\sffamily\small,
+  % Estilos de bloques
+  box/.style={draw, rectangle, rounded corners=2pt, minimum width=2.2cm, minimum height=1.0cm, thick, fill=white},
+  groupbox/.style={draw, rectangle, rounded corners=5pt, line width=1.2pt, inner sep=10pt},
+  neuralbox/.style={box, fill=black!5, pattern=north west lines, pattern color=black!25},
+  % Estilos de flechas
+  line/.style={draw, -{Stealth[scale=1.2]}, thick},
+  dashline/.style={draw, -{Stealth[scale=1.2]}, thick, dashed}
+]
+
+  % ==========================================
+  % FILA SUPERIOR: POLÍTICA NEURONAL (APRENDIZAJE - TRAMADO)
+  % ==========================================
+  \node[box, fill=black!10] (entradas) at (-2, 3.2) {
+    \textbf{Entradas Observadas}\\
+    $\bm{e}_p, \bm{e}_v, \ddot{\bm{x}}_{\text{ref}}$\\
+    ($9$ variables en \texttt{min\_v1})
+  };
+  
+  \node[neuralbox, right= 1.5cm of entradas] (normalizador) {
+    \textbf{Normalización}\\
+    Ajuste de rango\\
+    $\bm{x} \to \bm{x}_{\text{norm}}$
+  };
+
+  \node[neuralbox, right=1.5cm of normalizador] (red) {
+    \textbf{Red Neuronal}\\
+    MLP / GRU / LSTM\\
+    (Pesos congelados)
+  };
+
+  \node[neuralbox, right= 1.5cm of red] (desnormalizador) {
+    \textbf{Desnormalización}\\
+    Fuerza física cruda\\
+    $\bm{F}_{d,W,\text{cruda}}$
+  };
+
+  \draw[line] (entradas) -- (normalizador);
+  \draw[line] (normalizador) -- node[above, font=\sffamily\scriptsize] {Cola FIFO} (red);
+  \draw[line] (red) -- (desnormalizador);
+
+  % ==========================================
+  % FILA INFERIOR: LAZO INTERNO Y PROTECCIONES CLÁSICAS
+  % ==========================================
+  % Posicionado exactamente debajo de desnormalizador
+  \node[box, below=1.8cm of desnormalizador, fill=white] (clipping) {
+    \textbf{Filtros de Seguridad}\\
+    - Acotar norma ($2.5mg$)\\
+    - Acotar inclinación (tilt)\\
+    - Sustentación $F_{z} \ge 0.2mg$
+  };
+  \draw[line] (desnormalizador) -- node[right, font=\sffamily\scriptsize] {$\bm{F}_{d,W,\text{cruda}}$} (clipping);
+
+  \node[box, left=1.2cm of clipping, fill=white] (conversion) {
+    \textbf{Conversión}\\
+    \textbf{Fuerza-Actitud}\\
+    $\bm{F}_{d,W} \to (T, \bm{q}_{\text{des}})$
+  };
+  \draw[line] (clipping) -- node[above, font=\sffamily\scriptsize] {$\bm{F}_{d,W}$ [N]} (conversion);
+
+  \node[box, left=1.2cm of conversion, fill=white] (lazo_interno) {
+    \textbf{Lazo Interno Clásico}\\
+    PD de actitud y\\
+    compensación giroscópica
+  };
+  \draw[line] (conversion) -- node[above, font=\sffamily\scriptsize] {$\bm{q}_{\text{des}}$} (lazo_interno);
+
+  \node[box, left=1.2cm of lazo_interno, fill=white] (mixer) {
+    \textbf{Mezclador (Mixer)}\\
+    Asignación y clipping\\
+    $\bm{\omega}_{\text{target}}$
+  };
+  \draw[line] (lazo_interno) -- node[above, font=\sffamily\scriptsize] {$\bm{\tau}_B$} (mixer);
+  \draw[line] (conversion.south) |- ++(-1.5, -0.4) -| (mixer.south);
+
+  % ==========================================
+  % GRUPOS DE CONTEXTO (Dibujados en el fondo)
+  % ==========================================
+  \begin{scope}[on background layer]
+    % Contenedor Bloque Neuronal Aprendido
+    \node[groupbox, draw=purple!80!black, fill=purple!3, fit=(normalizador) (red) (desnormalizador)] (neural_group) {};
+    
+    % Contenedor Bloque Clásico
+    \node[groupbox, draw=green!60!black, fill=green!3, fit=(clipping) (conversion) (lazo_interno) (mixer)] (classic_group) {};
+  \end{scope}
+
+  \node[anchor=south west, font=\sffamily\bfseries, color=purple!80!black] at ($(neural_group.north west) + (0.1,0)$) {Política Neuronal Aprendida (Imitación)};
+  \node[anchor=north west, font=\sffamily\bfseries, color=green!60!black] at ($(classic_group.south west) + (0.1,-0.15)$) {Módulo Clásico de Seguridad e Inferencia Interna};
+
+  % ==========================================
+  % PLANTA Y REALIMENTACIONES (Sin cruces)
+  % ==========================================
+  % Posicionada a la izquierda del mixer en la fila inferior
+  \node[box, left=1.5cm of mixer, fill=gray!20] (planta) {
+    \textbf{Planta}\\
+    \textbf{(Simulador 6DOF)}
+  };
+  \draw[line] (mixer) -- node[above, font=\sffamily\scriptsize] {$\bm{\omega}_{\text{target}}$} (planta);
+
+  % 1. Realimentación de posición a entradas (va por la izquierda exterior, sin cruces)
+  \draw[dashline] (planta.west) -- ++(-0.8, 0) |- node[pos=0.3, left, font=\sffamily\scriptsize] {Posición $\bm{x}$\\Velocidad $\dot{\bm{x}}$} (entradas.west);
+
+  % 2. Realimentación de actitud a lazo_interno (sube vertical y va por arriba a lazo_interno)
+  \draw[dashline] (planta.north) -- ++(0, 1.1) coordinate (fb_att);
+  \draw[dashline] (fb_att) -| (lazo_interno.north);
+  \node[above, font=\sffamily\scriptsize] at ($(fb_att)!0.5!(lazo_interno.north |- fb_att)$)
+    {Actitud $\bm{q}$, $\bm{\omega}_B$};
+
+\end{tikzpicture}
+\end{document}

@@ -1,0 +1,117 @@
+\documentclass[tikz,border=10pt]{standalone}
+\usetikzlibrary{positioning, arrows.meta, calc, shapes.geometric, babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage{amsmath, amssymb, bm}
+
+\begin{document}
+\begin{tikzpicture}[
+  node distance=0.8cm and 1.0cm,
+  align=center,
+  font=\sffamily\small,
+  % Estilos de bloques
+  box/.style={draw, rectangle, rounded corners=3pt, minimum width=3.5cm, minimum height=1.1cm, thick, fill=white},
+  decision/.style={draw, diamond, aspect=1.8, thick, fill=white, inner sep=2pt},
+  discardbox/.style={box, fill=red!5, draw=red!70, dashed},
+  successbox/.style={box, fill=green!5, draw=green!70},
+  % Estilos de flechas
+  line/.style={draw, -{Stealth[scale=1.2]}, thick},
+  dashline/.style={draw, -{Stealth[scale=1.2]}, thick, dashed}
+]
+
+  % ==========================================
+  % BLOQUE INICIAL: CONFIGURACIÓN
+  % ==========================================
+  \node[box, fill=gray!5] (inicio) {\textbf{Configuración de Escenario}\\Definir trayectoria nominal\\y ganancias base};
+
+  % ==========================================
+  % FASE 1: DIAGNÓSTICO
+  % ==========================================
+  \node[box, below=of inicio] (diagnostico) {
+    \textbf{Fase 1: Diagnóstico Inicial}\\
+    Evaluar ganancias base en bucle cerrado
+  };
+  \draw[line] (inicio) -- (diagnostico);
+
+  \node[decision, below=0.8cm of diagnostico] (dec_base) {¿Supera umbral\\de RMSE?};
+  \draw[line] (diagnostico) -- (dec_base);
+
+  % ==========================================
+  % FASE 2: BÚSQUEDA GLOBAL
+  % ==========================================
+  \node[box, below=0.9cm of dec_base] (global) {
+    \textbf{Fase 2: Búsqueda Global}\\
+    Generar 32 candidatos aleatorios\\
+    mediante muestreo log-uniforme
+  };
+  % Conexión si NO supera el umbral (requiere tuneo)
+  \draw[line] (dec_base) -- node[right, font=\sffamily\bfseries\color{red!70!black}] {NO (Requiere sintonía)} (global);
+
+  % ==========================================
+  % FASE 3: FILTROS DUROS
+  % ==========================================
+  \node[box, below=of global] (filtros) {
+    \textbf{Fase 3: Filtros Duros}\\
+    Evaluar en bucle cerrado
+  };
+  \draw[line] (global) -- (filtros);
+
+  % Criterios de filtro
+  \node[decision, below=0.8cm of filtros] (dec_filtros) {¿Estable y seguro?};
+  \draw[line] (filtros) -- (dec_filtros);
+
+  % Descartes y Aceptación
+  \node[discardbox, left=1.2cm of dec_filtros] (descarte) {
+    \textbf{Descarte} [$\otimes$]\\
+    - Caídas ($z < z_{\min}$)\\
+    - Exceso inclinación\\
+    - Inestabilidad/NaNs\\
+    - Saturación $> 2.0$ s
+  };
+  \draw[line] (dec_filtros.west) -- node[above, font=\sffamily\bfseries\color{red!70!black}] {NO} (descarte.east);
+
+  \node[successbox, below=0.9cm of dec_filtros] (supervivientes) {
+    \textbf{Supervivientes} [$\checkmark$]\\
+    Selección de hasta 16 mejores\\
+    candidatos iniciales
+  };
+  \draw[line] (dec_filtros) -- node[right, font=\sffamily\bfseries\color{green!60!black}] {SÍ} (supervivientes);
+
+  % ==========================================
+  % FASE 4: REFINAMIENTO LOCAL
+  % ==========================================
+  \node[box, below=of  supervivientes] (local) {
+    \textbf{Fase 4: Refinamiento Local}\\
+    Optimización Nelder-Mead (simplex)\\
+    para minimizar RMSE localmente
+  };
+  \draw[line] (supervivientes) -- (local);
+
+  % ==========================================
+  % FASE 5: SELECCIÓN MULTICRITERIO
+  % ==========================================
+  \node[box, below=of local] (seleccion) {
+    \textbf{Fase 5: Selección y Desempate}\\
+    1. Minimizar costo RMSE pos/vel\\
+    2. Penalizar esfuerzo ($\int \|\bm{\tau}_B\|^2 dt$)\\
+    3. Penalizar desviación de ganancias base
+  };
+  \draw[line] (local) -- (seleccion);
+
+  % ==========================================
+  % RESULTADO FINAL: YAML CONGELADO
+  % ==========================================
+  \node[box, fill=gray!10, below=1.0cm of  seleccion, minimum width=4.5cm] (yaml) {
+    \textbf{Resultado Final}\\
+    Ganancias ganadoras congeladas en\\
+    \texttt{data/classic\_dataset/v1/pids/}
+  };
+  \draw[line] (seleccion) -- (yaml);
+
+  % Conexión directa desde Fase 1 (SÍ supera el umbral)
+  \draw[line] (dec_base.east) -- node[above, xshift=0.3cm, font=\sffamily\bfseries\color{green!60!black}] {SÍ (Suficiente)} ++(2.8,0) |- (yaml.east);
+
+\end{tikzpicture}
+\end{document}

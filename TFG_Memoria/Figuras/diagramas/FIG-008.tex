@@ -1,0 +1,81 @@
+\documentclass[tikz,border=10pt]{standalone}
+\usetikzlibrary{positioning, arrows.meta, calc, babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage{amsmath, amssymb, bm}
+
+\begin{document}
+\begin{tikzpicture}[
+  node distance=0.8cm and 0.5cm,
+  align=center,
+  font=\sffamily\small,
+  % Estilos de columnas de fondo
+  colbox/.style={draw, rectangle, rounded corners=4pt, minimum width=3.0cm, minimum height=5.2cm, line width=1.2pt},
+  lvlbox/.style={draw, rectangle, rounded corners=2pt, minimum width=2.6cm, minimum height=1.9cm, fill=white, thick, font=\sffamily\scriptsize},
+  % Estilos de flechas
+  line/.style={draw, -{Stealth[scale=1.2]}, thick}
+]
+
+  % ==========================================
+  % 4 COLUMNAS DE NIVELES DE EVALUACIÓN
+  % ==========================================
+
+  % --- COLUMNA 1: NIVEL 1 (ID) ---
+  \node[colbox, draw=green!60!black, fill=green!2] (col1) at (0,0) {};
+  \node[anchor=north, font=\sffamily\bfseries, color=green!60!black, yshift=-0.2cm] (t1) at (col1.north) {Nivel 1\\Interpolación ID};
+  \node[lvlbox] (lvl1) at ($(col1.center) + (0,-0.1)$) {
+    \textbf{Familias Nominales}\\
+    - Hold\\
+    - Circle\\
+    - Lissajous\\
+    - Waypoint\\
+    (Test split)
+  };
+  \node[anchor=south, font=\sffamily\bfseries\scriptsize, color=green!50!black, yshift=0.2cm] at (col1.south) {Mismo Escenario\\y Parámetros};
+
+  % --- COLUMNA 2: NIVEL 2 (Cruzada) ---
+  \node[colbox, draw=blue!60!black, fill=blue!2, right=0.6cm of col1] (col2) {};
+  \node[anchor=north, font=\sffamily\bfseries, color=blue!60!black, yshift=-0.2cm] (t2) at (col2.north) {Nivel 2\\Transferencia};
+  \node[lvlbox] (lvl2) at ($(col2.center) + (0,-0.1)$) {
+    \textbf{Evaluación Cruzada}\\
+    Probar PID nativo de\\
+    una familia en otra\\
+    (e.g., PID de Circle\\
+    evaluado en Waypoint)
+  };
+  \node[anchor=south, font=\sffamily\bfseries\scriptsize, color=blue!50!black, yshift=0.2cm] at (col2.south) {Robustez Clásica\\(Línea Base)};
+
+  % --- COLUMNA 3: NIVEL 3 (OOD Mixta) ---
+  \node[colbox, draw=orange!70!black, fill=orange!3, right=0.6cm of col2] (col3) {};
+  \node[anchor=north, font=\sffamily\bfseries, color=orange!70!black, yshift=-0.2cm] (t3) at (col3.north) {Nivel 3\\Composiciones};
+  \node[lvlbox] (lvl3) at ($(col3.center) + (0,-0.1)$) {
+    \textbf{Misiones Compuestas}\\
+    Trayectorias hiladas\\
+    secuencialmente\\
+    (Hold $\to$ Circle $\to$\\
+    Waypoint)
+  };
+  \node[anchor=south, font=\sffamily\bfseries\scriptsize, color=orange!60!black, yshift=0.2cm] at (col3.south) {Generalización\\OOD Mixta};
+
+  % --- COLUMNA 4: NIVEL 4 (OOD Completo) ---
+  \node[colbox, draw=purple!80!black, fill=purple!2, right=0.6cm of col3] (col4) {};
+  \node[anchor=north, font=\sffamily\bfseries, color=purple!80!black, yshift=-0.2cm] (t4) at (col4.north) {Nivel 4\\Geometrías OOD};
+  \node[lvlbox] (lvl4) at ($(col4.center) + (0,-0.1)$) {
+    \textbf{Geometrías Inéditas}\\
+    Curvas completamente\\
+    nuevas en el test:\\
+    - Lemniscatas\\
+    - Lissajous complejas
+  };
+  \node[anchor=south, font=\sffamily\bfseries\scriptsize, color=purple!70!black, yshift=0.2cm] at (col4.south) {Generalización\\OOD Total};
+
+  % ==========================================
+  % FLECHA INFERIOR DE DIFICULTAD CRECIENTE
+  % ==========================================
+  \draw[line, line width=2.0pt, color=black!60] 
+    ($(col1.south west) + (0, -0.6)$) -- node[below, font=\sffamily\bfseries\color{black!70}, yshift=-0.1cm] {Grado de Novedad e Independencia de Ensayos Creciente} ($(col4.south east) + (0, -0.6)$);
+
+\end{tikzpicture}
+\end{document}
