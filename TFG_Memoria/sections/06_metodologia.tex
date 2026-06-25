@@ -77,8 +77,8 @@ cerrando el bucle en el simulador y no solo midiendo error supervisado de fuerza
 
 Para las muestras $e_k=\|\bm{p}_{r,k}-\bm{p}_k\|_2$, se calculan
 \begin{equation}
- e_{\mathrm{RMSE}}=\sqrt{\frac{1}{N}\sum e_k^2},\qquad
- e_{\mathrm{MAE}}=\frac{1}{N}\sum e_k,\qquad
+ e_{\mathrm{RMSE}}=\sqrt{\frac{1}{N}\sum_{k=1}^{N} e_k^2},\qquad
+ e_{\mathrm{MAE}}=\frac{1}{N}\sum_{k=1}^{N} e_k,\qquad
  e_{\max}=\max e_k.
 \end{equation}
 RMSE penaliza errores grandes, MAE describe el error medio en m y el máximo
@@ -118,12 +118,14 @@ congelados se regeneran los escenarios clásicos y se ejecuta la referencia
 clásica.
 
 A partir de esa base se generan los datos de imitación: primero el banco de
-candidatos externos de fuerza deseada y su selección por escenario. Las fases 
-siguientes entrenan MLP, GRU y LSTM, evalúan su fidelidad supervisada, ejecutan 
-la comparación cerrada sobre el split de prueba, generan y evalúan la batería OOD,
-y finalmente ejecutan la transferencia clásica y consolidan las tablas. Los comandos 
-extensos de estas fases se remiten al Anejo~1 para no duplicar en el cuerpo del texto 
-detalles operativos.
+candidatos externos de fuerza deseada y su selección por escenario, y después el
+banco de programación de ganancias que queda como alternativa implementada fuera
+de la comparación principal. Las fases siguientes entrenan MLP, GRU y LSTM,
+evalúan su fidelidad supervisada, ejecutan la comparación cerrada sobre el split
+de prueba, generan y evalúan la batería OOD, y finalmente ejecutan la
+transferencia clásica y consolidan las tablas. Los comandos extensos de estas
+fases se remiten al Anejo~1 para no duplicar en el cuerpo del texto detalles
+operativos.
 
 % FIGURA PENDIENTE [FIG-007]: mostrar el flujo completo, artefactos de entrada y salida y fronteras entre train, val, test y OOD
 El split de entrenamiento puede intervenir en el ajuste de controladores, la

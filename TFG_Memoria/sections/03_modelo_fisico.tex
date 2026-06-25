@@ -62,17 +62,20 @@ visual aislada, sino como signo del par de reacción de guiñada que aparece en
 % FIGURA PENDIENTE [FIG-011]: mostrar configuración en X, orden de rotores y sentidos de giro usados por el simulador.
 
 Cada rotor utiliza $k_f=\SI{1e-4}{N.s^2.rad^{-2}}$ para el empuje y
-$k_m=\SI{1e-6}{N.m.s^2.rad^{-2}}$ para el par de reacción. Para la cota de
-actuación documentada en este modelo académico se toma
-$\omega_{\max}=\SI{316}{rad.s^{-1}}$, de modo que el empuje máximo por rotor es
+$k_m=\SI{1e-6}{N.m.s^2.rad^{-2}}$ para el par de reacción. En los escenarios
+oficiales se toma $\omega_{\max}=\SI{500}{rad.s^{-1}}$, de modo que el empuje
+máximo por rotor es
 \begin{equation}
- T_{\max}=k_f\omega_{\max}^2\simeq\SI{10}{N}.
+ T_{\max}=k_f\omega_{\max}^2=\SI{25}{N}.
  \label{eq:empuje-maximo-rotor}
 \end{equation}
 Este límite no pretende especificar un vehículo comercial; es una cota elegida
 para el caso de estudio, superior al empuje por rotor en estacionario
-($mg/4\simeq\SI{2.45}{N}$) sin introducir márgenes numéricos
-desproporcionados.
+($mg/4\simeq\SI{2.45}{N}$). El controlador impone además una envolvente de
+fuerza deseada de $2.5mg$ antes de la conversión a actitud; por tanto, la
+saturación de rotor se interpreta sobre todo como límite de asignación y de
+momentos, no como una orden nominal de usar toda la capacidad individual de cada
+rotor.
 
 % CITA PENDIENTE [CIT-002]: criterio físico o fuente de referencia para masa, geometría, inercia y coeficientes de propulsión del vehículo académico.
 La metodología seguida mantiene el mismo vehículo en todos los escenarios de
@@ -126,6 +129,8 @@ cuerpo es $\bm{F}_{i,B}=[0\;0\;-T_i]^\mathsf{T}$ y su contribución al momento
 incluye el término de brazo $\bm{r}_{i,B}\times\bm{F}_{i,B}$ y el par de
 reacción $[0\;0\;Q_i]^\mathsf{T}$.
 % CITA PENDIENTE [CIT-004]: fundamento de la ley cuadrática empuje/par de rotor y asignación de fuerzas en un cuadricóptero.
+El modelo cuadrático de empuje y par de reacción es una aproximación habitual en
+modelos de cuadricóptero de bajo orden \cite{beard2012small,mellinger2011minimum}.
 
 El mixer, o mezclador de actuadores, transforma una petición de empuje colectivo
 y momentos en comandos individuales de rotor. Para ello construye una matriz de

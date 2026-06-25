@@ -8,7 +8,7 @@ lugar, proporciona la referencia clásica contra la que se comparan las implemen
 neuronales. En segundo lugar, genera datos de referencia para el aprendizaje por
 imitación, ya que su lazo externo define la fuerza deseada que la red debe
 aproximar. En tercer lugar, aporta el lazo interno de actitud compartido por la
-ruta clásica y por la ruta neuronal. Por tanto, no se usa solo como baseline:
+ruta clásica y por la ruta neuronal. Por tanto, no se usa solo como referencia:
 también fija la frontera física entre la parte aprendida y la parte clásica de
 la arquitectura híbrida.
 
@@ -80,6 +80,9 @@ $\bm{R}_{WB,d}$ con esos tres ejes como columnas. Esta matriz se transforma a
 cuaternión para comparar la actitud deseada con la actitud observada.
 
 % CITA PENDIENTE [CIT-009]: fundamento del control PD en cascada de posición y actitud para cuadricópteros, incluyendo conversión geométrica fuerza-actitud y error de cuaternión
+La estructura en cascada y la conversión de una fuerza deseada a actitud son
+coherentes con formulaciones habituales de control de cuadricópteros
+\cite{beard2012small,mellinger2011minimum}.
 El error de actitud se calcula como
 $\bm{q}_e=\bm{q}_{WB}^{-1}\otimes\bm{q}_{WB,d}$. Si su parte escalar es
 negativa, el cuaternión se cambia de signo para escoger la representación de

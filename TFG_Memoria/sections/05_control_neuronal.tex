@@ -28,7 +28,10 @@ la conversión a actitud, las saturaciones y el control interno siguen siendo
 explícitos. Por tanto, el comportamiento seguro no debe atribuirse únicamente a
 la red. Una parte puede proceder de los límites de fuerza e inclinación y del
 lazo interno compartido; por ello la evaluación posterior cuantifica no solo el
-error de seguimiento, sino también el uso de protecciones y saturaciones.
+error de seguimiento, sino también el uso de protecciones y saturaciones. Esta
+lectura corresponde a aprendizaje por imitación supervisado: la política
+aprendida aproxima acciones de un experto observado, con las limitaciones
+propias de depender de la distribución de demostraciones \cite{ross2011dagger}.
 % CITA PENDIENTE [CIT-011]: ventajas y límites de combinar una política aprendida con lazos clásicos en control híbrido
 
 \subsubsection*{Construcción y selección de datos de imitación}
@@ -36,9 +39,9 @@ error de seguimiento, sino también el uso de protecciones y saturaciones.
 El dataset neuronal se construye en una fase posterior al ajuste de los PD
 clásicos. Primero, el flujo clásico fija los escenarios, trayectorias,
 perturbaciones, semillas y particiones entrenamiento--validación--prueba, así
-como los controladores de referencia. Después, para generar los datos de
-imitación, no se reutilizan sin más los comandos de fuerza almacenados en esa
-ejecución clásica: a partir de cada escenario se construye un banco específico de
+como los controladores de referencia por familia. Después, para generar los datos
+de imitación, no se repite la búsqueda global de PD ni se modifican los lazos de
+actitud: se toma cada escenario ya materializado y se construye un banco local de
 variantes del lazo externo, modificando exclusivamente las ganancias
 $\bm{K}_{p,p}$ y $\bm{K}_{d,p}$ y conservando el lazo interno de actitud, el
 vehículo, la trayectoria y los límites del escenario fuente.
@@ -58,10 +61,12 @@ RMSE de posición. Se admiten después los candidatos situados hasta un 5\,\% po
 encima de ese valor y, dentro de ese subconjunto, se escoge el de menor esfuerzo
 de control; si persiste el empate, se prefiere el perfil más conservador. La
 telemetría del candidato escogido se copia al dataset de imitación y el
-escenario resultante registra las ganancias externas seleccionadas. Así, los
-datos con los que se entrena la red proceden de nuevos expertos externos
-generados para cada escenario, no de una segunda sintonización global del banco
-clásico.
+escenario resultante registra las ganancias externas seleccionadas. En este
+sentido, el término ``experto externo'' no designa un nuevo PD completo por
+familia, sino la variante segura del lazo externo que aporta la fuerza objetivo
+para ese escenario concreto. Esta segunda selección genera objetivos de
+imitación más específicos sin cambiar el lazo interno ni redefinir la referencia
+clásica congelada.
 
 Esta construcción debe interpretarse como clonación de comportamiento. La red
 observa las acciones de los PD externos seleccionados y aprende a aproximar sus
@@ -138,9 +143,11 @@ evaluación supervisada y de la ejecución en bucle cerrado.
 % CITA PENDIENTE [CIT-013]: definición y propiedades relevantes de ReLU, GRU y LSTM para justificar las arquitecturas comparadas
 La anchura de 64 unidades, las dos capas ocultas de la MLP y la única capa
 recurrente se mantienen homogéneas para acotar la comparación entre
-arquitecturas. La justificación conceptual de ReLU, GRU y LSTM se apoya en el
-estado del arte; la evidencia experimental de este trabajo valora su desempeño
-en el banco definido y bajo la misma dimensión oculta.
+arquitecturas. ReLU, GRU y LSTM son componentes establecidos para redes
+neuronales profundas y recurrentes
+\cite{nair2010relu,cho2014learning,hochreiter1997lstm}; la evidencia
+experimental de este trabajo valora su desempeño en el banco definido y bajo la
+misma dimensión oculta.
 
 \subsubsection*{Normalización, entrenamiento y selección del modelo}
 
@@ -154,7 +161,8 @@ controlador.
 
 El aprendizaje minimiza el error cuadrático medio (MSE) entre la fuerza
 normalizada predicha por la red y la fuerza normalizada calculada por el experto
-PD. La optimización se realiza con Adam y una tasa de aprendizaje $10^{-3}$. Una
+PD. La optimización se realiza con Adam \cite{kingma2015adam} y una tasa de
+aprendizaje $10^{-3}$. Una
 época corresponde a una pasada completa por las muestras de entrenamiento; la
 configuración actual permite hasta 100 épocas, lotes de 64 muestras y semilla 42
 para reproducibilidad de la inicialización y del orden aleatorio de las muestras.
