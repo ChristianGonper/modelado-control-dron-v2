@@ -3,9 +3,9 @@
 
 \subsubsection*{Contrastes e hipótesis operativas}
 
-La campaña se diseña antes de interpretar resultados y descompone la hipótesis
-central en cinco contrastes operativos. Estas hipótesis son direccionales, pero
-no se dan por confirmadas hasta disponer de evidencia completa y comparable.
+El procedimiento se define antes de interpretar resultados y descompone la
+hipótesis central en cinco contrastes operativos. Cada contraste vincula una
+parte de la comparación con las métricas que permiten juzgarla.
 
 \begin{table}[H]
 \caption{Contrastes e hipótesis operativas predefinidos.}
@@ -14,24 +14,25 @@ no se dan por confirmadas hasta disponer de evidencia completa y comparable.
 \toprule
 ID & Contraste & Hipótesis operativa \\
 \midrule
-H1 & Especialización clásica por familia & El PD nativo reduce la degradación frente a PD no nativos sin perder seguridad. \\
-H2 & Transferencia de los PD congelados & La transferencia cruzada es desigual y deja margen para una política común. \\
-H3 & Fidelidad de imitación y seguimiento cerrado & Una pérdida supervisada baja es necesaria, pero no suficiente, para rendimiento cerrado competitivo. \\
-H4 & Transferencia neuronal a condiciones OOD & La política común puede combinar comportamientos vistos, pero se degradará más ante geometrías completamente nuevas. \\
+H1 & Especialización del PD experto & El PD nativo de cada familia actúa como referencia especializada y debe superar a los PD no nativos en su propia familia sin perder seguridad. \\
+H2 & Transferencia de los PD congelados & La transferencia cruzada de PD entre familias es desigual y delimita el rendimiento esperable sin reajuste. \\
+H3 & Fidelidad de imitación y seguimiento cerrado & Una pérdida supervisada baja es necesaria, pero no suficiente, para obtener seguimiento cerrado competitivo. \\
+H4 & Procedimiento neuronal común frente a transferencia clásica & Un único procedimiento neuronal de fuerza deseada puede competir mejor que los PD congelados aplicados fuera de su familia. \\
 H5 & Efecto de la memoria temporal & GRU o LSTM pueden beneficiarse de historia bajo ruido y retardo, sin asumir cuál será superior. \\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-Cada hipótesis se juzga con éxito de misión, seguridad, error de seguimiento,
-actuación y uso de protecciones; no mediante una única media global. La síntesis
-de resultados declarará la cobertura y la incertidumbre disponible para cada
-contraste.
+Los contrastes se juzgan con éxito de misión, seguridad, error de seguimiento,
+actuación, saturación y uso de protecciones; no mediante una única media global.
+La síntesis de resultados separa condiciones conocidas, transferencia clásica y
+escenarios OOD para identificar en qué parte del procedimiento aparece cada
+diferencia.
 
 \subsubsection*{Diseño del conjunto de datos clásico}
 
-El conjunto v1 contiene 150 episodios: 18 de \texttt{hold}, 48 de círculo, 48
-de Lissajous y 36 de \texttt{waypoint}. Sus particiones por familia son
+El conjunto contiene 150 episodios: 18 de \texttt{hold}, 48 de círculo, 48 de
+Lissajous y 36 de \texttt{waypoint}. Sus particiones por familia son
 12/3/3, 34/7/7, 34/7/7 y 25/5/6 para entrenamiento, validación y prueba. En
 total resultan 105 episodios de entrenamiento, 22 de validación y 23 de prueba.
 La asignación se genera de forma determinista con semilla base 1042 y cada
@@ -42,34 +43,35 @@ periódico planar, movimiento periódico multieje y misiones finitas con frenado
 Cada una combina geometrías de distinta exigencia con perfiles de drag, viento,
 ruido y actuadores. \texttt{hold} usa 18 combinaciones y menos perfiles porque
 su referencia constante no introduce la diversidad geométrica de las familias
-dinámicas; esta reducción evita sobrerrepresentar muestras estacionarias, aunque
-su efecto sobre el equilibrio del conjunto debe revisarse.
+dinámicas; esta reducción evita sobrerrepresentar muestras estacionarias dentro
+del conjunto de entrenamiento.
 
-Los conteos, geometrías y niveles concretos son una cobertura diseñada para v1,
-no el resultado de un cálculo de potencia estadística.
+La cantidad de episodios, geometrías y niveles de perturbación constituye una
+cobertura acotada y reproducible para comparar controladores dentro del alcance
+del simulador.
 % CITA PENDIENTE [CIT-016]: criterio experimental o análisis de cobertura para justificar familias, conteos, ratios y perfiles del dataset clásico
 La partición se asigna a escenarios completos antes de extraer muestras. Todas
 las muestras y ventanas de un episodio heredan su split, por lo que una secuencia
-temporal no se reparte entre entrenamiento, validación y prueba. La semilla hace
-repetibles geometrías, perturbaciones y ruido, pero un único sorteo no cuantifica
-por sí solo variabilidad entre semillas.
+temporal no se reparte entre entrenamiento, validación y prueba. La semilla fija
+la asignación de geometrías, perturbaciones y ruido, lo que permite reconstruir
+exactamente la misma división experimental.
 
 \subsubsection*{Diseño del conjunto de datos de imitación}
 
-Cada fila del manifiesto clásico origina un grupo de candidatos externos. El
-banco registra escenario fuente, variante, ganancias, ruta de resultados,
-seguridad, RMSE y esfuerzo. El selector conserva únicamente candidatos que
-superan los filtros del \apartadoref{subsec:control-neuronal-imitacion}; copia la
-telemetría del elegido y materializa un YAML con sus ganancias exactas. El
-manifiesto resultante mantiene familia, geometría, perturbación, semilla, split,
-experto y procedencia.
+Cada escenario del conjunto clásico origina un grupo de candidatos externos para
+la predicción de fuerza deseada. El banco registra escenario fuente, variante,
+ganancias, ruta de resultados, seguridad, RMSE y esfuerzo. El selector conserva
+únicamente candidatos que superan los filtros del
+\apartadoref{subsec:control-neuronal-imitacion}; copia la telemetría del elegido
+y materializa un YAML con sus ganancias exactas. El registro resultante mantiene
+familia, geometría, perturbación, semilla, split, experto y procedencia.
 
 Las muestras se extraen de la observación que vio el experto y su
 $\bm{F}_{d,W}$ solicitada. Por tanto, la distribución aprendida es la de estados
 visitados por expertos seguros seleccionados, no la distribución de todos los
-estados físicamente posibles. El filtrado reduce demostraciones fallidas, pero
-también elimina ejemplos de recuperación. Esta dependencia se considera al
-interpretar cualquier diferencia entre error supervisado y bucle cerrado.
+estados físicamente posibles. El filtrado limita el dataset a ejecuciones
+válidas. Por eso la evaluación principal se realiza
+cerrando el bucle en el simulador y no solo midiendo error supervisado de fuerza.
 
 \subsubsection*{Métricas, criterios de éxito y análisis}
 
@@ -84,43 +86,53 @@ detecta excursiones puntuales. Se informan por familia y escenario, no solo como
 una media global.
 
 La actuación se describe separadamente mediante empuje colectivo en N, norma de
-momentos en N\,m y velocidad de rotor en rad/s. El índice heredado
-$|T|+\|\tau\|$ mezcla unidades y se limita a diagnóstico; no se presenta como
-esfuerzo físico total. Saturación y degradación son porcentajes de muestras en
-que la cadena de actuación alcanza límites. Para redes se añaden porcentajes de
-recorte de norma e inclinación de fuerza.
+momentos en N\,m y velocidad de rotor en rad/s. Saturación y degradación son
+porcentajes de muestras en que la cadena de actuación alcanza límites o reduce
+el mando solicitado. Para redes se añaden también los porcentajes de recorte de
+norma e inclinación de la fuerza predicha.
 
 El éxito de seguridad acepta únicamente terminación por límite temporal,
 trayectoria completada o composición completada. El éxito de misión depende del
 tipo de trayectoria: las referencias infinitas deben alcanzar el límite
-temporal; \texttt{line}/\texttt{waypoint} deben completar su misión y una
-composición debe emitir su terminación específica. Así se evita clasificar como
-éxito una misión finita estable pero incompleta.
+temporal; \texttt{waypoint} debe completar su misión y una composición debe
+emitir su terminación específica. Así se evita clasificar como éxito una misión
+finita estable pero incompleta.
 
 % CITA PENDIENTE [CIT-017]: respaldo del uso e interpretación de RMSE, MAE, error máximo y métricas de saturación en seguimiento de trayectorias
-Los umbrales duros usados para seleccionar PD son heurísticos y se fijan antes
-de observar prueba. Las conclusiones deberán mostrar su sensibilidad cuando una
-clasificación dependa de valores próximos al 2\,\% o a los límites de error.
+Los filtros duros de selección de PD exigen métricas finitas, terminación
+coherente con la trayectoria, saturación y degradación no superiores al
+2\,\%, y un error máximo por debajo del umbral definido para cada familia. Esos
+filtros se aplican antes de construir los datos de imitación y no se modifican
+tras observar prueba.
 
 \subsection{Protocolo experimental y reproducibilidad}
 \label{subsec:protocolo-reproducibilidad}
 
-\subsubsection*{Diseño global de la campaña}
+\subsubsection*{Diseño global del procedimiento experimental}
 
-La campaña sigue once fases: pruebas y escenarios de sanidad; generación del
-dataset clásico inicial; diagnóstico y ajuste condicional de PD; congelación y
-regeneración del baseline; generación y selección de expertos de fuerza;
-generación de la alternativa de ganancias; entrenamiento de MLP, GRU y LSTM;
-evaluación supervisada; evaluación cerrada en prueba; generación y evaluación
-OOD; y transferencia clásica con consolidación de tablas.
+El procedimiento experimental sigue once fases ordenadas. Primero se ejecutan
+comprobaciones iniciales del simulador y de escenarios representativos. Después
+se genera el conjunto clásico inicial, se diagnostican los PD por familia y, si
+es necesario, se busca un PD experto para cada familia. Con esos controladores
+congelados se regeneran los escenarios clásicos y se ejecuta la referencia
+clásica.
+
+A partir de esa base se generan los datos de imitación: primero el banco de
+candidatos externos de fuerza deseada y su selección por escenario. Las fases 
+siguientes entrenan MLP, GRU y LSTM, evalúan su fidelidad supervisada, ejecutan 
+la comparación cerrada sobre el split de prueba, generan y evalúan la batería OOD,
+y finalmente ejecutan la transferencia clásica y consolidan las tablas. Los comandos 
+extensos de estas fases se remiten al Anejo~1 para no duplicar en el cuerpo del texto 
+detalles operativos.
 
 % FIGURA PENDIENTE [FIG-007]: mostrar el flujo completo, artefactos de entrada y salida y fronteras entre train, val, test y OOD
-El split de entrenamiento puede intervenir en ajuste, normalización y
-optimización de pesos. Validación selecciona checkpoint y, si se documenta, los
-hiperparámetros. Prueba y OOD se reservan para evaluación; no pueden modificar
-ganancias, normalización, arquitectura, umbrales ni criterios de éxito. La
-regeneración de artefactos conserva manifiestos y configuraciones para detectar
-una dependencia indebida.
+El split de entrenamiento puede intervenir en el ajuste de controladores, la
+normalización y la optimización de pesos. Validación se usa para seleccionar el
+checkpoint neuronal. Prueba y OOD se reservan para comprobar el rendimiento una
+vez fijado el procedimiento: no modifican ganancias, normalización,
+arquitectura, umbrales ni criterios de éxito. Esta separación es la condición
+necesaria para interpretar el split de prueba como datos no vistos durante el
+entrenamiento.
 
 \subsubsection*{Configuración y comparación del entrenamiento}
 
@@ -131,17 +143,18 @@ el menor MSE de validación. MLP usa una muestra actual; GRU y LSTM usan ventana
 de 20 muestras. Todas emplean 64 unidades ocultas, aunque el número de parámetros
 y el coste difieren por arquitectura.
 
-El dispositivo se registra y la opción automática selecciona CUDA si está
-disponible. Se siembran Python, NumPy, PyTorch y los trabajadores del cargador;
-el determinismo completo puede depender de operaciones y hardware CUDA. Una
-comparación se acepta como equivalente solo si las configuraciones guardadas no
-presentan diferencias adicionales y si las tres ejecuciones acceden a las
-mismas particiones.
+La semilla fija la inicialización y el orden aleatorio de las muestras durante el
+entrenamiento. La evaluación de validación y prueba se calcula sin alterar pesos
+ni reordenar el criterio de selección. La ejecución puede realizarse en CPU o
+CUDA mediante la opción automática del entrenamiento, pero la comparación entre
+arquitecturas se interpreta solo cuando las tres ejecuciones usan las mismas
+particiones y la misma configuración experimental salvo la arquitectura.
 
-No consta una búsqueda versionada común de anchura, longitud, tasa o paciencia.
-En consecuencia, v1 compara configuraciones por defecto igualadas, no el mejor
-modelo posible de cada familia. Esta limitación impide atribuir una eventual
-diferencia exclusivamente al mecanismo MLP, GRU o LSTM.
+La comparación mantiene una configuración común de anchura, longitud de ventana,
+tasa de aprendizaje y paciencia para aislar el efecto de sustituir la
+arquitectura. Por tanto, las conclusiones se formulan sobre estas
+configuraciones igualadas, no como una optimización independiente de cada
+familia de red.
 
 \subsubsection*{Evaluación en familias conocidas y transferencia clásica}
 
@@ -155,54 +168,56 @@ La transferencia clásica aplica los cuatro PD congelados a cada uno de los 23
 escenarios, incluida la combinación nativa. Esto produce $23\times4=92$
 ejecuciones y una matriz controlador--familia. Las combinaciones no nativas
 cuantifican transferencia sin reajuste; la diagonal vuelve a medir
-especialización. La comparación exige conservar trayectoria, semilla,
-perturbaciones, vehículo, terminaciones y cadena de actuación.
+especialización. Al mantener iguales trayectoria, semilla, perturbaciones,
+vehículo y criterios de terminación, las diferencias observadas se atribuyen al
+controlador aplicado y no a un cambio de escenario.
 
 \subsubsection*{Evaluación fuera de la distribución de entrenamiento}
 
 OOD contiene escenarios cuyos episodios no intervienen en ajuste,
 normalización, entrenamiento ni selección de checkpoint. Para cada escenario se
-ejecutan redes y PD congelados transferidos bajo la misma condición. El baseline
-operativo principal es el conjunto de PD disponibles sin reajuste. Si se genera
-un PD específico con datos de la condición nueva, se presentará aparte como cota
-de especialización y nunca como evidencia de transferencia.
+ejecutan redes y PD congelados transferidos bajo la misma condición. La
+referencia operativa principal es el conjunto de PD disponibles sin reajuste. En
+alguna trayectoria OOD puede añadirse un PD ajustado específicamente para esa
+condición como referencia auxiliar de especialización, pero separado de la
+comparación de transferencia.
 
 % FIGURA PENDIENTE [FIG-008]: separar visualmente evaluación ID, transferencia clásica, composiciones OOD y familias geométricas nuevas
 
 \subsubsection*{Variaciones y composiciones de familias conocidas}
 
 Este nivel modifica exigencia o combina capacidades presentes: Lissajous más
-rápidas o ruidosas, secuencias compuestas de espera, waypoint y círculo, y
+rápidas o ruidosas, secuencias compuestas de \texttt{hold}, waypoint y círculo, y
 misiones helicoidales aproximadas por waypoints. Aunque la combinación completa
-sea nueva, sus primitivas pertenecen al vocabulario del entrenamiento. Cada fila
-del manifiesto OOD registra qué geometría, perturbación o transición cambia.
+sea nueva, sus primitivas pertenecen a los datos de entrenamiento. Son casos más
+exigentes que los episodios ID porque fuerzan transiciones y tramos heterogéneos
+dentro de una misma ejecución. Por ello permiten estudiar un caso plausible de
+misión compuesta: un PD experto de una familia puede resolver bien el tramo para
+el que fue ajustado y degradarse en otros, mientras que el controlador neuronal
+se evalúa como una política única aplicada a todas las fases.
 
 \subsubsection*{Trayectorias completamente nuevas}
 
 Las lemniscatas introducen una familia geométrica no incluida en las cuatro
-familias de entrenamiento. Se ensayan variantes tridimensionales, rápidas y con
-perturbaciones combinadas. Esta categoría es una prueba más fuerte porque no
-solo altera parámetros de una primitiva conocida; cambia la estructura de la
-referencia. Mantenerla separada evita que un promedio de OOD oculte la diferencia
-entre recombinación y novedad geométrica.
+familias de entrenamiento. La implementación usa una lemniscata de Gerono en el
+plano horizontal,
+\begin{equation}
+ x(t)=c_x+a\sin(\omega t),\qquad
+ y(t)=c_y+b\sin(2\omega t),
+\end{equation}
+con una oscilación vertical opcional
+$z(t)=c_z+A_z\sin(\omega_z t)$. En la batería OOD se ensayan variantes
+tridimensionales, rápidas y con perturbaciones combinadas. Esta categoría es
+una prueba más fuerte porque no solo altera parámetros de una primitiva
+conocida; cambia la estructura de la referencia. Mantenerla separada evita que
+un promedio OOD oculte la diferencia entre recombinación de familias conocidas y
+novedad geométrica.
 
-\subsubsection*{Reproducibilidad y validez de la evidencia}
+\subsubsection*{Criterios de validez de las ejecuciones}
 
-Una ejecución entra en la evidencia si dispone de configuración materializada,
-\texttt{telemetry.json} y \texttt{metrics.json} legibles, valores finitos,
-terminación interpretable y metadatos coherentes. El manifiesto de evidencia y
-los reportes de lote deben cuadrar con los conteos esperados. Los resultados
-ausentes, fallidos, pertenecientes a otra revisión o generados con condiciones
-incomparables se excluyen y se contabilizan; no se rellenan ni se sustituyen de
-forma silenciosa.
-
-Los metadatos conservan escenario, semilla, controlador, parámetros efectivos,
-comando, versión de Python y paquete, plataforma, estado Git y hashes del YAML y
-de \texttt{uv.lock}. Los checkpoints guardan arquitectura, dimensiones,
-hiperparámetros y normalización. Un cambio de umbral, semilla, presupuesto,
-dataset o protección define una condición experimental distinta.
-
-La campaña se orquesta mediante una interfaz por fases, pero los comandos
-extensos se remiten al Anejo 1. La reproducibilidad aquí significa poder
-reconstruir los artefactos y detectar sus condiciones; no garantiza igualdad
-bit a bit entre dispositivos ni corrige las limitaciones físicas del modelo.
+Una ejecución se considera válida para extraer información si dispone de una
+configuración interpretable y de archivos de telemetría y métricas legibles, con
+valores finitos y una terminación compatible con el tipo de trayectoria. Los
+resultados ausentes, fallidos, ajenos a la lista de ejecuciones definida o
+generados bajo condiciones incomparables no se emplean para construir tablas ni
+conclusiones.
