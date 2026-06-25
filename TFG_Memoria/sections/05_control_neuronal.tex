@@ -119,7 +119,9 @@ La ventana temporal permite estudiar si la historia reciente aporta información
 útil frente a retardos, ruido de observación y dinámica de actuadores. El valor
 $L=20$ fija una ventana corta, compatible con el periodo de control de la
 campaña, y permite comparar las arquitecturas recurrentes bajo un contrato
-temporal común.
+temporal común. Como comprobación posterior, se ejecutó un estudio de
+sensibilidad con $L=10$ y $L=40$ para GRU y LSTM; las diferencias observadas no
+modificaron la configuración principal de la comparativa.
 % CITA PENDIENTE [CIT-012]: criterio para seleccionar variables de estado/error y longitud de ventana en control neuronal recurrente
 
 \subsubsection*{Arquitecturas y parámetros de MLP, GRU y LSTM}
@@ -143,8 +145,10 @@ evaluación supervisada y de la ejecución en bucle cerrado.
 % CITA PENDIENTE [CIT-013]: definición y propiedades relevantes de ReLU, GRU y LSTM para justificar las arquitecturas comparadas
 La anchura de 64 unidades, las dos capas ocultas de la MLP y la única capa
 recurrente se mantienen homogéneas para acotar la comparación entre
-arquitecturas. ReLU, GRU y LSTM son componentes establecidos para redes
-neuronales profundas y recurrentes
+arquitecturas. Esta decisión se contrastó con una variante de 128 unidades; la
+mejora supervisada de algunas redes no produjo una ventaja cerrada suficientemente
+sistemática como para sustituir la configuración común. ReLU, GRU y LSTM son
+componentes establecidos para redes neuronales profundas y recurrentes
 \cite{nair2010relu,cho2014learning,hochreiter1997lstm}; la evidencia
 experimental de este trabajo valora su desempeño en el banco definido y bajo la
 misma dimensión oculta.
@@ -176,7 +180,10 @@ con menor valor. La paciencia de 10 épocas implementa parada temprana: si la
 pérdida de validación no mejora durante diez épocas consecutivas, el
 entrenamiento se detiene y se conserva el mejor modelo observado. Esta regla
 reduce entrenamientos innecesarios, limita el ajuste excesivo al split de
-entrenamiento y define un criterio reproducible de selección del modelo.
+entrenamiento y define un criterio reproducible de selección del modelo. La
+robustez frente a la semilla se comprobó de forma acotada repitiendo MLP con dos
+semillas adicionales; en el split de prueba la variabilidad resultante no cambió
+la interpretación de la arquitectura.
 
 % CITA PENDIENTE [CIT-014]: fundamento de normalización train-only, MSE, Adam y parada temprana en aprendizaje supervisado
 Una pérdida supervisada baja indica que la red replica con precisión las fuerzas

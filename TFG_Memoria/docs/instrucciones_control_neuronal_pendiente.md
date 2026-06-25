@@ -28,39 +28,41 @@ copia de comandos del dataset clásico ni una repetición del tuneo global de lo
 PD. Es una fase posterior que genera expertos externos por escenario variando
 solo el lazo externo.
 
-## Estudios recomendados antes del cierre experimental
+## Estudio de sensibilidad ejecutado
 
-No he encontrado en el repo una campaña versionada que compare otras longitudes
-de ventana recurrente, otras anchuras de red o varias semillas para la
-comparación principal `outer_force_min_v1`. Los scripts sí permiten ejecutar
-esas variantes mediante `--sequence-length`, `--hidden-dim` y `--seed`.
+El estudio recomendado se ejecutó en el worktree de comparación y quedó
+documentado en
+`../docs/reviews/estudio_sensibilidad_neuronal_outer_force_2026-06-25.md`.
+También se incorporaron al repositorio las herramientas de reproducción:
+`tools/run_neural_sensitivity_study.py`,
+`tools/summarize_neural_sensitivity.py` y la opción `--variant-tag` de
+`tools/run_neural_outer_force_dataset.py`.
 
-Prioridad alta:
+Cobertura ejecutada:
 
-1. Entrenar MLP, GRU y LSTM con `--hidden-dim 128` manteniendo el resto de la
-   configuración.
-2. Evaluar MSE supervisado en `train`, `val` y `test`.
-3. Ejecutar bucle cerrado en `test` para comprobar si mejora seguimiento,
-   saturación o clipping frente a `hidden_dim=64`.
+- Baseline `outer_force_min_v1` con MLP, GRU y LSTM.
+- `hidden_dim=128` para MLP, GRU y LSTM.
+- Ventanas recurrentes `L=10` y `L=40` para GRU y LSTM.
+- Semillas adicionales 7 y 123 para MLP.
+- Evaluación supervisada en `train`, `val` y `test`.
+- Bucle cerrado en `test` y OOD.
 
-Prioridad media:
+Lectura técnica:
 
-1. Repetir GRU y LSTM con `--sequence-length 10` y `--sequence-length 40`.
-2. Comparar pérdida supervisada, éxito de misión, RMSE, saturación, clipping y
-   coste de inferencia.
-3. Mantener MLP como control sin memoria.
+- Ninguna variante cambia el éxito de misión en `test`.
+- `hidden_dim=128` reduce el MSE supervisado de GRU/LSTM, pero no mejora de
+  forma uniforme el bucle cerrado de test.
+- LSTM con `hidden_dim=128` y LSTM con `L=40` reducen el RMSE medio de test,
+  principalmente en escenarios Lissajous, con empeoramientos pequeños en otros
+  escenarios.
+- Las semillas adicionales de MLP muestran variabilidad baja en test.
+- OOD es más disperso y no debe usarse para seleccionar hiperparámetros de la
+  comparación principal.
 
-Prioridad media:
+Conclusión para la memoria:
 
-1. Repetir al menos la arquitectura principal con dos semillas adicionales, por
-   ejemplo `--seed 7` y `--seed 123`.
-2. Declarar en resultados si la conclusión cambia o si las diferencias quedan
-   dentro de una variabilidad aceptable.
-
-## Criterio para actualizar la memoria
-
-Si estos estudios se ejecutan y no cambian la conclusión, la memoria puede
-presentar `hidden_dim=64` y `L=20` como configuración suficiente dentro del banco
-evaluado. Si `128` o una ventana distinta mejora claramente el bucle cerrado, la
-comparación principal debería actualizarse o la discusión debe declarar la
-sensibilidad observada.
+La configuración `hidden_dim=64`, `L=20`, semilla 42 se mantiene como
+configuración principal común. No procede rehacer la comparativa principal con
+`hidden_dim=128` ni con `L=40` porque la mejora no es sistemática en todas las
+arquitecturas y escenarios. Sí procede declarar en la memoria que esta decisión
+fue contrastada mediante un estudio de sensibilidad separado.

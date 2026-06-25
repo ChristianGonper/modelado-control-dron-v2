@@ -33,22 +33,22 @@ Interpretacion para la memoria:
   PD congelado por familia y comparar contra el dataset outer-force actual. Eso
   seria un cambio experimental, no una simple correccion de redaccion.
 
-## Estudio neuronal en curso
+## Estudio neuronal de sensibilidad
 
-El usuario indica que esta en proceso valorar si cambiar ventana, numero de
-neuronas o semilla altera los resultados. No se ha dejado como afirmacion en el
-texto de la memoria.
+El estudio de sensibilidad de ventana, numero de neuronas y semilla se ejecuto
+despues de la revision inicial. La evidencia queda documentada en
+`../../docs/reviews/estudio_sensibilidad_neuronal_outer_force_2026-06-25.md` y
+resumida en `docs/instrucciones_control_neuronal_pendiente.md`.
 
-Cuando el estudio termine, actualizar:
+Decision editorial:
 
-- `05_control_neuronal.tex`: justificar o matizar `sequence_length=20`,
-  `hidden_dim=64`, semilla 42 y configuracion comun.
-- `06_metodologia.tex`: si se incorporan nuevos experimentos, explicar si son
-  sensibilidad, seleccion de hiperparametros o comprobacion posterior.
-- Tablas de resultados: separar configuracion principal de ablations o analisis
-  de sensibilidad.
-
-De momento no se contempla ampliar el numero de episodios de entrenamiento.
+- Mantener `hidden_dim=64`, `sequence_length=20` y semilla 42 como configuracion
+  principal comun.
+- Documentar en la memoria que se contrasto frente a `hidden_dim=128`, ventanas
+  `L=10/40` y semillas adicionales.
+- No mezclar esta sensibilidad con las tablas principales salvo que se cree una
+  tabla auxiliar de ablation.
+- No ampliar por ahora el numero de episodios de entrenamiento.
 
 ## Citas
 
