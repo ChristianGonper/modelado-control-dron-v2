@@ -1,0 +1,13 @@
+variant_tag,block,architecture,hidden_dim,sequence_length,seed,run_dir,state,supervised_splits,closed_loop_test_runs,closed_loop_ood_runs
+v1_baseline,baseline,mlp,64,,42,data/neural_control\outer_force_mlp_min_v1,complete,3,23,10
+v1_baseline,baseline,gru,64,20.0,42,data/neural_control\outer_force_gru_min_v1,complete,3,23,10
+v1_baseline,baseline,lstm,64,20.0,42,data/neural_control\outer_force_lstm_min_v1,complete,3,23,10
+h128,h128,mlp,128,,42,data/neural_control\outer_force_mlp_min_v1_h128,complete,3,23,10
+h128,h128,gru,128,20.0,42,data/neural_control\outer_force_gru_min_v1_h128,complete,3,23,10
+h128,h128,lstm,128,20.0,42,data/neural_control\outer_force_lstm_min_v1_h128,complete,3,23,10
+L10,L10,gru,64,10.0,42,data/neural_control\outer_force_gru_min_v1_L10,complete,3,23,10
+L10,L10,lstm,64,10.0,42,data/neural_control\outer_force_lstm_min_v1_L10,complete,3,23,10
+L40,L40,gru,64,40.0,42,data/neural_control\outer_force_gru_min_v1_L40,complete,3,23,10
+L40,L40,lstm,64,40.0,42,data/neural_control\outer_force_lstm_min_v1_L40,complete,3,23,10
+seed7,seed7,mlp,64,,7,data/neural_control\outer_force_mlp_min_v1_seed7,complete,3,23,10
+seed123,seed123,mlp,64,,123,data/neural_control\outer_force_mlp_min_v1_seed123,complete,3,23,10

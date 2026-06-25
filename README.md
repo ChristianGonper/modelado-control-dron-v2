@@ -18,7 +18,7 @@ Implementado:
 - Referencias analíticas (`hold`, `circle`, `lissajous`, `lemniscate`), misión secuencial state-aware con parada en cada punto (`waypoint`), y **trayectorias compuestas** (`composite`) que permiten encadenar secuencias con transiciones lineales automáticas.
 - Escenarios YAML, telemetría JSON, métricas JSON con unidades físicas explícitas, figuras PNG/PDF (300 dpi) y visor 3D HTML.
 - Postproceso visual con perfiles `diagnostic`/`report`, figuras por episodio (`plot`) y comparativas agregadas de campaña (`plot-comparison`).
-- Tooling para generar el dataset `outer_force`, batería OOD (`generate_ood_battery.py`), batch cerrado (`run_neural_outer_force_dataset.py`), tabla comparativa (`build_comparison_closed_loop.py`) y entrenar/evaluar modelos mediante scripts en `tools/`.
+- Tooling para generar el dataset `outer_force`, batería OOD (`generate_ood_battery.py`), batch cerrado (`run_neural_outer_force_dataset.py`), sensibilidad neuronal (`run_neural_sensitivity_study.py`, `summarize_neural_sensitivity.py`), tabla comparativa (`build_comparison_closed_loop.py`) y entrenar/evaluar modelos mediante scripts en `tools/`.
 - Control neuronal alternativo en el lazo externo de posición (`neural_position`), donde la red predice ganancias variables y el lazo interno clásico estabiliza actitud.
 
 ## Evidencia versionada y alcance consolidado
@@ -71,6 +71,17 @@ uv run python tools\run_neural_outer_force_dataset.py --dataset data\outer_force
 # Bateria OOD local ignorada por git (manifest split=ood)
 uv run python tools\generate_ood_battery.py --out data\neural_ood\battery_v1 --overwrite
 ```
+
+Para ejecutar el estudio de sensibilidad de `outer_force_min_v1` sin sobrescribir
+el baseline:
+
+```powershell
+uv run python tools\run_neural_sensitivity_study.py --device auto --workers 1
+uv run python tools\summarize_neural_sensitivity.py
+```
+
+Las variantes se escriben con sufijos propios (`h128`, `L10`, `L40`, semillas)
+en `data/`, y los CSV agregados quedan en `results/neural_sensitivity/`.
 
 El banco `outer_force` ejecuta variantes del PID externo para cada escenario fuente, conserva el PID interno y los limites del YAML original, excluye candidatos inseguros y elige el experto por RMSE, esfuerzo dentro del margen del 5% y conservadurismo en empate. La evaluacion supervisada compara fuerzas ENU predichas con `desired_force_W_N` del experto; la calidad de control se compara en bucle cerrado con `position_rmse_m`, errores auxiliares, terminacion, saturacion, degradacion y porcentajes de clipping de fuerza. `run_neural_scenario.py` sustituye el controlador del YAML en memoria sin modificarlo. Los checkpoints legacy de cuatro comandos finales o seis salidas de `neural_position` no son compatibles con `controller.type: neural`.
 

@@ -102,8 +102,21 @@ def test_run_neural_outer_force_dataset_manifest_and_report(tmp_path):
     norm = tmp_path / "norm.json"
     norm.write_text("{}", encoding="utf-8")
 
-    def fake_run_row(row, dataset, checkpoint, normalization, architecture, device, no_visualization, rerun):
-        out_dir = os.path.join(dataset, row["result_dir"] + f"_neural_{architecture}")
+    def fake_run_row(
+        row,
+        dataset,
+        checkpoint,
+        normalization,
+        architecture,
+        device,
+        no_visualization,
+        rerun,
+        variant_tag=None,
+    ):
+        suffix = f"_neural_{architecture}"
+        if variant_tag:
+            suffix += f"_{variant_tag}"
+        out_dir = os.path.join(dataset, row["result_dir"] + suffix)
         return {"scenario_id": row["scenario_id"], "status": "SUCCESS", "result_dir": out_dir}
 
     argv = [

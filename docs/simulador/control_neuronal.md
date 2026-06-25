@@ -84,6 +84,23 @@ uv run python tools\generate_ood_battery.py --out data\neural_ood\battery_v1 --o
 uv run python tools\run_neural_outer_force_dataset.py --dataset data\neural_ood\battery_v1 --split ood --checkpoint data\neural_control\outer_force_mlp_min_v1\checkpoints\mlp_best.pt --normalization data\neural_control\outer_force_mlp_min_v1\normalization.json --no-visualization
 ```
 
+### Sensibilidad de hiperparametros
+
+El estudio de sensibilidad de `outer_force_min_v1` se ejecuta sobre artefactos
+ya generados y no sobrescribe los resultados base. Las variantes usan sufijos en
+los directorios de resultado y sus informes de batch se guardan en
+`data/neural_ablation/reports/`.
+
+```powershell
+uv run python tools\run_neural_sensitivity_study.py --device auto --workers 1
+uv run python tools\summarize_neural_sensitivity.py
+```
+
+El resumen queda en `results/neural_sensitivity/`. El informe tecnico
+`docs/reviews/estudio_sensibilidad_neuronal_outer_force_2026-06-25.md` documenta
+la campana ejecutada para `hidden_dim=128`, ventanas `L=10/40` y semillas
+adicionales.
+
 Evaluacion supervisada OOD (requiere telemetria con targets de fuerza bajo `result_dir`, manifest `split=ood`):
 
 ```powershell

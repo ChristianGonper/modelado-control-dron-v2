@@ -10,10 +10,27 @@ import pandas as pd
 from run_neural_scenario import resolve_architecture, run_neural_outer_force_scenario
 
 
-def _run_row(row, dataset, checkpoint, normalization, architecture, device, no_visualization, rerun):
+def _result_suffix(architecture: str, variant_tag: str | None) -> str:
+    suffix = f"_neural_{architecture}"
+    if variant_tag:
+        suffix += f"_{variant_tag}"
+    return suffix
+
+
+def _run_row(
+    row,
+    dataset,
+    checkpoint,
+    normalization,
+    architecture,
+    device,
+    no_visualization,
+    rerun,
+    variant_tag=None,
+):
     scenario_id = row["scenario_id"]
     scenario_path = os.path.join(dataset, row["scenario_path"])
-    out_dir = os.path.join(dataset, row["result_dir"] + f"_neural_{architecture}")
+    out_dir = os.path.join(dataset, row["result_dir"] + _result_suffix(architecture, variant_tag))
     metrics_file = os.path.join(out_dir, "metrics.json")
 
     if os.path.exists(metrics_file) and not rerun:
@@ -56,6 +73,13 @@ def main():
         action="store_true",
         help="Stop on first error (only when --workers 1; ignored in parallel mode).",
     )
+    parser.add_argument(
+        "--variant-tag",
+        type=str,
+        default=None,
+        help="Optional tag for sensitivity/ablation runs (e.g. h128, L10). "
+        "Writes to {result_dir}_neural_{arch}_{tag} and saves report outside dataset v1.",
+    )
     args = parser.parse_args()
 
     if args.workers < 1:
@@ -83,7 +107,11 @@ def main():
     rows = [row.to_dict() for _, row in df.iterrows()]
     total = len(rows)
     print(f"Total scenarios to run: {total}")
-    print(f"Using architecture={architecture}, device={args.device}, workers={args.workers}")
+    variant_tag = args.variant_tag.strip() if args.variant_tag else None
+    print(
+        f"Using architecture={architecture}, device={args.device}, workers={args.workers}"
+        + (f", variant_tag={variant_tag}" if variant_tag else "")
+    )
 
     report = []
     if args.workers == 1:
@@ -98,6 +126,7 @@ def main():
                 args.device,
                 args.no_visualization,
                 args.rerun,
+                variant_tag,
             )
             print(f"[{index}/{total}] {result['scenario_id']}: {result['status']}")
             report.append(result)
@@ -116,6 +145,7 @@ def main():
                     args.device,
                     args.no_visualization,
                     args.rerun,
+                    variant_tag,
                 )
                 for row in rows
             ]
@@ -124,11 +154,21 @@ def main():
                 print(f"[{index}/{total}] {result['scenario_id']}: {result['status']}")
                 report.append(result)
 
-    report_path = os.path.join(args.dataset, f"run_report_neural_{architecture}.csv")
-    report_df = pd.DataFrame(report)
-    if os.path.exists(report_path):
-        old_report = pd.read_csv(report_path)
-        report_df = pd.concat([old_report, report_df]).drop_duplicates("scenario_id", keep="last")
+    if variant_tag:
+        report_dir = os.path.join("data", "neural_ablation", "reports")
+        os.makedirs(report_dir, exist_ok=True)
+        split_label = args.split or "all"
+        report_path = os.path.join(
+            report_dir,
+            f"run_report_{variant_tag}_{architecture}_{split_label}.csv",
+        )
+        report_df = pd.DataFrame(report)
+    else:
+        report_path = os.path.join(args.dataset, f"run_report_neural_{architecture}.csv")
+        report_df = pd.DataFrame(report)
+        if os.path.exists(report_path):
+            old_report = pd.read_csv(report_path)
+            report_df = pd.concat([old_report, report_df]).drop_duplicates("scenario_id", keep="last")
     report_df.to_csv(report_path, index=False)
     print(f"Run report saved to {report_path}")
 

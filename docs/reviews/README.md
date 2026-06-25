@@ -5,6 +5,11 @@ Esta carpeta contiene revisiones tecnicas del simulador y auditorias de estado.
 ## Diagnostico vigente (junio 2026)
 
 - **`auditoria_integral_tfg_2026-06-10.md`**: auditoria integral READ-ONLY (cientifico, simulador, neuronal, documentacion), dictamen para memoria, hallazgos P0–P2, mapa de regeneracion de evidencias y delta vs mayo 2026. **Consultar primero** para el estado actual del TFG.
+- **`estudio_sensibilidad_neuronal_outer_force_2026-06-25.md`**:
+  evidencia reproducible de sensibilidad de `outer_force_min_v1` frente a
+  `hidden_dim=128`, ventanas recurrentes `L=10/40` y semillas adicionales. No
+  cambia la configuracion principal, pero justifica documentar que fue
+  contrastada.
 
 ## Auditoria multivista (mayo 2026 — referencia historica)
 
