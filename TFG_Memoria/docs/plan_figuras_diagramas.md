@@ -32,9 +32,11 @@ diagrama cambie.
 | Metodología 3.1 | `FIG-011` Configuración de rotores | Mostrar configuración en X, orden de rotores y signo de giro usado por el mixer. Ficha creada; figura pendiente. |
 | Metodología 3.1 | `FIG-009` Familias de trayectorias | Mostrar de un vistazo qué capacidad exige `hold`, `circle`, `lissajous` y `waypoint`. Ficha creada; figura pendiente. |
 | Metodología 3.1 | `FIG-010` Perfiles de waypoint | Explicar perfil trapezoidal/triangular y relación entre posición, velocidad y aceleración escalar. Ficha creada; figura pendiente. |
+| Metodología 3.1 | `FIG-012` Mixer con saturación | Mostrar flujo de reparto de mandos del mixer, desplazamiento del colectivo y recorte de momentos bajo saturación. Ficha creada; figura pendiente. |
 | Metodología 3.2 | `FIG-004` Control PD en cascada | Mostrar lazo externo de posición y lazo interno de actitud. Ficha creada; figura pendiente. |
 | Metodología 3.2 | `FIG-005` Búsqueda progresiva | Mostrar diagnóstico, candidatos, filtros, refinamiento y congelación. Ficha creada; figura pendiente. |
 | Metodología 3.3 | `FIG-006` Predicción de fuerza deseada | Mostrar entradas, MLP/GRU/LSTM, protecciones y lazo interno común. Ficha creada; figura pendiente. |
+| Metodología 3.3 | `FIG-013` Ventana deslizante recurrente | Representar la ventana deslizante temporal, el avance del lote recurrentemente y el padding por repetición al inicio. Ficha creada; figura pendiente. |
 | Metodología 3.5 | `FIG-007` Flujo completo de campaña | Conectar datasets, tuneo, entrenamiento y comparaciones. Ficha creada; figura pendiente. |
 | Metodología 3.5 | `FIG-008` Niveles de evaluación | Separar familias vistas, transferencia, composiciones y trayectorias nuevas. Ficha creada; figura pendiente. |
 | Trabajo futuro | Paso hacia dron real | Mostrar sensores, estimación, control y percepción a bordo. |

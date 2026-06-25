@@ -101,9 +101,12 @@ finita estable pero incompleta.
 % CITA PENDIENTE [CIT-017]: respaldo del uso e interpretación de RMSE, MAE, error máximo y métricas de saturación en seguimiento de trayectorias
 Los filtros duros de selección de PD exigen métricas finitas, terminación
 coherente con la trayectoria, saturación y degradación no superiores al
-2\,\%, y un error máximo por debajo del umbral definido para cada familia. Esos
-filtros se aplican antes de construir los datos de imitación y no se modifican
-tras observar prueba.
+2\,\%, y un error máximo de posición ($e_{\max}$) inferior a los umbrales definidos
+para cada familia: \SI{0.40}{m} para \texttt{hold}, \SI{0.75}{m} para
+\texttt{circle}, \SI{0.90}{m} para \texttt{lissajous} y \SI{0.80}{m} para
+\texttt{waypoint}. Estos filtros actúan como criterio operativo de aceptación y se aplican
+antes de construir los datos de imitación, sin ser modificados tras observar
+el conjunto de prueba.
 
 \subsection{Protocolo experimental y reproducibilidad}
 \label{subsec:protocolo-reproducibilidad}

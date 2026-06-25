@@ -160,6 +160,8 @@ $s_i(k_m/k_f)T_i$. Por tanto, un rotor situado a la derecha del vehículo
 que un rotor situado delante ($x_i>0$) aporta momento de cabeceo positivo. Esta
 es la misma convención implementada por el mixer del simulador.
 
+% FIGURA PENDIENTE [FIG-012]: representar el flujo de reparto de mandos del mixer, el desplazamiento del colectivo y el recorte de momentos bajo saturación.
+
 La solución se obtiene invirtiendo la matriz de asignación para la geometría
 definida. El mixer separa la parte de la solución debida al empuje colectivo de
 la parte debida a los momentos. Si la suma de ambas exige empujes fuera del
@@ -253,8 +255,9 @@ posición, velocidad y aceleración.
 
 La familia \texttt{waypoint} define una misión punto a punto. El vehículo debe
 alcanzar una serie de posiciones, frenar, asentarse dentro de una tolerancia de
-posición y velocidad y permanecer allí antes de avanzar al siguiente punto. El
-avance no depende solo del tiempo global, sino del estado del vehículo. Para
+posición y velocidad y permanecer allí durante un tiempo de asentamiento
+configurable (con un valor por defecto de \SI{0.40}{s}) antes de avanzar al
+siguiente punto. El avance no depende solo del tiempo global, sino del estado del vehículo. Para
 cada tramo se genera una coordenada escalar $s(t)$ sobre la recta que une dos
 waypoints. Si la distancia permite alcanzar la velocidad máxima, el perfil es
 trapezoidal: aceleración constante, tramo de velocidad constante y frenado. Si
