@@ -3,166 +3,230 @@
 
 \subsubsection*{Formulación híbrida de predicción de fuerza deseada}
 
-La ruta neuronal principal aprende la frontera entre traslación y actitud ya
-definida por el PD en cascada. En cada ciclo recibe variables construidas a
-partir de la observación y la referencia y predice
-$\widehat{\bm{F}}_{d,W}\in\mathbb{R}^3$, expresada en N y en mundo ENU. Esta
-salida pasa por límites explícitos y después por el mismo conversor
-fuerza--actitud y el mismo PD interno que el controlador clásico.
+La implementación neuronal adoptada aprende la decisión de traslación que en el
+controlador clásico define el lazo externo del PD en cascada. En cada ciclo de
+control recibe variables construidas a partir de la observación disponible y de
+la referencia, y predice una fuerza deseada
+$\widehat{\bm{F}}_{d,W}\in\mathbb{R}^3$ expresada en N y en el sistema mundo
+ENU. Esta salida no se entrega directamente a los rotores: atraviesa los mismos
+límites de fuerza y los mismos conversores fuerza--actitud que la implementación
+clásica, y a partir de ahí el lazo interno de actitud permanece común.
 
 % FIGURA PENDIENTE [FIG-006]: distinguir entradas observadas, MLP/GRU/LSTM, fuerza deseada ENU, protecciones y lazo interno clásico común
-La red no predice empuje colectivo, momentos ni velocidades de rotor. Así se
-mantiene común la estabilización angular y se compara de forma directa la
-decisión traslacional aprendida con la fuerza del experto. La alternativa de
-actuación directa ampliaría el espacio de salida y mezclaría aprendizaje de
-traslación, actitud y asignación. No se descarta como enfoque general, pero queda
-fuera de la pregunta de esta primera versión.
+La red predice una fuerza de traslación, pero no predice los momentos del lazo
+interno ni las velocidades de rotor. Esta frontera mantiene compartida la
+estabilización angular y permite comparar de forma directa la decisión de
+traslación aprendida con la decisión generada por el PD externo experto. Una
+arquitectura que actuase directamente sobre momentos o rotores tendría un
+espacio de salida más amplio y mezclaría el aprendizaje del seguimiento de
+trayectoria con la estabilización del vehículo. Esa posibilidad no se descarta
+como línea futura, pero queda fuera del objetivo de este trabajo.
 
-La arquitectura híbrida conserva estructura física interpretable y límites
-compartidos, aunque restringe la política a lo que el lazo interno puede
-realizar. Tampoco aporta por sí sola garantías de estabilidad: parte del
-comportamiento seguro puede proceder de los límites y del PD interno, dependencia
-que se cuantifica durante la evaluación.
+La arquitectura híbrida conserva una estructura física interpretable: la red
+imita el mismo contrato de entrada y salida que el lazo externo clásico, mientras
+la conversión a actitud, las saturaciones y el control interno siguen siendo
+explícitos. Por tanto, el comportamiento seguro no debe atribuirse únicamente a
+la red. Una parte puede proceder de los límites de fuerza e inclinación y del
+lazo interno compartido; por ello la evaluación posterior cuantifica no solo el
+error de seguimiento, sino también el uso de protecciones y saturaciones.
 % CITA PENDIENTE [CIT-011]: ventajas y límites de combinar una política aprendida con lazos clásicos en control híbrido
 
-\subsubsection*{Construcción y selección de demostraciones}
+\subsubsection*{Construcción y selección de datos de imitación}
 
-El conjunto clásico aporta escenarios, splits y condiciones, pero sus comandos
-no se copian sin más. Para cada escenario se genera un banco de variantes de las
-ganancias externas, conservando el PD de actitud, vehículo, trayectoria,
-perturbaciones, semilla y límites. De este modo, la demostración se asocia al
-mejor experto externo hallado para esa condición sin alterar el problema físico.
+El dataset neuronal se construye en una fase posterior al ajuste de los PD
+clásicos. Primero, el flujo clásico fija los escenarios, trayectorias,
+perturbaciones, semillas y particiones entrenamiento--validación--prueba, así
+como los controladores de referencia. Después, para generar los datos de
+imitación, no se reutilizan sin más los comandos de fuerza almacenados en esa
+ejecución clásica: a partir de cada escenario se construye un banco específico de
+variantes del lazo externo, modificando exclusivamente las ganancias
+$\bm{K}_{p,p}$ y $\bm{K}_{d,p}$ y conservando el lazo interno de actitud, el
+vehículo, la trayectoria y los límites del escenario fuente.
 
-Los candidatos que no completan la misión, presentan métricas no finitas,
-superan el 2\,\% de saturación o degradación, o exceden el error máximo familiar
-se descartan. Entre los restantes se identifica el menor RMSE. Se admiten los
-candidatos hasta un 5\,\% por encima y se escoge el de menor índice de esfuerzo;
-un empate numérico se resuelve en el orden conservador, base y agresivo. Si
-ningún candidato es seguro, el proceso falla y no fabrica una demostración.
+Las variantes implementadas escalan las ganancias externas del controlador
+fuente mediante cinco perfiles: conservador, base, agresivo y dos perfiles más
+amortiguados. En términos relativos, estos perfiles aplican respectivamente los
+factores $(0.7,0.9)$, $(1.0,1.0)$, $(1.3,1.2)$, $(1.6,2.0)$ y $(1.4,1.8)$ sobre
+$(\bm{K}_{p,p},\bm{K}_{d,p})$. Cada variante se ejecuta en el mismo escenario y
+se evalúa con las métricas de la simulación. Solo se consideran candidatos que
+superan los filtros duros de misión y seguridad; si un escenario no dispone de
+ningún candidato seguro, el proceso falla en lugar de fabricar una muestra
+artificial.
 
-El margen del 5\,\% expresa un compromiso heurístico: evita elegir una reducción
-pequeña de RMSE a costa de mayor actuación. El número y escala de variantes, el
-propio margen y el índice de esfuerzo requieren análisis de sensibilidad. Como
-la red solo observa acciones de estos PD, aprende su cobertura y también sus
-errores; no dispone de ejemplos de recuperación fuera de las regiones visitadas
-ni optimiza una recompensa de seguimiento.
+Entre los candidatos seguros de cada escenario se identifica primero el menor
+RMSE de posición. Se admiten después los candidatos situados hasta un 5\,\% por
+encima de ese valor y, dentro de ese subconjunto, se escoge el de menor esfuerzo
+de control; si persiste el empate, se prefiere el perfil más conservador. La
+telemetría del candidato escogido se copia al dataset de imitación y el
+escenario resultante registra las ganancias externas seleccionadas. Así, los
+datos con los que se entrena la red proceden de nuevos expertos externos
+generados para cada escenario, no de una segunda sintonización global del banco
+clásico.
+
+Esta construcción debe interpretarse como clonación de comportamiento. La red
+observa las acciones de los PD externos seleccionados y aprende a aproximar sus
+fuerzas; no optimiza directamente el error de trayectoria ni recibe una
+recompensa de seguimiento. En consecuencia, también puede heredar sesgos o
+errores de los expertos en regiones concretas de la trayectoria. A la vez, si el
+dataset contiene errores grandes o transitorios suficientemente representados,
+la red puede aprender respuestas de corrección dentro de esa cobertura. Esta
+distinción justifica evaluar por separado la fidelidad supervisada y el
+comportamiento en bucle cerrado.
 
 \subsubsection*{Tensores, variables de entrada, objetivos y secuencias}
 
-La versión principal \texttt{outer\_force\_min\_v1} representa cada instante
-mediante nueve variables:
+Los datos de entrada empleados en la implementación representan cada
+instante mediante nueve variables:
 \begin{equation}
  \bm{x}_k=[\bm{e}_{p,k}^{\mathsf T}\;
            \bm{e}_{v,k}^{\mathsf T}\;
            \bm{a}_{r,k}^{\mathsf T}]^{\mathsf T}.
  \label{eq:variables-neuronales}
 \end{equation}
-Los errores se calculan con la observación entregada al controlador, no con el
-estado verdadero. La salida supervisada es la fuerza deseada de tres componentes
-calculada por el experto seleccionado mediante la \eqnref{eq:pd-fuerza-deseada}.
-Predecir esa acción permite una correspondencia directa con el lazo sustituido;
-predecir el error de posición no definiría por sí mismo una actuación.
+Los errores de posición $\bm{e}_{p,k}$ y velocidad $\bm{e}_{v,k}$ se calculan
+con la observación entregada al controlador, no con el estado verdadero del
+simulador. La tercera parte del vector es la aceleración de referencia en ENU.
+El objetivo supervisado es la fuerza deseada de tres componentes que calcularía
+el PD externo con esas mismas variables, equivalente a la
+\eqnref{eq:pd-fuerza-deseada}. Por tanto, existe una relación uno a uno entre lo
+que recibe y produce el lazo externo clásico y lo que se entrega a la red.
 
-La selección mínima excluye variables de actitud y actuación porque el lazo
-externo experto depende de error de posición, error de velocidad y aceleración
-de referencia. Así reduce dimensionalidad y evita proporcionar a la red
-información que el mapeo objetivo no necesita de forma explícita. Es una
-hipótesis de diseño que se contrasta frente a la variante ampliada, no una prueba
-de suficiencia universal.
+Podrían añadirse variables de actitud, actuación, guiñada o estado observado
+completo. Sin embargo, el objetivo de esta comparación es imitar el lazo externo
+y no proporcionar a la red información que ese lazo no necesita para calcular la
+fuerza. Esta elección reduce la dimensionalidad, mantiene la interpretación como
+sustitución del PD externo y se contrasta indirectamente con una variante
+implementada de observación completa. La decisión es una hipótesis de diseño, no
+una afirmación sobre optimización.
 
-La MLP procesa tensores $[B,9]$. GRU y LSTM reciben ventanas
-$[B,L,9]$ con $L=20$ y producen la fuerza correspondiente al último instante.
-Como el periodo de control es \SI{0.02}{s}, una ventana completa abarca
-\SI{0.40}{s} entre veinte muestras y \SI{0.38}{s} entre la primera y la última.
-Al comienzo de un episodio, la primera muestra rellena la historia faltante. Las
-ventanas nunca atraviesan episodios ni splits.
+La MLP procesa tensores de forma $[B,9]$, donde $B$ es el tamaño del lote de
+entrenamiento. GRU y LSTM reciben tensores $[B,L,9]$, con $L=20$, y producen la
+fuerza correspondiente al último instante de la ventana. Como el periodo de
+control es \SI{0.02}{s}, la ventana recurrente cubre \SI{0.40}{s} de muestras,
+o \SI{0.38}{s} entre la primera y la última. En entrenamiento, las ventanas se
+construyen dentro de cada episodio mediante una ventana deslizante y nunca
+atraviesan episodios ni particiones del dataset. En inferencia, al comienzo de
+un episodio todavía no existen veinte muestras previas; por ello la cola
+recurrente se rellena inicialmente repitiendo la primera entrada normalizada
+hasta completar la longitud requerida.
 
-La ventana cubre varias constantes de tiempo nominales del actuador y permite
-representar efectos temporales de observación y seguimiento. Sin embargo, 20 es
-un valor por defecto no seleccionado todavía mediante una comparación de
-longitudes, latencia y coste.
+La ventana temporal permite estudiar si la historia reciente aporta información
+útil frente a retardos, ruido de observación y dinámica de actuadores. El valor
+$L=20$ fija una ventana corta, compatible con el periodo de control de la
+campaña, y permite comparar las arquitecturas recurrentes bajo un contrato
+temporal común.
 % CITA PENDIENTE [CIT-012]: criterio para seleccionar variables de estado/error y longitud de ventana en control neuronal recurrente
 
 \subsubsection*{Arquitecturas y parámetros de MLP, GRU y LSTM}
 
-La MLP contiene dos capas ocultas de 64 unidades con ReLU y una capa lineal de
-tres salidas. Para nueve entradas suma 4995 parámetros entrenables. GRU y LSTM
-emplean una única capa recurrente de 64 unidades y una proyección lineal a tres
-componentes; sus tamaños son 14\,595 y 19\,395 parámetros, respectivamente. La
-salida recurrente se calcula a partir del último estado de la ventana.
+La MLP emplea dos capas ocultas de 64 unidades con activación ReLU y una capa
+lineal final de tres salidas. Con nueve entradas, el número de parámetros se
+obtiene sumando pesos y sesgos de cada capa:
+$(9\cdot64+64)+(64\cdot64+64)+(64\cdot3+3)=4995$. GRU y LSTM usan una única
+capa recurrente de 64 unidades y una proyección lineal final a tres componentes;
+con las fórmulas de PyTorch para una capa recurrente con sesgos, sus tamaños son
+14\,595 y 19\,395 parámetros entrenables, respectivamente. En ambos casos la
+salida se calcula a partir del último estado de la ventana.
 
-La MLP constituye la referencia sin memoria explícita: dos muestras iguales
-producen la misma fuerza. GRU y LSTM prueban si la historia reciente aporta una
-ventaja consistente ante ruido, retardo y dinámica de actuadores. La comparación
-no presupone que una arquitectura recurrente sea superior; esa afirmación solo
-puede proceder de los experimentos cerrados.
+La MLP actúa como referencia sin memoria explícita: dos entradas idénticas
+producen la misma fuerza. GRU y LSTM permiten comprobar si la historia reciente
+mejora la predicción en presencia de ruido, retardos o efectos temporales no
+capturados por una muestra aislada. La comparación no presupone que las redes
+recurrentes sean superiores; esa conclusión solo puede extraerse de la
+evaluación supervisada y de la ejecución en bucle cerrado.
 
 % CITA PENDIENTE [CIT-013]: definición y propiedades relevantes de ReLU, GRU y LSTM para justificar las arquitecturas comparadas
-La activación ReLU, la anchura 64, las dos capas ocultas de la MLP y la única
-capa recurrente son valores implementados por defecto. No consta una búsqueda
-versionada que los justifique. Se mantienen iguales donde es posible para
-acotar la comparación, y se registran como decisiones pendientes de sensibilidad
-antes de extraer conclusiones sobre arquitectura.
+La anchura de 64 unidades, las dos capas ocultas de la MLP y la única capa
+recurrente se mantienen homogéneas para acotar la comparación entre
+arquitecturas. La justificación conceptual de ReLU, GRU y LSTM se apoya en el
+estado del arte; la evidencia experimental de este trabajo valora su desempeño
+en el banco definido y bajo la misma dimensión oculta.
 
 \subsubsection*{Normalización, entrenamiento y selección del modelo}
 
-El normalizador calcula media y desviación de entradas y objetivos usando solo
-episodios de entrenamiento. Las mismas estadísticas transforman validación,
-prueba e inferencia, evitando que información de estas particiones modifique la
-representación aprendida. El modelo minimiza el error cuadrático medio (MSE) de
-la fuerza normalizada mediante Adam.
+Antes del entrenamiento se calcula la media y la desviación típica de entradas y
+objetivos usando únicamente el split de entrenamiento. La normalización evita que
+variables con magnitudes absolutas mayores dominen la pérdida por escala y
+expresa cada componente como desviación respecto a las estadísticas del conjunto
+de entrenamiento. Las mismas estadísticas se aplican después a validación,
+prueba e inferencia, y la salida de la red se desnormaliza antes de entregarla al
+controlador.
 
-La configuración por defecto fija 100 épocas máximas, lotes de 64 muestras, tasa
-de aprendizaje $10^{-3}$, semilla 42 y paciencia 10. El cargador de entrenamiento
-baraja con un generador sembrado; validación no se baraja. Tras cada época se
-calcula la pérdida de validación y se guarda el checkpoint con el menor valor;
-el entrenamiento termina tras diez épocas sin mejora.
+El aprendizaje minimiza el error cuadrático medio (MSE) entre la fuerza
+normalizada predicha por la red y la fuerza normalizada calculada por el experto
+PD. La optimización se realiza con Adam y una tasa de aprendizaje $10^{-3}$. Una
+época corresponde a una pasada completa por las muestras de entrenamiento; la
+configuración actual permite hasta 100 épocas, lotes de 64 muestras y semilla 42
+para reproducibilidad de la inicialización y del orden aleatorio de las muestras.
+Ese orden aleatorio se aplica solo durante el entrenamiento, con un generador
+sembrado, para reducir la dependencia del gradiente respecto a la secuencia de
+lectura de los episodios. La validación se evalúa en orden fijo porque no
+actualiza pesos y debe medir de forma estable el modelo obtenido.
+
+Tras cada época se calcula la pérdida de validación y se guarda el checkpoint
+con menor valor. La paciencia de 10 épocas implementa parada temprana: si la
+pérdida de validación no mejora durante diez épocas consecutivas, el
+entrenamiento se detiene y se conserva el mejor modelo observado. Esta regla
+reduce entrenamientos innecesarios, limita el ajuste excesivo al split de
+entrenamiento y define un criterio reproducible de selección del modelo.
 
 % CITA PENDIENTE [CIT-014]: fundamento de normalización train-only, MSE, Adam y parada temprana en aprendizaje supervisado
-Estos hiperparámetros son una configuración común reproducible, no el resultado
-documentado de una optimización equivalente por arquitectura. La comparación
-final deberá declarar cualquier desviación. Además, una pérdida baja solo indica
-proximidad a las fuerzas del experto en las muestras observadas: pequeños errores
-sistemáticos pueden acumularse en bucle cerrado y desplazar al controlador hacia
-estados ausentes del entrenamiento. Por ello la evaluación supervisada no
-sustituye a la ejecución del simulador.
+Una pérdida supervisada baja indica que la red replica con precisión las fuerzas
+emitidas por los expertos en las muestras observadas. No implica necesariamente
+que minimice el error de posición en bucle cerrado: el experto puede contener
+errores bajo determinadas perturbaciones, y pequeñas desviaciones de fuerza
+pueden acumularse hasta visitar estados poco representados en el dataset. Por
+ello, la evaluación supervisada es una comprobación de fidelidad al experto, no
+un sustituto de la simulación cerrada con métricas de seguimiento, éxito,
+saturación y uso de protecciones.
 
 \subsubsection*{Inferencia en bucle cerrado y protecciones}
 
-En inferencia se construyen las mismas nueve variables, se normalizan, se
-predice la fuerza y se desnormaliza. Para GRU y LSTM se mantiene una cola de 20
-muestras que se reinicia al comenzar cada episodio. Antes del lazo interno, la
-fuerza puede limitarse a la envolvente clásica: norma máxima $2.5mg$, inclinación
-máxima declarada por el escenario y componente vertical ascendente mínima. El
-PD interno aplica después sus límites de momentos y la cadena física conserva
-las saturaciones de rotor.
+Durante la inferencia se construyen en cada ciclo las mismas variables de
+entrada, se normalizan con las estadísticas aprendidas en entrenamiento y se
+entregan a la red. La fuerza predicha se desnormaliza y se interpreta de nuevo
+como $\widehat{\bm{F}}_{d,W}$. En MLP esta operación depende solo del instante
+actual. En GRU y LSTM se mantiene una cola de las últimas 20 entradas
+normalizadas; la cola se reinicia al comenzar cada episodio y se rellena al
+inicio repitiendo la primera muestra disponible.
 
-La telemetría cuenta las activaciones del recorte de norma y de inclinación y
-las resume como porcentajes. Estas variables se analizan junto con saturación,
-degradación y error: una trayectoria estable con recorte frecuente no demuestra
-que la red haya aprendido por sí sola una acción segura.
+Antes de convertir la fuerza a una actitud deseada, la implementación neuronal
+conserva las protecciones de la implementación clásica: limita la norma de la
+fuerza a $2.5mg$,
+restringe la inclinación deseada mediante el ángulo máximo configurado y evita
+solicitudes verticales no positivas imponiendo una componente ascendente mínima.
+Después de estas protecciones, el lazo interno clásico calcula momentos y la
+cadena física mantiene sus saturaciones de rotor. No es necesario redefinir aquí
+ese lazo interno; lo relevante es que es el mismo contrato de estabilización que
+en el controlador clásico.
 
-La norma máxima reproduce el límite de empuje del PD; la inclinación restringe
-la dirección que se entrega al lazo interno. Los umbrales concretos de
-inclinación y componente vertical son protecciones de diseño, no garantías
-formales.
+La telemetría registra cuántas veces se activa el recorte de norma y cuántas el
+recorte de inclinación. Los porcentajes se calculan respecto al número de pasos
+de control ejecutados en el episodio. Estas métricas se interpretan junto con el
+error, el éxito de misión, la saturación y la degradación: una trayectoria puede
+completarse gracias a una intervención frecuente de las protecciones, lo que
+limitaría la atribución del desempeño a la política aprendida.
 % CITA PENDIENTE [CIT-015]: criterio físico para límites de fuerza, inclinación y componente vertical en la ruta híbrida
 
 \subsubsection*{Alternativas implementadas fuera de la comparación}
 
-La ruta \texttt{neural\_position} predice seis log-multiplicadores de las
-ganancias externas. Tras desnormalizar, aplica la exponencial, limita cada factor
-al intervalo $[0.25,4]$ y multiplica las tres componentes de $\bm{K}_{p,p}$ y
-$\bm{K}_{d,p}$. El PD en cascada completo calcula después fuerza, actitud y
-mando. Esta ruta aprende una programación de ganancias, no la misma variable que
-la comparación principal.
+Durante el desarrollo se implementaron alternativas que no forman parte de la
+comparación principal. Una de ellas aprende una programación de ganancias en
+tiempo real: la red predice multiplicadores para las ganancias externas
+$\bm{K}_{p,p}$ y $\bm{K}_{d,p}$, limitados a un intervalo prefijado, y el PD en
+cascada calcula después la fuerza, la actitud y los mandos. Conceptualmente, esta
+ruta no aprende directamente la fuerza deseada, sino una programación instantánea
+del lazo externo clásico.
 
-También está implementado \texttt{outer\_force\_full\_v1}, con 31 variables de
-estado observado, referencia, errores y representación continua de yaw. Puede
-estudiar si el contexto adicional mejora la predicción, pero cambia la
-dimensionalidad y el supuesto de información mínima.
+También se implementó una variante de predicción de fuerza con observación
+ampliada. En lugar de usar solo las nueve variables necesarias para reproducir
+el PD externo, esta versión incorpora 31 variables que incluyen estado observado,
+referencia, errores y una representación continua de la guiñada. Puede servir
+para estudiar si el contexto adicional mejora la predicción, pero cambia la
+hipótesis de información mínima: la red deja de comportarse como una sustitución
+estricta del lazo externo PD.
 
-Ambas alternativas se excluyen de la primera comparación para mantener una sola
-frontera aprendida y un contrato de entrada común entre MLP, GRU y LSTM. Su
-existencia se documenta para no confundir artefactos, checkpoints o métricas, y
-se reserva para trabajo futuro.
+Ambas alternativas se excluyen de la comparativa del trabajo para mantener un
+único procedimiento neuronal principal y el mismo contrato funcional entre el
+control clásico y el controlador aprendido: sustituir la decisión de fuerza del
+lazo externo conservando el resto de la arquitectura en cascada.
