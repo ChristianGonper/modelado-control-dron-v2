@@ -33,7 +33,11 @@ la parte vectorial a continuación. Las magnitudes se expresan en el Sistema
 Internacional; los ángulos solo se convierten a grados para visualización y
 análisis gráfico.
 
-% FIGURA PENDIENTE [FIG-002]: fijar los ejes ENU y FRD, la orientación del cuadricóptero y el signo del empuje.
+\begin{figure}[H]
+  \includegraphics[width=0.85\textwidth]{FIG-002}
+  \caption{Sistemas de referencia empleados por el simulador. El sistema mundo sigue la convención ENU y el sistema cuerpo la convención FRD; el empuje total se aplica en la dirección opuesta al eje vertical del cuerpo ($z_B$). Fuente: elaboración propia.}
+  \label{fig:marcos-referencia}
+\end{figure}
 
 Se supone un cuerpo rígido de masa e inercia constantes, centro de masas fijo y
 gravedad uniforme. Los rotores se modelan con un empuje proporcional al cuadrado
@@ -53,24 +57,28 @@ se sitúan, en el sistema de referencia cuerpo, en
  \bm{r}_{i,B}\in
  \{(0.17,0.17,0),(0.17,-0.17,0),(-0.17,0.17,0),(-0.17,-0.17,0)\}\,\si{m},
 \]
+
 lo que corresponde a una configuración en X respecto a los ejes de cuerpo. En
 ese orden, las posiciones representan los rotores delantero-derecho,
 delantero-izquierdo, trasero-derecho y trasero-izquierdo. Los sentidos de giro
-se codifican mediante $s_i=\{-1,1,1,-1\}$; este signo no se usa como etiqueta
-visual aislada, sino como signo del par de reacción de guiñada que aparece en
+se codifican mediante $s_i=\{-1,1,1,-1\}$; signo el cual actúa como el par de reacción de guiñada que aparece en
 \eqnref{eq:rotor-cuadratico}.
-% FIGURA PENDIENTE [FIG-011]: mostrar configuración en X, orden de rotores y sentidos de giro usados por el simulador.
+
+\begin{figure}[H]
+  \includegraphics[width=0.75\textwidth]{FIG-011}
+  \caption{Configuración en X de los motores y sentidos de giro del rotor en el sistema de referencia cuerpo. La dirección física de los rotores se asocia con el signo del momento de reacción en guiñada. Fuente: elaboración propia.}
+  \label{fig:configuracion-rotores}
+\end{figure}
 
 Cada rotor utiliza $k_f=\SI{1e-4}{N.s^2.rad^{-2}}$ para el empuje y
-$k_m=\SI{1e-6}{N.m.s^2.rad^{-2}}$ para el par de reacción. En los escenarios
-oficiales se toma $\omega_{\max}=\SI{500}{rad.s^{-1}}$, de modo que el empuje
+$k_m=\SI{1e-6}{N.m.s^2.rad^{-2}}$ para el par de reacción. En los escenarios se toma $\omega_{\max}=\SI{500}{rad.s^{-1}}$, de modo que el empuje
 máximo por rotor es
 \begin{equation}
  T_{\max}=k_f\omega_{\max}^2=\SI{25}{N}.
  \label{eq:empuje-maximo-rotor}
 \end{equation}
 Este límite no pretende especificar un vehículo comercial; es una cota elegida
-para el caso de estudio, superior al empuje por rotor en estacionario
+para el caso de estudio, muy superior al empuje por rotor en estacionario
 ($mg/4\simeq\SI{2.45}{N}$). El controlador impone además una envolvente de
 fuerza deseada de $2.5mg$ antes de la conversión a actitud; por tanto, la
 saturación de rotor se interpreta sobre todo como límite de asignación y de
@@ -160,7 +168,11 @@ $s_i(k_m/k_f)T_i$. Por tanto, un rotor situado a la derecha del vehículo
 que un rotor situado delante ($x_i>0$) aporta momento de cabeceo positivo. Esta
 es la misma convención implementada por el mixer del simulador.
 
-% FIGURA PENDIENTE [FIG-012]: representar el flujo de reparto de mandos del mixer, el desplazamiento del colectivo y el recorte de momentos bajo saturación.
+\begin{figure}[H]
+  \includegraphics[width=0.9\textwidth]{FIG-012}
+  \caption{Esquema lógico y toma de decisiones del mezclador de rotores (mixer) ante condiciones factibles y saturadas. Se prioriza el control de actitud mediante el recorte proporcional de momentos ($k$) frente a la desviación del empuje colectivo solicitado. Fuente: elaboración propia.}
+  \label{fig:flujo-mixer}
+\end{figure}
 
 La solución se obtiene invirtiendo la matriz de asignación para la geometría
 definida. El mixer separa la parte de la solución debida al empuje colectivo de
@@ -207,12 +219,12 @@ posición y velocidad, no como una racha aleatoria de viento; por tanto, el
 viento se interpreta aquí como sesgo externo medio y el ruido gaussiano como una
 degradación simplificada de la medida.
 
-La observación que recibe el controlador puede incluir ruido gaussiano pequeño
-en posición y velocidad. Este ruido representa de forma simplificada que la
-señal observada no es perfecta. La dinámica base, la integración y la evaluación
-siguen usando el estado del simulador sin ruido sensórico; lo perturbado es la
-información entregada al controlador. La semilla del escenario fija las
-realizaciones pseudoaleatorias, de modo que un mismo YAML puede reproducirse.
+La observación que recibe el controlador puede incluir este pequeño ruido gaussiano
+que representa de forma simplificada que la señal observada no es perfecta. La dinámica 
+base, la integración y la evaluación siguen usando el estado del simulador sin ruido 
+sensórico; lo perturbado es la información entregada al controlador. La semilla del 
+escenario fija las realizaciones pseudoaleatorias, de modo que un mismo YAML puede 
+reproducirse.
 
 % CITA PENDIENTE [CIT-006]: alcance y limitaciones de representar resistencia, viento y ruido mediante modelos lineales, constantes y gaussianos.
 Estos mecanismos permiten probar de forma controlada disipación, perturbaciones
@@ -227,7 +239,7 @@ saturación de actuadores persiste más que el tiempo permitido. En las ejecucio
 base se usa un umbral de \SI{2}{s} para saturación persistente, si bien es
 completamente configurable. El límite de inclinación por defecto,
 \SI{1.256}{rad}, se usa como frontera operacional del banco de ensayo; es un
-valor convencional y no un certificado de seguridad de un dron real. La ejecución del simulador
+valor convencional y no un mecanismo de seguridad de un dron real. La ejecución del simulador
 mantiene además límites internos de posición y velocidad para detener
 trayectorias numéricamente divergentes, pero esos límites no forman parte de la
 definición física del vehículo.
@@ -248,10 +260,16 @@ introduce un movimiento periódico acoplado entre ejes:
  z(t) &= c_z + A_z\sin(\omega_z t).
  \label{eq:lissajous}
 \end{align}
+
 Al usar frecuencias distintas por eje, la referencia cubre una región espacial
 más rica que un círculo y obliga al controlador a seguir cambios simultáneos de
 posición, velocidad y aceleración.
-% FIGURA PENDIENTE [FIG-009]: comparar visualmente hold, círculo, Lissajous y waypoint para explicar qué capacidad exige cada familia.
+
+\begin{figure}[H]
+  \includegraphics[width=0.9\textwidth]{FIG-009}
+  \caption{Familias de trayectorias analíticas del simulador. Cada geometría introduce estímulos diferentes (estacionario, velocidad variable, aceleración acoplada en 3 ejes o tramos discretos). Fuente: elaboración propia a partir de las clases de trayectoria.}
+  \label{fig:familias-trayectorias}
+\end{figure}
 
 La familia \texttt{waypoint} define una misión punto a punto. El vehículo debe
 alcanzar una serie de posiciones, frenar, asentarse dentro de una tolerancia de
@@ -264,7 +282,12 @@ trapezoidal: aceleración constante, tramo de velocidad constante y frenado. Si
 el tramo es corto, el perfil es triangular y no se alcanza la velocidad máxima.
 En ambos casos la posición y la velocidad son continuas, evitando escalones
 en la referencia.
-% FIGURA PENDIENTE [FIG-010]: mostrar perfiles trapezoidal y triangular de waypoint para posición, velocidad y aceleración escalar.
+
+\begin{figure}[H]
+  \includegraphics[width=0.9\textwidth]{FIG-010}
+  \caption{Perfiles cinemáticos generados en las transiciones entre waypoints. A la izquierda se ilustra el perfil trapezoidal (para tramos largos) y a la derecha el perfil triangular (para tramos cortos, donde no se alcanza la velocidad de consigna). Fuente: elaboración propia.}
+  \label{fig:perfiles-waypoint}
+\end{figure}
 
 \begin{lstlisting}[caption={Estructura simplificada de un escenario YAML.},label={lst:yaml-escenario}]
 name: "Waypoint Clean"
@@ -319,7 +342,11 @@ trabajo, la frecuencia de telemetría se ha elegido menor que la de integración
 porque es suficiente para el análisis posterior y evita almacenar datos
 innecesariamente densos.
 
-% FIGURA PENDIENTE [FIG-003]: representar el orden de referencia, observación, control, mixer, actuadores, RK4 y telemetría con sus tres periodos.
+\begin{figure}[H]
+  \includegraphics[width=\textwidth]{FIG-003}
+  \caption{Secuencia de ejecución temporal multirrate y dependencias de datos. Se diferencian las tres bandas de frecuencia asociadas a la integración física (100 Hz), el ciclo digital de control (50 Hz) y el registro periódico de variables (10 Hz). Fuente: elaboración propia.}
+  \label{fig:arquitectura-multirrate}
+\end{figure}
 % CITA PENDIENTE [CIT-008]: justificación de la retención de orden cero y de la separación multirrate en simulación digital de control.
 Los periodos son parámetros configurables. En este trabajo se fijan como decisión de
 diseño para construir una plataforma de comparación de controladores; un estudio

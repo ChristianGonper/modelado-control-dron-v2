@@ -85,7 +85,7 @@
   \draw[line] (pd_att) -- (sum_gyro);
 
   \node[above=0.8cm of sum_gyro] (gyro) {Término giroscópico\\$\bm{\omega}_B \times (\bm{I}_B \bm{\omega}_B)$};
-  \node[below=0.8cm of sum_gyro] (sat_mom) {Saturación\\momentos $\bm{\tau}_{\max}$};
+  \node[below=1.0 cm of sum_gyro] (sat_mom) {Saturación\\momentos $\bm{\tau}_{\max}$};
 
   \draw[line] (gyro) -- (sum_gyro.north);
   \draw[line] (sum_gyro.south) -- (sat_mom.north);

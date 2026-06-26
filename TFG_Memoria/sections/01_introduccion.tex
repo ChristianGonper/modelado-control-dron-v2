@@ -25,16 +25,17 @@ entre, por ejemplo, mantener una posición y recorrer una geometría exigente. L
 especialización evita parte de ese compromiso, pero multiplica el coste de
 ajuste, validación y selección de ganancias. Por ello se construye un banco con
 un PD especializado para cada familia de trayectorias y se estudia si una
-política neuronal común puede condensar las demostraciones de esos expertos.
+implementación neuronal puede condensar las demostraciones de esos expertos.
 
 La comparación requiere un entorno donde modelo, referencias, perturbaciones,
-semillas, límites y métricas permanezcan bajo control. El simulador 6DOF
+semillas de aleatoriedad, límites de actuación y métricas permanezcan bajo control. El simulador 6DOF
 desarrollado proporciona ese contrato experimental: los controladores comparten
 el mismo vehículo, la misma observación y la misma cadena de actuación; cada
 ejecución conserva la configuración efectiva y la telemetría necesaria para
 revisar y reproducir el experimento. El banco no pretende sustituir una futura
 validación en vuelo, sino aislar el contraste experimental dentro de unas
 hipótesis explícitas y reproducibles.
+
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{FIG-001}
@@ -46,11 +47,11 @@ En la \figref{fig:estrategia-experimental} se detalla visualmente esta aproximac
 
 \subsubsection*{Problema abordado}
 
-El problema central del trabajo consiste en determinar si una única política
-neuronal, entrenada a partir de demostraciones generadas por controladores PD
+El problema central del trabajo consiste en determinar si un único sistema
+neuronal, entrenado a partir de demostraciones generadas por controladores PD
 ajustados para distintas familias de trayectorias, puede sustituir ese banco de
 controladores cuando se evalúa bajo las mismas referencias y perturbaciones. La
-comparación debe establecer si la política mantiene un comportamiento
+comparación debe establecer si la implementación neuronal mantiene un comportamiento
 competitivo en las condiciones conocidas y si transfiere mejor a variaciones,
 composiciones y trayectorias nuevas.
 
@@ -61,7 +62,7 @@ reajuste, a otra familia o condición. La ruta neuronal principal sustituye el
 lazo externo y realiza una \emph{predicción de fuerza deseada}; a partir de la
 observación y la referencia, produce un vector tridimensional en el sistema de
 referencia ENU mientras conserva el lazo interno clásico. Por tanto, la red no
-ordena directamente velocidades de rotor ni momentos de cuerpo.
+ordena directamente velocidades de rotor ni momentos en el sistema de referencia cuerpo.
 
 Se denomina rendimiento competitivo a conservar, en bucle cerrado, la
 completitud de misión y la seguridad, y a obtener errores de seguimiento,
@@ -84,7 +85,7 @@ especialización clásica, transferencia clásica e imitación neuronal.
 \subsection{Hipótesis y objetivos}
 \label{subsec:hipotesis-objetivos}
 
-La hipótesis central sostiene que una política neuronal única, entrenada por
+La hipótesis central sostiene que un sistema neuronal único, entrenado por
 imitación para predecir la fuerza deseada del lazo externo, puede alcanzar una
 capacidad de seguimiento competitiva frente al PD especializado de cada familia
 en condiciones conocidas y transferir mejor que los PD aplicados fuera de su

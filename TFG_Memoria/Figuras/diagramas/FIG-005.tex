@@ -47,7 +47,7 @@
     mediante muestreo log-uniforme
   };
   % Conexión si NO supera el umbral (requiere tuneo)
-  \draw[line] (dec_base) -- node[right, font=\sffamily\bfseries\color{red!70!black}] {NO (Requiere sintonía)} (global);
+  \draw[line] (dec_base) -- node[right, font=\sffamily\bfseries\color{red!70!black}] {NO (sintonización)} (global);
 
   % ==========================================
   % FASE 3: FILTROS DUROS
@@ -84,8 +84,8 @@
   % ==========================================
   \node[box, below=of  supervivientes] (local) {
     \textbf{Fase 4: Refinamiento Local}\\
-    Optimización Nelder-Mead (simplex)\\
-    para minimizar RMSE localmente
+    Optimización local\\
+    para minimizar RMSE
   };
   \draw[line] (supervivientes) -- (local);
 
@@ -94,7 +94,7 @@
   % ==========================================
   \node[box, below=of local] (seleccion) {
     \textbf{Fase 5: Selección y Desempate}\\
-    1. Minimizar costo RMSE pos/vel\\
+    1. Minimizar coste RMSE pos/vel\\
     2. Penalizar esfuerzo ($\int \|\bm{\tau}_B\|^2 dt$)\\
     3. Penalizar desviación de ganancias base
   };
@@ -105,13 +105,12 @@
   % ==========================================
   \node[box, fill=gray!10, below=1.0cm of  seleccion, minimum width=4.5cm] (yaml) {
     \textbf{Resultado Final}\\
-    Ganancias ganadoras congeladas en\\
-    \texttt{data/classic\_dataset/v1/pids/}
+    Ganancias ganadoras congeladas
   };
   \draw[line] (seleccion) -- (yaml);
 
   % Conexión directa desde Fase 1 (SÍ supera el umbral)
-  \draw[line] (dec_base.east) -- node[above, xshift=0.3cm, font=\sffamily\bfseries\color{green!60!black}] {SÍ (Suficiente)} ++(2.8,0) |- (yaml.east);
+  \draw[line] (dec_base.east) -- node[above, xshift=0.3cm, font=\sffamily\bfseries\color{green!60!black}] {SÍ} ++(2.8,0) |- (yaml.east);
 
 \end{tikzpicture}
 \end{document}

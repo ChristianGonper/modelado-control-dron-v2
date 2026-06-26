@@ -23,7 +23,7 @@
   % ==========================================
   % FILA 1: ETAPA I (y = 0.0)
   % ==========================================
-  \node[phasebox] (f1) at (0,0) {\textbf{Fase 1}\\Sanidad y Tests\\(\texttt{pytest})};
+  \node[phasebox] (f1) at (0,0) {\textbf{Fase 1}\\Tests\\(\texttt{pytest})};
   \node[phasebox] (f2) at (3.6,0) {\textbf{Fase 2}\\Dataset Clásico\\Inicial};
   \node[phasebox] (f3) at (7.2,0) {\textbf{Fase 3}\\Diagnóstico y\\Ajuste PID};
   \node[phasebox] (f4) at (10.8,0) {\textbf{Fase 4}\\Baseline Clásico\\con PIDs Congelados};
@@ -75,7 +75,7 @@
   \node[phasebox] (f9) at (3.6,-9.0) {\textbf{Fase 9}\\Simulación bucle\\cerrado (Test ID)};
   \node[phasebox] (f10) at (7.2,-9.0) {\textbf{Fase 10}\\Simulación bucle\\cerrado (OOD)};
   \node[phasebox] (f11) at (10.8,-9.0) {\textbf{Fase 11}\\Consolidación y\\tablas LaTeX};
-  \node[artbox] (art_latex) at (10.8,-10.65) {Tablas comparativas\\de rendimiento en\\LaTeX (\texttt{results/})};
+  \node[artbox] (art_latex) at (10.8,-10.65) {Tablas comparativas\\de rendimiento en\\LaTeX};
 
   % Bus de checkpoints: baja de art_weights y corre horizontal a Y=-7.8 (por debajo del título)
   \draw[thick, dashed] (art_weights.south) -- (10.8,-7.8) -- (0,-7.8);
@@ -93,19 +93,19 @@
   % ==========================================
   % LÍNEA BASE CLÁSICA (Extremo derecho, exterior)
   % ==========================================
-  \draw[line, draw=black!30] (f4.east) -- (12.5,0) -- (12.5,-9.0) -- (f11.east);
-  \node[right, font=\sffamily\scriptsize\itshape, text=black!50] at (12.6,-4.5) {Línea base clásica};
+  \draw[line, draw=black!30] (f4.east) -- (13.0,0) -- (13.0,-9.0) -- (f11.east);
+  \node[right, font=\sffamily\scriptsize\itshape, text=black!50] at (13.0,-4.5) {Línea base clásica};
 
   % ==========================================
   % CAPA DE FONDO: PANELES DE ETAPA (y sep=0.2cm)
   % ==========================================
   \begin{scope}[on background layer]
     % Panel Etapa I
-    \draw[groupbox, fill=blue!5!gray!2, draw=blue!40!gray!50] (-1.4, 1.4) rectangle (12.2, -2.2);
+    \draw[groupbox, fill=blue!5!gray!2, draw=blue!40!gray!50] (-1.4, 1.4) rectangle (12.5, -2.2);
     % Panel Etapa II
-    \draw[groupbox, fill=red!5!gray!2, draw=red!40!gray!50] (-1.4, -2.4) rectangle (12.2, -6.6);
+    \draw[groupbox, fill=red!5!gray!2, draw=red!40!gray!50] (-1.4, -2.4) rectangle (12.5, -6.6);
     % Panel Etapa III (Más alto)
-    \draw[groupbox, fill=green!5!gray!2, draw=green!40!gray!50] (-1.4, -6.8) rectangle (12.2, -11.3);
+    \draw[groupbox, fill=green!5!gray!2, draw=green!40!gray!50] (-1.4, -6.8) rectangle (12.5, -11.3);
   \end{scope}
 
   % Títulos de las Etapas colocados en la esquina superior izquierda

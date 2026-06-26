@@ -26,7 +26,7 @@
   \node[box, fill=black!10] (entradas) at (-2, 3.2) {
     \textbf{Entradas Observadas}\\
     $\bm{e}_p, \bm{e}_v, \ddot{\bm{x}}_{\text{ref}}$\\
-    ($9$ variables en \texttt{min\_v1})
+    ($9$ variables)
   };
   
   \node[neuralbox, right= 1.5cm of entradas] (normalizador) {
@@ -43,8 +43,8 @@
 
   \node[neuralbox, right= 1.5cm of red] (desnormalizador) {
     \textbf{Desnormalización}\\
-    Fuerza física cruda\\
-    $\bm{F}_{d,W,\text{cruda}}$
+    Fuerza física predicha\\
+    $\bm{F}_{d,W,\text{pred}}$
   };
 
   \draw[line] (entradas) -- (normalizador);
@@ -96,8 +96,8 @@
     \node[groupbox, draw=green!60!black, fill=green!3, fit=(clipping) (conversion) (lazo_interno) (mixer)] (classic_group) {};
   \end{scope}
 
-  \node[anchor=south west, font=\sffamily\bfseries, color=purple!80!black] at ($(neural_group.north west) + (0.1,0)$) {Política Neuronal Aprendida (Imitación)};
-  \node[anchor=north west, font=\sffamily\bfseries, color=green!60!black] at ($(classic_group.south west) + (0.1,-0.15)$) {Módulo Clásico de Seguridad e Inferencia Interna};
+  \node[anchor=south west, font=\sffamily\bfseries, color=purple!80!black] at ($(neural_group.north west) + (0.1,0)$) {Implementación Neuronal (Imitación)};
+  \node[anchor=north west, font=\sffamily\bfseries, color=green!60!black] at ($(classic_group.south west) + (0.1,-0.15)$) {Módulo Clásico de Seguridad e Inferencia};
 
   % ==========================================
   % PLANTA Y REALIMENTACIONES (Sin cruces)

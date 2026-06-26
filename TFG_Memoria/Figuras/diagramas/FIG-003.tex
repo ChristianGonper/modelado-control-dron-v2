@@ -1,6 +1,5 @@
-%% FIG-003  --  Arquitectura multirrate del simulador  (v5 - limpio)
-\documentclass[tikz,border=12pt]{standalone}
-\usetikzlibrary{positioning, arrows.meta, calc, patterns, babel, backgrounds}
+\documentclass[tikz,border=10pt]{standalone}
+\usetikzlibrary{positioning, arrows.meta, calc, patterns, backgrounds, babel}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
@@ -23,35 +22,33 @@
 ]
 
 %% ====================================================================
-%%  GEOMETRIA  (coordenadas absolutas)
+%%  GEOMETRIA  (coordenadas absolutas ensanchadas)
 %%
-%%  Bandas:  x in [-7.8, +7.2]  (ancho = 15.0 cm)
+%%  Bandas:  x in [-9.0, +8.5]  (ancho = 17.5 cm)
 %%
 %%  y_ctrl =  0      semialtura = 1.90
 %%  y_fis  = -4.60   semialtura = 1.50
 %%  y_tel  = -7.90   semialtura = 0.90
 %%
 %%  Columnas de bloques:
-%%    ref/obs : x = -5.0
-%%    ctrl    : x = -0.8
-%%    mix     : x =  3.4
-%%    act     : x =  3.4   (mismo x que mix, pero en banda fisica)
-%%    rk4     : x = -1.8
+%%    ref/obs : x = -6.0
+%%    ctrl    : x = -1.0
+%%    mix     : x =  5.2
+%%    act     : x =  5.2   (mismo x que mix, pero en banda fisica)
+%%    rk4     : x = -2.2
 %%    tel     : x =  2.0   (desplazado a la derecha para dejar paso a la izq)
 %%
 %%  Canales exteriores:
-%%    canal ZOH     x =  7.7
-%%    canal FB      x = -6.7   (dentro del borde izq de la banda = -7.8)
-%%    canal TEL ctrl x = 6.5
+%%    canal ZOH     x =  8.0
+%%    canal FB      x = -8.4
 %% ====================================================================
 
-\def\xBL{-7.8}   \def\xBR{7.2}
+\def\xBL{-9.0}   \def\xBR{8.5}
 \def\yC{0}     \def\hC{1.90}
 \def\yF{-4.60} \def\hF{1.50}
 \def\yT{-7.90} \def\hT{0.90}
-\def\xZOH{7.7}
-\def\xFB{-7.3}
-\def\xTEL{6.5}
+\def\xZOH{9.0}
+\def\xFB{-8.4}
 
 %% ====================================================================
 %%  BANDAS DE FONDO
@@ -77,7 +74,7 @@
 %%  ETIQUETAS DE BANDA
 %% ====================================================================
 \node[anchor=north west, font=\sffamily\footnotesize\bfseries, text=blue!65!black]
-  at (\xBL+0.20, \yC+\hC-0.14)
+  at (\xBL+0.20, \yC+\hC-0.05)
   {Banda de Control\enspace $f_{\mathrm{ctrl}}=50\,\mathrm{Hz}$,\enspace $T_c=0{,}02\,\mathrm{s}$};
 
 \node[anchor=north east, font=\sffamily\footnotesize\bfseries, text=green!55!black]
@@ -91,53 +88,54 @@
 %% ====================================================================
 %%  BLOQUES -- BANDA DE CONTROL
 %% ====================================================================
-\node[widebox, fill=gray!7] (ref) at (-5.0, \yC+0.72) {
+\node[widebox, fill=gray!7] (ref) at (-6.0, \yC+0.72) {
   \textbf{Referencia}\\
   $\bm{x}_{\mathrm{ref}},\,\dot{\bm{x}}_{\mathrm{ref}},\,\ddot{\bm{x}}_{\mathrm{ref}},\,\psi_{\mathrm{ref}}$
 };
 
-\node[box, fill=blue!7] (obs) at (-5.0, \yC-0.76) {
+\node[box, fill=blue!7] (obs) at (-6.0, \yC-0.76) {
   \textbf{Observaci\'on}\\
   Ruido de medida\\
   $\bm{x}_{\mathrm{obs}},\,\dot{\bm{x}}_{\mathrm{obs}}$
 };
 
-\node[widebox, fill=blue!10] (ctrl) at (-0.8, \yC) {
+\node[widebox, fill=blue!10] (ctrl) at (-1.0, \yC) {
   \textbf{Controlador}\\
   Cl\'asico o Neuronal\\
   $T,\;\bm{\tau}_B$
 };
 
-\node[box, fill=blue!7] (mix) at (4.2, \yC) {
+\node[box, fill=blue!7] (mix) at (5.2, \yC) {
   \textbf{Mezclador}\\
   Asignaci\'on y clipping\\
   $\bm{\omega}_{\mathrm{target}}$
 };
 
 %% -- Flechas control --
-%%  ref -> ctrl: trayectoria deseada
-\draw[arr] (ref.east) |- (-3.1, 1.4) -- node[below, font=\sffamily\scriptsize, pos=0.35]{trayectoria deseada} (-0.8, 1.4) -- (ctrl.north);
-%%  obs -> ctrl: estado observado (simplificado con sintaxis TikZ ortogonal, desplazado a la izquierda para no solaparse con la subida)
-\draw[arr] (obs.east) -- ++(0.3, 0) |- node[above, font=\sffamily\scriptsize, pos=0.3]{estado observado} ([xshift=-0.5cm, yshift=-0.98cm]ctrl.south) -- ([xshift=-0.5cm]ctrl.south);
+%%  ref -> ctrl: trayectoria deseada (salida horizontal, codo ascendente)
+\draw[arr] (ref.east) -- ([xshift=0.5cm]ref.east) |- node[below, font=\sffamily\scriptsize, pos=0.75]{trayectoria deseada} (-1.0, 1.4) -- (ctrl.north);
+%%  obs -> ctrl: estado observado (simplificado con ruteo absoluto robusto)
+\draw[arr] (-4.4, -0.76) -- (-4.1, -0.76) |- node[above, font=\sffamily\scriptsize, pos=0.73]{estado observado} (-1.5, -1.58) -- (-1.5, -0.6);
 %%  ctrl -> mix: comandos de empuje y momentos
 \draw[arr] (ctrl.east) -- node[above, font=\sffamily\scriptsize]{comandos $T,\;\bm{\tau}_B$} (mix.west);
 
 %% ====================================================================
 %%  BLOQUES -- BANDA DE FISICA
 %% ====================================================================
-\node[box, fill=green!9] (act) at (4.2, \yF) {
+\node[box, fill=green!9] (act) at (5.2, \yF) {
   \textbf{Actuadores}\\
   Din\'amica de rotores\\
   retardo y lag
 };
 
-\node[widebox, fill=green!11] (rk4) at (-1.8, \yF) {
+\node[widebox, fill=green!11] (rk4) at (-2.2, \yF) {
   \textbf{Integraci\'on RK4}\\
   Cuerpo r\'igido\\
   $\bm{x},\,\dot{\bm{x}},\,\bm{q},\,\bm{\omega}$
 };
 
-\draw[arr] (act.west) -- node[above, font=\sffamily\scriptsize, pos=0.25]{velocidad real $\bm{\omega}_{\mathrm{rotor}}$} (rk4.east);
+%%  Se ajusta pos=0.30 para posicionar la etiqueta en el espacio holgado a la derecha de la telemetria vertical (x=0.8)
+\draw[arr] (act.west) -- node[above, font=\sffamily\scriptsize, pos=0.30]{velocidad real $\bm{\omega}_{\mathrm{rotor}}$} (rk4.east);
 
 %% ====================================================================
 %%  BLOQUE -- BANDA DE TELEMETRIA
@@ -160,7 +158,7 @@
 
 %% ====================================================================
 %%  CANAL IZQUIERDO (FB):  RK4 -> Observacion  (realimentación de estado real)
-%%  xFB = -7.3, dentro de la banda de control, sube limpio por fuera de ref/obs
+%%  xFB = -8.4, dentro de la banda de control, sube limpio por fuera de ref/obs
 %% ====================================================================
 \draw[darr]
   (rk4.west) -- (\xFB, \yF)
@@ -170,28 +168,27 @@
   -- (obs.west);
 
 %% ====================================================================
-%%  TELEMETRIA 1:  RK4 -> Registro  (L limpia por la derecha del bloque RK4)
+%%  TELEMETRIA 1:  RK4 -> Registro  (L limpia mediante ruteo ortogonal automático)
 %%  Ruta: rk4.south (shift derecho) -> y=-7.9 -> tel.west
 %% ====================================================================
 \draw[tarr]
-  ([xshift=1.0cm]rk4.south) -- node[left, font=\sffamily\scriptsize\itshape, align=right] {registro de\\estado real}
-  (-0.8, \yT) -- (tel.west);
+  ([xshift=1.0cm]rk4.south) |- node[left, font=\sffamily\scriptsize\itshape, pos=0.55, align=right] {registro de\\estado real}
+  (tel.west);
 
 %% ====================================================================
-%%  TELEMETRIA 2:  Controlador -> Registro  (bajada simplificada por el canal central)
-%%  Ruta: ctrl.south (shift) -> y=-2.35 -> x=1.3 -> y=-7.3 (tel.north)
+%%  TELEMETRIA 2:  Controlador -> Registro  (bajada por el canal central)
+%%  Ruta: ctrl.south (shift) -> y=-2.35 -> x=0.8 -> y=-7.3 (tel.north)
+%%  Cruzando la línea física (act.west -> rk4.east) en y=-4.6, x=0.8
+%%  Para evitar solapamientos, dibujamos un arco de puente de salto en y=-4.6
 %% ====================================================================
 \draw[tarr]
-  ([xshift=0.5cm]ctrl.south) -- ++(0, -1.75)
-  -| node[right, font=\sffamily\scriptsize\itshape, pos=0.8, align=left] {registro de\\comandos}
-     ([xshift=-0.7cm]tel.north);
+  (-0.5, -0.6) -- (-0.5, -2.35)
+  -- (0.8, -2.35)
+  -- (0.8, -4.45)
+  arc[start angle=90, end angle=-90, radius=0.15]
+  -- (0.8, -7.3)
+  node[right, font=\sffamily\scriptsize\itshape, pos=0.45, align=left] {registro de\\comandos};
 
-%% ====================================================================
-%%  PIE EXPLICATIVO
-%% ====================================================================
-\node[font=\sffamily\scriptsize\itshape, text=black!38, anchor=north]
-  at (0, \yT-\hT-0.22)
-  {Bucle cerrado multirrate: la f\'isica integra a 100\,Hz; el controlador lee y act\'ua a 50\,Hz.};
 
 \end{tikzpicture}
 \end{document}
