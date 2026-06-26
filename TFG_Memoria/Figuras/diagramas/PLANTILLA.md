@@ -1,4 +1,4 @@
-# Ficha de diagrama: título pendiente
+# Ficha de diagrama: titulo pendiente
 
 ## Intención
 
@@ -20,10 +20,10 @@
 
 ## Reproducción
 
-- **Formato y archivo fuente:**
-- **Herramienta y versión:**
-- **Prompt, código o pasos manuales:**
-- **Comando de generación o exportación:**
+- **Formato y archivo fuente:** TikZ standalone `FIG-xxx.tex`, salvo grafica reproducible justificada.
+- **Herramienta y versión:** LaTeX/TikZ del entorno de compilacion de la memoria.
+- **Prompt, código o pasos manuales:** describir la construccion o enlazar el script exacto.
+- **Comando de generación o exportación:** compilacion normal de `main.tex` o comando reproducible del script.
 - **Archivo incluido en LaTeX:**
 
 ## Verificación
@@ -33,3 +33,4 @@
 - [ ] El significado no depende únicamente del color.
 - [ ] El contenido coincide con la implementación o las fuentes citadas.
 - [ ] La exportación o inclusión LaTeX se puede repetir.
+- [ ] La ficha coincide con el formato real de la fuente y no menciona SVG/PDF si la fuente final es TikZ.

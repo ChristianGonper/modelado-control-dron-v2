@@ -1,20 +1,23 @@
 # Fuentes reproducibles de los diagramas
 
-Los diagramas pueden realizarse en SVG, TikZ u otro formato original compatible
-con el flujo LaTeX. Debe conservarse siempre la fuente editable, no solo la
-exportación incluida en la memoria.
+Los diagramas de la memoria se mantienen preferentemente como fuentes TikZ
+standalone (`FIG-xxx.tex`) para que la figura sea editable, versionable y
+coherente con el flujo LaTeX. Solo se usará otro formato cuando la figura sea
+una gráfica generada a partir de datos o cuando TikZ no sea razonable para el
+contenido. En todos los casos debe conservarse la fuente reproducible, no solo
+la exportación incluida en la memoria.
 
 Cada diagrama tendrá además una ficha Markdown con el mismo nombre base. La ficha
 permitirá repetirlo o revisarlo sin depender de recordar cómo se creó. Se partirá
 de `PLANTILLA.md`:
 
 ```text
-control_hibrido.svg
-control_hibrido.pdf
-control_hibrido.md
+FIG-003.tex
+FIG-003.md
 
-flujo_multirrate.tex
-flujo_multirrate.md
+FIG-010.py
+FIG-010.pdf
+FIG-010.md
 ```
 
 La ficha debe registrar como mínimo:
@@ -28,10 +31,15 @@ La ficha debe registrar como mínimo:
 7. prompt, código o pasos manuales necesarios para reproducirlo;
 8. forma de inclusión o exportación y comprobaciones visuales.
 
-Para SVG se conservarán el `.svg` editable y, cuando se use `pdflatex`, su
-exportación `.pdf`. Para TikZ u otro diagrama nativo se conservará el `.tex`
-incluido o compilable. Las gráficas derivadas de resultados deben registrar
-también el script, comando, datos de entrada y revisión Git de procedencia.
+Para TikZ se conservará el `.tex` standalone o incluido. Si el documento usa la
+figura mediante `\includegraphics`, la exportación PDF generada desde esa fuente
+no sustituye al `.tex`. Para gráficas derivadas de scripts o resultados se
+registrarán también el script, el comando, los datos de entrada y la revisión Git
+de procedencia. Si se incorpora un SVG por necesidad puntual, se conservarán el
+`.svg` editable y la exportación `.pdf`.
 
 Los diagramas deben usar etiquetas en español, fondo claro, tipografía legible y
-un significado que no dependa únicamente del color.
+un significado que no dependa únicamente del color. Cuando el diagrama representa
+marcos, fuerzas, momentos o señales de control, la ficha debe declarar
+explícitamente el marco de referencia, las unidades y la relación con el código o
+la ecuación de la memoria.

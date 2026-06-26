@@ -7,9 +7,9 @@
   transferido, MLP, GRU y LSTM.
 - No se dependerá únicamente del color: se combinarán marcadores, patrones o
   etiquetas.
-- Los diagramas podrán realizarse en SVG, TikZ u otro formato original integrado
-  en LaTeX. Se elegirá el formato que mejor conserve precisión, editabilidad y
-  estabilidad de compilación.
+- Los diagramas se realizarán preferentemente en TikZ standalone integrado en
+  LaTeX. Solo se usará otro formato cuando el contenido sea una gráfica generada
+  por script o cuando TikZ no sea razonable para la figura.
 - Cada diagrama conservará su fuente editable y una ficha reproducible con el
   mismo nombre base, según `../Figuras/diagramas/README.md`.
 - Los snippets serán breves y usarán el estilo `codigoTFG` definido en
@@ -24,21 +24,20 @@ diagrama cambie.
 
 | Capítulo | Diagrama | Finalidad |
 |---|---|---|
-| Introducción | `FIG-001` Hipótesis y estrategia experimental | Mostrar banco de PD, selección de expertos, imitación y comparación de las tres referencias en ID y OOD. Ficha revisada; figura pendiente. |
+| Introducción | `FIG-001` Hipótesis y estrategia experimental | Mostrar banco de PD, selección de expertos, imitación y comparación de las tres referencias en ID y OOD. Fuente TikZ disponible. |
 | Estado del arte | Taxonomía de enfoques de control | Situar PD, programación de ganancias, control aprendido e híbrido. |
-| Metodología 3.1 | `FIG-002` Marcos ENU y FRD | Fijar signos, ejes y dirección de empuje. Ficha creada; figura pendiente. |
-| Metodología 3.1 | `FIG-003` Flujo multirrate | Explicar referencia, control, mezclador, actuadores, dinámica y telemetría. Ficha creada; figura pendiente. |
-| Metodología 3.1 | Arquitectura del banco propio | Contrastar control y trazabilidad con plataformas no adaptadas al objetivo. |
-| Metodología 3.1 | `FIG-011` Configuración de rotores | Mostrar configuración en X, orden de rotores y signo de giro usado por el mixer. Ficha creada; figura pendiente. |
-| Metodología 3.1 | `FIG-009` Familias de trayectorias | Mostrar de un vistazo qué capacidad exige `hold`, `circle`, `lissajous` y `waypoint`. Ficha creada; figura pendiente. |
-| Metodología 3.1 | `FIG-010` Perfiles de waypoint | Explicar perfil trapezoidal/triangular y relación entre posición, velocidad y aceleración escalar. Ficha creada; figura pendiente. |
-| Metodología 3.1 | `FIG-012` Mixer con saturación | Mostrar flujo de reparto de mandos del mixer, desplazamiento del colectivo y recorte de momentos bajo saturación. Ficha creada; figura pendiente. |
-| Metodología 3.2 | `FIG-004` Control PD en cascada | Mostrar lazo externo de posición y lazo interno de actitud. Ficha creada; figura pendiente. |
-| Metodología 3.2 | `FIG-005` Búsqueda progresiva | Mostrar diagnóstico, candidatos, filtros, refinamiento y congelación. Ficha creada; figura pendiente. |
-| Metodología 3.3 | `FIG-006` Predicción de fuerza deseada | Mostrar entradas, MLP/GRU/LSTM, protecciones y lazo interno común. Ficha creada; figura pendiente. |
-| Metodología 3.3 | `FIG-013` Ventana deslizante recurrente | Representar la ventana deslizante temporal, el avance del lote recurrentemente y el padding por repetición al inicio. Ficha creada; figura pendiente. |
-| Metodología 3.5 | `FIG-007` Flujo completo de campaña | Conectar datasets, tuneo, entrenamiento y comparaciones. Ficha creada; figura pendiente. |
-| Metodología 3.5 | `FIG-008` Niveles de evaluación | Separar familias vistas, transferencia, composiciones y trayectorias nuevas. Ficha creada; figura pendiente. |
+| Metodología 3.1 | `FIG-002` Marcos ENU y FRD | Fijar signos, ejes y dirección de empuje. Fuente TikZ disponible y ficha actualizada. |
+| Metodología 3.1 | `FIG-003` Flujo multirrate | Explicar referencia, control, mezclador, actuadores, dinámica y telemetría. Fuente TikZ disponible y ficha actualizada. |
+| Metodología 3.1 | `FIG-011` Configuración de rotores | Mostrar configuración en X, orden de rotores y signo de giro usado por el mixer. Fuente TikZ disponible y ficha actualizada. |
+| Metodología 3.1 | `FIG-009` Familias de trayectorias | Mostrar de un vistazo qué capacidad exige `hold`, `circle`, `lissajous` y `waypoint`. Ficha actualizada; en este worktree no existe todavía `FIG-009.tex`, solo generación PDF por script. |
+| Metodología 3.1 | `FIG-010` Perfiles de waypoint | Explicar perfil trapezoidal/triangular y relación entre posición, velocidad y aceleración escalar. Ficha actualizada; en este worktree no existe todavía `FIG-010.tex`, solo generación PDF por script. |
+| Metodología 3.1 | `FIG-012` Mixer con saturación | Mostrar flujo de reparto de mandos del mixer, desplazamiento del colectivo y recorte de momentos bajo saturación. Fuente TikZ disponible y ficha actualizada. |
+| Metodología 3.2 | `FIG-004` Control PD en cascada | Mostrar lazo externo de posición y lazo interno de actitud. Fuente TikZ disponible y ficha actualizada. |
+| Metodología 3.2 | `FIG-005` Búsqueda progresiva | Mostrar diagnóstico, candidatos, filtros, refinamiento y congelación. Fuente TikZ disponible y ficha actualizada. |
+| Metodología 3.3 | `FIG-006` Predicción de fuerza deseada | Mostrar entradas, MLP/GRU/LSTM, protecciones y lazo interno común. Fuente TikZ disponible y ficha actualizada. |
+| Metodología 3.3 | `FIG-013` Ventana deslizante recurrente | Representar la ventana deslizante temporal, el avance del lote recurrentemente y el padding por repetición al inicio. Fuente TikZ disponible y ficha actualizada. |
+| Metodología 3.5 | `FIG-007` Flujo completo de campaña | Conectar datasets, tuneo, entrenamiento y comparaciones. Fuente TikZ disponible y ficha actualizada. |
+| Metodología 3.5 | `FIG-008` Niveles de evaluación | Separar familias vistas, transferencia, composiciones y trayectorias nuevas. Fuente TikZ disponible y ficha actualizada. |
 | Trabajo futuro | Paso hacia dron real | Mostrar sensores, estimación, control y percepción a bordo. |
 
 ## Gráficas y tablas previstas para resultados
@@ -54,35 +53,3 @@ diagrama cambie.
 9. Tabla de fidelidad supervisada de fuerza frente a rendimiento en bucle
    cerrado.
 10. Tabla síntesis que responda cada pregunta experimental.
-
-## Especificaciones iniciales reproducibles
-
-Estas especificaciones pueden usarse como prompt para SVG o traducirse a TikZ u
-otro formato. La ficha definitiva debe registrar la técnica realmente utilizada
-y cualquier decisión añadida durante su elaboración.
-
-### Control híbrido de predicción de fuerza
-
-> Crear un diagrama técnico vectorial, fondo blanco y estilo académico. Mostrar
-> a la izquierda referencia y observación, en el centro una red seleccionable
-> MLP/GRU/LSTM que predice una fuerza deseada tridimensional en ENU, después un
-> bloque de límites de fuerza e inclinación, y finalmente un controlador clásico
-> interno que genera empuje colectivo y momentos. Diferenciar claramente lo
-> aprendido de lo clásico. Conservar una fuente editable y una exportación apta
-> para la memoria.
-
-### Flujo experimental
-
-> Crear un diagrama vectorial horizontal del flujo: escenarios declarativos,
-> dataset clásico, sintonización y banco de PD, selección de demostraciones,
-> entrenamiento MLP/GRU/LSTM, evaluación supervisada, evaluación en bucle
-> cerrado y comparación en cuatro niveles. Usar etiquetas en español, formas
-> simples y una fuente editable.
-
-### Camino hacia vuelo real
-
-> Crear un diagrama vectorial que muestre la evolución desde simulación 6DOF
-> hasta vuelo real: mejora del modelo, identificación, sensores, estimador de
-> estado, controlador, validación progresiva y percepción visual con conciencia
-> situacional. Presentar los pasos como trabajo futuro, sin sugerir que ya están
-> implementados. Conservar una fuente editable.
