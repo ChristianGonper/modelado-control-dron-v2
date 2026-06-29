@@ -1,4 +1,107 @@
-Este anejo recogerá los comandos finales usados para generar datasets, entrenar
-modelos, ejecutar bucle cerrado y construir tablas y figuras. Solo deben
-incluirse comandos realmente ejecutados o congelados como parte de la campaña
-experimental.
+\subsubsection*{Regeneración de la batería OOD}
+
+La batería OOD usada en resultados procede de
+\texttt{data/neural\_ood/battery\_v1}. La auditoría de las hélices detectó que
+\texttt{max\_duration\_s}=35\,s no daba margen a dos perfiles trapezoidales; por
+ello se fijó \texttt{max\_duration\_s}=60\,s en el generador. Tras el ajuste,
+\texttt{helix\_ascending\_fast} y \texttt{helix\_descending\_noise\_wind}
+completan la misión, mientras que \texttt{helix\_tight\_aggressive} se conserva
+como caso de estrés.
+
+\begin{verbatim}
+uv run python tools/generate_ood_battery.py ^
+  --out data/neural_ood/battery_v1 ^
+  --pid-source-dataset data/classic_dataset/v1 ^
+  --overwrite
+\end{verbatim}
+
+\subsubsection*{Campaña OOD y consolidación}
+
+Los controladores clásicos transferidos y las tres arquitecturas outer-force se
+ejecutaron sobre la batería OOD corregida. Después se consolidaron las tablas
+comparativas usadas por el capítulo de resultados.
+
+\begin{verbatim}
+uv run python tools/run_classic_transfer_dataset.py ^
+  --dataset data/neural_ood/battery_v1 ^
+  --pid-source-dataset data/classic_dataset/v1 ^
+  --pid-family all --include-native --workers 8 ^
+  --no-visualization --rerun
+
+uv run python tools/run_neural_outer_force_dataset.py ^
+  --dataset data/neural_ood/battery_v1 --split ood ^
+  --architecture mlp --device auto --workers 4 ^
+  --no-visualization --rerun
+
+uv run python tools/run_neural_outer_force_dataset.py ^
+  --dataset data/neural_ood/battery_v1 --split ood ^
+  --architecture gru --device auto --workers 4 ^
+  --no-visualization --rerun
+
+uv run python tools/run_neural_outer_force_dataset.py ^
+  --dataset data/neural_ood/battery_v1 --split ood ^
+  --architecture lstm --device auto --workers 4 ^
+  --no-visualization --rerun
+
+uv run python tools/summarize_comparison.py
+\end{verbatim}
+
+Los comandos reales incluyen las rutas completas de checkpoint y normalización
+de cada arquitectura en \texttt{data/neural\_control/outer\_force\_*}. Dichas
+rutas quedan registradas en \texttt{results/evidence\_manifest.csv}.
+
+\subsubsection*{Figuras finales de resultados}
+
+\begin{verbatim}
+uv run simulador-quad plot-comparison ^
+  results/comparison_all_runs.csv ^
+  --out TFG_Memoria/Figuras/resultados ^
+  --formats pdf png
+\end{verbatim}
+
+El comando anterior genera las figuras de cuerpo \texttt{res\_*} y las figuras
+del atlas \texttt{atlas\_*}. La trayectoria representativa también puede
+recibir telemetrías explícitas mediante opciones repetidas
+\texttt{--trajectory-telemetry LABEL:PATH}.
+
+\subsubsection*{Artefactos de evidencia}
+
+\begin{itemize}
+  \item \texttt{results/comparison\_all\_runs.csv}: 264 corridas comparables.
+  \item \texttt{results/comparison\_all\_runs\_full.csv}: historial consolidado
+    con splits adicionales cuando existen.
+  \item \texttt{results/comparison\_summary.csv}: agregación por controlador,
+    split y familia.
+  \item \texttt{results/evidence\_manifest.csv}: procedencia de datasets,
+    checkpoints y decisiones de inclusión.
+  \item \texttt{TFG\_Memoria/Figuras/resultados/}: figuras finales en PDF y PNG.
+\end{itemize}
+
+\subsubsection*{Atlas de trayectorias representativas}
+
+Las figuras de esta sección no se usan como prueba cuantitativa principal. Su
+función es mostrar la variedad geométrica y experimental cubierta por el
+trabajo: familias vistas, trayectorias OOD y un caso helicoidal tridimensional.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{atlas_trayectorias_id.pdf}
+\caption{Muestra visual de familias conocidas: \texttt{hold}, \texttt{circle},
+\texttt{lissajous} y \texttt{waypoint}.}
+\label{fig:atlas-trayectorias-id}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{atlas_trayectorias_ood.pdf}
+\caption{Muestra visual de trayectorias fuera de distribución:
+\texttt{lemniscate}, \texttt{lissajous} 3D, composición y hélice.}
+\label{fig:atlas-trayectorias-ood}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.74\textwidth]{atlas_trayectoria_helix_3d.pdf}
+\caption{Vista tridimensional de una hélice OOD representativa.}
+\label{fig:atlas-trayectoria-helix-3d}
+\end{figure}

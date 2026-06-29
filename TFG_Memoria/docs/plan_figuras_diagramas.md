@@ -40,16 +40,35 @@ diagrama cambie.
 | Metodología 3.5 | `FIG-008` Niveles de evaluación | Separar familias vistas, transferencia, composiciones y trayectorias nuevas. Fuente TikZ disponible y ficha actualizada. |
 | Trabajo futuro | Paso hacia dron real | Mostrar sensores, estimación, control y percepción a bordo. |
 
-## Gráficas y tablas previstas para resultados
+## Gráficas y tablas del capítulo de resultados
 
-1. Tabla de cobertura y validez de ejecuciones.
-2. RMSE y tasa de éxito por controlador en familias vistas.
-3. Mapa de calor de transferencia cruzada de controladores PD.
-4. Comparación separada de variaciones o composiciones de familias conocidas.
-5. Comparación separada de trayectorias completamente nuevas.
-6. Gráfico seguimiento frente a esfuerzo de control.
-7. Saturación, degradación y activación de protecciones.
-8. Distribución del error por controlador y escenario.
-9. Tabla de fidelidad supervisada de fuerza frente a rendimiento en bucle
-   cerrado.
-10. Tabla síntesis que responda cada pregunta experimental.
+| ID archivo | Ubicación | Uso en memoria | Procedencia |
+|---|---|---|---|
+| `res_pid_transfer_matrix` | `TFG_Memoria/Figuras/resultados/` | Cuerpo: transferencia PD clásica | `comparison.py`, CSV consolidado |
+| `res_id_rmse_family` | `TFG_Memoria/Figuras/resultados/` | Cuerpo: RMSE en condiciones conocidas | `comparison.py` |
+| `res_ood_rmse_family` | `TFG_Memoria/Figuras/resultados/` | Cuerpo: figura principal OOD por familia | `comparison.py` |
+| `res_ood_scenario_matrix` | `TFG_Memoria/Figuras/resultados/` | Cuerpo: desglose OOD por escenario/controlador | `comparison.py` |
+| `res_ood_termination_summary` | `TFG_Memoria/Figuras/resultados/` | Cuerpo: modos de terminación OOD | `comparison.py` |
+| `res_trajectory_lemniscate_mlp_lstm` | `TFG_Memoria/Figuras/resultados/` | Cuerpo: caso representativo MLP/LSTM | Telemetría `lemniscate_fast_center_yaw` |
+| `res_protections_ood` | `TFG_Memoria/Figuras/resultados/` | Cuerpo: protecciones y degradación en OOD | `comparison.py` |
+| `atlas_trayectorias_id` | `TFG_Memoria/Figuras/resultados/` | Anejo: muestra visual de familias conocidas | Telemetrías de dataset clásico |
+| `atlas_trayectorias_ood` | `TFG_Memoria/Figuras/resultados/` | Anejo: muestra visual de trayectorias OOD | Telemetrías OOD |
+| `atlas_trayectoria_helix_3d` | `TFG_Memoria/Figuras/resultados/` | Anejo: vista 3D de hélice OOD | Telemetría OOD |
+| `tab:cobertura-campana` | `07_resultados.tex` | Cobertura y validez | `comparison_all_runs.csv` |
+| `tab:fidelidad-supervisada` | `07_resultados.tex` | H3 fidelidad supervisada | `data/neural_control/*/metrics/test_force_metrics.json` |
+| `tab:sintesis-resultados` | `07_resultados.tex` | Lecturas principales de campaña | Evidencia consolidada |
+
+Comando de regeneración:
+
+```powershell
+uv run simulador-quad plot-comparison results/comparison_all_runs.csv --out TFG_Memoria/Figuras/resultados --formats pdf png
+```
+
+## Decisiones editoriales para resultados
+
+1. El cuerpo usa alta densidad curada: siete figuras principales y tres tablas.
+2. El éxito de misión no se representa en ID porque apenas discrimina; se usa
+   solo para modos de fallo OOD.
+3. Las figuras `atlas_*` muestran el trabajo realizado y la variedad de
+   trayectorias; no sustituyen a la evidencia cuantitativa del cuerpo.
+4. Las figuras antiguas `mem_*` y `c1--c7` dejan de ser contrato editorial.

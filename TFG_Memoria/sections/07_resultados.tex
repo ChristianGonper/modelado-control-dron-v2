@@ -1,45 +1,220 @@
-\subsection{Cobertura y comprobaciones de validez}
+\subsection{Cobertura y validez de la campaña}
 \label{subsec:resultados-cobertura}
 
-Antes de comparar controladores se verificará la cobertura de la campaña, la
-validez de las ejecuciones y la coherencia de los metadatos.
+% Redactar: abrir el capítulo explicando que la comparación se apoya en una
+% campaña cerrada y trazable, no en ejemplos aislados. El tono debe ser de
+% auditoría experimental: qué entra, qué queda fuera y por qué.
+% Evidencia: comparison_all_runs.csv contiene 264 corridas comparables:
+% 184 en test (23 escenarios base x 8 controladores) y 80 en OOD
+% (10 escenarios base x 8 controladores). neural_position queda fuera por no
+% disponer de evidencia consolidada.
 
-\subsection{Referencia clásica y especialización}
+La campaña comparativa queda resumida en la \autoref{tab:cobertura-campana}.
+Los artefactos completos de generación, consolidación y visualización se
+documentan en el \apartadoref{anejo:comandos}.
+
+\begin{table}[H]
+\caption{Cobertura de la campaña comparativa principal.}
+\label{tab:cobertura-campana}
+\begin{tabular}{lrrrrr}
+\toprule
+Split & Escenarios base & Controladores & Corridas & Éxito misión [\%] & Seguridad [\%] \\
+\midrule
+\texttt{test} & 23 & 8 & 184 & 99,5 & 99,5 \\
+\texttt{ood} & 10 & 8 & 80 & 66,3 & 76,3 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% Redactar: mencionar que no se eliminan episodios fallidos antes de agregar.
+% Dato útil: en test solo falla circle_g04_P5_combined_s1083 con PD Lissajous
+% transferido por límite de actitud. En OOD los fallos se concentran en
+% lemniscatas extremas, compuestos agresivos y helix_tight_aggressive.
+% Nota: no extenderse aquí; las causas se retoman con las figuras OOD.
+
+\subsection{Referencia clásica y transferencia entre familias}
 \label{subsec:resultados-referencia-clasica}
 
-Se caracterizará el rendimiento de los PD nativos y una matriz cruzada mostrará
-cómo se degrada cada controlador especializado al aplicarse a otras familias.
-Esta evidencia establecerá tanto la referencia de especialización como el
-baseline de transferencia sin reajuste.
+% Redactar: presentar esta parte como la referencia de ingeniería. Antes de
+% juzgar redes, se muestra qué ocurre cuando un PD especializado se transfiere
+% sin reajuste a otras familias.
+% Lectura esperada: la diagonal no domina en todas las familias. Hay
+% especialización parcial, no confirmación total. El PD Lissajous transfiere
+% especialmente bien en hold y waypoint.
 
-\subsection{Desempeño neuronal en condiciones conocidas}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.72\textwidth]{res_pid_transfer_matrix.pdf}
+\caption{Transferencia cruzada de los controladores PD en el split
+\texttt{test}. Las filas indican la familia usada para la sintonización y las
+columnas la familia evaluada. La diagonal marca el uso nativo de cada
+controlador; las excepciones fuera de la diagonal deben interpretarse como
+transferencia favorable, no como reajuste posterior.}
+\label{fig:res-pid-transfer-matrix}
+\end{figure}
+
+% Redactar: usar la figura para defender una idea matizada. No decir que el PD
+% nativo es siempre óptimo. Datos útiles: circle nativo 0,094 m frente a 0,162 m
+% con PD Hold; lissajous nativo 0,071 m; hold mejora con PD Lissajous 0,044 m
+% frente a 0,057 m; waypoint mejora con PD Lissajous 0,048 m frente a 0,066 m.
+
+\subsection{Aprendizaje neuronal en condiciones conocidas}
 \label{subsec:resultados-neuronal-id}
 
-Se compararán los PD nativos y las redes MLP, GRU y LSTM dentro de la
-distribución de entrenamiento mediante precisión, éxito, seguridad y actuación.
-La fidelidad supervisada de fuerza se relacionará con el comportamiento en
-bucle cerrado y con la activación de las protecciones compartidas.
+% Redactar: conectar entrenamiento supervisado y bucle cerrado. La tabla no
+% demuestra por sí sola buen control, pero permite comparar fidelidad de fuerza
+% con el comportamiento posterior.
 
-\subsection{Transferencia y generalización fuera de distribución}
+\begin{table}[H]
+\caption{Fidelidad supervisada de fuerza y señales de protección asociadas.}
+\label{tab:fidelidad-supervisada}
+\begin{tabular}{lrrrr}
+\toprule
+Arquitectura & MSE norm. & RMSE fuerza norm. [N] & Clip incl. previo [\%] & Clip incl. cerrado [\%] \\
+\midrule
+MLP  & 0,0185 & 0,083 & 0,057 & 0,062 \\
+GRU  & 0,0102 & 0,053 & 0,000 & 0,000 \\
+LSTM & 0,0111 & 0,055 & 0,000 & 0,000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% Redactar: explicar que la fidelidad supervisada no se traduce de forma
+% automática en menor RMSE en bucle cerrado. Esta es una de las ideas centrales.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{res_id_rmse_family.pdf}
+\caption{RMSE medio en condiciones conocidas para el PD representativo y las
+tres arquitecturas neuronales outer-force. Se muestra únicamente el seguimiento,
+ya que el éxito de misión en \texttt{test} apenas discrimina entre
+controladores.}
+\label{fig:res-id-rmse-family}
+\end{figure}
+
+% Redactar: destacar que MLP es competitivo en hold/lissajous, GRU mejora en
+% circle frente a LSTM, y LSTM no domina pese a su fidelidad supervisada. Evitar
+% frases de superioridad global.
+
+\subsection{Generalización fuera de distribución}
 \label{subsec:resultados-transferencia-ood}
 
-Se presentarán por separado las variaciones y composiciones de capacidades
-conocidas y las familias geométricas completamente nuevas. Las redes se
-compararán con los PD congelados transferidos sin reajuste para valorar la
-hipótesis de una política común más transferible.
+% Redactar: esta debe ser la parte visualmente central del capítulo. La figura
+% por familia da la lectura rápida; la matriz por escenario demuestra que no se
+% esconden casos extremos ni heterogeneidad interna.
 
-\subsubsection*{Comparación entre MLP, GRU y LSTM}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{res_ood_rmse_family.pdf}
+\caption{RMSE medio fuera de distribución por familia de escenario. La escala se
+mantiene lineal para conservar la interpretación física en metros; las
+lemniscatas y lissajous extremas elevan el error de algunas arquitecturas y
+deben leerse junto con el desglose por escenario.}
+\label{fig:res-ood-rmse-family}
+\end{figure}
 
-Se analizará si la memoria recurrente aporta ventajas consistentes según la
-categoría de evaluación, evitando depender de una única media agregada.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.86\textwidth]{res_ood_scenario_matrix.pdf}
+\caption{Desglose OOD por escenario y controlador para las cuatro referencias
+principales. El número de cada celda es el RMSE en metros; el asterisco indica
+que la misión no se completó aunque el episodio se conserva en la agregación.}
+\label{fig:res-ood-scenario-matrix}
+\end{figure}
 
-\subsubsection*{Actuación y protecciones}
+% Redactar: separar claramente tres fenómenos: OOD moderado donde las redes son
+% competitivas; geometrías extremas donde aparecen errores grandes; y fallos de
+% misión que no deben ocultarse en medias. La matriz permite citar casos
+% concretos sin cargar el texto con todos los números.
 
-Se mostrarán esfuerzo, saturación, degradación y activación de protecciones para
-evitar atribuir a la política aprendida la seguridad aportada por límites
-clásicos compartidos.
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.76\textwidth]{res_ood_termination_summary.pdf}
+\caption{Tipos de terminación en la batería OOD para los controladores
+principales. Esta figura complementa el RMSE: una trayectoria puede tener error
+moderado y, aun así, no satisfacer el criterio de misión.}
+\label{fig:res-ood-termination-summary}
+\end{figure}
 
-\subsubsection*{Síntesis de los contrastes}
+% Redactar: usar esta figura para explicar por qué no basta con una media de
+% error. Distinguir tiempo, saturación y actitud como modos de fallo con
+% implicaciones físicas distintas.
 
-El bloque de evidencia cerrará sintetizando H1--H5 sin introducir explicaciones
-causales que excedan los datos disponibles.
+\subsection{Caso representativo de arquitectura}
+\label{subsec:resultados-caso-representativo}
+
+% Redactar: esta figura no sustituye a la estadística agregada. Sirve para que
+% el lector vea el fenómeno dinámico: dos arquitecturas con la misma interfaz
+% outer-force pueden producir seguimiento muy distinto.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.88\textwidth]{res_trajectory_lemniscate_mlp_lstm.pdf}
+\caption{Escenario OOD \texttt{lemniscate\_fast\_center\_yaw}: comparación
+visual entre MLP y LSTM. El panel superior muestra el plano horizontal y el
+inferior el error de posición a lo largo del episodio.}
+\label{fig:res-trajectory-lemniscate-mlp-lstm}
+\end{figure}
+
+% Redactar: defender aquí la idea "la arquitectura decide" sin convertirla en
+% regla universal. La figura ilustra un caso fuerte; la evidencia general está
+% en las figuras agregadas y en el atlas del anejo.
+
+\subsection{Actuación, protecciones y límites compartidos}
+\label{subsec:resultados-protecciones}
+
+% Redactar: cerrar la parte experimental recordando que la seguridad no procede
+% solo de la red. Hay mixer, saturación, límites de fuerza y degradación experta.
+% No presentar clipping frecuente como éxito del aprendizaje.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.78\textwidth]{res_protections_ood.pdf}
+\caption{Activación media de protecciones y degradación experta en OOD. La
+figura ayuda a separar error de seguimiento, demanda de control y actuación de
+los límites compartidos del sistema.}
+\label{fig:res-protections-ood}
+\end{figure}
+
+% Redactar: explicar que MLP concentra clipping de norma/inclinación en OOD,
+% mientras que la degradación experta aparece también en referencias clásicas.
+% Usar esta figura como transición natural hacia la discusión.
+
+\subsection{Lecturas principales de la campaña}
+\label{subsec:resultados-sintesis}
+
+% Redactar: esta tabla es un puente hacia discusión. Mantenerla como síntesis
+% sobria: evidencia observada + lectura prudente. Evitar convertirla en una
+% checklist explícita de H1--H5, aunque cubra esas preguntas por debajo.
+
+\begin{table}[H]
+\caption{Lecturas principales que debe desarrollar la redacción final.}
+\label{tab:sintesis-resultados}
+\begin{tabularx}{\textwidth}{p{0.27\textwidth} X X}
+\toprule
+Eje de lectura & Evidencia observada & Lectura acotada \\
+\midrule
+Especialización clásica & La matriz PD muestra diagonal favorable en parte de
+las familias y excepciones claras en \texttt{hold} y \texttt{waypoint}. &
+La especialización existe, pero la transferencia entre familias no es
+uniformemente mala. \\
+Imitación en \texttt{test} & MLP, GRU y LSTM completan las misiones conocidas,
+con RMSE dependiente de familia. & La fidelidad supervisada no basta para
+predecir el comportamiento en bucle cerrado. \\
+Generalización OOD & Los agregados y la matriz por escenario muestran fallos y
+errores altos en geometrías extremas. & La política común es competitiva en
+casos moderados, no superior de forma global. \\
+Memoria temporal & GRU y LSTM no dominan sistemáticamente a MLP ni entre sí. &
+La memoria recurrente introduce una sensibilidad arquitectónica que debe
+interpretarse por familia y escenario. \\
+Protecciones & Clipping, saturación y degradación aparecen de forma desigual
+entre controladores y escenarios. & La seguridad observada pertenece al sistema
+híbrido completo, no únicamente a la red. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% Redactar: al cerrar el capítulo, remitir al anejo como atlas visual. Las
+% figuras de trayectorias del anejo no son demostración comparativa, sino una
+% muestra de la variedad de escenarios y del trabajo experimental realizado.
+% Referencia útil: \apartadoref{anejo:comandos}.
