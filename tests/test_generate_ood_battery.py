@@ -61,6 +61,7 @@ def test_generate_ood_battery_smoke(tmp_path):
         cfg = yaml.safe_load(f)
     assert cfg["output"]["dir"] == "results/lemniscate_3d_heavy_wind"
     assert row["result_dir"].replace("\\", "/") == "results/lemniscate_3d_heavy_wind"
+    assert cfg["termination"]["max_duration_s"] == 60.0
 
 
 def test_generate_ood_battery_requires_frozen_pids(tmp_path):

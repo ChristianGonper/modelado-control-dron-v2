@@ -38,7 +38,8 @@ BASE_TIMING = {
 }
 
 BASE_TERMINATION = {
-    "max_duration_s": 35.0,
+    # Waypoint helices need ~43 s nominal profile time; 60 s matches classic waypoint battery.
+    "max_duration_s": 60.0,
     "z_min_m": 0.0,
     "max_attitude_angle_rad": 1.256,
     "max_saturation_duration_s": 2.0,
