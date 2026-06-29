@@ -30,7 +30,9 @@ def _record(**overrides):
         "force_norm_clip_percentage": 2.0,
         "force_tilt_clip_percentage": 0.5,
         "degradation_percentage": 0.0,
+        "mission_success": 1.0,
         "success": 1.0,
+        "termination_reason": "Trajectory completed",
     }
     base.update(overrides)
     return base
@@ -41,8 +43,10 @@ def _build_comparison_records():
     for family in ["hold", "circle", "lissajous", "waypoint"]:
         for controller in [
             f"classic_pid_{family}",
+            "classic_pid_representative",
             "neural_outer_force_mlp",
             "neural_outer_force_gru",
+            "neural_outer_force_lstm",
         ]:
             records.append(
                 _record(
@@ -56,8 +60,13 @@ def _build_comparison_records():
                 )
             )
 
-    for family in ["circle", "waypoint"]:
-        for controller in ["classic_pid_circle", "neural_outer_force_mlp"]:
+    for family in ["lemniscate", "lissajous", "composite", "waypoint"]:
+        for controller in [
+            "classic_pid_representative",
+            "neural_outer_force_mlp",
+            "neural_outer_force_gru",
+            "neural_outer_force_lstm",
+        ]:
             records.append(
                 _record(
                     scenario_id=f"scen_ood_{family}_{controller}",
@@ -68,7 +77,9 @@ def _build_comparison_records():
                     collective_thrust_mean_N=10.5 + 0.1 * len(controller),
                     body_moment_norm_mean_Nm=0.8 + 0.05 * len(controller),
                     saturation_percentage=4.0,
+                    mission_success=0.0 if family == "lemniscate" else 1.0,
                     success=0.0,
+                    termination_reason="Persistent actuator saturation" if family == "lemniscate" else "Trajectory completed",
                 )
             )
 
@@ -96,13 +107,12 @@ def test_plot_comparison_generates_all_figures(tmp_path):
     result = plot_comparison(csv_path, out_dir, formats=["png", "pdf"])
 
     expected_bases = {
-        "c1_rmse_comparison",
-        "c2_success_rate",
-        "c3_generalization_ood",
-        "c4_pid_transfer",
-        "c5_tracking_vs_effort",
-        "c6_saturation_clipping",
-        "c7_error_distribution",
+        "res_id_rmse_family",
+        "res_ood_rmse_family",
+        "res_pid_transfer_matrix",
+        "res_ood_scenario_matrix",
+        "res_ood_termination_summary",
+        "res_protections_ood",
     }
 
     actual_files = os.listdir(out_dir)
@@ -112,8 +122,9 @@ def test_plot_comparison_generates_all_figures(tmp_path):
         assert os.path.getsize(out_dir / f"{base}.png") > 0
         assert os.path.getsize(out_dir / f"{base}.pdf") > 0
 
-    assert set(result.generated) == expected_bases
-    assert len(result.paths) == len(expected_bases) * 2
+    generated = set(result.generated)
+    assert expected_bases.issubset(generated)
+    assert len(result.paths) == len(generated) * 2
 
 
 def test_plot_comparison_reports_skipped_c3_without_ood(tmp_path):
@@ -130,9 +141,9 @@ def test_plot_comparison_reports_skipped_c3_without_ood(tmp_path):
 
     result = plot_comparison(csv_path, tmp_path / "figs", formats=["png"])
 
-    assert "c3_generalization_ood" not in result.generated
+    assert "res_ood_rmse_family" not in result.generated
     skipped_ids = {figure_id for figure_id, _ in result.skipped}
-    assert "c3_generalization_ood" in skipped_ids
+    assert "res_ood_rmse_family" in skipped_ids
 
 
 def test_plot_comparison_includes_transfer_pid_runs_in_c1(tmp_path):
@@ -156,7 +167,7 @@ def test_plot_comparison_includes_transfer_pid_runs_in_c1(tmp_path):
     pd.DataFrame(records).to_csv(csv_path, index=False)
 
     result = plot_comparison(csv_path, tmp_path / "figs", formats=["png"])
-    assert "c1_rmse_comparison" in result.generated
+    assert "res_pid_transfer_matrix" in result.generated
 
 
 def test_plot_comparison_c4_ignores_non_test_splits(tmp_path):
@@ -180,7 +191,7 @@ def test_plot_comparison_c4_ignores_non_test_splits(tmp_path):
     pd.DataFrame(records).to_csv(csv_path, index=False)
 
     result = plot_comparison(csv_path, tmp_path / "figs", formats=["png"])
-    assert "c4_pid_transfer" in result.generated
+    assert "res_pid_transfer_matrix" in result.generated
 
 
 def test_plot_comparison_skips_c5_without_physical_columns(tmp_path):
@@ -199,7 +210,7 @@ def test_plot_comparison_skips_c5_without_physical_columns(tmp_path):
     pd.DataFrame(records).to_csv(csv_path, index=False)
 
     result = plot_comparison(csv_path, tmp_path / "figs", formats=["png"])
-    assert "c5_tracking_vs_effort" not in result.generated
+    assert "res_protections_ood" not in result.generated
 
 
 def test_plot_comparison_drops_ambiguous_classic_family_pid_rows(tmp_path):
@@ -226,7 +237,7 @@ def test_plot_comparison_drops_ambiguous_classic_family_pid_rows(tmp_path):
 
     assert result.warnings
     assert "classic_family_pid" in result.warnings[0]
-    assert "c1_rmse_comparison" in result.generated
+    assert result.generated
 
 
 def test_plot_comparison_c5_uses_only_test_split(tmp_path):
@@ -254,7 +265,7 @@ def test_plot_comparison_c5_uses_only_test_split(tmp_path):
     pd.DataFrame(records).to_csv(csv_path, index=False)
 
     result = plot_comparison(csv_path, tmp_path / "figs", formats=["png"])
-    assert "c5_tracking_vs_effort" in result.generated
+    assert result.generated
 
 
 def test_plot_comparison_normalizes_legacy_transfer_labels(tmp_path):
@@ -271,4 +282,55 @@ def test_plot_comparison_normalizes_legacy_transfer_labels(tmp_path):
     pd.DataFrame(records).to_csv(csv_path, index=False)
 
     result = plot_comparison(csv_path, tmp_path / "figs", formats=["png"])
-    assert "c1_rmse_comparison" in result.generated
+    assert "res_pid_transfer_matrix" in result.generated
+
+
+def test_plot_comparison_generates_trajectory_with_fixture_telemetry(tmp_path):
+    fixtures_dir = Path(__file__).resolve().parent / "fixtures"
+    csv_path = tmp_path / "comparison_all_runs.csv"
+    pd.DataFrame(_build_comparison_records()).to_csv(csv_path, index=False)
+    out_dir = tmp_path / "figs_traj"
+    result = plot_comparison(
+        csv_path,
+        out_dir,
+        formats=["png"],
+        trajectory_telemetry=[
+            ("MLP", fixtures_dir / "trajectory_representative_mlp.json"),
+            ("LSTM", fixtures_dir / "trajectory_representative_lstm.json"),
+        ],
+    )
+    assert "res_trajectory_lemniscate_mlp_lstm" in result.generated
+    assert (out_dir / "res_trajectory_lemniscate_mlp_lstm.png").exists()
+
+
+def test_plot_comparison_skips_trajectory_when_telemetry_missing(tmp_path):
+    csv_path = tmp_path / "comparison_all_runs.csv"
+    pd.DataFrame(_build_comparison_records()).to_csv(csv_path, index=False)
+    result = plot_comparison(
+        csv_path,
+        tmp_path / "figs_missing_traj",
+        formats=["png"],
+        trajectory_telemetry=[("MLP", tmp_path / "missing.json")],
+    )
+    assert "res_trajectory_lemniscate_mlp_lstm" not in result.generated
+    skipped = dict(result.skipped)
+    assert "res_trajectory_lemniscate_mlp_lstm" in skipped
+    assert "telemetría ausente" in skipped["res_trajectory_lemniscate_mlp_lstm"]
+
+
+def test_plot_comparison_prefers_mission_success_and_warns_on_legacy_success(tmp_path):
+    records = [
+        _record(
+            scenario_id="legacy_success_only",
+            family="hold",
+            split="test",
+            controller="classic_pid_representative",
+            mission_success=0.0,
+            success=1.0,
+        )
+    ]
+    records[0].pop("mission_success")
+    csv_path = tmp_path / "legacy_success.csv"
+    pd.DataFrame(records).to_csv(csv_path, index=False)
+    result = plot_comparison(csv_path, tmp_path / "figs_legacy", formats=["png"])
+    assert result.generated

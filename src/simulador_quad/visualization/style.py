@@ -34,6 +34,7 @@ CONTROLLER_STYLE: dict[str, dict[str, Any]] = {
     "classic_pid_circle": {"color": FAMILY_COLORS["circle"], "label": "PID Circle", "linestyle": "-"},
     "classic_pid_lissajous": {"color": FAMILY_COLORS["lissajous"], "label": "PID Lissajous", "linestyle": "-"},
     "classic_pid_waypoint": {"color": FAMILY_COLORS["waypoint"], "label": "PID Waypoint", "linestyle": "-"},
+    "classic_pid_representative": {"color": COLORS["pid"], "label": "PD representativo", "linestyle": "-"},
     "outer_force_oracle": {"color": COLORS["secondary"], "label": "Oráculo Fuerza", "linestyle": "-."},
     "neural_outer_force_mlp": {"color": COLORS["mlp"], "label": "MLP Fuerza", "linestyle": "-"},
     "neural_outer_force_gru": {"color": COLORS["gru"], "label": "GRU Fuerza", "linestyle": "-"},

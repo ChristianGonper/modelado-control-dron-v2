@@ -132,9 +132,13 @@ Cada escenario usado en la memoria debe conservar:
   - `neural_outer_force` y `perturbation_response` solo cuando existen los campos opcionales necesarios.
   - Con `--profile report --formats png pdf`, las mismas figuras se exportan en PNG y PDF a 300 dpi.
 - Figuras comparativas de campaña (`plot-comparison` sobre `comparison_all_runs.csv`):
-  - `c1_rmse_comparison`, `c2_success_rate`, `c3_generalization_ood`, `c4_pid_transfer`, `c5_tracking_vs_effort`, `c6_saturation_clipping`, `c7_error_distribution`
-  - La CLI lista también las figuras omitidas cuando faltan datos (p. ej. C3 sin split `ood`).
-  - C4 y C5 usan solo `split=test`. C5 separa empuje colectivo [N] y norma de momentos [N·m]; no usa el índice heurístico `|T| + ||τ||`.
+  - Cuerpo de memoria: `res_pid_transfer_matrix`, `res_id_rmse_family`,
+    `res_ood_rmse_family`, `res_ood_scenario_matrix`,
+    `res_ood_termination_summary`, `res_trajectory_lemniscate_mlp_lstm`,
+    `res_protections_ood`.
+  - Atlas de trayectorias: `atlas_trayectorias_id`,
+    `atlas_trayectorias_ood`, `atlas_trayectoria_helix_3d`.
+  - La CLI lista también las figuras omitidas cuando faltan datos necesarios.
   - Las filas `classic_family_pid` ambiguas se omiten con advertencia; no se infiere el PID desde la familia de trayectoria.
 - Conclusion tecnica breve:
   - causa de terminacion;

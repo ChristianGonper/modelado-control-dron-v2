@@ -242,6 +242,12 @@ def main():
     plot_comp_parser.add_argument("--out", required=True, help="Directorio donde se escribirán las figuras comparativas")
     plot_comp_parser.add_argument("--formats", nargs="+", choices=["png", "pdf"], default=["png", "pdf"],
                                    help="Formatos de imagen a generar (default: png pdf)")
+    plot_comp_parser.add_argument(
+        "--trajectory-telemetry",
+        action="append",
+        metavar="LABEL:PATH",
+        help="Serie LABEL:PATH para res_trajectory_lemniscate_mlp_lstm (repetible, p. ej. MLP:telemetry.json)",
+    )
 
     args = parser.parse_args()
 
@@ -269,11 +275,24 @@ def main():
         for path in paths:
             print(f"  {path}")
     elif args.command == "plot-comparison":
+        trajectory_telemetry = None
+        if args.trajectory_telemetry:
+            trajectory_telemetry = []
+            for item in args.trajectory_telemetry:
+                label, sep, path = item.partition(":")
+                if not sep or not label or not path:
+                    print(
+                        f"Error: --trajectory-telemetry requiere formato LABEL:PATH, recibido: {item!r}",
+                        file=sys.stderr,
+                    )
+                    sys.exit(2)
+                trajectory_telemetry.append((label, path))
         try:
             result = plot_comparison(
                 args.comparison_csv,
                 args.out,
                 formats=args.formats,
+                trajectory_telemetry=trajectory_telemetry,
             )
         except (FileNotFoundError, ValueError) as exc:
             print(f"Error: {exc}", file=sys.stderr)

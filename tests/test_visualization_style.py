@@ -21,6 +21,10 @@ def test_get_controller_style():
     assert style_hold["label"] == "PID Hold"
     assert style_hold["color"] == "#0072B2"
 
+    style_representative = get_controller_style("classic_pid_representative")
+    assert style_representative["label"] == "PD representativo"
+    assert style_representative["color"] == COLORS["pid"]
+
     # Dynamic classic transfer matching
     style_trans = get_controller_style("classic_transfer_lissajous")
     assert "Lissa" in style_trans["label"]
