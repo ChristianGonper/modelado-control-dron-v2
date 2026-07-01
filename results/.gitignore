@@ -1,6 +1,4 @@
-*
+*.png
+*.pdf
+*.html
 !.gitignore
-!evidence_manifest.csv
-!comparison_all_runs.csv
-!comparison_all_runs_full.csv
-!comparison_summary.csv
