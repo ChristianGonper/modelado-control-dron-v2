@@ -1,13 +1,124 @@
 \subsection{Conclusiones}
 
-Las conclusiones valorarán directamente la hipótesis central y cada
-objetivo, separando contribuciones desarrolladas, resultados observados,
-interpretaciones y límites.
+Este trabajo ha desarrollado un entorno reproducible para comparar control
+clásico especializado y control neuronal por imitación en el seguimiento de
+trayectorias de un cuadricóptero. La contribución no se limita a implementar un
+simulador 6DOF: el valor del trabajo está en haber cerrado una cadena
+experimental completa, desde la generación de escenarios y expertos PD hasta el
+entrenamiento de MLP, GRU y LSTM, la ejecución en bucle cerrado y la
+consolidación de resultados comparables. Esa trazabilidad permite interpretar
+los resultados sin depender de ejemplos aislados ni de una única media global.
+
+La hipótesis inicial se cumple de forma parcial y matizada. Las arquitecturas
+neuronales entrenadas para predecir la fuerza deseada del lazo externo son
+viables en familias conocidas y pueden sustituir al banco de PD en varios casos
+sin perder la capacidad de completar la misión. Sin embargo, no se observa una
+superioridad neuronal global. En condiciones fuera de distribución aparecen
+fallos, diferencias fuertes entre arquitecturas y una dependencia clara de la
+geometría y de la exigencia dinámica de la referencia.
+
+La primera conclusión técnica es que la especialización clásica no se comporta
+como una diagonal perfecta. Algunos PD transferidos funcionan mejor que el PD
+nativo en familias concretas, mientras que otros pierden rendimiento al salir de
+su trayectoria de ajuste. Esto confirma que la transferencia clásica es desigual
+y que el banco de expertos constituye una referencia necesaria para juzgar la
+imitación neuronal. También muestra que el proceso de sintonización de los PD
+podría refinarse en futuras versiones, especialmente en familias donde el
+controlador nativo no es el que mejor transfiere ni el que menor error produce.
+
+La segunda conclusión es que la fidelidad supervisada no basta para predecir el
+seguimiento en bucle cerrado. GRU y LSTM aproximan mejor la fuerza del experto
+en la evaluación supervisada, pero no dominan de forma sistemática el RMSE de
+posición. MLP, pese a no usar memoria temporal explícita, obtiene resultados
+muy competitivos en varias familias conocidas y en OOD moderado. Por tanto, la
+calidad de imitación de la acción experta es una condición útil, pero no
+suficiente, para garantizar buen seguimiento dinámico.
+
+La tercera conclusión es que la memoria recurrente no aporta una mejora
+automática. GRU ofrece un compromiso sólido en varios escenarios, mientras que
+LSTM presenta fallos acusados en trayectorias rápidas o geométricamente más
+exigentes. La comparación sugiere que la historia temporal puede ayudar en
+ciertos regímenes, pero también puede introducir sensibilidad a estados poco
+representados, retardos y desviaciones acumuladas. En consecuencia, la elección
+de arquitectura debe analizarse junto con la familia de trayectoria, la
+velocidad, las perturbaciones y los límites de actuación.
+
+La cuarta conclusión es que la seguridad observada pertenece a la arquitectura
+de control completa, no únicamente a la red. El lazo interno clásico, el
+mezclador, la saturación de actuadores y los recortes de fuerza condicionan el
+comportamiento final. Esta decisión de diseño es adecuada para el alcance del
+trabajo porque permite estudiar la sustitución del lazo externo por una red sin
+renunciar a una estructura de control interpretable; al mismo tiempo, obliga a
+ser prudente al atribuir méritos o fallos exclusivamente a la parte neuronal.
+
+En conjunto, el trabajo cumple el objetivo de proporcionar una plataforma
+experimental coherente para estudiar la sustitución de un banco de PD por una
+implementación neuronal de fuerza deseada. Los resultados muestran que la
+imitación neuronal es prometedora en condiciones conocidas y en ciertas
+variaciones OOD, pero que la generalización no puede darse por supuesta. La
+contribución principal queda, por tanto, en haber construido un procedimiento
+medible y reproducible para separar especialización, transferencia,
+arquitectura neuronal y límites físicos de actuación.
 
 \subsection{Trabajo futuro}
 
-Se propondrán la evaluación de métodos ya implementados, la ampliación y
-robustificación del conjunto de datos, modelos físicos más complejos y
-validación progresiva con hardware. También se estudiarán los sensores y
-estimadores necesarios para vuelo real, además de percepción visual a bordo,
-reconocimiento y conciencia situacional.
+Una primera línea de trabajo consiste en adaptar el simulador a un vehículo
+comercial concreto. Esto requiere identificar masa, inercia, geometría de
+rotores, límites de empuje, curvas de motor, retardos, saturaciones y parámetros
+de sensores a partir de documentación técnica o ensayos experimentales. Una vez
+cerrada esa identificación, las métricas obtenidas en simulación tendrían una
+relación más directa con la capacidad de un dron real y no solo con un vehículo
+representativo.
+
+La segunda línea es aumentar la fidelidad física del modelo. El simulador actual
+incluye un conjunto deliberadamente acotado de fenómenos, suficiente para la
+comparación realizada, pero pueden incorporarse modelos más ricos de resistencia
+aerodinámica, descarga de batería, variación de empuje con tensión, efecto suelo,
+turbulencia, interferencia entre rotores y restricciones térmicas o eléctricas.
+Estas ampliaciones permitirían estudiar si los controladores mantienen su
+comportamiento cuando la actuación disponible cambia durante la misión o cuando
+aparecen efectos que el modelo actual solo aproxima de forma simplificada.
+
+También resulta necesario ampliar y refinar el conjunto de trayectorias. El
+trabajo ha usado familias representativas para construir una comparación
+controlada, pero una implementación orientada a vuelo real debería aumentar el
+número de familias, la diversidad geométrica dentro de cada familia, las
+velocidades, los perfiles verticales y las transiciones entre primitivas. Este
+crecimiento debe ir acompañado de una revisión de los límites de terminación,
+empuje, inclinación, saturación y tiempo máximo, de modo que reflejen mejor lo
+que puede exigirse a un vehículo concreto sin confundir una misión exigente con
+una misión físicamente inviable.
+
+Otra línea importante es el estudio sistemático de arquitecturas neuronales. En
+este trabajo MLP, GRU y LSTM se comparan bajo una configuración común para
+aislar el efecto de la arquitectura. En una fase posterior, el objetivo podría
+cambiar: no solo comparar familias de redes en igualdad de condiciones, sino
+buscar la mejor configuración para seguimiento de trayectorias. Esto implica
+explorar anchura, profundidad, longitud de ventana, normalización, selección de
+entradas, regularización, semillas, tamaño del conjunto de entrenamiento y
+criterios de selección de checkpoints. Es posible que cada arquitectura requiera
+un tamaño y una ventana distintos para expresar su mejor comportamiento.
+
+Asimismo, conviene estudiar de forma más fina qué subconjuntos de datos aportan
+capacidad de generalización. No basta con añadir más trayectorias: debe
+analizarse qué familias, perturbaciones y regímenes dinámicos enriquecen de
+verdad la distribución de entrenamiento. Esta línea permitiría distinguir si los
+fallos OOD proceden de falta de cobertura geométrica, de falta de estados con
+alta aceleración, de límites de actuación demasiado restrictivos o de una
+arquitectura incapaz de representar la relación entre observación, referencia y
+fuerza deseada.
+
+El paso natural posterior es trasladar el enfoque a un vehículo real. Para ello
+no basta con cargar una red entrenada en simulación: primero debe garantizarse
+que el dron real ofrece las variables necesarias de estado, referencia y
+actuación, o que existe un estimador capaz de reconstruirlas con suficiente
+frecuencia y precisión. También habría que alinear las secuencias de control,
+telemetría y temporización entre simulador y vehículo, definir procedimientos de
+prueba progresiva y establecer límites de seguridad independientes de la red.
+
+Finalmente, una línea de cierre consiste en usar el simulador como banco de
+validación antes del vuelo. Esto permitiría probar trayectorias nuevas, detectar
+regímenes donde el controlador demanda fuerzas excesivas, ajustar protecciones y
+seleccionar escenarios de ensayo real con riesgo controlado. De esta forma, el
+trabajo desarrollado puede servir como base para una transición gradual desde la
+comparación en simulación hacia una evaluación experimental sobre hardware.
