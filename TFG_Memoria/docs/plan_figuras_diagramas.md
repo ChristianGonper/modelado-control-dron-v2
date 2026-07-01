@@ -8,10 +8,14 @@
 - No se dependerá únicamente del color: se combinarán marcadores, patrones o
   etiquetas.
 - Los diagramas se realizarán preferentemente en TikZ standalone integrado en
-  LaTeX. Solo se usará otro formato cuando el contenido sea una gráfica generada
-  por script o cuando TikZ no sea razonable para la figura.
+  LaTeX. También podrán realizarse con Python, Matplotlib u otras librerías de
+  dibujo cuando el resultado sea más claro, especialmente para representaciones
+  geométricas, trayectorias, señales o esquemas que convenga generar por script.
 - Cada diagrama conservará su fuente editable y una ficha reproducible con el
   mismo nombre base, según `../Figuras/diagramas/README.md`.
+- Toda figura nueva requiere ficha antes de su desarrollo. Solo se procederá a
+  crear o regenerar una figura cuando el usuario lo pida explícitamente en la
+  instrucción de trabajo.
 - Los snippets serán breves y usarán el estilo `codigoTFG` definido en
   `preamble.sty`.
 
@@ -25,7 +29,8 @@ diagrama cambie.
 | Capítulo | Diagrama | Finalidad |
 |---|---|---|
 | Introducción | `FIG-001` Hipótesis y estrategia experimental | Mostrar banco de PD, selección de expertos, imitación y comparación de las tres referencias en ID y OOD. Fuente TikZ disponible. |
-| Estado del arte | Taxonomía de enfoques de control | Situar PD, programación de ganancias, control aprendido e híbrido. |
+| Estado del arte | `FIG-014` Arquitecturas neuronales para control | Comparar MLP, RNN básica y arquitecturas recurrentes con compuertas sin duplicar la ventana temporal de `FIG-013`. Fuente TikZ disponible y ficha actualizada. |
+| Estado del arte | `FIG-015` Actuación y movimiento de un cuadricóptero | Explicar cómo cuatro rotores generan empuje colectivo y momentos, y por qué el movimiento lateral exige inclinar el vehículo. Ficha creada; fuente pendiente. |
 | Metodología 3.1 | `FIG-002` Marcos ENU y FRD | Fijar signos, ejes y dirección de empuje. Fuente TikZ disponible y ficha actualizada. |
 | Metodología 3.1 | `FIG-003` Flujo multirrate | Explicar referencia, control, mezclador, actuadores, dinámica y telemetría. Fuente TikZ disponible y ficha actualizada. |
 | Metodología 3.1 | `FIG-011` Configuración de rotores | Mostrar configuración en X, orden de rotores y signo de giro usado por el mixer. Fuente TikZ disponible y ficha actualizada. |
