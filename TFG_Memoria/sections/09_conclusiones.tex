@@ -99,6 +99,17 @@ entradas, regularización, semillas, tamaño del conjunto de entrenamiento y
 criterios de selección de checkpoints. Es posible que cada arquitectura requiera
 un tamaño y una ventana distintos para expresar su mejor comportamiento.
 
+Dentro de esa línea también debería estudiarse la forma de inferencia de las
+redes recurrentes. La implementación actual reconstruye y procesa una ventana
+de 20 muestras en cada ciclo, sin reutilizar directamente los estados ocultos
+calculados en el ciclo anterior. Una alternativa sería conservar estados
+recurrentes entre pasos para reducir recálculo o aproximarse a una inferencia
+más stateful. No obstante, esta modificación no es meramente computacional:
+alteraría el contrato efectivo de la red, porque la salida pasaría a depender de
+un estado propagado entre ciclos y no solo de la ventana explícita de muestras
+recientes. Por ello debería evaluarse como una variante metodológica propia, con
+entrenamiento, validación y pruebas cerradas específicas.
+
 Asimismo, conviene estudiar de forma más fina qué subconjuntos de datos aportan
 capacidad de generalización. No basta con añadir más trayectorias: debe
 analizarse qué familias, perturbaciones y regímenes dinámicos enriquecen de

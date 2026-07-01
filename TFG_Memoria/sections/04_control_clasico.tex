@@ -23,6 +23,7 @@ $\bm{\tau}_B$ en FRD. El mixer descrito en el
 y los momentos en comandos de rotor.
 
 \begin{figure}[H]
+  \centering
   \includegraphics[width=\textwidth]{FIG-004}
   \caption{Arquitectura del controlador clásico en cascada implementado. Se destacan el lazo externo (posición en mundo ENU), la conversión geométrica de fuerza a actitud y el lazo interno (estabilización de actitud en cuerpo FRD). La frontera de sustitución neuronal se sitúa en la señal de fuerza deseada $\bm{F}_{d,W}$. Fuente: elaboración propia.}
   \label{fig:arquitectura-cascada}
@@ -221,6 +222,7 @@ una mejora clara, reduciendo la probabilidad de escoger ganancias más agresivas
 solo por diferencias numéricas pequeñas.
 
 \begin{figure}[H]
+  \centering
   \includegraphics[width=0.75\textwidth]{FIG-005}
   \caption{Flujo lógico de optimización y ajuste progresivo de ganancias clásicas. Los candidatos aleatorios globales se filtran por condiciones de estabilidad y seguridad antes de que se inicie la optimización local. Fuente: elaboración propia.}
   \label{fig:optimizacion-pid}

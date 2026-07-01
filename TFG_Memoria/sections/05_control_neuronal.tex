@@ -13,6 +13,7 @@ límites de fuerza y los mismos conversores fuerza--actitud que la implementaci�
 clásica, y a partir de ahí el lazo interno de actitud permanece común.
 
 \begin{figure}[H]
+  \centering
   \includegraphics[width=\textwidth]{FIG-006}
   \caption{Estructura del controlador neuronal híbrido. La red neuronal sustituye únicamente la decisión traslacional del lazo externo para generar $\bm{F}_{d,W}$, delegando el filtrado de seguridad, la conversión fuerza-actitud y la estabilización en el lazo clásico interno. Fuente: elaboración propia.}
   \label{fig:contrato-neuronal}
@@ -118,7 +119,17 @@ un episodio todavía no existen veinte muestras previas; por ello la cola
 recurrente se rellena inicialmente repitiendo la primera entrada normalizada
 hasta completar la longitud requerida.
 
+La inferencia recurrente usada en este trabajo no es \emph{stateful} en el
+sentido estricto. GRU y LSTM no conservan entre ciclos el estado oculto
+calculado en la llamada anterior para usarlo directamente como estado inicial
+de la siguiente. En cada ciclo se reconstruye una ventana con las últimas veinte
+entradas normalizadas y se procesa completa; la fuerza aplicada se obtiene de la
+salida asociada al último instante de esa ventana. Así, dos ejecuciones con la
+misma cola de entradas producen la misma salida, sin depender de un estado
+interno acumulado fuera de la ventana.
+
 \begin{figure}[H]
+  \centering
   \includegraphics[width=0.95\textwidth]{FIG-013}
   \caption{Mapeo de la ventana temporal deslizante en redes recurrentes e inicialización mediante repetición de muestra (\textit{padding} izquierdo) en el arranque ($k = 0$). La cola FIFO genera un lote consolidado de dimensiones $[1, 20, 9]$ en cada inferencia. Fuente: elaboración propia.}
   \label{fig:ventana-deslizante}
@@ -211,7 +222,9 @@ entregan a la red. La fuerza predicha se desnormaliza y se interpreta de nuevo
 como $\widehat{\bm{F}}_{d,W}$. En MLP esta operación depende solo del instante
 actual. En GRU y LSTM se mantiene una cola de las últimas 20 entradas
 normalizadas; la cola se reinicia al comenzar cada episodio y se rellena al
-inicio repitiendo la primera muestra disponible.
+inicio repitiendo la primera muestra disponible. La red se evalúa sobre esa
+ventana completa en cada ciclo de control, en lugar de propagar únicamente el
+estado recurrente resultante del ciclo anterior.
 
 Antes de convertir la fuerza a una actitud deseada, la implementación neuronal
 conserva las protecciones de la implementación clásica: limita la norma de la

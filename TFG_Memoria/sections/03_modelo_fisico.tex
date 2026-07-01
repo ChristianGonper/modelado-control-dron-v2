@@ -34,7 +34,8 @@ Internacional; los ángulos solo se convierten a grados para visualización y
 análisis gráfico.
 
 \begin{figure}[H]
-  \includegraphics[width=0.85\textwidth]{FIG-002}
+  \centering
+  \includegraphics[width=0.82\textwidth, trim=0 3.5cm 0 4.0cm, clip]{FIG-002}
   \caption{Sistemas de referencia empleados por el simulador. El sistema mundo sigue la convención ENU y el sistema cuerpo la convención FRD; el empuje total se aplica en la dirección opuesta al eje vertical del cuerpo ($z_B$). Fuente: elaboración propia.}
   \label{fig:marcos-referencia}
 \end{figure}
@@ -65,6 +66,7 @@ se codifican mediante $s_i=\{-1,1,1,-1\}$; signo el cual actúa como el par de r
 \eqnref{eq:rotor-cuadratico}.
 
 \begin{figure}[H]
+  \centering
   \includegraphics[width=0.75\textwidth]{FIG-011}
   \caption{Configuración en X de los motores y sentidos de giro del rotor en el sistema de referencia cuerpo. La dirección física de los rotores se asocia con el signo del momento de reacción en guiñada. Fuente: elaboración propia.}
   \label{fig:configuracion-rotores}
@@ -169,6 +171,7 @@ que un rotor situado delante ($x_i>0$) aporta momento de cabeceo positivo. Esta
 es la misma convención implementada por el mixer del simulador.
 
 \begin{figure}[H]
+  \centering
   \includegraphics[width=0.9\textwidth]{FIG-012}
   \caption{Esquema lógico y toma de decisiones del mezclador de rotores (mixer) ante condiciones factibles y saturadas. Se prioriza el control de actitud mediante el recorte proporcional de momentos ($k$) frente a la desviación del empuje colectivo solicitado. Fuente: elaboración propia.}
   \label{fig:flujo-mixer}
@@ -266,6 +269,7 @@ más rica que un círculo y obliga al controlador a seguir cambios simultáneos 
 posición, velocidad y aceleración.
 
 \begin{figure}[H]
+  \centering
   \includegraphics[width=0.9\textwidth]{FIG-009}
   \caption{Familias de trayectorias analíticas del simulador. Cada geometría introduce estímulos diferentes (estacionario, velocidad variable, aceleración acoplada en 3 ejes o tramos discretos). Fuente: elaboración propia a partir de las clases de trayectoria.}
   \label{fig:familias-trayectorias}
@@ -284,6 +288,7 @@ En ambos casos la posición y la velocidad son continuas, evitando escalones
 en la referencia.
 
 \begin{figure}[H]
+  \centering
   \includegraphics[width=0.9\textwidth]{FIG-010}
   \caption{Perfiles cinemáticos generados en las transiciones entre waypoints. A la izquierda se ilustra el perfil trapezoidal (para tramos largos) y a la derecha el perfil triangular (para tramos cortos, donde no se alcanza la velocidad de consigna). Fuente: elaboración propia.}
   \label{fig:perfiles-waypoint}
@@ -343,6 +348,7 @@ porque es suficiente para el análisis posterior y evita almacenar datos
 innecesariamente densos.
 
 \begin{figure}[H]
+  \centering
   \includegraphics[width=\textwidth]{FIG-003}
   \caption{Secuencia de ejecución temporal multirrate y dependencias de datos. Se diferencian las tres bandas de frecuencia asociadas a la integración física (100 Hz), el ciclo digital de control (50 Hz) y el registro periódico de variables (10 Hz). Fuente: elaboración propia.}
   \label{fig:arquitectura-multirrate}
