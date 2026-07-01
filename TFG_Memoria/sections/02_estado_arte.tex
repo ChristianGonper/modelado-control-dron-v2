@@ -22,6 +22,17 @@ seguimiento de posición, inclinación, saturación de actuadores y estabilidad,
 aunque no reproduce por sí sola todos los fenómenos aerodinámicos de un vuelo
 real.
 
+El término 6DOF indica que el vehículo dispone de tres grados de libertad
+traslacionales y tres rotacionales. Sin embargo, esto no significa que pueda
+imponer de forma independiente una aceleración arbitraria en cada eje del mundo
+y una actitud arbitraria al mismo tiempo. En un cuadricóptero convencional, los
+rotores generan empuje principalmente a lo largo del eje vertical del cuerpo. La
+fuerza lateral aparece al inclinar el vehículo y, con ello, orientar una parte
+del empuje hacia la dirección horizontal deseada. Esta es la razón física por la
+que seguimiento de posición y control de actitud no pueden separarse por
+completo: para desplazarse lateralmente, el controlador debe ordenar una actitud
+compatible con la fuerza traslacional requerida.
+
 Los sistemas de referencia son una parte esencial de esta formulación. En
 aeronaves y vehículos aéreos se distinguen habitualmente un sistema ligado al
 mundo o a la navegación y un sistema ligado al cuerpo. El primero permite
@@ -46,6 +57,31 @@ solución exige empujes negativos o superiores al máximo disponible, aparecen
 saturaciones y degradaciones de mando. Por ello, una comparación de
 controladores no puede limitarse al error de posición; también debe registrar
 cuándo la actuación solicitada deja de ser físicamente realizable.
+
+La gestión de la actuación puede entenderse a partir de cuatro combinaciones
+básicas (véase la figura~\ref{fig:actuacion-movimiento}). Si los cuatro rotores
+aumentan o reducen su empuje de forma parecida, cambia el empuje colectivo y,
+por tanto, la aceleración vertical en una actitud nivelada. Si aumenta el empuje
+relativo en un lado frente al opuesto, aparece un momento de alabeo; si la
+diferencia se produce entre la parte delantera y la trasera, aparece un momento
+de cabeceo. La guiñada se obtiene aprovechando los pares de reacción de rotores
+que giran en sentidos alternos. En términos compactos, cada rotor aporta una
+fuerza $T_i$ y el conjunto produce una salida agregada del tipo
+\[
+  \bm{u} = [T\;\tau_x\;\tau_y\;\tau_z]^\mathsf{T},
+\]
+donde $T$ es el empuje colectivo y $\tau_x$, $\tau_y$ y $\tau_z$ son momentos de
+cuerpo. El problema del mixer consiste en invertir esa relación bajo
+restricciones de empuje mínimo y máximo. Si la inversión exige valores fuera de
+la envolvente de actuación, el controlador podrá haber calculado una orden
+matemáticamente coherente, pero no físicamente aplicable.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{FIG-015}
+  \caption{Mecanismos de actuación y movimiento en un cuadricóptero. Para cada maniobra se muestra la vista superior del vehículo en planta (izquierda) con la dirección de giro de cada rotor e indicaciones de desequilibrio de empuje ($+$, $-$, $=$), y el efecto físico resultante en vista lateral o mediante ecuaciones (derecha). La inclinación del vehículo ($\phi$, $\theta$) desvía el vector de empuje total ($T$) generando las componentes de fuerza lateral ($F_y$) o longitudinal ($F_x$) que posibilitan la traslación horizontal. Fuente: elaboración propia.}
+  \label{fig:actuacion-movimiento}
+\end{figure}
 
 La integración temporal del modelo exige discretizar las ecuaciones
 diferenciales. Los métodos de Runge--Kutta, y en particular RK4, son una opción
@@ -117,6 +153,18 @@ dinámica traslacional, más lenta, y la dinámica angular, que debe responder c
 mayor rapidez. También hace explícita la subactuación del cuadricóptero: para
 acelerar lateralmente, el vehículo debe inclinarse y orientar su empuje
 \cite{beard2012small,mellinger2011minimum,lee2010geometric}.
+
+En esta arquitectura, el lazo externo no decide directamente velocidades de
+rotor. Su salida puede interpretarse como una fuerza deseada en mundo: si el
+vehículo está por debajo de la referencia, esa fuerza tendrá una componente
+vertical mayor; si necesita avanzar lateralmente, tendrá una componente
+horizontal. El lazo interno toma esa fuerza, calcula qué orientación del cuerpo
+permitiría generarla con el empuje disponible y regula la actitud hacia esa
+orientación. La guiñada de referencia completa la orientación, porque la
+dirección de empuje fija el eje vertical del cuerpo pero no determina por sí
+sola la rotación alrededor de ese eje. Esta conversión fuerza--actitud es el
+puente entre la planificación traslacional y la actuación real del
+cuadricóptero.
 
 Los controladores PD y PID siguen siendo referencias frecuentes por su
 simplicidad, interpretabilidad y bajo coste computacional. Un término
@@ -201,6 +249,23 @@ representar los datos como tensores, agrupar muestras en lotes y optimizar una
 función de pérdida diferenciable mediante retropropagación
 \cite{rumelhart1986learning,pytorchDocs}.
 
+Una red neuronal no almacena reglas explícitas del tipo ``si el error es grande,
+ordena tal fuerza''. Lo que aprende son pesos y sesgos que transforman las
+entradas en salidas. En regresión supervisada, cada muestra proporciona un par
+entrada--objetivo y el entrenamiento modifica los parámetros para reducir una
+pérdida. Si $\theta$ agrupa todos los parámetros de la red y
+$\mathcal{L}(\theta)$ mide el error medio, el descenso por gradiente actualiza
+los parámetros en la dirección opuesta al gradiente:
+\[
+  \theta_{n+1}=\theta_n-\eta\nabla_\theta\mathcal{L}(\theta_n),
+\]
+donde $\eta$ es la tasa de aprendizaje. Un valor demasiado grande puede hacer
+que el entrenamiento oscile o diverja; uno demasiado pequeño puede volverlo
+lento o dejarlo atrapado durante muchas iteraciones. Optimizadores como Adam
+adaptan el tamaño efectivo de actualización usando información acumulada de los
+gradientes, pero siguen dependiendo de una tasa de aprendizaje base
+\cite{kingma2015adam}.
+
 \subsubsection{Redes feedforward}
 
 Una red feedforward calcula la salida mediante una sucesión de capas aplicadas
@@ -212,6 +277,18 @@ introducen funciones de activación no lineales entre capas. La unidad lineal
 rectificada, ReLU, es una activación habitual en redes profundas por su
 simplicidad y por facilitar el entrenamiento frente a saturaciones propias de
 otras funciones \cite{nair2010relu}.
+
+Para una capa genérica, la operación puede escribirse como
+\[
+  \bm{z}^{(\ell)}=\bm{W}^{(\ell)}\bm{a}^{(\ell-1)}+\bm{b}^{(\ell)},\qquad
+  \bm{a}^{(\ell)}=\phi(\bm{z}^{(\ell)}),
+\]
+donde $\bm{W}^{(\ell)}$ y $\bm{b}^{(\ell)}$ son pesos y sesgos, y $\phi$ es una
+activación no lineal. En una MLP, esta operación se repite varias veces hasta
+obtener una salida. La profundidad viene dada por el número de capas, mientras
+que la anchura se asocia al número de unidades por capa. Estas dos dimensiones
+condicionan la capacidad del modelo, el coste de entrenamiento y la tendencia a
+ajustarse en exceso a los datos disponibles.
 
 El perceptrón multicapa, o MLP, combina varias capas lineales con activaciones
 no lineales. Teóricamente, las redes feedforward con suficientes unidades pueden
@@ -233,6 +310,19 @@ del error instantáneo, sino también de cómo se ha llegado a ese estado. Esta
 propiedad resulta atractiva para control, donde el comportamiento reciente puede
 aportar información sobre retardos, perturbaciones o tendencias dinámicas.
 
+Una RNN básica puede resumirse mediante
+\[
+  \bm{h}_k=\phi(\bm{W}_x\bm{x}_k+\bm{W}_h\bm{h}_{k-1}+\bm{b}_h),\qquad
+  \bm{y}_k=\bm{W}_y\bm{h}_k+\bm{b}_y.
+\]
+El vector $\bm{x}_k$ es la entrada en el instante discreto $k$, $\bm{h}_k$ es el
+estado oculto que resume la historia procesada hasta ese instante y
+$\bm{y}_k$ es la salida. Durante el entrenamiento, la red se desenrolla en el
+tiempo y el gradiente se propaga hacia atrás a través de esa cadena temporal.
+Este procedimiento, conocido como retropropagación a través del tiempo, permite
+ajustar los mismos parámetros recurrentes a partir de los errores observados en
+la secuencia completa.
+
 La RNN básica, sin embargo, presenta dificultades para aprender dependencias
 temporales largas. Durante la retropropagación a través del tiempo, los
 gradientes pueden atenuarse o crecer de forma excesiva, lo que dificulta
@@ -240,7 +330,10 @@ conservar información relevante a lo largo de muchos pasos. Las arquitecturas
 recurrentes modernas introducen compuertas internas para regular qué información
 se conserva, se actualiza o se descarta. La diferencia conceptual respecto a la
 MLP es, por tanto, que la predicción recurrente no depende solo de la muestra
-actual, sino de una representación interna de la historia reciente. En la \figref{fig:comparativa-arquitecturas-control} se ilustra esta diferencia fundamental entre los enfoques estáticos y los temporales.
+actual, sino de una representación interna de la historia reciente
+\cite{bengio1994longterm}. En la
+\figref{fig:comparativa-arquitecturas-control} se ilustra esta diferencia
+fundamental entre los enfoques estáticos y los temporales.
 
 \begin{figure}[H]
   \centering
@@ -260,6 +353,29 @@ retardos de actuador, ruido o evolución del error. Sin embargo, también aument
 el número de parámetros y puede introducir sensibilidad a patrones temporales
 poco representados en el conjunto de entrenamiento.
 
+La LSTM separa dos magnitudes internas. El estado oculto $\bm{h}_k$ es la
+representación que se entrega al exterior de la celda y se usa para calcular la
+salida o alimentar el siguiente paso. El estado de celda $\bm{c}_k$ actúa como
+una memoria interna más directa, diseñada para transportar información a lo
+largo de la secuencia. Las tres compuertas principales regulan esa memoria:
+la compuerta de olvido decide qué parte de $\bm{c}_{k-1}$ se conserva; la
+compuerta de entrada decide qué información nueva se incorpora; y la compuerta
+de salida decide qué parte de la memoria actualizada se expone como
+$\bm{h}_k$. Una formulación habitual es
+\begin{align}
+  \bm{f}_k &= \sigma(\bm{W}_f[\bm{h}_{k-1},\bm{x}_k]+\bm{b}_f),\\
+  \bm{i}_k &= \sigma(\bm{W}_i[\bm{h}_{k-1},\bm{x}_k]+\bm{b}_i),\\
+  \tilde{\bm{c}}_k &= \tanh(\bm{W}_c[\bm{h}_{k-1},\bm{x}_k]+\bm{b}_c),\\
+  \bm{c}_k &= \bm{f}_k\odot\bm{c}_{k-1}+\bm{i}_k\odot\tilde{\bm{c}}_k,\\
+  \bm{o}_k &= \sigma(\bm{W}_o[\bm{h}_{k-1},\bm{x}_k]+\bm{b}_o),\\
+  \bm{h}_k &= \bm{o}_k\odot\tanh(\bm{c}_k).
+\end{align}
+Aquí $\sigma$ es la sigmoide, $\tanh$ es la tangente hiperbólica,
+$[\bm{h}_{k-1},\bm{x}_k]$ denota concatenación y $\odot$ producto componente a
+componente. La importancia de estas ecuaciones no está en sus constantes
+concretas, sino en la idea de memoria regulada: la red aprende cuándo olvidar,
+cuándo escribir y cuándo exponer información.
+
 \paragraph*{Gated recurrent unit (GRU).}
 La GRU también utiliza compuertas, pero con una estructura más compacta que la
 LSTM. En lugar de separar explícitamente un estado de celda y un estado oculto,
@@ -270,6 +386,37 @@ LSTM en muchas configuraciones, manteniendo la capacidad de procesar secuencias.
 Por ello, comparar GRU y LSTM bajo el mismo contrato experimental permite
 valorar si una memoria recurrente más compleja aporta una mejora real en el
 banco de control definido.
+
+En una GRU, la compuerta de actualización $\bm{z}_k$ regula cuánto del estado
+anterior se conserva frente a cuánto se reemplaza por una nueva propuesta. La
+compuerta de reinicio $\bm{r}_k$ controla cuánto influye el estado anterior al
+calcular el candidato $\tilde{\bm{h}}_k$. Una forma habitual de expresarlo es
+\begin{align}
+  \bm{z}_k &= \sigma(\bm{W}_z[\bm{h}_{k-1},\bm{x}_k]+\bm{b}_z),\\
+  \bm{r}_k &= \sigma(\bm{W}_r[\bm{h}_{k-1},\bm{x}_k]+\bm{b}_r),\\
+  \tilde{\bm{h}}_k &=
+    \tanh(\bm{W}_h[\bm{r}_k\odot\bm{h}_{k-1},\bm{x}_k]+\bm{b}_h),\\
+  \bm{h}_k &= (1-\bm{z}_k)\odot\bm{h}_{k-1}
+             +\bm{z}_k\odot\tilde{\bm{h}}_k.
+\end{align}
+Al no mantener un estado de celda separado, la GRU suele requerir menos
+parámetros que una LSTM equivalente. Esa menor complejidad no implica
+necesariamente menor capacidad en todos los problemas: en algunos casos puede
+ser suficiente para capturar la historia útil y reducir sensibilidad frente a
+secuencias poco representadas.
+
+En inferencia existen dos formas prácticas de usar una red recurrente. En una
+ejecución \emph{stateful}, el estado oculto calculado en un paso se conserva y
+se entrega directamente como estado inicial del paso siguiente. En una ejecución
+basada en ventana, en cambio, cada predicción reconstruye una secuencia reciente
+de longitud fija y la procesa completa para obtener la salida final. La primera
+opción evita recalcular repetidamente información pasada, pero hace que el
+estado interno dependa de cómo se haya ido propagando la red durante todo el
+episodio. La segunda es más costosa computacionalmente, pero mantiene un
+contrato más local y reproducible: la salida depende de la ventana observada y
+no de un estado oculto acumulado fuera de ella. Esta distinción será relevante
+en la metodología, porque la implementación evaluada usa ventanas temporales de
+longitud fija y no una inferencia recurrente plenamente stateful.
 
 El entrenamiento de estas arquitecturas mantiene elementos comunes del
 aprendizaje supervisado. La normalización calculada solo con el conjunto de
