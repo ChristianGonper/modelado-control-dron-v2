@@ -374,7 +374,7 @@ def draw_lateral_view(ax, xc, yc, mode):
         ax.text(xc + 0.475, yc - 1.1, "Avance\nLongitudinal", color='#2563eb', ha='center', va='top', fontsize=8, fontweight='bold')
 
 def main():
-    fig, axs = plt.subplots(2, 2, figsize=(9, 8.0), dpi=300)
+    fig, axs = plt.subplots(2, 2, figsize=(9, 6), dpi=300)
     
     # Separación horizontal
     xc_p = -1.35
