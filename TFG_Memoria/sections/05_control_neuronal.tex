@@ -16,7 +16,7 @@ clásica, y a partir de ahí el lazo interno de actitud permanece común.
   \centering
   \includegraphics[width=\textwidth]{FIG-006}
   \caption{Estructura del controlador neuronal híbrido. La red neuronal sustituye únicamente la decisión traslacional del lazo externo para generar $\bm{F}_{d,W}$, delegando el filtrado de seguridad, la conversión fuerza-actitud y la estabilización en el lazo clásico interno. Fuente: elaboración propia.}
-  \label{fig:contrato-neuronal}
+  \label{fig:control-neuronal-hibrido}
 \end{figure}
 La red predice una fuerza de traslación, pero no predice los momentos del lazo
 interno ni las velocidades de rotor. Esta frontera mantiene compartida la
@@ -28,7 +28,7 @@ trayectoria con la estabilización del vehículo. Esa posibilidad no se descarta
 como línea futura, pero queda fuera del objetivo de este trabajo.
 
 La arquitectura híbrida conserva una estructura física interpretable: la red
-imita el mismo contrato de entrada y salida que el lazo externo clásico, mientras
+imita la misma relación de entrada y salida que el lazo externo clásico, mientras
 la conversión a actitud, las saturaciones y el control interno siguen siendo
 explícitos. Por tanto, el comportamiento seguro no debe atribuirse únicamente a
 la red. Una parte puede proceder de los límites de fuerza e inclinación y del
@@ -37,7 +37,6 @@ error de seguimiento, sino también el uso de protecciones y saturaciones. Esta
 lectura corresponde a aprendizaje por imitación supervisado: la política
 aprendida aproxima acciones de un experto observado, con las limitaciones
 propias de depender de la distribución de demostraciones \cite{ross2011dagger}.
-% CITA PENDIENTE [CIT-011]: ventajas y límites de combinar una política aprendida con lazos clásicos en control híbrido
 
 \subsubsection*{Construcción y selección de datos de imitación}
 
@@ -45,7 +44,7 @@ El dataset neuronal se construye en una fase posterior al ajuste de los PD
 clásicos. Primero, el flujo clásico fija los escenarios, trayectorias,
 perturbaciones, semillas y particiones entrenamiento--validación--prueba, así
 como los controladores de referencia por familia. Después, para generar los datos
-de imitación se toma cada escenario ya materializado y se construye un banco local de
+de imitación se toma cada escenario ya materializado y se construye un conjunto local de
 variantes del lazo externo, modificando exclusivamente las ganancias
 $\bm{K}_{p,p}$ y $\bm{K}_{d,p}$ y conservando el lazo interno de actitud, el
 vehículo, la trayectoria y los límites del escenario fuente.
@@ -70,7 +69,7 @@ sentido, el término ``experto externo'' no designa un nuevo PD completo por
 familia, sino la variante segura del lazo externo que aporta la fuerza objetivo
 para ese escenario concreto. Esta segunda selección genera objetivos de
 imitación más específicos sin cambiar el lazo interno ni redefinir la referencia
-clásica congelada.
+clásica cuyos parámetros ya se habían fijado.
 
 Esta construcción debe interpretarse como clonación de comportamiento. La red
 observa las acciones de los PD externos seleccionados y aprende a aproximar sus
@@ -138,11 +137,10 @@ interno acumulado fuera de la ventana.
 La ventana temporal permite estudiar si la historia reciente aporta información
 útil frente a retardos, ruido de observación y dinámica de actuadores. El valor
 $L=20$ fija una ventana corta, compatible con el periodo de control de la
-campaña, y permite comparar las arquitecturas recurrentes bajo un contrato
+serie experimental, y permite comparar las arquitecturas recurrentes bajo una configuración
 temporal común. Como comprobación posterior, se ejecutó un estudio de
 sensibilidad con $L=10$ y $L=40$ para GRU y LSTM; las diferencias observadas no
 modificaron la configuración principal de la comparativa.
-% CITA PENDIENTE [CIT-012]: criterio para seleccionar variables de estado/error y longitud de ventana en control neuronal recurrente
 
 \subsubsection*{Arquitecturas y parámetros de MLP, GRU y LSTM}
 
@@ -162,16 +160,17 @@ capturados por una muestra aislada. La comparación no presupone que las redes
 recurrentes sean superiores; esa conclusión solo puede extraerse de la
 evaluación supervisada y de la ejecución en bucle cerrado.
 
-% CITA PENDIENTE [CIT-013]: definición y propiedades relevantes de ReLU, GRU y LSTM para justificar las arquitecturas comparadas
 La anchura de 64 unidades, las dos capas ocultas de la MLP y la única capa
 recurrente se mantienen homogéneas para acotar la comparación entre
 arquitecturas. Esta decisión se contrastó con una variante de 128 unidades; la
 mejora supervisada de algunas redes no produjo una ventaja cerrada suficientemente
 sistemática como para sustituir la configuración común. ReLU, GRU y LSTM son
 componentes establecidos para redes neuronales profundas y recurrentes
-\cite{nair2010relu,cho2014learning,hochreiter1997lstm}; la evidencia
-experimental de este trabajo valora su desempeño en el banco definido y bajo la
-misma dimensión oculta.
+\cite{nair2010relu,cho2014learning,hochreiter1997lstm}; la evaluación
+experimental de este trabajo valora su desempeño en el entorno definido y bajo la
+misma dimensión oculta. Por tanto, el resultado debe interpretarse como una
+comparación de arquitecturas bajo una configuración común, no como una búsqueda
+exhaustiva del mejor tamaño posible para cada red.
 
 \subsubsection*{Normalización, entrenamiento y selección del modelo}
 
@@ -195,7 +194,7 @@ lectura de los episodios. La validación se evalúa en orden fijo porque no
 actualiza pesos y debe medir de forma estable el modelo obtenido.
 
 Tras cada época se calcula la pérdida de validación y se guarda el checkpoint
-con menor valor. La paciencia de 10 épocas implementa parada temprana: si la
+con menor valor. Se aplica parada temprana con una paciencia de 10 épocas: si la
 pérdida de validación no mejora durante diez épocas consecutivas, el
 entrenamiento se detiene y se conserva el mejor modelo observado. Esta regla
 reduce entrenamientos innecesarios, limita el ajuste excesivo al split de
@@ -204,7 +203,6 @@ robustez frente a la semilla se comprobó de forma acotada repitiendo MLP con do
 semillas adicionales; en el split de prueba la variabilidad resultante no cambió
 la interpretación de la arquitectura.
 
-% CITA PENDIENTE [CIT-014]: fundamento de normalización train-only, MSE, Adam y parada temprana en aprendizaje supervisado
 Una pérdida supervisada baja indica que la red replica con precisión las fuerzas
 emitidas por los expertos en las muestras observadas. No implica necesariamente
 que minimice el error de posición en bucle cerrado: el experto puede contener
@@ -240,7 +238,6 @@ de control ejecutados en el episodio. Estas métricas se interpretan junto con e
 error, el éxito de misión, la saturación y la degradación: una trayectoria puede
 completarse gracias a una intervención frecuente de las protecciones, lo que
 limitaría la atribución del desempeño a la política aprendida.
-% CITA PENDIENTE [CIT-015]: criterio físico para límites de fuerza, inclinación y componente vertical en la ruta híbrida
 
 \subsubsection*{Alternativas implementadas fuera de la comparación}
 
@@ -261,6 +258,6 @@ hipótesis de información mínima: la red deja de comportarse como una sustituc
 estricta del lazo externo PD.
 
 Ambas alternativas se excluyen de la comparativa del trabajo para mantener un
-único procedimiento neuronal principal y el mismo contrato funcional entre el
+único procedimiento neuronal principal y la misma relación funcional entre el
 control clásico y el controlador aprendido: sustituir la decisión de fuerza del
 lazo externo conservando el resto de la arquitectura en cascada.

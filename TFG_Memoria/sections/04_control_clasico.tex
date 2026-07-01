@@ -23,8 +23,7 @@ $\bm{\tau}_B$ en FRD. El mixer descrito en el
 y los momentos en comandos de rotor.
 
 \begin{figure}[H]
-  \centering
-  \includegraphics[width=\textwidth]{FIG-004}
+  \makebox[\textwidth][c]{\includegraphics[width=1.1\textwidth]{FIG-004}}
   \caption{Arquitectura del controlador clásico en cascada implementado. Se destacan el lazo externo (posición en mundo ENU), la conversión geométrica de fuerza a actitud y el lazo interno (estabilización de actitud en cuerpo FRD). La frontera de sustitución neuronal se sitúa en la señal de fuerza deseada $\bm{F}_{d,W}$. Fuente: elaboración propia.}
   \label{fig:arquitectura-cascada}
 \end{figure}
@@ -64,7 +63,7 @@ conducen a $\bm{F}_{d,W}=[0\;0\;mg]^\mathsf{T}$, es decir, a la fuerza
 ascendente necesaria para equilibrar el peso.
 
 La norma de $\bm{F}_{d,W}$ define el empuje colectivo solicitado, limitado en el
-controlador a $[0,2.5mg]$. Este límite es una convención del banco de ensayo: no
+controlador a $[0,2.5mg]$. Este límite es una convención del entorno de ensayo: no
 pretende representar una especificación de un vehículo real y puede
 modificarse en otra serie de ejecuciones si se declara como una condición experimental
 distinta. Como el cuerpo usa la convención FRD, el empuje sustentador actúa en
@@ -84,7 +83,6 @@ $\bm{x}_{B,d}=\bm{y}_{B,d}\times\bm{z}_{B,d}$ y construye la matriz
 $\bm{R}_{WB,d}$ con esos tres ejes como columnas. Esta matriz se transforma a
 cuaternión para comparar la actitud deseada con la actitud observada.
 
-% CITA PENDIENTE [CIT-009]: fundamento del control PD en cascada de posición y actitud para cuadricópteros, incluyendo conversión geométrica fuerza-actitud y error de cuaternión
 La estructura en cascada y la conversión de una fuerza deseada a actitud son
 coherentes con formulaciones habituales de control de cuadricópteros
 \cite{beard2012small,mellinger2011minimum}.
@@ -106,7 +104,7 @@ dinámica rotacional del \apartadoref{subsec:modelo-simulador}. El resultado se
 satura por componente con los límites declarados en el controlador; si no se
 declaran, se emplean $(10,10,2)$~N\,m.
 
-Las ganancias iniciales del banco son
+Las ganancias iniciales del conjunto de controladores son
 $\bm{K}_{p,p}=(2,2,5)$,
 $\bm{K}_{d,p}=(1,1,2)$,
 $\bm{K}_{p,a}=(4,4,1)$ y
@@ -118,13 +116,13 @@ $\bm{K}_{d,a}=(1.2,1.2,0.4)$. Estas ganancias no son necesariamente las usadas
 en la ejecución final: el proceso de ajuste descrito más adelante selecciona y
 congela un PD por familia en archivos \texttt{pid\_<familia>\_v1.yaml}.
 
-El controlador no incluye término integral. La razón práctica es mantener un
-contrato observable y acotado para el lazo que después se imita: la acción
+El controlador no incluye término integral. La razón práctica es mantener una
+relación observable y acotada para el lazo que después se imita: la acción
 externa depende de error de posición, error de velocidad y aceleración de
 referencia, sin añadir un estado integral cuya evolución dependa de la historia
 completa del episodio. En cuadricópteros, además, la acción integral puede
 acumular mando durante fases con saturación o cambios continuos de referencia,
-lo que exige mecanismos adicionales de anti-windup y validación. En este banco
+lo que exige mecanismos adicionales de anti-windup y validación. En esta comparación
 se prioriza una referencia PD trazable, con prealimentación de trayectoria y
 gravedad, frente a eliminar por completo cualquier error estacionario ante
 sesgos externos constantes.
@@ -140,7 +138,6 @@ candidato se juzga con métricas de seguimiento, actitud, esfuerzo de control,
 saturación, degradación y terminación, que son las magnitudes relevantes para la
 comparativa experimental.
 
-% CITA PENDIENTE [CIT-010]: comparación de ajuste manual, Ziegler--Nichols, métodos basados en modelo y optimización numérica para controladores de cuadricópteros
 La alternativa de ajuste manual produciría un controlador defendible si quedasen
 registradas todas las iteraciones, pero aportaría menos trazabilidad que una
 búsqueda reproducible. Reglas clásicas como Ziegler--Nichols nacen para clases
@@ -171,7 +168,7 @@ bloques de ganancias:
 $\bm{K}_{p,p}$, $\bm{K}_{d,p}$, $\bm{K}_{p,a}$ y $\bm{K}_{d,a}$. Cada candidato
 se define mediante cuatro multiplicadores que escalan esos bloques completos.
 La primera ronda evalúa 32 candidatos con multiplicadores log-uniformes entre
-0,5 y 2, además del candidato inicial. Después se seleccionan los mejores
+0.5 y 2, además del candidato inicial. Después se seleccionan los mejores
 candidatos seguros de esa ronda y se generan 16 perturbaciones locales alrededor
 de ellos, recortadas al mismo intervalo. El presupuesto nominal por familia es,
 por tanto, de 49 evaluaciones cerradas.
@@ -234,18 +231,18 @@ demuestran una optimización global. Deben interpretarse como un óptimo local b
 presupuesto de cómputo razonable y con criterios declarados antes de evaluar
 test u OOD.
 
-\subsubsection*{Controladores congelados y transferencia cruzada}
+\subsubsection*{Controladores con parámetros fijados y transferencia cruzada}
 
 El ajuste solo consulta escenarios del split de entrenamiento. Una vez elegido
 el candidato de una familia, sus ganancias, procedencia, configuración de
 búsqueda, conjunto diagnóstico y métricas resumidas se guardan en un YAML
 \texttt{pid\_<familia>\_v1.yaml}. Las ejecuciones posteriores usan esos archivos como
-banco congelado: los escenarios de validación, prueba y OOD no modifican las
+conjunto de controladores con parámetros fijados: los escenarios de validación, prueba y OOD no modifican las
 ganancias ni los umbrales de selección.
 
-Se denomina PD especializado al controlador congelado asociado a la misma
+Se denomina PD especializado al controlador cuyos parámetros se han fijado para la misma
 familia que la trayectoria evaluada. La transferencia cruzada consiste en
-ejecutar un escenario con los PD congelados de las demás familias, manteniendo
+ejecutar un escenario con los PD de las demás familias sin reajustarlos, manteniendo
 vehículo, trayectoria, perturbaciones, semilla, terminaciones y cadena de
 actuación. Así, la diferencia observada procede del ajuste del controlador y no
 de un cambio simultáneo del experimento.

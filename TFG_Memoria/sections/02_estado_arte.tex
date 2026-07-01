@@ -86,11 +86,11 @@ matemáticamente coherente, pero no físicamente aplicable.
 La integración temporal del modelo exige discretizar las ecuaciones
 diferenciales. Los métodos de Runge--Kutta, y en particular RK4, son una opción
 clásica para integrar sistemas ordinarios cuando se desea una relación favorable
-entre precisión y coste computacional \cite{butcher2016numerical}. En bancos de
+entre precisión y coste computacional \cite{butcher2016numerical}. En entornos de
 control digital es habitual separar la frecuencia de integración física, la
 frecuencia de actualización del controlador y la frecuencia de registro de
 telemetría. Entre dos ciclos de control, el último mando calculado se mantiene
-constante mediante una retención de orden cero, aproximando el comportamiento de
+constante mediante un bloqueador de orden 0, aproximando el comportamiento de
 un sistema digital que actúa sobre una dinámica continua \cite{astrom1997computer}.
 
 Existen plataformas maduras para simular vehículos aéreos. MATLAB, Simulink y
@@ -104,7 +104,7 @@ tipo de plataformas muestra que la simulación es una herramienta central para
 prototipado, evaluación y enseñanza en robótica aérea.
 
 El presente trabajo no necesita reproducir toda la amplitud de esas
-plataformas, sino construir un banco experimental acotado donde el modelo físico,
+plataformas, sino construir un entorno experimental acotado donde el modelo físico,
 las trayectorias, los límites, las perturbaciones, los controladores y las
 métricas sean completamente trazables. Por ello, el estado del arte sirve aquí
 para identificar las piezas que debe contener el simulador: dinámica 6DOF,
@@ -173,7 +173,7 @@ amortigua la respuesta a partir de la velocidad o la velocidad angular, y un
 término integral puede reducir errores estacionarios cuando existen sesgos
 persistentes. Sin embargo, la acción integral introduce memoria adicional y
 puede acumular mando durante saturaciones, por lo que requiere mecanismos de
-anti-windup y validación específica. En un banco cuyo objetivo es comparar una
+anti-windup y validación específica. En un entorno cuyo objetivo es comparar una
 señal externa imitable, una estructura PD con prealimentación de trayectoria
 puede ser una referencia más acotada y trazable.
 
@@ -194,7 +194,7 @@ todo el rango de operación, una respuesta clásica es la programación de
 ganancias. Esta técnica selecciona o interpola parámetros de control según
 variables que describen el punto de operación, de modo que distintas regiones
 del vuelo pueden usar ajustes distintos \cite{leith2000survey}. Conceptualmente,
-un banco de controladores especializados por familia de trayectoria se relaciona
+un conjunto de controladores especializados por familia de trayectoria se relaciona
 con esta idea: se dispone de varios expertos y se aplica el más adecuado a una
 condición concreta. No obstante, en este trabajo la ruta neuronal principal no
 interpola ganancias. La red aprende a predecir directamente la fuerza deseada
@@ -383,9 +383,9 @@ combina mecanismos de actualización y reinicio para decidir cuánta informació
 previa conserva y cómo incorpora la entrada actual \cite{cho2014learning}. Esto
 la sitúa como una alternativa recurrente con menor complejidad paramétrica que
 LSTM en muchas configuraciones, manteniendo la capacidad de procesar secuencias.
-Por ello, comparar GRU y LSTM bajo el mismo contrato experimental permite
+Por ello, comparar GRU y LSTM bajo la misma configuración experimental permite
 valorar si una memoria recurrente más compleja aporta una mejora real en el
-banco de control definido.
+problema de control definido.
 
 En una GRU, la compuerta de actualización $\bm{z}_k$ regula cuánto del estado
 anterior se conserva frente a cuánto se reemplaza por una nueva propuesta. La
@@ -413,7 +413,7 @@ de longitud fija y la procesa completa para obtener la salida final. La primera
 opción evita recalcular repetidamente información pasada, pero hace que el
 estado interno dependa de cómo se haya ido propagando la red durante todo el
 episodio. La segunda es más costosa computacionalmente, pero mantiene un
-contrato más local y reproducible: la salida depende de la ventana observada y
+relación más local y reproducible: la salida depende de la ventana observada y
 no de un estado oculto acumulado fuera de ella. Esta distinción será relevante
 en la metodología, porque la implementación evaluada usa ventanas temporales de
 longitud fija y no una inferencia recurrente plenamente stateful.
@@ -470,7 +470,7 @@ control híbrido, donde una parte aprendida se inserta dentro de una arquitectur
 clásica para conservar estructura física, límites y trazabilidad.
 
 La contribución de esta memoria adopta la tercera vía. Se construye un simulador
-6DOF reproducible, se ajusta un banco de controladores PD especializados y se
+6DOF reproducible, se ajusta un conjunto de controladores PD especializados y se
 entrenan MLP, GRU y LSTM para imitar la fuerza deseada del lazo externo. La red
 no sustituye el vehículo completo ni actúa directamente sobre rotores: produce
 una señal de fuerza en el sistema mundo que después atraviesa la misma

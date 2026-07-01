@@ -11,28 +11,31 @@ acoplada de un sólido rígido, limitada por los actuadores y expuesta a
 perturbaciones internas y externas. Debe coordinar, por tanto, el movimiento de
 traslación y la actitud sin perder la estabilidad ni incumplir la misión.
 
-% CITA PENDIENTE [CIT-001]: los cuadricópteros son sistemas subactuados y acoplados cuyo seguimiento exige coordinar traslación y actitud
 Esta naturaleza acoplada motiva el uso de una arquitectura de control en dos
-niveles. En este trabajo, un PD en cascada transforma primero los errores de
-posición y velocidad en una fuerza deseada en el sistema de referencia ENU. El lazo
-interno convierte esa fuerza, junto con la referencia de guiñada, en una
+niveles \cite{beard2012small,mellinger2011minimum,lee2010geometric}. En este
+trabajo, un PD en cascada transforma primero los errores de posición y
+velocidad en una fuerza deseada en el sistema de referencia local
+East--North--Up (ENU). El lazo interno convierte esa fuerza, junto con la
+referencia de guiñada, en una
 actitud deseada, un empuje colectivo y unos momentos de cuerpo; a continuación,
 el mezclador distribuye estos mandos entre los cuatro rotores.
-% CITA PENDIENTE [CIT-018]: compromiso de un ajuste fijo ante condiciones de operación diferentes y motivación de controladores especializados o programación de ganancias
 Ajustar un único
 controlador para maniobras de distinta naturaleza puede imponer un compromiso
 entre, por ejemplo, mantener una posición y recorrer una geometría exigente. La
 especialización evita parte de ese compromiso, pero multiplica el coste de
-ajuste, validación y selección de ganancias. Por ello se construye un banco con
-un PD especializado para cada familia de trayectorias y se estudia si una
-implementación neuronal puede condensar las demostraciones de esos expertos.
+ajuste, validación y selección de ganancias. Por ello se construye un conjunto
+de controladores con un PD especializado para cada familia de trayectorias y se estudia si una
+implementación neuronal puede condensar las demostraciones de esos expertos. La
+idea de disponer de parámetros de control distintos según el régimen de
+operación está relacionada con la programación de ganancias
+\cite{leith2000survey}.
 
 La comparación requiere un entorno donde modelo, referencias, perturbaciones,
 semillas de aleatoriedad, límites de actuación y métricas permanezcan bajo control. El simulador 6DOF
-desarrollado proporciona ese contrato experimental: los controladores comparten
+desarrollado proporciona una base experimental común: los controladores comparten
 el mismo vehículo, la misma observación y la misma cadena de actuación; cada
 ejecución conserva la configuración efectiva y la telemetría necesaria para
-revisar y reproducir el experimento. El banco no pretende sustituir una futura
+revisar y reproducir el experimento. Esta plataforma no pretende sustituir una futura
 validación en vuelo, sino aislar el contraste experimental dentro de unas
 hipótesis explícitas y reproducibles.
 
@@ -43,21 +46,21 @@ hipótesis explícitas y reproducibles.
   \label{fig:estrategia-experimental}
 \end{figure}
 
-En la \figref{fig:estrategia-experimental} se detalla visualmente esta aproximación experimental estructurada en dos etapas. La primera etapa ilustra la generación de datos a partir del banco de expertos clásicos para entrenar las redes neuronales. La segunda etapa muestra la evaluación comparativa paralela en el simulador 6DOF bajo las mismas condiciones (tanto conocidas ID como de transferencia OOD), contrastando las tres referencias de control.
+En la \figref{fig:estrategia-experimental} se detalla visualmente esta aproximación experimental estructurada en dos etapas. La primera etapa ilustra la generación de datos a partir del conjunto de expertos clásicos para entrenar las redes neuronales. La segunda etapa muestra la evaluación comparativa paralela en el simulador 6DOF bajo las mismas condiciones: condiciones dentro de la distribución de entrenamiento o \textit{in-distribution} (ID), y condiciones fuera de dicha distribución u \textit{out-of-distribution} (OOD). Con ello se contrastan las tres referencias de control.
 
 \subsubsection*{Problema abordado}
 
 El problema central del trabajo consiste en determinar si un único sistema
 neuronal, entrenado a partir de demostraciones generadas por controladores PD
-ajustados para distintas familias de trayectorias, puede sustituir ese banco de
+ajustados para distintas familias de trayectorias, puede sustituir ese conjunto de
 controladores cuando se evalúa bajo las mismas referencias y perturbaciones. La
 comparación debe establecer si la implementación neuronal mantiene un comportamiento
 competitivo en las condiciones conocidas y si transfiere mejor a variaciones,
 composiciones y trayectorias nuevas.
 
 La comparación distingue tres referencias. El \emph{PD especializado} es el
-controlador congelado para la familia a la que pertenece el escenario. Un
-\emph{PD transferido} es uno de esos mismos controladores aplicado, sin
+controlador cuyos parámetros se han fijado para la familia a la que pertenece
+el escenario. Un \emph{PD transferido} es uno de esos mismos controladores aplicado, sin
 reajuste, a otra familia o condición. La ruta neuronal principal sustituye el
 lazo externo y realiza una \emph{predicción de fuerza deseada}; a partir de la
 observación y la referencia, produce un vector tridimensional en el sistema de
@@ -71,8 +74,11 @@ pertinente. Las métricas y criterios se
 predefinen en el \apartadoref{subsec:datos-metricas}. La transferencia se
 evalúa al aplicar un controlador fuera de la condición para la que fue ajustado.
 La evaluación separa condiciones dentro de la distribución de entrenamiento
-(ID) de condiciones fuera de la distribución de entrenamiento (OOD). Entre las
-últimas se distinguen composiciones de trayectorias conocidas y
+(ID, \textit{in-distribution}) de condiciones fuera de la distribución de
+entrenamiento (OOD, \textit{out-of-distribution}). En ID se evalúan escenarios
+del mismo tipo que los usados para ajustar expertos y entrenar redes, aunque
+reservados para prueba; en OOD se fuerzan variaciones no vistas, recombinaciones
+o geometrías nuevas. Entre estas últimas se distinguen composiciones de trayectorias conocidas y
 familias geométricas completamente nuevas.
 
 El estudio no intenta demostrar una superioridad universal de una arquitectura, 
@@ -96,67 +102,36 @@ y el uso de protecciones.
 
 El objetivo general es desarrollar un entorno reproducible de simulación 6DOF
 que permita determinar si un controlador neuronal por imitación puede sustituir
-un banco de controladores PD especializados y ofrecer una mejor
+un conjunto de controladores PD especializados y ofrecer una mejor
 capacidad de transferencia a trayectorias y condiciones no empleadas durante el
 entrenamiento.
 
 Este objetivo se descompone en los siguientes objetivos específicos:
 
 \begin{enumerate}
-  \item formular e implementar un modelo 6DOF de cuerpo rígido para un
+  \item Formular e implementar un modelo 6DOF de cuerpo rígido para un
   cuadricóptero, con sistemas de referencia apropiados, actuadores limitados,
   perturbaciones simplificadas y frecuencias de actualización diferenciadas;
-  \item definir familias de trayectorias y escenarios que permitan repetir las
+  \item Definir familias de trayectorias y escenarios que permitan repetir las
   condiciones experimentales;
-  \item implementar un PD en cascada y obtener, mediante una búsqueda
+  \item Implementar un PD en cascada y obtener, mediante una búsqueda
   determinista restringida a los escenarios de entrenamiento, un controlador
   experto especializado para cada familia;
-  \item valorar la especialización del banco clásico y su capacidad de
+  \item Valorar la especialización del conjunto clásico y su capacidad de
   transferencia al aplicar cada controlador a familias distintas de la nativa;
-  \item entrenar MLP, GRU y LSTM para predecir la fuerza deseada y comparar la
+  \item Entrenar MLP, GRU y LSTM para predecir la fuerza deseada y comparar la
   ausencia o presencia de memoria temporal bajo un protocolo común;
-  \item evaluar la calidad de la predicción supervisada y, de forma separada,
+  \item Evaluar la calidad de la predicción supervisada y, de forma separada,
   el seguimiento en bucle cerrado en condiciones ID y OOD; y
-  \item conservar evidencia trazable suficiente para reconstruir los
+  \item Conservar evidencia trazable suficiente para reconstruir los
   experimentos y sus resultados.
 \end{enumerate}
-
-\subsubsection*{Alcance y limitaciones}
-
-El vehículo se representa como un cuerpo rígido de seis grados de libertad. La
-posición y la velocidad se expresan en el sistema de referencia mundo
-East--North--Up (ENU); la velocidad angular, los momentos y la geometría de
-rotores emplean el sistema de referencia cuerpo Forward--Right--Down (FRD). La
-actitud se propaga mediante un cuaternión y la dinámica mediante las ecuaciones
-de Newton--Euler integradas con RK4 de paso fijo. El modelo incluye gravedad,
-una fuerza de resistencia lineal, velocidad de viento constante, ruido gaussiano
-de posición y velocidad, ley cuadrática de rotor, retardo puro, dinámica de
-primer orden y saturación.
-
-Estas elecciones constituyen hipótesis de modelado, no propiedades generales de
-un cuadricóptero real. Se suponen masa e inercia constantes, un sólido rígido y
-parámetros conocidos. No se modelan flexibilidad, efecto suelo, interferencia
-entre rotores, aerodinámica no lineal, turbulencia ni descarga de
-batería. El viento no constituye un campo atmosférico real y la resistencia
-lineal no procede de una identificación aerodinámica. La observación solo
-incorpora ruido sintético en posición y velocidad; no se modelan de forma
-concreta una IMU, un receptor GNSS ni un estimador de estado a bordo.
-
-Los límites de altura y actitud, junto con la persistencia de la saturación,
-acotan la región donde una ejecución se considera válida. Las redes se entrenan
-mediante clonación supervisada de la fuerza calculada por expertos PD; no
-minimizan directamente el error de posición y pueden heredar los sesgos de esos
-expertos ante perturbaciones externas. Además, la ruta neuronal conserva la
-estabilización del lazo interno PD y las protecciones clásicas. En consecuencia,
-los resultados solo son válidos para los escenarios, los parámetros del
-vehículo y las semillas descritos; no demuestran un comportamiento seguro en
-hardware de vuelo real.
 
 \subsection{Estructura del documento}
 \label{subsec:estructura-documento}
 
 La aportación del trabajo es la integración trazable de cuatro elementos: un
-simulador 6DOF acotado, un banco de PD en cascada especializados, un proceso de
+simulador 6DOF acotado, un conjunto de PD en cascada especializados, un proceso de
 selección de expertos por familia y escenario y una comparación de MLP, GRU y
 LSTM en bucle cerrado. El interés reside en construir una comparación que
 permita distinguir qué propiedades proceden del PD experto, qué aprende la red,

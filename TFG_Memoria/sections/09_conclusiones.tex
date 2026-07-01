@@ -11,7 +11,7 @@ los resultados sin depender de ejemplos aislados ni de una única media global.
 
 La hipótesis inicial se cumple de forma parcial y matizada. Las arquitecturas
 neuronales entrenadas para predecir la fuerza deseada del lazo externo son
-viables en familias conocidas y pueden sustituir al banco de PD en varios casos
+viables en familias conocidas y pueden sustituir al conjunto de PD en varios casos
 sin perder la capacidad de completar la misión. Sin embargo, no se observa una
 superioridad neuronal global. En condiciones fuera de distribución aparecen
 fallos, diferencias fuertes entre arquitecturas y una dependencia clara de la
@@ -21,7 +21,7 @@ La primera conclusión técnica es que la especialización clásica no se compor
 como una diagonal perfecta. Algunos PD transferidos funcionan mejor que el PD
 nativo en familias concretas, mientras que otros pierden rendimiento al salir de
 su trayectoria de ajuste. Esto confirma que la transferencia clásica es desigual
-y que el banco de expertos constituye una referencia necesaria para juzgar la
+y que el conjunto de expertos constituye una referencia necesaria para juzgar la
 imitación neuronal. También muestra que el proceso de sintonización de los PD
 podría refinarse en futuras versiones, especialmente en familias donde el
 controlador nativo no es el que mejor transfiere ni el que menor error produce.
@@ -52,13 +52,45 @@ renunciar a una estructura de control interpretable; al mismo tiempo, obliga a
 ser prudente al atribuir méritos o fallos exclusivamente a la parte neuronal.
 
 En conjunto, el trabajo cumple el objetivo de proporcionar una plataforma
-experimental coherente para estudiar la sustitución de un banco de PD por una
+experimental coherente para estudiar la sustitución de un conjunto de PD por una
 implementación neuronal de fuerza deseada. Los resultados muestran que la
 imitación neuronal es prometedora en condiciones conocidas y en ciertas
 variaciones OOD, pero que la generalización no puede darse por supuesta. La
 contribución principal queda, por tanto, en haber construido un procedimiento
 medible y reproducible para separar especialización, transferencia,
 arquitectura neuronal y límites físicos de actuación.
+
+\subsection{Alcance y limitaciones}
+
+El vehículo se representa como un cuerpo rígido de seis grados de libertad. La
+posición y la velocidad se expresan en el sistema de referencia mundo
+East--North--Up (ENU); la velocidad angular, los momentos y la geometría de
+rotores emplean el sistema de referencia cuerpo Forward--Right--Down (FRD). La
+actitud se propaga mediante un cuaternión y la dinámica mediante las ecuaciones
+de Newton--Euler integradas con RK4 de paso fijo. El modelo incluye gravedad,
+una fuerza de resistencia lineal, velocidad de viento constante, ruido gaussiano
+de posición y velocidad, ley cuadrática de rotor, retardo puro, dinámica de
+primer orden y saturación.
+
+Estas elecciones constituyen hipótesis de modelado, no propiedades generales de
+un cuadricóptero real. Se suponen masa e inercia constantes, un sólido rígido y
+parámetros conocidos. No se modelan flexibilidad, efecto suelo, interferencia
+entre rotores, aerodinámica no lineal, turbulencia ni descarga de batería. El
+viento no constituye un campo atmosférico real y la resistencia lineal no
+procede de una identificación aerodinámica. La observación solo incorpora ruido
+sintético en posición y velocidad; no se modelan de forma concreta una IMU, un
+receptor GNSS ni un estimador de estado a bordo.
+
+Los límites de altura y actitud, junto con la persistencia de la saturación,
+acotan la región donde una ejecución se considera válida. Las redes se entrenan
+mediante clonación supervisada de la fuerza calculada por expertos PD; no
+minimizan directamente el error de posición y pueden heredar los sesgos de esos
+expertos ante perturbaciones externas. Además, la ruta neuronal conserva la
+estabilización del lazo interno PD y las protecciones clásicas. En consecuencia,
+los resultados solo son válidos para los escenarios, los parámetros del
+vehículo y las semillas descritos; no demuestran un comportamiento seguro en
+hardware de vuelo real. Estas limitaciones motivan directamente las líneas de
+trabajo futuro que se plantean a continuación.
 
 \subsection{Trabajo futuro}
 
@@ -105,7 +137,7 @@ de 20 muestras en cada ciclo, sin reutilizar directamente los estados ocultos
 calculados en el ciclo anterior. Una alternativa sería conservar estados
 recurrentes entre pasos para reducir recálculo o aproximarse a una inferencia
 más stateful. No obstante, esta modificación no es meramente computacional:
-alteraría el contrato efectivo de la red, porque la salida pasaría a depender de
+alteraría la relación efectiva de la red, porque la salida pasaría a depender de
 un estado propagado entre ciclos y no solo de la ventana explícita de muestras
 recientes. Por ello debería evaluarse como una variante metodológica propia, con
 entrenamiento, validación y pruebas cerradas específicas.
@@ -127,7 +159,7 @@ frecuencia y precisión. También habría que alinear las secuencias de control,
 telemetría y temporización entre simulador y vehículo, definir procedimientos de
 prueba progresiva y establecer límites de seguridad independientes de la red.
 
-Finalmente, una línea de cierre consiste en usar el simulador como banco de
+Finalmente, una línea de cierre consiste en usar el simulador como plataforma de
 validación antes del vuelo. Esto permitiría probar trayectorias nuevas, detectar
 regímenes donde el controlador demanda fuerzas excesivas, ajustar protecciones y
 seleccionar escenarios de ensayo real con riesgo controlado. De esta forma, el

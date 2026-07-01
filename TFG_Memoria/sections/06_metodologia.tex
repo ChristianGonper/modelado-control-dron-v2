@@ -4,7 +4,7 @@
 \subsubsection*{Contrastes e hipótesis operativas}
 
 El procedimiento se define antes de interpretar resultados y descompone la
-hipótesis central en cinco contrastes operativos. Cada contraste vincula una
+hipótesis central en cinco comprobaciones experimentales. Cada una vincula una
 parte de la comparación con las métricas que permiten juzgarla.
 
 \begin{table}[H]
@@ -12,12 +12,12 @@ parte de la comparación con las métricas que permiten juzgarla.
 \label{tab:hipotesis-operativas}
 \begin{tabularx}{\textwidth}{p{0.08\textwidth} X X}
 \toprule
-ID & Contraste & Hipótesis operativa \\
+ID & Comprobación & Hipótesis operativa \\
 \midrule
 H1 & Especialización del PD experto & El PD nativo de cada familia actúa como referencia especializada y debe superar a los PD no nativos en su propia familia sin perder seguridad. \\
-H2 & Transferencia de los PD congelados & La transferencia cruzada de PD entre familias es desigual y delimita el rendimiento esperable sin reajuste. \\
+H2 & Transferencia de los PD con parámetros fijados & La transferencia cruzada de PD entre familias es desigual y delimita el rendimiento esperable sin reajuste. \\
 H3 & Fidelidad de imitación y seguimiento cerrado & Una pérdida supervisada baja es necesaria, pero no suficiente, para obtener seguimiento cerrado competitivo. \\
-H4 & Procedimiento neuronal común frente a transferencia clásica & Un único procedimiento neuronal de fuerza deseada puede competir mejor que los PD congelados aplicados fuera de su familia. \\
+H4 & Procedimiento neuronal común frente a transferencia clásica & Un único procedimiento neuronal de fuerza deseada puede competir mejor que los PD aplicados fuera de su familia sin reajuste. \\
 H5 & Efecto de la memoria temporal & GRU o LSTM pueden beneficiarse de historia bajo ruido y retardo, sin asumir cuál será superior. \\
 \bottomrule
 \end{tabularx}
@@ -49,7 +49,6 @@ del conjunto de entrenamiento.
 La cantidad de episodios, geometrías y niveles de perturbación constituye una
 cobertura acotada y reproducible para comparar controladores dentro del alcance
 del simulador.
-% CITA PENDIENTE [CIT-016]: criterio experimental o análisis de cobertura para justificar familias, conteos, ratios y perfiles del dataset clásico
 La partición se asigna a escenarios completos antes de extraer muestras. Todas
 las muestras y ventanas de un episodio heredan su split, por lo que una secuencia
 temporal no se reparte entre entrenamiento, validación y prueba. La semilla fija
@@ -59,7 +58,7 @@ exactamente la misma división experimental.
 \subsubsection*{Diseño del conjunto de datos de imitación}
 
 Cada escenario del conjunto clásico origina un grupo de candidatos externos para
-la predicción de fuerza deseada. El banco registra escenario fuente, variante,
+la predicción de fuerza deseada. El registro conserva escenario fuente, variante,
 ganancias, ruta de resultados, seguridad, RMSE y esfuerzo. El selector conserva
 únicamente candidatos que superan los filtros del
 \apartadoref{subsec:control-neuronal-imitacion}; copia la telemetría del elegido
@@ -98,7 +97,6 @@ temporal; \texttt{waypoint} debe completar su misión y una composición debe
 emitir su terminación específica. Así se evita clasificar como éxito una misión
 finita estable pero incompleta.
 
-% CITA PENDIENTE [CIT-017]: respaldo del uso e interpretación de RMSE, MAE, error máximo y métricas de saturación en seguimiento de trayectorias
 Los filtros duros de selección de PD exigen métricas finitas, terminación
 coherente con la trayectoria, saturación y degradación no superiores al
 2\,\%, y un error máximo de posición ($e_{\max}$) inferior a los umbrales definidos
@@ -117,12 +115,12 @@ El procedimiento experimental sigue once fases ordenadas. Primero se ejecutan
 comprobaciones iniciales del simulador y de escenarios representativos. Después
 se genera el conjunto clásico inicial, se diagnostican los PD por familia y, si
 es necesario, se busca un PD experto para cada familia. Con esos controladores
-congelados se regeneran los escenarios clásicos y se ejecuta la referencia
+con parámetros fijados se regeneran los escenarios clásicos y se ejecuta la referencia
 clásica.
 
-A partir de esa base se generan los datos de imitación: primero el banco de
+A partir de esa base se generan los datos de imitación: primero el conjunto de
 candidatos externos de fuerza deseada y su selección por escenario, y después el
-banco de programación de ganancias que queda como alternativa implementada fuera
+conjunto de programación de ganancias que queda como alternativa implementada fuera
 de la comparación principal. Las fases siguientes entrenan MLP, GRU y LSTM,
 evalúan su fidelidad supervisada, ejecutan la comparación cerrada sobre el split
 de prueba, generan y evalúan la batería OOD, y finalmente ejecutan la
@@ -133,8 +131,8 @@ operativos.
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{FIG-007}
-  \caption{Flujo general del procedimiento experimental estructurado en 11 fases reproducibles. Se ilustran la generación progresiva de los datasets de entrenamiento, el flujo de optimización clásico, el entrenamiento neuronal y las etapas de validación e inyección OOD. Fuente: elaboración propia.}
-  \label{fig:campana-experimental}
+  \caption{Flujo general del procedimiento experimental estructurado en 11 fases reproducibles. Se ilustran la generación progresiva de los datasets de entrenamiento, el flujo de optimización clásico, el entrenamiento neuronal y las etapas de validación y evaluación OOD. Fuente: elaboración propia.}
+  \label{fig:procedimiento-experimental}
 \end{figure}
 El split de entrenamiento puede intervenir en el ajuste de controladores, la
 normalización y la optimización de pesos. Validación se usa para seleccionar el
@@ -176,9 +174,9 @@ La evaluación ID utiliza los 23 episodios completos de prueba: 3
 \texttt{hold}, 7 círculos, 7 Lissajous y 6 \texttt{waypoint}. En cada escenario
 se ejecutan el PD nativo y las tres redes bajo idéntica configuración física. La
 red común se compara primero con el experto especializado de esa familia, que es
-la referencia más exigente para afirmar sustitución del banco.
+la referencia más exigente para afirmar sustitución del conjunto de expertos.
 
-La transferencia clásica aplica los cuatro PD congelados a cada uno de los 23
+La transferencia clásica aplica los cuatro PD con parámetros fijados a cada uno de los 23
 escenarios, incluida la combinación nativa. Esto produce $23\times4=92$
 ejecuciones y una matriz controlador--familia. Las combinaciones no nativas
 cuantifican transferencia sin reajuste; la diagonal vuelve a medir
@@ -190,7 +188,7 @@ controlador aplicado y no a un cambio de escenario.
 
 OOD contiene escenarios cuyos episodios no intervienen en ajuste,
 normalización, entrenamiento ni selección de checkpoint. Para cada escenario se
-ejecutan redes y PD congelados transferidos bajo la misma condición. La
+ejecutan redes y PD transferidos bajo la misma condición. La
 referencia operativa principal es el conjunto de PD disponibles sin reajuste. En
 alguna trayectoria OOD puede añadirse un PD ajustado específicamente para esa
 condición como referencia auxiliar de especialización, pero separado de la
@@ -228,7 +226,11 @@ con una oscilación vertical opcional
 $z(t)=c_z+A_z\sin(\omega_z t)$. En la batería OOD se ensayan variantes
 tridimensionales, rápidas y con perturbaciones combinadas. Esta categoría es
 una prueba más fuerte porque no solo altera parámetros de una primitiva
-conocida; cambia la estructura de la referencia. Mantenerla separada evita que
+conocida; cambia la estructura de la referencia y exige cambios simultáneos de
+curvatura y velocidad en una trayectoria cerrada con cruce central. Por eso, en
+la práctica, una lemniscata suele ser más dura que una trayectoria periódica
+planar más regular cuando la red o el PD no han visto esa geometría durante el
+ajuste. Mantenerla separada evita que
 un promedio OOD oculte la diferencia entre recombinación de familias conocidas y
 novedad geométrica.
 

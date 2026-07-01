@@ -62,7 +62,8 @@ se sitúan, en el sistema de referencia cuerpo, en
 lo que corresponde a una configuración en X respecto a los ejes de cuerpo. En
 ese orden, las posiciones representan los rotores delantero-derecho,
 delantero-izquierdo, trasero-derecho y trasero-izquierdo. Los sentidos de giro
-se codifican mediante $s_i=\{-1,1,1,-1\}$; signo el cual actúa como el par de reacción de guiñada que aparece en
+se codifican mediante $s_i=\{-1,1,1,-1\}$; este signo determina el par de
+reacción de guiñada que aparece en
 \eqnref{eq:rotor-cuadratico}.
 
 \begin{figure}[H]
@@ -87,13 +88,12 @@ saturación de rotor se interpreta sobre todo como límite de asignación y de
 momentos, no como una orden nominal de usar toda la capacidad individual de cada
 rotor.
 
-% CITA PENDIENTE [CIT-002]: criterio físico o fuente de referencia para masa, geometría, inercia y coeficientes de propulsión del vehículo académico.
 La metodología seguida mantiene el mismo vehículo en todos los escenarios de
 comparación. Aunque el simulador permitiría cambiar masa, inercia o parámetros
 de rotor, hacerlo mezclaría el efecto del controlador con el efecto del propio
 vehículo. Al no disponer de una identificación experimental de una plataforma
 concreta, estos valores se adoptan como caso de estudio académico. Lo relevante
-en este trabajo es disponer de un banco coherente para probar controladores, no
+en este trabajo es disponer de un entorno coherente para probar controladores, no
 demostrar representatividad cuantitativa de un modelo comercial determinado.
 
 \subsubsection*{Cinemática y dinámica del cuerpo rígido}
@@ -124,7 +124,9 @@ El estado avanza mediante Runge--Kutta de cuarto orden (RK4) y paso fijo de
 integración. Esta elección ofrece una discretización determinista y un coste
 razonable para trayectorias lentas, sin maniobras agresivas ni cambios bruscos
 de referencia.
-% CITA PENDIENTE [CIT-003]: propiedades y condiciones de uso de RK4 de paso fijo y justificación bibliográfica del orden de magnitud temporal empleado.
+La elección de RK4 se apoya en su uso extendido para ecuaciones diferenciales
+ordinarias cuando se busca una integración determinista de coste moderado
+\cite{butcher2016numerical}.
 
 \subsubsection*{Actuadores, mixer y límites de actuación}
 
@@ -138,13 +140,12 @@ donde $s_i\in\{-1,1\}$ representa el sentido de giro. La fuerza del rotor en
 cuerpo es $\bm{F}_{i,B}=[0\;0\;-T_i]^\mathsf{T}$ y su contribución al momento
 incluye el término de brazo $\bm{r}_{i,B}\times\bm{F}_{i,B}$ y el par de
 reacción $[0\;0\;Q_i]^\mathsf{T}$.
-% CITA PENDIENTE [CIT-004]: fundamento de la ley cuadrática empuje/par de rotor y asignación de fuerzas en un cuadricóptero.
 El modelo cuadrático de empuje y par de reacción es una aproximación habitual en
 modelos de cuadricóptero de bajo orden \cite{beard2012small,mellinger2011minimum}.
 
 El mixer, o mezclador de actuadores, transforma una petición de empuje colectivo
 y momentos en comandos individuales de rotor. Para ello construye una matriz de
-asignación cuyas columnas recogen la contribución de cada empuje $T_i$ al
+asignación $\bm{M}$ cuyas columnas recogen la contribución de cada empuje $T_i$ al
 empuje colectivo, al momento de alabeo, al momento de cabeceo y al momento de
 guiñada:
 \begin{equation}
@@ -152,12 +153,14 @@ guiñada:
 T\\ \tau_x\\ \tau_y\\ \tau_z
 \end{bmatrix}
 =
+\underbrace{
 \begin{bmatrix}
 1 & 1 & 1 & 1\\
 -y_1 & -y_2 & -y_3 & -y_4\\
 x_1 & x_2 & x_3 & x_4\\
 s_1 k_m/k_f & s_2 k_m/k_f & s_3 k_m/k_f & s_4 k_m/k_f
 \end{bmatrix}
+}_{\bm{M}}
 \begin{bmatrix}
 T_1\\T_2\\T_3\\T_4
 \end{bmatrix}.
@@ -171,8 +174,7 @@ que un rotor situado delante ($x_i>0$) aporta momento de cabeceo positivo. Esta
 es la misma convención implementada por el mixer del simulador.
 
 \begin{figure}[H]
-  \centering
-  \includegraphics[width=0.9\textwidth]{FIG-012}
+  \includegraphics[width=1.0\textwidth]{FIG-012}
   \caption{Esquema lógico y toma de decisiones del mezclador de rotores (mixer) ante condiciones factibles y saturadas. Se prioriza el control de actitud mediante el recorte proporcional de momentos ($k$) frente a la desviación del empuje colectivo solicitado. Fuente: elaboración propia.}
   \label{fig:flujo-mixer}
 \end{figure}
@@ -198,7 +200,6 @@ perfil, valores de $\tau=\SI{0.03}{s}$ con retardo de \SI{0.01}{s}, y en
 perfiles más exigentes $\tau=\SI{0.05}{s}$ con retardo de \SI{0.02}{s}. Son
 valores representativos para introducir una dinámica de actuación simplificada;
 no proceden de una identificación de motor, hélice y componentes concretos.
-% CITA PENDIENTE [CIT-005]: justificación del modelo de primer orden, el retardo y sus valores para actuadores simplificados.
 
 \subsubsection*{Perturbaciones, observación y seguridad}
 \phantomsection
@@ -229,7 +230,6 @@ sensórico; lo perturbado es la información entregada al controlador. La semill
 escenario fija las realizaciones pseudoaleatorias, de modo que un mismo YAML puede 
 reproducirse.
 
-% CITA PENDIENTE [CIT-006]: alcance y limitaciones de representar resistencia, viento y ruido mediante modelos lineales, constantes y gaussianos.
 Estos mecanismos permiten probar de forma controlada disipación, perturbaciones
 externas y calidad de observación. No reproducen turbulencia ni las
 características de sensores reales. Los perfiles son niveles heurísticos del
@@ -241,12 +241,11 @@ roll/pitch supera el límite configurado, si aparece un valor no finito o si la
 saturación de actuadores persiste más que el tiempo permitido. En las ejecuciones
 base se usa un umbral de \SI{2}{s} para saturación persistente, si bien es
 completamente configurable. El límite de inclinación por defecto,
-\SI{1.256}{rad}, se usa como frontera operacional del banco de ensayo; es un
+\SI{1.256}{rad}, se usa como frontera operacional del entorno de ensayo; es un
 valor convencional y no un mecanismo de seguridad de un dron real. La ejecución del simulador
 mantiene además límites internos de posición y velocidad para detener
 trayectorias numéricamente divergentes, pero esos límites no forman parte de la
 definición física del vehículo.
-% CITA PENDIENTE [CIT-007]: criterio defendible para el límite de actitud y los umbrales de seguridad de la campaña.
 
 \subsubsection*{Trayectorias y escenarios reproducibles}
 
@@ -290,7 +289,7 @@ en la referencia.
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.9\textwidth]{FIG-010}
-  \caption{Perfiles cinemáticos generados en las transiciones entre waypoints. A la izquierda se ilustra el perfil trapezoidal (para tramos largos) y a la derecha el perfil triangular (para tramos cortos, donde no se alcanza la velocidad de consigna). Fuente: elaboración propia.}
+  \caption{Perfiles cinemáticos generados en las transiciones entre waypoints. A la izquierda se ilustra el perfil trapezoidal (para tramos largos) y a la derecha el perfil triangular (para tramos cortos, donde no se alcanza la velocidad de consigna). Todas las magnitudes representadas son escalares sobre el eje de avance del tramo. Fuente: elaboración propia.}
   \label{fig:perfiles-waypoint}
 \end{figure}
 
@@ -310,7 +309,9 @@ timing: {physics_dt_s: 0.01, control_dt_s: 0.02, telemetry_dt_s: 0.1}
 termination: {max_duration_s: 40.0, z_min_m: -0.1}
 \end{lstlisting}
 
-El formato YAML se usa porque permite declarar los experimentos de forma
+El formato YAML (\textit{YAML Ain't Markup Language}, un formato de texto
+legible para describir datos estructurados mediante claves, listas y valores)
+se usa porque permite declarar los experimentos de forma
 legible y reproducible sin modificar el código fuente. En cada fichero se fija
 el vehículo, el estado inicial, la trayectoria, el controlador, las
 perturbaciones, la semilla, los periodos de ejecución, las condiciones de
@@ -320,7 +321,6 @@ actitud nivelada y empuje inicial de estacionario. Así se evalúa el seguimient
 de la trayectoria y no la recuperación desde una caída inicial provocada por
 arrancar con los rotores apagados.
 
-% NOTA AUTOR PARA 3.4: desarrollar que cada geometría se escogió para cubrir una capacidad distinta: estacionario, seguimiento curvo, movimiento 3D periódico, misión punto a punto y evaluación OOD mediante composiciones/lemniscatas.
 La caracterización experimental de cada geometría se desarrolla en el
 \apartadoref{subsec:datos-metricas}. Además de estas familias principales, el
 simulador admite composiciones secuenciales de trayectorias y lemniscatas para
@@ -338,7 +338,7 @@ nuevo. El mixer y los actuadores producen la fuerza y el momento aplicados a
 partir del último comando disponible; RK4 avanza el estado y la telemetría
 registra las variables a su propia frecuencia.
 
-Entre dos ciclos de control se aplica un retenedor de orden cero: el último
+Entre dos ciclos de control se aplica un bloqueador de orden 0: el último
 comando solicitado se mantiene constante hasta que el controlador vuelve a
 actualizarlo. Esto aproxima la situación de un sistema digital, en el que la
 dinámica física evoluciona continuamente, los sensores y el controlador operan a
@@ -353,7 +353,6 @@ innecesariamente densos.
   \caption{Secuencia de ejecución temporal multirrate y dependencias de datos. Se diferencian las tres bandas de frecuencia asociadas a la integración física (100 Hz), el ciclo digital de control (50 Hz) y el registro periódico de variables (10 Hz). Fuente: elaboración propia.}
   \label{fig:arquitectura-multirrate}
 \end{figure}
-% CITA PENDIENTE [CIT-008]: justificación de la retención de orden cero y de la separación multirrate en simulación digital de control.
 Los periodos son parámetros configurables. En este trabajo se fijan como decisión de
 diseño para construir una plataforma de comparación de controladores; un estudio
 centrado en el simulador podría analizar la sensibilidad frente a otras
@@ -390,8 +389,8 @@ La gestión del entorno se realiza con \texttt{uv}, de modo que las dependencias
 y los comandos de reproducción quedan definidos de forma sencilla para otros
 usuarios. El trabajo se ha desarrollado de forma abierta en GitHub, lo que
 facilita la inspección del código, la trazabilidad de cambios y la reutilización
-académica del material\footnote{\url{https://github.com/ChristianGonper/modelado-control-dron-v2}}.
-% CITA PENDIENTE [CIT-019]: documentación oficial de Python, PyTorch, uv y GitHub para respaldar licencia/capacidades y rol de cada herramienta.
+académica del material\footnote{\url{https://github.com/ChristianGonper/modelado-control-dron-v2}}
+\cite{pytorchDocs,uvDocs,githubDocs}.
 
 No se afirma que Python sea la opción de mayor rendimiento. Una implementación
 en C o C++ sería más adecuada para una plataforma embarcada o para requisitos de

@@ -2,7 +2,7 @@
 \label{subsec:resultados-cobertura}
 
 La comparativa usada para contrastar las hipótesis se apoya en una ejecución
-cerrada, reproducible y trazable. La \autoref{tab:cobertura-campana} resume el
+cerrada, reproducible y trazable. La \autoref{tab:cobertura-ejecucion} resume el
 alcance de esa ejecución: número de escenarios base, controladores evaluados,
 ejecuciones agregadas y porcentaje de casos que completan la misión sin rebasar
 los límites de seguridad definidos. Los comandos de generación, consolidación y
@@ -10,7 +10,7 @@ visualización se recogen en el \anejoref{anejo:comandos}.
 
 \begin{table}[H]
 \caption{Cobertura de la ejecución comparativa principal.}
-\label{tab:cobertura-campana}
+\label{tab:cobertura-ejecucion}
 \small
 \begin{tabularx}{\textwidth}{l
   >{\hsize=0.8\hsize\raggedleft\arraybackslash}X
@@ -22,8 +22,8 @@ visualización se recogen en el \anejoref{anejo:comandos}.
 \toprule
 Split & Escenarios & Controladores & Ejecuciones & Completadas [\%] & Límites [\%] \\
 \midrule
-\texttt{test} & 23 & 8 & 184 & 99,5 & 99,5 \\
-\texttt{ood} & 10 & 8 & 80 & 66,3 & 76,3 \\
+\texttt{test} & 23 & 8 & 184 & 99.5 & 99.5 \\
+\texttt{ood} & 10 & 8 & 80 & 66.3 & 76.3 \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -82,16 +82,18 @@ la fuerza predicha supera los límites de inclinación antes de aplicarse el
 recorte, tanto en la evaluación supervisada como durante la ejecución cerrada.
 
 \begin{table}[H]
-\caption{Fidelidad supervisada de fuerza y recorte de inclinación asociado.}
+\caption{Fidelidad supervisada de fuerza y recorte de inclinación asociado. Los porcentajes de recorte corresponden a la activación del límite de inclinación antes de aplicar la fuerza en el lazo interno.}
 \label{tab:fidelidad-supervisada}
-\small
-\begin{tabularx}{\textwidth}{l *{4}{>{\raggedleft\arraybackslash}X}}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.20\textwidth}
+  *{4}{>{\centering\arraybackslash}X}}
 \toprule
-Arquitectura & MSE norm. & RMSE fuerza [N] & Clip incl. supervisado [\%] & Clip incl. cerrado [\%] \\
+Arquitectura & MSE norm. & RMSE fuerza [N] & Clip supervisado [\%] & Clip cerrado [\%] \\
 \midrule
-MLP  & 0,0185 & 0,083 & 0,057 & 0,062 \\
-GRU  & 0,0102 & 0,053 & 0,000 & 0,000 \\
-LSTM & 0,0111 & 0,055 & 0,000 & 0,000 \\
+MLP  & 0.0185 & 0.083 & 0.057 & 0.062 \\
+GRU  & 0.0102 & 0.053 & 0.000 & 0.000 \\
+LSTM & 0.0111 & 0.055 & 0.000 & 0.000 \\
 \bottomrule
 \end{tabularx}
 \end{table}
