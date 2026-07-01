@@ -61,16 +61,16 @@ def main():
     # ====================================================
     # Fila 1: Posición s(t)
     axs[0, 0].plot(t_eval_trap, res_trap[:, 0], 'b-', linewidth=2, label=r"$s(t)$")
-    axs[0, 0].set_ylabel("Posición Escalar $s$ [m]")
+    axs[0, 0].set_ylabel("Posición $s$ [m]")
     axs[0, 0].set_title(f"Perfil Trapezoidal ($L={L_trap}$ m)")
     
     # Fila 2: Velocidad s_dot(t)
     axs[1, 0].plot(t_eval_trap, res_trap[:, 1], 'g-', linewidth=2, label=r"$\dot{s}(t)$")
-    axs[1, 0].set_ylabel(r"Velocidad Escalar $\dot{s}$ [m/s]")
+    axs[1, 0].set_ylabel(r"Velocidad $\dot{s}$ [m/s]")
     
     # Fila 3: Aceleración s_ddot(t)
     axs[2, 0].plot(t_eval_trap, res_trap[:, 2], 'r-', linewidth=1.8, label=r"$\ddot{s}(t)$")
-    axs[2, 0].set_ylabel(r"Aceleración Escalar $\ddot{s}$ [m/s$^2$]")
+    axs[2, 0].set_ylabel(r"Aceleración $\ddot{s}$ [m/s$^2$]")
     axs[2, 0].set_xlabel("Tiempo $t$ [s]")
 
     # Sombrear fases para Columna 1
@@ -106,17 +106,21 @@ def main():
         ax.axvspan(t_acc_tri, t_total_tri, color=colors_phase['dec'], alpha=0.5)
 
     # Añadir leyenda de fases en la parte superior central
-    fig.legend(loc='upper center', bbox_to_anchor=(0.5, 0.96), ncol=3, frameon=True)
+    fig.legend(loc='upper center', bbox_to_anchor=(0.5, 0.97), ncol=3, frameon=True)
     
     plt.tight_layout()
-    # Ajustar para dejar espacio a la leyenda
-    plt.subplots_adjust(top=0.88)
+    # Ajustar para dejar espacio a la leyenda sin pisar títulos
+    plt.subplots_adjust(top=0.86)
     
     # Guardar
     out_path = "TFG_Memoria/Figuras/diagramas/FIG-010.pdf"
+    out_png = "TFG_Memoria/Figuras/diagramas/FIG-010.png"
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     plt.savefig(out_path, format='pdf', bbox_inches='tight')
-    print(f"Figura FIG-010 guardada exitosamente en {out_path}")
+    plt.savefig(out_png, format='png', bbox_inches='tight', dpi=300)
+    print(f"Figura FIG-010 guardada exitosamente en PDF y PNG:")
+    print(f"  - PDF: {out_path}")
+    print(f"  - PNG: {out_png}")
 
 if __name__ == "__main__":
     main()
