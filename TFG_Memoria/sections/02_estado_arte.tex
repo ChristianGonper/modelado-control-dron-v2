@@ -240,7 +240,14 @@ conservar información relevante a lo largo de muchos pasos. Las arquitecturas
 recurrentes modernas introducen compuertas internas para regular qué información
 se conserva, se actualiza o se descarta. La diferencia conceptual respecto a la
 MLP es, por tanto, que la predicción recurrente no depende solo de la muestra
-actual, sino de una representación interna de la historia reciente.
+actual, sino de una representación interna de la historia reciente. En la \figref{fig:comparativa-arquitecturas-control} se ilustra esta diferencia fundamental entre los enfoques estáticos y los temporales.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{FIG-014}
+  \caption{Comparativa conceptual de arquitecturas neuronales para control temporal. En (A) se muestra el carácter puramente estático de la MLP. En (B) se detalla el flujo desenrollado de la RNN básica y su vulnerabilidad al desvanecimiento del gradiente. En (C) se contrasta la estructura selectiva con compuertas de la célula LSTM y la célula GRU. Fuente: elaboración propia.}
+  \label{fig:comparativa-arquitecturas-control}
+\end{figure}
 
 \paragraph*{Long short-term memory (LSTM).}
 La arquitectura LSTM introduce un estado de celda y varias compuertas que
