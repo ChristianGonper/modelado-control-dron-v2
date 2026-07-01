@@ -367,7 +367,10 @@ def _plot_res_ood_scenario_matrix(df: pd.DataFrame, output_dir: Path, formats: l
 
     fig_height = max(4.8, 0.34 * len(scenario_order) + 1.2)
     fig, ax = plt.subplots(figsize=(6.4, fig_height))
-    image = ax.imshow(matrix, cmap="viridis", aspect="auto", vmin=0.0, vmax=np.nanpercentile(matrix, 95))
+    cmap = plt.get_cmap("viridis")
+    vmin = 0.0
+    vmax = float(np.nanpercentile(matrix, 95))
+    image = ax.imshow(matrix, cmap=cmap, aspect="auto", vmin=vmin, vmax=vmax)
     fig.colorbar(image, ax=ax, label="RMSE [m]", fraction=0.046, pad=0.04)
     ax.set_xticks(np.arange(len(controllers)))
     ax.set_xticklabels(_controller_labels(controllers), rotation=0)
@@ -381,7 +384,18 @@ def _plot_res_ood_scenario_matrix(df: pd.DataFrame, output_dir: Path, formats: l
             if np.isnan(val):
                 continue
             failed = not np.isnan(success[r, c]) and success[r, c] < 0.5
-            ax.text(c, r, f"{val:.2f}" + ("*" if failed else ""), ha="center", va="center", fontsize=7, color="white" if val > np.nanpercentile(matrix, 60) else "#222222")
+            rgba = cmap((val - vmin) / max(vmax - vmin, 1e-9))
+            luminance = 0.2126 * rgba[0] + 0.7152 * rgba[1] + 0.0722 * rgba[2]
+            text_color = "white" if luminance < 0.48 else "#111111"
+            ax.text(
+                c,
+                r,
+                f"{val:.2f}" + ("*" if failed else ""),
+                ha="center",
+                va="center",
+                fontsize=7,
+                color=text_color,
+            )
     return save_figure(fig, output_dir, "res_ood_scenario_matrix", formats)
 
 
@@ -405,7 +419,7 @@ def _plot_res_ood_termination_summary(df: pd.DataFrame, output_dir: Path, format
         "Saturación": COLORS["mlp"],
         "Otra": COLORS["secondary"],
     }
-    fig, ax = plt.subplots(figsize=(6.2, 3.4))
+    fig, ax = plt.subplots(figsize=(6.2, 3.8))
     bottom = np.zeros(len(controllers))
     x = np.arange(len(controllers))
     for cls in classes:
@@ -417,15 +431,21 @@ def _plot_res_ood_termination_summary(df: pd.DataFrame, output_dir: Path, format
     ax.set_xticklabels(_controller_labels(controllers), rotation=18, ha="right")
     ax.set_ylabel("Número de escenarios OOD")
     ax.set_xlabel("Controlador")
-    ax.legend(loc="upper right", ncol=2, fontsize=7)
+    ax.legend(
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.24),
+        ncol=3,
+        fontsize=7,
+        frameon=False,
+    )
     return save_figure(fig, output_dir, "res_ood_termination_summary", formats)
 
 
 def _plot_res_protections_ood(df: pd.DataFrame, output_dir: Path, formats: list[str] | None) -> list[str]:
     frame = df[(df["split"] == "ood") & df["controller"].isin(MEMORY_PRIMARY_CONTROLLERS)].copy()
     metrics = [
-        ("degradation_percentage", "Degradación experta"),
-        ("force_norm_clip_percentage", "Clip norma fuerza"),
+        ("degradation_percentage", "Degradación mixer"),
+        ("force_norm_clip_percentage", "Clip fuerza"),
         ("force_tilt_clip_percentage", "Clip inclinación"),
         ("saturation_percentage", "Saturación actuadores"),
     ]
@@ -435,7 +455,7 @@ def _plot_res_protections_ood(df: pd.DataFrame, output_dir: Path, formats: list[
     controllers = _memory_controller_list(frame, "ood")
     y = np.arange(len(controllers))
     height = 0.18
-    palette = [COLORS["secondary"], COLORS["mlp"], COLORS["failure"], "#7A869A"]
+    palette = ["#6B7280", "#0072B2", "#009E73", "#D55E00"]
     fig, ax = plt.subplots(figsize=(6.1, 3.4))
     for idx, (column, label) in enumerate(metrics):
         values = [float(frame[frame["controller"] == ctrl][column].mean()) for ctrl in controllers]
