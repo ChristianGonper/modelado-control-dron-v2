@@ -1,56 +1,327 @@
 \subsection{Simulación y modelado de cuadricópteros}
 
-Se revisarán plataformas comerciales y abiertas relevantes, incluidas MATLAB,
-Simulink y RotorPy, atendiendo únicamente a las capacidades relacionadas con
-este trabajo. Esta comparación preparará la decisión de construir un banco
-acotado, adaptable y completamente trazable. También se presentarán las
-ecuaciones de Newton--Euler para un cuerpo rígido 6DOF, los sistemas de
-referencia, los cuaterniones y la integración RK4. La aplicación concreta de
-estas bases se reservará para la metodología.
+El cuadricóptero es una plataforma aérea de seis grados de libertad cuya
+posición y actitud evolucionan de forma acoplada, pero cuya actuación procede
+de un número reducido de rotores. Esta combinación convierte el seguimiento de
+trayectorias en un problema especialmente representativo dentro de los sistemas
+no tripulados: el vehículo debe modificar su orientación para generar la fuerza
+traslacional requerida, al mismo tiempo que mantiene la estabilidad angular y
+respeta límites de actuación. Por esta razón, la literatura de pequeños UAV
+suele describir el problema mediante modelos de cuerpo rígido, sistemas de
+referencia bien definidos y arquitecturas de control en cascada
+\cite{beard2012small,mellinger2011minimum,lee2010geometric}.
+
+En un modelo de cuerpo rígido 6DOF, el estado del vehículo combina posición,
+velocidad, actitud y velocidad angular. La traslación se obtiene al sumar
+gravedad, fuerzas aerodinámicas simplificadas y la fuerza generada por los
+rotores una vez transformada desde el sistema cuerpo al sistema inercial. La
+rotación se describe mediante las ecuaciones de Euler, donde los momentos
+aplicados por los rotores modifican la velocidad angular en función de la matriz
+de inercia. Este tipo de formulación permite estudiar la interacción entre
+seguimiento de posición, inclinación, saturación de actuadores y estabilidad,
+aunque no reproduce por sí sola todos los fenómenos aerodinámicos de un vuelo
+real.
+
+Los sistemas de referencia son una parte esencial de esta formulación. En
+aeronaves y vehículos aéreos se distinguen habitualmente un sistema ligado al
+mundo o a la navegación y un sistema ligado al cuerpo. El primero permite
+expresar posición, velocidad y referencias de trayectoria; el segundo resulta
+natural para la geometría del vehículo, los momentos y las fuerzas generadas por
+los rotores. La transformación entre ambos se realiza mediante una matriz de
+rotación asociada a la actitud. En simulación y control, los cuaterniones son
+una alternativa habitual a los ángulos de Euler porque representan la orientación
+sin introducir singularidades cinemáticas en actitudes concretas
+\cite{kuipers1999quaternions}. Los ángulos de Euler siguen siendo útiles para
+visualización o para fijar límites operativos, pero no son la representación más
+robusta para propagar la actitud durante la integración numérica.
+
+La generación de fuerzas en un cuadricóptero se modela frecuentemente mediante
+una relación cuadrática entre la velocidad angular del rotor y el empuje
+producido. Cada rotor contribuye además al momento total mediante su brazo de
+palanca y el par de reacción asociado a su sentido de giro
+\cite{beard2012small,pounds2010modelling}. El mezclador de actuadores resuelve
+entonces el problema inverso: dado un empuje colectivo y tres momentos deseados,
+calcula los empujes individuales que deberían producir los rotores. Cuando la
+solución exige empujes negativos o superiores al máximo disponible, aparecen
+saturaciones y degradaciones de mando. Por ello, una comparación de
+controladores no puede limitarse al error de posición; también debe registrar
+cuándo la actuación solicitada deja de ser físicamente realizable.
+
+La integración temporal del modelo exige discretizar las ecuaciones
+diferenciales. Los métodos de Runge--Kutta, y en particular RK4, son una opción
+clásica para integrar sistemas ordinarios cuando se desea una relación favorable
+entre precisión y coste computacional \cite{butcher2016numerical}. En bancos de
+control digital es habitual separar la frecuencia de integración física, la
+frecuencia de actualización del controlador y la frecuencia de registro de
+telemetría. Entre dos ciclos de control, el último mando calculado se mantiene
+constante mediante una retención de orden cero, aproximando el comportamiento de
+un sistema digital que actúa sobre una dinámica continua \cite{astrom1997computer}.
+
+Existen plataformas maduras para simular vehículos aéreos. MATLAB, Simulink y
+UAV Toolbox proporcionan herramientas para diseñar, simular, probar y desplegar
+aplicaciones UAV, incluyendo escenarios, sensores, autopilotos y flujos de
+prueba en escritorio o hardware-in-the-loop \cite{mathworksUAVToolbox}. En el
+ámbito abierto, RotorPy ofrece un simulador Python de multirrotores orientado a
+educación e investigación, con dinámica 6DOF, aerodinámica, actuadores,
+sensores, viento y validación frente a datos reales \cite{folk2023rotorpy}. Este
+tipo de plataformas muestra que la simulación es una herramienta central para
+prototipado, evaluación y enseñanza en robótica aérea.
+
+El presente trabajo no necesita reproducir toda la amplitud de esas
+plataformas, sino construir un banco experimental acotado donde el modelo físico,
+las trayectorias, los límites, las perturbaciones, los controladores y las
+métricas sean completamente trazables. Por ello, el estado del arte sirve aquí
+para identificar las piezas que debe contener el simulador: dinámica 6DOF,
+marcos de referencia explícitos, actitud mediante cuaterniones, ley de rotor,
+mezclador con saturación, perturbaciones simplificadas, integración determinista
+y telemetría suficiente para revisar cada ejecución.
+
+\subsection{Plataformas de programación y aprendizaje automático}
+
+La elección de una plataforma de implementación condiciona la reproducibilidad y
+la facilidad de inspección del trabajo. Python se ha consolidado como un entorno
+amplio para computación científica y desarrollo experimental, con licencia
+abierta y una comunidad extensa de librerías. Su interés en este contexto no
+reside en ser la opción más eficiente para vuelo embarcado, sino en permitir
+expresar con claridad el modelo, generar datos, ejecutar comparativas y conectar
+el simulador con herramientas de aprendizaje automático.
+
+PyTorch proporciona tensores, diferenciación automática, módulos neuronales y
+optimizadores que permiten entrenar modelos supervisados y recurrentes en CPU o
+GPU \cite{pytorchDocs}. Su modelo de programación mediante \texttt{Tensor},
+\texttt{nn.Module}, funciones de pérdida y optimizadores encaja de forma directa
+con la formulación del problema de imitación: a partir de entradas medidas en
+cada ciclo de control, la red aprende a aproximar una fuerza deseada calculada
+por un experto. Además, PyTorch incluye implementaciones estándar de capas
+lineales, GRU, LSTM, pérdida MSE y Adam, lo que reduce el riesgo de introducir
+errores en componentes algorítmicos ya establecidos.
+
+La reproducibilidad también depende de la gestión del entorno y de los artefactos
+experimentales. Herramientas como \texttt{uv} permiten declarar, resolver y
+ejecutar entornos Python de forma repetible \cite{uvDocs}. El uso de archivos de
+configuración legibles, como YAML, facilita que escenarios, semillas,
+trayectorias, controladores y condiciones de terminación puedan revisarse sin
+modificar código. Finalmente, Git y GitHub proporcionan un soporte común para
+historial de cambios, distribución del código y trazabilidad de los experimentos
+\cite{githubDocs}. Estas herramientas no sustituyen la validez física o
+experimental, pero sí ayudan a que el trabajo pueda auditarse y repetirse.
 
 \subsection{Control clásico en cascada y programación de ganancias}
 
-Se explicará el control PD en cascada de posición y actitud~\cite{beard2012small}.
-También se revisarán métodos clásicos y numéricos de sintonización para preparar
-la justificación posterior de la búsqueda progresiva empleada. La programación
-de ganancias (\emph{gain scheduling}) se presentará como una técnica clásica que
-selecciona o interpola parámetros del controlador según el punto de operación.
-Su motivación se relacionará con el uso de controladores externos
-especializados, sin identificarla con la ruta neuronal principal: esta predice
-fuerza deseada, mientras que la alternativa \texttt{neural\_position} sí
-programa ganancias externas.
+El control clásico de cuadricópteros suele organizarse en cascada. El lazo
+externo trabaja sobre posición y velocidad, y calcula una fuerza o aceleración
+deseada en el sistema de referencia de navegación. El lazo interno transforma
+esa intención de traslación en una actitud deseada y estabiliza el vehículo
+mediante momentos de cuerpo. Esta separación aprovecha la diferencia entre la
+dinámica traslacional, más lenta, y la dinámica angular, que debe responder con
+mayor rapidez. También hace explícita la subactuación del cuadricóptero: para
+acelerar lateralmente, el vehículo debe inclinarse y orientar su empuje
+\cite{beard2012small,mellinger2011minimum,lee2010geometric}.
+
+Los controladores PD y PID siguen siendo referencias frecuentes por su
+simplicidad, interpretabilidad y bajo coste computacional. Un término
+proporcional corrige el error de posición o actitud, un término derivativo
+amortigua la respuesta a partir de la velocidad o la velocidad angular, y un
+término integral puede reducir errores estacionarios cuando existen sesgos
+persistentes. Sin embargo, la acción integral introduce memoria adicional y
+puede acumular mando durante saturaciones, por lo que requiere mecanismos de
+anti-windup y validación específica. En un banco cuyo objetivo es comparar una
+señal externa imitable, una estructura PD con prealimentación de trayectoria
+puede ser una referencia más acotada y trazable.
+
+La sintonización de ganancias puede abordarse de varias maneras. El ajuste
+manual permite incorporar intuición del diseñador, pero puede ser difícil de
+auditar si no se conservan todas las iteraciones. Las reglas clásicas de
+Ziegler--Nichols ofrecen procedimientos sistemáticos para ciertas clases de
+sistemas, aunque no representan directamente un cuadricóptero 6DOF con
+saturaciones y trayectorias espaciales \cite{ziegler1942optimum}. También es
+posible diseñar controladores sobre modelos linealizados alrededor de puntos de
+operación, o buscar ganancias mediante optimización numérica evaluada en
+simulación cerrada. Esta última aproximación resulta especialmente útil cuando
+se desea juzgar candidatos con las mismas trayectorias, límites y métricas que
+se emplearán después en la comparación experimental.
+
+Cuando un único conjunto de ganancias no ofrece un compromiso satisfactorio en
+todo el rango de operación, una respuesta clásica es la programación de
+ganancias. Esta técnica selecciona o interpola parámetros de control según
+variables que describen el punto de operación, de modo que distintas regiones
+del vuelo pueden usar ajustes distintos \cite{leith2000survey}. Conceptualmente,
+un banco de controladores especializados por familia de trayectoria se relaciona
+con esta idea: se dispone de varios expertos y se aplica el más adecuado a una
+condición concreta. No obstante, en este trabajo la ruta neuronal principal no
+interpola ganancias. La red aprende a predecir directamente la fuerza deseada
+del lazo externo, mientras que la programación neuronal de ganancias queda como
+una alternativa implementada fuera de la comparación principal.
 
 \subsection{Aprendizaje por imitación y control híbrido}
 
-Se definirán experto, demostración, clonación de comportamiento y desplazamiento
-de distribución, situando métodos como DAgger~\cite{ross2011dagger}. Se justificará la imitación y la conservación de un lazo
-clásico interno como una frontera coherente con el carácter aeroespacial del
-trabajo.
+El aprendizaje por imitación busca entrenar una política a partir de
+demostraciones generadas por un experto. En su forma más directa, la clonación
+de comportamiento plantea un problema supervisado: la política recibe las
+observaciones del experto y aprende a reproducir sus acciones. Esta idea tiene
+antecedentes tempranos en conducción autónoma, como ALVINN, donde una red
+aprendía a producir comandos de dirección a partir de ejemplos humanos
+\cite{pomerleau1989alvinn}. En robótica y control, el atractivo de la imitación
+es que evita diseñar una función de recompensa completa y permite transferir a
+un modelo aprendido el comportamiento de un controlador o demostrador ya
+disponible.
+
+La clonación de comportamiento tiene una limitación central: los datos proceden
+de los estados visitados por el experto, pero durante la ejecución la política
+aprendida puede cometer pequeños errores y visitar estados que no estaban bien
+representados en las demostraciones. Esta diferencia entre la distribución de
+entrenamiento y la distribución inducida por la política se conoce como
+desplazamiento de distribución. Métodos como DAgger reducen este problema
+agregando datos de los estados visitados por la política aprendida y consultando
+de nuevo al experto \cite{ross2011dagger}. Aunque este trabajo no implementa
+DAgger, la idea es importante para interpretar los resultados: una pérdida
+supervisada baja no garantiza por sí sola un buen comportamiento en bucle
+cerrado.
+
+En aplicaciones de control físico, una política aprendida puede reemplazar todo
+el controlador o solo una parte de la arquitectura. Los enfoques híbridos
+conservan bloques clásicos cuando estos aportan interpretación, estabilidad
+local, límites físicos o compatibilidad con la cadena de actuación. Esta
+frontera es especialmente razonable en un TFG centrado en comparar control
+clásico e imitación neuronal: permite que la red aprenda una decisión acotada,
+mientras el lazo interno, el mezclador y las protecciones siguen siendo
+explícitos. La consecuencia metodológica es clara: el desempeño final no debe
+atribuirse únicamente a la red, sino a la interacción entre la predicción
+neuronal, la estructura clásica compartida y los límites impuestos.
 
 \subsection{Redes neuronales para control}
 
+Las redes neuronales usadas en este trabajo se formulan como modelos
+supervisados de regresión. La entrada es un vector o una secuencia de vectores
+construidos a partir de la observación y de la referencia; la salida es una
+fuerza tridimensional en el sistema de referencia mundo. Durante el
+entrenamiento, los parámetros se ajustan para reducir la diferencia entre la
+fuerza predicha y la fuerza emitida por el experto. Esta formulación requiere
+representar los datos como tensores, agrupar muestras en lotes y optimizar una
+función de pérdida diferenciable mediante retropropagación
+\cite{rumelhart1986learning,pytorchDocs}.
+
 \subsubsection{Redes feedforward}
 
-Se explicarán tensores, capas lineales, lotes, secuencias y la necesidad de
-funciones de activación no lineales. Se situará la unidad lineal rectificada
-(ReLU) utilizada en la implementación y se presentará el perceptrón multicapa
-(MLP) como arquitectura sin memoria explícita y referencia de menor complejidad.
+Una red feedforward calcula la salida mediante una sucesión de capas aplicadas
+en una sola dirección, desde la entrada hasta la predicción. En una capa lineal,
+la salida se obtiene multiplicando la entrada por una matriz de pesos y sumando
+un vector de sesgos. Si solo se encadenasen transformaciones lineales, el modelo
+seguiría siendo equivalente a una transformación lineal global. Por ello se
+introducen funciones de activación no lineales entre capas. La unidad lineal
+rectificada, ReLU, es una activación habitual en redes profundas por su
+simplicidad y por facilitar el entrenamiento frente a saturaciones propias de
+otras funciones \cite{nair2010relu}.
+
+El perceptrón multicapa, o MLP, combina varias capas lineales con activaciones
+no lineales. Teóricamente, las redes feedforward con suficientes unidades pueden
+aproximar clases amplias de funciones continuas bajo condiciones adecuadas
+\cite{cybenko1989approximation}. En este trabajo, la MLP actúa como referencia
+neuronal sin memoria explícita: dos entradas iguales producen la misma fuerza,
+independientemente de la historia previa del episodio. Esta característica la
+hace más simple y barata que las arquitecturas recurrentes, pero también limita
+su capacidad para usar información temporal cuando existen retardos, ruido de
+observación o transitorios de actuación.
 
 \subsubsection{Redes recurrentes}
 
-Se partirá de la red neuronal recurrente básica y de los conceptos de estado
-oculto y ventanas temporales.
+Las redes neuronales recurrentes (RNN) amplían la formulación feedforward
+incorporando un estado oculto que se actualiza a lo largo de la secuencia. En
+cada instante, el modelo procesa la entrada actual junto con una representación
+compacta de la historia previa. De este modo, la salida puede depender no solo
+del error instantáneo, sino también de cómo se ha llegado a ese estado. Esta
+propiedad resulta atractiva para control, donde el comportamiento reciente puede
+aportar información sobre retardos, perturbaciones o tendencias dinámicas.
+
+La RNN básica, sin embargo, presenta dificultades para aprender dependencias
+temporales largas. Durante la retropropagación a través del tiempo, los
+gradientes pueden atenuarse o crecer de forma excesiva, lo que dificulta
+conservar información relevante a lo largo de muchos pasos. Las arquitecturas
+recurrentes modernas introducen compuertas internas para regular qué información
+se conserva, se actualiza o se descarta. La diferencia conceptual respecto a la
+MLP es, por tanto, que la predicción recurrente no depende solo de la muestra
+actual, sino de una representación interna de la historia reciente.
 
 \paragraph*{Long short-term memory (LSTM).}
-Se presentarán su estado de celda y sus mecanismos de compuerta como extensión
-de la recurrencia básica para conservar información a lo largo de la secuencia.
+La arquitectura LSTM introduce un estado de celda y varias compuertas que
+controlan la entrada, el olvido y la salida de información. Su objetivo es
+facilitar que la red conserve información relevante durante más pasos temporales
+que una RNN simple, mitigando el problema de gradientes desvanecidos
+\cite{hochreiter1997lstm}. En el contexto del seguimiento de trayectorias, esta
+memoria puede ayudar si la historia reciente contiene información útil sobre
+retardos de actuador, ruido o evolución del error. Sin embargo, también aumenta
+el número de parámetros y puede introducir sensibilidad a patrones temporales
+poco representados en el conjunto de entrenamiento.
 
 \paragraph*{Gated recurrent unit (GRU).}
-Se describirá su formulación recurrente con compuertas y se comparará con LSTM
-en estructura, memoria y coste computacional.
+La GRU también utiliza compuertas, pero con una estructura más compacta que la
+LSTM. En lugar de separar explícitamente un estado de celda y un estado oculto,
+combina mecanismos de actualización y reinicio para decidir cuánta información
+previa conserva y cómo incorpora la entrada actual \cite{cho2014learning}. Esto
+la sitúa como una alternativa recurrente con menor complejidad paramétrica que
+LSTM en muchas configuraciones, manteniendo la capacidad de procesar secuencias.
+Por ello, comparar GRU y LSTM bajo el mismo contrato experimental permite
+valorar si una memoria recurrente más compleja aporta una mejora real en el
+banco de control definido.
+
+El entrenamiento de estas arquitecturas mantiene elementos comunes del
+aprendizaje supervisado. La normalización calculada solo con el conjunto de
+entrenamiento evita que variables de distinta escala dominen la pérdida y reduce
+fugas de información desde validación o prueba. El error cuadrático medio (MSE)
+es una función natural para regresión de fuerzas, al penalizar desviaciones
+grandes entre predicción y experto. Adam combina estimaciones adaptativas de
+primer y segundo momento del gradiente y se ha convertido en un optimizador
+estándar en aprendizaje profundo \cite{kingma2015adam}. La validación y la
+parada temprana permiten seleccionar un checkpoint sin ajustar los pesos sobre
+el conjunto de prueba.
+
+\subsection{Evaluación, generalización y métricas}
+
+En sistemas dinámicos controlados, la evaluación debe realizarse tanto sobre la
+señal aprendida como sobre el comportamiento cerrado del sistema. Una red puede
+aproximar bien la fuerza del experto en muestras del conjunto de prueba y, aun
+así, generar una trayectoria peor cuando sus predicciones se realimentan en la
+dinámica. Esta diferencia se debe a que el control en bucle cerrado modifica los
+estados futuros que verá la propia política. Por ello, la evaluación de
+aprendizaje por imitación debe distinguir fidelidad supervisada, éxito de
+misión, error de seguimiento, actuación y uso de protecciones.
+
+La separación entre entrenamiento, validación y prueba es necesaria para estimar
+el comportamiento en datos no usados durante el ajuste de pesos o la selección
+de modelos. Además, cuando el objetivo es estudiar transferencia, conviene
+distinguir entre condiciones dentro de la distribución de entrenamiento y
+condiciones fuera de distribución. Las primeras comprueban interpolación dentro
+de familias, perturbaciones y geometrías ya representadas. Las segundas evalúan
+si la política conserva un comportamiento razonable ante recombinaciones,
+mayores exigencias dinámicas o trayectorias geométricamente nuevas.
+
+Las métricas de seguimiento deben capturar aspectos complementarios del error.
+RMSE penaliza con más intensidad errores grandes, MAE describe el error medio y
+el máximo detecta excursiones puntuales que pueden quedar ocultas en un
+promedio. En control de vehículos, estas magnitudes deben interpretarse junto
+con terminaciones, saturaciones y esfuerzo de actuación: un controlador puede
+obtener un error medio bajo durante parte del episodio y, sin embargo, fallar la
+misión o demandar mandos no realizables. Esta lectura multidimensional es la que
+permite comparar de forma justa un PD especializado, un PD transferido y una
+política neuronal híbrida.
 
 \subsection{Posicionamiento del trabajo}
 
-El capítulo concluirá situando la aportación entre control clásico, control
-completamente aprendido y enfoques híbridos. Se explicará qué hueco cubre el
-banco personalizado y cómo conserva trazabilidad física y experimental.
+El trabajo se sitúa entre tres enfoques. El primero es el control clásico en
+cascada, interpretable y económico, pero sensible al ajuste de ganancias y al
+dominio para el que se ha sintonizado. El segundo es el control aprendido de
+forma amplia, que puede explotar datos y aproximadores no lineales, pero exige
+una validación cuidadosa cuando se aplica a sistemas físicos. El tercero es el
+control híbrido, donde una parte aprendida se inserta dentro de una arquitectura
+clásica para conservar estructura física, límites y trazabilidad.
+
+La contribución de esta memoria adopta la tercera vía. Se construye un simulador
+6DOF reproducible, se ajusta un banco de controladores PD especializados y se
+entrenan MLP, GRU y LSTM para imitar la fuerza deseada del lazo externo. La red
+no sustituye el vehículo completo ni actúa directamente sobre rotores: produce
+una señal de fuerza en el sistema mundo que después atraviesa la misma
+conversión fuerza--actitud, el mismo lazo interno y el mismo mezclador que el
+controlador clásico. Así, el estado del arte no solo presenta antecedentes, sino
+que delimita la pregunta técnica del TFG: hasta qué punto una política neuronal
+única puede condensar varios expertos externos sin perder la interpretación y
+las protecciones de una arquitectura clásica en cascada.
