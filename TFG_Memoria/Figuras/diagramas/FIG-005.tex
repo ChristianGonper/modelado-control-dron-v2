@@ -35,7 +35,7 @@
   };
   \draw[line] (inicio) -- (diagnostico);
 
-  \node[decision, below=0.8cm of diagnostico] (dec_base) {¿Supera umbral\\de RMSE?};
+  \node[decision, below=0.8cm of diagnostico] (dec_base) {{\textquestiondown}Supera umbral\\de RMSE?};
   \draw[line] (diagnostico) -- (dec_base);
 
   % ==========================================
@@ -59,7 +59,7 @@
   \draw[line] (global) -- (filtros);
 
   % Criterios de filtro
-  \node[decision, below=0.8cm of filtros] (dec_filtros) {¿Estable y seguro?};
+  \node[decision, below=0.8cm of filtros] (dec_filtros) {{\textquestiondown}Estable y seguro?};
   \draw[line] (filtros) -- (dec_filtros);
 
   % Descartes y Aceptación
