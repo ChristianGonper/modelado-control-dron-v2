@@ -30,7 +30,7 @@ Interpretacion para la memoria:
   familia.
 - Si esta doble seleccion se considera demasiado pesada o conceptualmente
   confusa, una alternativa futura seria entrenar directamente con la fuerza del
-  PD congelado por familia y comparar contra el dataset outer-force actual. Eso
+  PD con parámetros fijados por familia y comparar contra el dataset outer-force actual. Eso
   seria un cambio experimental, no una simple correccion de redaccion.
 
 ## Estudio neuronal de sensibilidad
@@ -81,10 +81,10 @@ Prioridad alta:
 - FIG-002: ejes ENU/FRD y signo del empuje. Evita errores de lectura en todo el
   modelo fisico.
 - FIG-004: arquitectura PD en cascada. Sirve de puente directo hacia la red.
-- FIG-006: contrato outer-force neuronal. Es clave para explicar que la red
+- FIG-006: interfaz outer-force neuronal. Es clave para explicar que la red
   sustituye solo la fuerza deseada.
 - FIG-007: flujo experimental de 11 fases. Debe dejar clara la separacion entre
-  tuneo clasico, banco outer-force, entrenamiento, test y OOD.
+  tuneo clasico, conjunto outer-force, entrenamiento, test y OOD.
 
 Prioridad media:
 

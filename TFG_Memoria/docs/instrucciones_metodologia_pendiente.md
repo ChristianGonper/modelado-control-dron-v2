@@ -27,7 +27,7 @@ Si se decide ampliar:
    `test` y OOD, no solo muestras de entrenamiento.
 2. Preservar splits por escenario completo; nunca repartir ventanas de un mismo
    episodio entre splits.
-3. Regenerar tambien el banco de fuerza externa, el dataset de imitacion y los
+3. Regenerar tambien el conjunto de fuerza externa, el dataset de imitacion y los
    checkpoints neuronales.
 4. Actualizar `docs/simulador/dataset_clasico.md`, la metodologia y cualquier
    tabla de resultados.
@@ -47,7 +47,7 @@ principal de transferencia, porque usaria informacion de la condicion nueva.
 
 Usarlo solo si aporta una lectura clara:
 
-- Si una trayectoria OOD nueva resulta fallida para todos los PD congelados y las
+- Si una trayectoria OOD nueva resulta fallida para todos los PD con parámetros fijados y las
   redes, puede ayudar a distinguir si el escenario es fisicamente razonable o si
   el problema es la falta de transferencia.
 - Si se usa, presentarlo como cota auxiliar de especializacion para esa

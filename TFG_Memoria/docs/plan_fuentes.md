@@ -27,7 +27,7 @@ numéricos elegidos, porque actualmente están implementados pero no justificado
 - Documentación oficial sobre las capacidades y licencias de MATLAB, Simulink y
   herramientas UAV relacionadas.
 - Artículo y documentación oficial de RotorPy.
-- Otras plataformas relevantes solo si ayudan a justificar por qué un banco
+- Otras plataformas relevantes solo si ayudan a justificar por qué un entorno
   propio, acotado y trazable resulta adecuado para esta pregunta.
 
 Debe evitarse afirmar genéricamente que una herramienta es «caja negra»,

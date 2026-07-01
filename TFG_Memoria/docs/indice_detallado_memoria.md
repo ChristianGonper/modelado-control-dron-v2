@@ -72,7 +72,7 @@ seguridad, error de seguimiento, actuación y uso de protecciones.
 cuadricóptero como un problema de control en cascada y explicar la limitación de
 depender de controladores externos especializados.
 
-**Contenido esencial.** Contexto aeroespacial, necesidad de un banco experimental
+**Contenido esencial.** Contexto aeroespacial, necesidad de un entorno experimental
 común, arquitectura con lazo externo de traslación y lazo interno de actitud, y
 motivación de sustituir la selección de especialistas por una política aprendida
 única. Aquí se define el problema, pero no se formula una lista de preguntas de
@@ -84,7 +84,7 @@ investigación.
 verificables.
 
 **Contenido esencial.** Hipótesis central; objetivo general; objetivos específicos
-relativos al simulador 6DOF, el banco de PD, las demostraciones, MLP/GRU/LSTM y la
+relativos al simulador 6DOF, el conjunto de PD, las demostraciones, MLP/GRU/LSTM y la
 evaluación ID/OOD. El alcance físico, las simplificaciones y las limitaciones se
 integrarán mediante un epígrafe no numerado, sin constituir un cuarto apartado.
 
@@ -101,7 +101,7 @@ fundamentos hasta la evidencia y las conclusiones.
 modelo de cuerpo rígido 6DOF.
 
 **Contenido esencial.** Plataformas relevantes, Newton--Euler, marcos de
-referencia, cuaterniones, integración numérica y justificación de un banco propio
+referencia, cuaterniones, integración numérica y justificación de un entorno propio
 acotado y trazable. Los parámetros concretos se reservan para metodología.
 
 ## 2.2 Control clásico en cascada y programación de ganancias
@@ -142,7 +142,7 @@ LSTM y GRU aparecerán después mediante epígrafes internos sin numerar.
 
 ## 2.5 Posicionamiento del trabajo
 
-**Función narrativa.** Situar la contribución entre el control clásico con banco
+**Función narrativa.** Situar la contribución entre el control clásico con conjunto
 de especialistas, la programación neuronal de ganancias y el control aprendido
 de fuerza con estabilización interna clásica.
 
@@ -150,7 +150,7 @@ de fuerza con estabilización interna clásica.
 
 ## 3.1 Modelo físico y simulador 6DOF
 
-**Función narrativa.** Definir el contrato físico, numérico y de observación
+**Función narrativa.** Definir la interfaz física, numérica y de observación
 común a todos los controladores.
 
 **Epígrafes internos previstos.** Convenciones ENU/FRD e hipótesis; vehículo de
@@ -166,7 +166,7 @@ Las métricas comparativas y los splits no se definirán aquí.
 interno compartido.
 
 **Epígrafes internos previstos.** Arquitectura PD; ecuaciones, ganancias y
-límites; método de sintonización; búsqueda progresiva; controladores congelados y
+límites; método de sintonización; búsqueda progresiva; controladores con parámetros fijados y
 transferencia cruzada. Estos epígrafes no aparecerán numerados.
 
 ## 3.3 Control neuronal por imitación
@@ -189,10 +189,10 @@ saturación, degradación y clipping.
 
 ## 3.5 Protocolo experimental y reproducibilidad
 
-**Función narrativa.** Establecer el orden de la campaña y las reglas que impiden
+**Función narrativa.** Establecer el orden del procedimiento experimental y las reglas que impiden
 contaminación entre entrenamiento y evaluación.
 
-**Epígrafes internos previstos.** Fases de campaña; configuración común de
+**Epígrafes internos previstos.** Fases del procedimiento experimental; configuración común de
 entrenamiento; evaluación ID y transferencia clásica; evaluación OOD por niveles;
 criterios de inclusión de evidencia; metadatos y reproducibilidad.
 
@@ -216,7 +216,7 @@ supervisada, seguimiento cerrado, actuación y protecciones.
 ## 4.4 Transferencia y generalización fuera de distribución
 
 Separará variaciones y composiciones conocidas de familias geométricas nuevas.
-La comparación principal será entre la política común y los PD congelados
+La comparación principal será entre la política común y los PD con parámetros fijados
 transferidos sin reajuste. Arquitecturas, actuación y clipping se tratarán como
 epígrafes internos, no como apartados adicionales.
 

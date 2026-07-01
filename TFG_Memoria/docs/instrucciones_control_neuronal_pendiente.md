@@ -11,7 +11,7 @@ la documentación del repositorio:
 
 - `tools/run_experimental_campaign.py` separa la fase de tuneo clásico de la
   fase de generación del dataset neuronal. La fase 3 ajusta los PD clásicos; la
-  fase 5 genera el banco y el dataset de fuerza externa.
+  fase 5 genera el conjunto y el dataset de fuerza externa.
 - `tools/generate_outer_force_pid_bank.py` toma cada escenario del dataset
   clásico y evalúa variantes que cambian solo `Kp_pos` y `Kd_pos`. El resto del
   controlador del escenario fuente, incluido el lazo interno, se conserva.

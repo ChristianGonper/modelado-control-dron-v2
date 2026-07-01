@@ -28,7 +28,7 @@ diagrama cambie.
 
 | Capítulo | Diagrama | Finalidad |
 |---|---|---|
-| Introducción | `FIG-001` Hipótesis y estrategia experimental | Mostrar banco de PD, selección de expertos, imitación y comparación de las tres referencias en ID y OOD. Fuente TikZ disponible. |
+| Introducción | `FIG-001` Hipótesis y estrategia experimental | Mostrar conjunto de PD, selección de expertos, imitación y comparación de las tres referencias en ID y OOD. Fuente TikZ disponible. |
 | Estado del arte | `FIG-014` Arquitecturas neuronales para control | Comparar MLP, RNN básica y arquitecturas recurrentes con compuertas sin duplicar la ventana temporal de `FIG-013`. Fuente TikZ disponible y ficha actualizada. |
 | Estado del arte | `FIG-015` Actuación y movimiento de un cuadricóptero | Explicar cómo cuatro rotores generan empuje colectivo y momentos, y por qué el movimiento lateral exige inclinar el vehículo. Ficha creada; fuente pendiente. |
 | Metodología 3.1 | `FIG-002` Marcos ENU y FRD | Fijar signos, ejes y dirección de empuje. Fuente TikZ disponible y ficha actualizada. |
@@ -41,7 +41,7 @@ diagrama cambie.
 | Metodología 3.2 | `FIG-005` Búsqueda progresiva | Mostrar diagnóstico, candidatos, filtros, refinamiento y congelación. Fuente TikZ disponible y ficha actualizada. |
 | Metodología 3.3 | `FIG-006` Predicción de fuerza deseada | Mostrar entradas, MLP/GRU/LSTM, protecciones y lazo interno común. Fuente TikZ disponible y ficha actualizada. |
 | Metodología 3.3 | `FIG-013` Ventana deslizante recurrente | Representar la ventana deslizante temporal, el avance del lote recurrentemente y el padding por repetición al inicio. Fuente TikZ disponible y ficha actualizada. |
-| Metodología 3.5 | `FIG-007` Flujo completo de campaña | Conectar datasets, tuneo, entrenamiento y comparaciones. Fuente TikZ disponible y ficha actualizada. |
+| Metodología 3.5 | `FIG-007` Flujo completo del procedimiento experimental | Conectar datasets, tuneo, entrenamiento y comparaciones. Fuente TikZ disponible y ficha actualizada. |
 | Metodología 3.5 | `FIG-008` Niveles de evaluación | Separar familias vistas, transferencia, composiciones y trayectorias nuevas. Fuente TikZ disponible y ficha actualizada. |
 | Trabajo futuro | Paso hacia dron real | Mostrar sensores, estimación, control y percepción a bordo. |
 
@@ -61,7 +61,7 @@ diagrama cambie.
 | `atlas_trayectoria_helix_3d` | `TFG_Memoria/Figuras/resultados/` | Anejo: vista 3D de hélice OOD | Telemetría OOD |
 | `tab:cobertura-campana` | `07_resultados.tex` | Cobertura y validez | `comparison_all_runs.csv` |
 | `tab:fidelidad-supervisada` | `07_resultados.tex` | H3 fidelidad supervisada | `data/neural_control/*/metrics/test_force_metrics.json` |
-| `tab:sintesis-resultados` | `07_resultados.tex` | Lecturas principales de campaña | Evidencia consolidada |
+| `tab:sintesis-resultados` | `07_resultados.tex` | Lecturas principales de la ejecución | Evidencia consolidada |
 
 Comando de regeneración:
 
@@ -76,4 +76,4 @@ uv run simulador-quad plot-comparison results/comparison_all_runs.csv --out TFG_
    solo para modos de fallo OOD.
 3. Las figuras `atlas_*` muestran el trabajo realizado y la variedad de
    trayectorias; no sustituyen a la evidencia cuantitativa del cuerpo.
-4. Las figuras antiguas `mem_*` y `c1--c7` dejan de ser contrato editorial.
+4. Las figuras antiguas `mem_*` y `c1--c7` dejan de formar parte de la línea editorial vigente.

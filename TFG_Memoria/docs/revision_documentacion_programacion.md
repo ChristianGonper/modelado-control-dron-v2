@@ -18,7 +18,7 @@ La documentación describe correctamente el flujo principal:
 3. `SimulationRunner` ejecuta el ciclo multirrate de referencia, observación,
    control, mezclador, actuadores, telemetría e integración RK4.
 4. La ejecución exporta telemetría, métricas y metadatos reproducibles.
-5. Las herramientas de campaña generan datasets, ajustan controladores,
+5. Las herramientas del procedimiento experimental generan datasets, ajustan controladores,
    entrenan redes y consolidan comparaciones.
 
 Las convenciones ENU/FRD, las ecuaciones 6DOF, los actuadores, el mezclador, las
@@ -35,7 +35,7 @@ código, pruebas y escenarios.
 - `docs/simulador/trazabilidad.md` permite justificar cada decisión mediante
   código, pruebas, escenarios y métricas.
 - `docs/simulador/dataset_clasico.md` y `control_neuronal.md` describen la cadena
-  experimental desde los controladores congelados hasta la comparación de
+  experimental desde los controladores con parámetros fijados hasta la comparación de
   predicción de fuerza deseada.
 - `results/comparison_summary.csv` contiene la comparación consolidada de
   controladores clásicos y redes MLP, GRU y LSTM en prueba y fuera de la
@@ -45,7 +45,7 @@ código, pruebas y escenarios.
 
 ### Hipótesis experimental y niveles de evaluación
 
-La hipótesis central debe formularse como la posibilidad de condensar un banco
+La hipótesis central debe formularse como la posibilidad de condensar un conjunto
 de controladores PD especializados en una política neuronal común, mantener un
 desempeño competitivo y mejorar la transferencia frente a los PD aplicados fuera
 de su familia. La evidencia implementada permite separar cuatro niveles:
