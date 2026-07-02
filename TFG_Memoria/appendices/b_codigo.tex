@@ -6,17 +6,20 @@ que se integra el controlador neuronal dentro del lazo clásico.
 
 \subsubsection*{Organización funcional del paquete}
 
-El paquete \texttt{simulador\_quad} está dividido por responsabilidades. La
-dinámica de cuerpo rígido y los actuadores se encuentran en
-\texttt{src/simulador\_quad/dynamics}; los sistemas de referencia, contratos de
-datos y utilidades comunes en \texttt{src/simulador\_quad/core}; los
-controladores en \texttt{src/simulador\_quad/control}; las trayectorias en
-\texttt{src/simulador\_quad/trajectories}; el registro de telemetría en
-\texttt{src/simulador\_quad/telemetry}; las métricas en
-\texttt{src/simulador\_quad/metrics}; y las salidas gráficas en
-\texttt{src/simulador\_quad/visualization}. Los scripts de \texttt{tools/}
-orquestan datasets, bancos de expertos, entrenamiento neuronal, ejecución
-masiva y consolidación de resultados.
+El paquete \texttt{simulador\_quad} está organizado de forma modular según sus
+responsabilidades bajo el directorio \path{src/simulador_quad/}:
+\begin{itemize}
+    \item \path{dynamics}: Dinámica de cuerpo rígido y actuadores.
+    \item \path{core}: Sistemas de referencia, contratos de datos y utilidades comunes.
+    \item \path{control}: Implementación de los diferentes controladores.
+    \item \path{trajectories}: Generación y gestión de trayectorias de referencia.
+    \item \path{telemetry}: Registro estructurado de la telemetría de simulación.
+    \item \path{metrics}: Cálculo de métricas de rendimiento y error.
+    \item \path{visualization}: Renderizado y salidas gráficas.
+\end{itemize}
+Los scripts de \path{tools/} orquestan la generación de datasets, bancos de
+expertos, entrenamiento neuronal, ejecución masiva y consolidación de
+resultados.
 
 Esta separación es relevante porque el trabajo compara controladores sin
 cambiar el entorno físico. La campaña puede sustituir el lazo externo por una

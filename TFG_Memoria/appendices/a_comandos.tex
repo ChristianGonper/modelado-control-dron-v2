@@ -25,20 +25,23 @@ artefactos: \texttt{telemetry.json} con la serie temporal y
 \begin{verbatim}
 uv run simulador-quad run scenarios\hover_clean.yaml --no-visualization
 
+set CASE=results\hover_clean
 uv run simulador-quad plot ^
-  results\hover_clean\telemetry.json ^
-  --metrics results\hover_clean\metrics.json ^
-  --out results\hover_clean\figures_report ^
+  %CASE%\telemetry.json ^
+  --metrics %CASE%\metrics.json ^
+  --out %CASE%\figures_report ^
   --profile report --formats png pdf
 \end{verbatim}
 
-El mismo patrón permite ejecutar casos diagnósticos más exigentes:
+El mismo patrón permite ejecutar escenarios sueltos de diagnóstico durante el
+desarrollo. Para las figuras finales del anejo visual, sin embargo, se emplean
+las telemetrías ya consolidadas del dataset clásico y no ejecuciones manuales
+aisladas.
 
 \begin{verbatim}
-uv run simulador-quad run scenarios\circle_noisy_wind.yaml --no-visualization
-uv run simulador-quad run scenarios\lissajous_clean.yaml --no-visualization
-uv run simulador-quad run scenarios\waypoint_clean.yaml --no-visualization
-uv run simulador-quad run scenarios\composite_ood.yaml --no-visualization
+uv run simulador-quad run ^
+  scenarios\lissajous_clean.yaml ^
+  --no-visualization
 \end{verbatim}
 
 \subsubsection*{Dataset clásico y expertos PD}
@@ -94,10 +97,10 @@ uv run python tools\evaluate_neural_controller.py ^
   --device auto
 \end{verbatim}
 
-Las arquitecturas recurrentes se entrenan cambiando
-\texttt{--architecture gru} o \texttt{--architecture lstm}. En la evaluación
-cerrada se pasan siempre el checkpoint y la normalización correspondientes para
-evitar mezclar modelos y escalados.
+Las arquitecturas recurrentes se entrenan con el mismo comando, sustituyendo
+\texttt{mlp} por \texttt{gru} o \texttt{lstm}. En la evaluación cerrada se pasan
+siempre el checkpoint y la normalización correspondientes para evitar mezclar
+modelos y escalados.
 
 \subsubsection*{Batería OOD y comparación cerrada}
 
@@ -139,8 +142,10 @@ uv run python tools\summarize_comparison.py
 \subsubsection*{Figuras de resultados y anejos}
 
 Las figuras comparativas del capítulo de resultados se regeneran desde el CSV
-consolidado. Las figuras de telemetría de los anejos se generan desde
-ejecuciones concretas para mostrar señales internas de simulación.
+consolidado. Las figuras de telemetría del anejo visual se generan desde el
+dataset clásico, donde se guardan las ejecuciones de los PD expertos congelados
+usadas en train, validación y test. Cuando se quiere ilustrar transferencia
+cruzada se usa la carpeta de resultados de transferencia.
 
 \begin{verbatim}
 uv run simulador-quad plot-comparison ^
@@ -148,31 +153,45 @@ uv run simulador-quad plot-comparison ^
   --out TFG_Memoria\Figuras\resultados ^
   --formats pdf png
 
+set ROOT=data\classic_dataset\v1\results\circle
+set RUN=circle_g04_P5_combined_s1083
 uv run simulador-quad plot ^
-  results\circle_noisy_wind\telemetry.json ^
-  --metrics results\circle_noisy_wind\metrics.json ^
-  --out TFG_Memoria\Figuras\resultados\sim_circle_noisy_wind ^
+  %ROOT%\%RUN%\telemetry.json ^
+  --metrics %ROOT%\%RUN%\metrics.json ^
+  --out TFG_Memoria\Figuras\resultados\classic_circle_combined ^
+  --profile report --formats pdf png
+
+set ROOT=data\classic_dataset\v1\results_transfer
+set RUN=circle_g04_P5_combined_s1083_with_pid_lissajous
+uv run simulador-quad plot ^
+  %ROOT%\%RUN%\telemetry.json ^
+  --metrics %ROOT%\%RUN%\metrics.json ^
+  --out TFG_Memoria\Figuras\resultados\transfer_circle_lissajous ^
   --profile report --formats pdf png
 \end{verbatim}
 
-El mismo comando de \texttt{plot} se ha aplicado a \texttt{hover\_clean},
-\texttt{lissajous\_clean}, \texttt{waypoint\_clean}, \texttt{circle\_drag} y
-\texttt{composite\_ood}. En todos los casos, el perfil \texttt{report} elimina
-títulos diagnósticos redundantes y conserva ejes, unidades, leyendas y formato
-apto para memoria.
+El mismo comando de \texttt{plot} se ha aplicado a cinco casos nativos:
+\texttt{hold\_g05\_P5}, \texttt{circle\_g04\_P5}, \texttt{circle\_g07\_P2},
+\texttt{lissajous\_g07\_P5} y \texttt{waypoint\_g03\_P5}. También se ha usado
+para una pareja de transferencia del caso circular. En todos ellos, el perfil
+\texttt{report} elimina títulos diagnósticos redundantes y conserva ejes,
+unidades, leyendas y formato apto para memoria.
 
 \subsubsection*{Artefactos de evidencia}
 
 \begin{itemize}
-  \item \texttt{results/comparison\_all\_runs.csv}: corridas comparables usadas
+  \item \path{results/comparison_all_runs.csv}: Corridas comparables usadas
     por las figuras principales de resultados.
-  \item \texttt{results/comparison\_summary.csv}: agregación por controlador,
+  \item \path{results/comparison_summary.csv}: Agregación por controlador,
     split y familia.
-  \item \texttt{results/evidence\_manifest.csv}: procedencia de datasets,
+  \item \path{results/evidence_manifest.csv}: Procedencia de datasets,
     checkpoints y decisiones de inclusión.
-  \item \texttt{results/*/telemetry.json}: series temporales por episodio.
-  \item \texttt{results/*/metrics.json}: métricas y metadatos de cada
-    ejecución.
-  \item \texttt{TFG\_Memoria/Figuras/resultados/}: figuras finales en PDF y
-    PNG.
+  \item Archivos de series temporales de los PD expertos nativos en
+    \path{data/classic_dataset/v1/results/*/*/telemetry.json}.
+  \item Archivos de métricas y metadatos de esas ejecuciones en
+    \path{data/classic_dataset/v1/results/*/*/metrics.json}.
+  \item Ejecuciones de transferencia cruzada entre familias de PD en
+    \path{data/classic_dataset/v1/results_transfer/*/}.
+  \item Directorio de figuras finales de la memoria en
+    \path{TFG_Memoria/Figuras/resultados/}.
 \end{itemize}

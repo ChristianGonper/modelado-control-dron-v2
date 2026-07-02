@@ -1,9 +1,12 @@
 Las figuras de este anejo no se emplean como prueba cuantitativa principal. Su
 función es mostrar el tipo de evidencia visual que se inspecciona después de una
 simulación cerrada y dar contexto a las métricas agregadas del capítulo de
-resultados. Se han escogido casos limpios, casos con perturbaciones y
-trayectorias con cambios geométricos para que el lector pueda ver el alcance
-práctico del banco de simulación.
+resultados. A diferencia de una ejecución manual aislada, las telemetrías usadas
+en este anejo proceden del dataset clásico consolidado:
+\texttt{data/classic\_dataset/v1/results}. Por tanto, corresponden a los PD
+expertos congelados que alimentan las fases de entrenamiento, validación y
+prueba. Al final se añade un ejemplo de \texttt{results\_transfer} para ilustrar
+la transferencia cruzada de esos mismos PD.
 
 \subsubsection*{Atlas de trayectorias}
 
@@ -17,7 +20,7 @@ aprecie su componente tridimensional.
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{atlas_trayectorias_id.pdf}
-\caption{Muestra visual de familias conocidas: \texttt{hold}, \texttt{circle},
+\caption[Muestra visual de familias conocidas.]{Muestra visual de familias conocidas: \texttt{hold}, \texttt{circle},
 \texttt{lissajous} y \texttt{waypoint}. Fuente: elaboración propia.}
 \label{fig:atlas-trayectorias-id}
 \end{figure}
@@ -25,7 +28,7 @@ aprecie su componente tridimensional.
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{atlas_trayectorias_ood.pdf}
-\caption{Muestra visual de trayectorias fuera de distribución:
+\caption[Muestra visual de trayectorias fuera de distribución.]{Muestra visual de trayectorias fuera de distribución:
 \texttt{lemniscate}, \texttt{lissajous} 3D, composición y hélice. Fuente:
 elaboración propia.}
 \label{fig:atlas-trayectorias-ood}
@@ -42,29 +45,32 @@ elaboración propia.}
 \subsubsection*{Episodios seleccionados}
 
 La \autoref{tab:casos-telemetria-anejo} resume los episodios incluidos en las
-figuras siguientes. La selección no busca maximizar o minimizar una métrica,
-sino cubrir situaciones distintas: estacionario, seguimiento curvo limpio,
-seguimiento con ruido y viento, navegación por waypoints y una trayectoria
-compuesta que encadena segmentos.
+figuras siguientes. Se han escogido casos de \texttt{test} del dataset clásico
+para cubrir familias, perturbaciones y modos de terminación distintos. La
+selección no busca maximizar ni minimizar una métrica concreta, sino enseñar qué
+se revisa cuando una ejecución del banco experimental se inspecciona más allá
+del RMSE agregado.
 
 \begin{table}[H]
-\caption{Casos de telemetría incluidos en el anejo.}
+\caption{Casos del dataset clásico usados para las figuras de telemetría.}
 \label{tab:casos-telemetria-anejo}
 \small
-\begin{tabularx}{\textwidth}{p{0.24\textwidth} p{0.22\textwidth} X}
+\setlength{\tabcolsep}{4pt}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.21\textwidth} >{\raggedright\arraybackslash}p{0.19\textwidth} X}
 \toprule
-Caso & Escenario & Motivo de inclusión \\
+Caso & Procedencia & Motivo de inclusión \\
 \midrule
-\texttt{hover\_clean} & Estacionario limpio & Verifica equilibrio vertical,
-empuje próximo al peso y ausencia de excitaciones laterales. \\
-\texttt{lissajous\_clean} & Curva 3D limpia & Muestra seguimiento continuo con
-acoplamiento simultáneo en los tres ejes. \\
-\texttt{circle\_noisy\_wind} & Círculo con drag, ruido y viento & Ilustra la
-respuesta ante perturbaciones y límites de actuador más restrictivos. \\
-\texttt{waypoint\_clean} & Secuencia por puntos & Enseña cambios discretos de
-referencia, tramos de avance y parada en destino. \\
-\texttt{composite\_ood} & Trayectoria compuesta & Presenta transiciones entre
-familias y mayor diversidad de consignas dentro de un mismo episodio. \\
+\texttt{hold\_g05\_P5} & \texttt{test}, PD \texttt{hold} & Estacionario con
+perturbación combinada; permite ver equilibrio, corrección frente a viento y
+ruido, y empuje próximo al peso. \\
+\texttt{circle\_g04\_P5} & \texttt{test}, PD \texttt{circle} & Seguimiento
+curvo con perturbación combinada y misión de duración fija. \\
+\texttt{circle\_g07\_P2} & \texttt{test}, PD \texttt{circle} & Caso de círculo
+con viento este, útil para observar error transitorio y actitud sostenida. \\
+\texttt{lissajous\_g07\_P5} & \texttt{test}, PD \texttt{lissajous} &
+Trayectoria periódica multieje con perturbación combinada. \\
+\texttt{waypoint\_g03\_P5} & \texttt{test}, PD \texttt{waypoint} & Misión finita
+con tramos, cambios de dirección y terminación por trayectoria completada. \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -72,25 +78,25 @@ familias y mayor diversidad de consignas dentro de un mismo episodio. \\
 \subsubsection*{Lectura geométrica}
 
 La \autoref{fig:sim-telemetry-geometry-a} y la
-\autoref{fig:sim-telemetry-geometry-b} comparan la referencia y el estado en el
-plano horizontal para cuatro situaciones representativas. En hover la
-geometría queda prácticamente degenerada en un punto; en Lissajous y círculo
-aparece el seguimiento curvo; y en waypoint se observan los tramos rectos con
-cambios de dirección.
+\autoref{fig:sim-telemetry-geometry-b} comparan referencia y estado en el plano
+horizontal. La primera muestra el contraste entre una referencia estacionaria y
+una curva periódica; la segunda enfrenta seguimiento circular sostenido y una
+misión por puntos, donde aparecen tramos rectos y cambios de dirección.
 
 \begin{figure}[H]
 \centering
 \begin{subfigure}[t]{0.48\textwidth}
 \centering
-\includegraphics[width=\textwidth]{sim_hover_clean/trajectory_xy.pdf}
-\caption{\texttt{hover\_clean}.}
+\includegraphics[width=\textwidth]{classic_hold_combined/trajectory_xy.pdf}
+\caption{\texttt{hold\_g05\_P5}.}
 \end{subfigure}\hfill
 \begin{subfigure}[t]{0.48\textwidth}
 \centering
-\includegraphics[width=\textwidth]{sim_lissajous_clean/trajectory_xy.pdf}
-\caption{\texttt{lissajous\_clean}.}
+\includegraphics[width=\textwidth]{classic_lissajous_combined/trajectory_xy.pdf}
+\caption{\texttt{lissajous\_g07\_P5}.}
 \end{subfigure}
-\caption{Seguimiento geométrico en escenarios limpios. Fuente: elaboración
+\caption{Seguimiento geométrico de dos expertos PD del dataset clásico: caso
+estacionario perturbado y trayectoria Lissajous multieje. Fuente: elaboración
 propia.}
 \label{fig:sim-telemetry-geometry-a}
 \end{figure}
@@ -99,16 +105,16 @@ propia.}
 \centering
 \begin{subfigure}[t]{0.48\textwidth}
 \centering
-\includegraphics[width=\textwidth]{sim_circle_noisy_wind/trajectory_xy.pdf}
-\caption{\texttt{circle\_noisy\_wind}.}
+\includegraphics[width=\textwidth]{classic_circle_combined/trajectory_xy.pdf}
+\caption{\texttt{circle\_g04\_P5}.}
 \end{subfigure}\hfill
 \begin{subfigure}[t]{0.48\textwidth}
 \centering
-\includegraphics[width=\textwidth]{sim_waypoint_clean/trajectory_xy.pdf}
-\caption{\texttt{waypoint\_clean}.}
+\includegraphics[width=\textwidth]{classic_waypoint_combined/trajectory_xy.pdf}
+\caption{\texttt{waypoint\_g03\_P5}.}
 \end{subfigure}
-\caption{Seguimiento geométrico en un caso perturbado y en una misión por
-waypoints. Fuente: elaboración propia.}
+\caption{Seguimiento geométrico en una referencia circular perturbada y en una
+misión por waypoints del split de prueba. Fuente: elaboración propia.}
 \label{fig:sim-telemetry-geometry-b}
 \end{figure}
 
@@ -116,58 +122,57 @@ waypoints. Fuente: elaboración propia.}
 
 Para interpretar una simulación no basta con ver la trayectoria. La
 \autoref{fig:sim-telemetry-error-attitude} combina error de seguimiento y
-actitud en dos episodios: un círculo con viento, ruido y drag, y una trayectoria
-compuesta OOD. Esto permite relacionar errores transitorios con los cambios de
-actitud que el lazo interno debe estabilizar.
+actitud en dos episodios del dataset clásico: un círculo con viento este y una
+Lissajous con perturbación combinada. Así se relacionan errores transitorios con
+la inclinación que el lazo interno debe estabilizar.
 
 \begin{figure}[H]
 \centering
 \begin{subfigure}[t]{0.48\textwidth}
 \centering
-\includegraphics[width=\textwidth]{sim_circle_noisy_wind/tracking_error.pdf}
-\caption{Error en \texttt{circle\_noisy\_wind}.}
+\includegraphics[width=\textwidth]{classic_circle_wind/tracking_error.pdf}
+\caption{Error en \texttt{circle\_g07\_P2}.}
 \end{subfigure}\hfill
 \begin{subfigure}[t]{0.48\textwidth}
 \centering
-\includegraphics[width=\textwidth]{sim_circle_noisy_wind/attitude_time.pdf}
-\caption{Actitud en \texttt{circle\_noisy\_wind}.}
+\includegraphics[width=\textwidth]{classic_circle_wind/attitude_time.pdf}
+\caption{Actitud en \texttt{circle\_g07\_P2}.}
 \end{subfigure}
 
 \vspace{0.5em}
 \begin{subfigure}[t]{0.48\textwidth}
 \centering
-\includegraphics[width=\textwidth]{sim_composite_ood/tracking_error.pdf}
-\caption{Error en \texttt{composite\_ood}.}
+\includegraphics[width=\textwidth]{classic_lissajous_combined/tracking_error.pdf}
+\caption{Error en \texttt{lissajous\_g07\_P5}.}
 \end{subfigure}\hfill
 \begin{subfigure}[t]{0.48\textwidth}
 \centering
-\includegraphics[width=\textwidth]{sim_composite_ood/attitude_time.pdf}
-\caption{Actitud en \texttt{composite\_ood}.}
+\includegraphics[width=\textwidth]{classic_lissajous_combined/attitude_time.pdf}
+\caption{Actitud en \texttt{lissajous\_g07\_P5}.}
 \end{subfigure}
-\caption{Relación visual entre error de seguimiento y actitud en dos episodios
-con mayor exigencia dinámica. Fuente: elaboración propia.}
+\caption{Relación visual entre error de seguimiento y actitud en dos casos del
+dataset clásico con perturbaciones. Fuente: elaboración propia.}
 \label{fig:sim-telemetry-error-attitude}
 \end{figure}
 
 \subsubsection*{Series temporales por eje}
 
 La lectura por ejes de la \autoref{fig:sim-telemetry-position-time} resulta
-útil cuando la geometría en planta no muestra toda la exigencia de la misión.
-En Lissajous se aprecia la variación simultánea de altura, mientras que en
-waypoint se distinguen tramos de avance y mesetas asociadas a la llegada a cada
-punto.
+útil cuando la geometría en planta no muestra toda la exigencia de la misión. En
+Lissajous se aprecia la variación simultánea de altura, mientras que en waypoint
+se distinguen tramos de avance y mesetas asociadas a la llegada a cada punto.
 
 \begin{figure}[H]
 \centering
 \begin{subfigure}[t]{0.48\textwidth}
 \centering
-\includegraphics[width=\textwidth]{sim_lissajous_clean/position_time.pdf}
-\caption{Posición por eje en \texttt{lissajous\_clean}.}
+\includegraphics[width=\textwidth]{classic_lissajous_combined/position_time.pdf}
+\caption{Posición por eje en \texttt{lissajous\_g07\_P5}.}
 \end{subfigure}\hfill
 \begin{subfigure}[t]{0.48\textwidth}
 \centering
-\includegraphics[width=\textwidth]{sim_waypoint_clean/position_time.pdf}
-\caption{Posición por eje en \texttt{waypoint\_clean}.}
+\includegraphics[width=\textwidth]{classic_waypoint_combined/position_time.pdf}
+\caption{Posición por eje en \texttt{waypoint\_g03\_P5}.}
 \end{subfigure}
 \caption{Evolución temporal de la posición frente a la referencia en dos
 familias con lectura geométrica diferente. Fuente: elaboración propia.}
@@ -177,38 +182,37 @@ familias con lectura geométrica diferente. Fuente: elaboración propia.}
 \subsubsection*{Actuación}
 
 La \autoref{fig:sim-telemetry-actuation} muestra señales de actuación en tres
-casos. El hover permite reconocer el nivel de empuje cercano al peso; el caso
-con viento exige variaciones sostenidas de control; y la trayectoria compuesta
-presenta cambios de consigna asociados a sus segmentos. Estas figuras ayudan a
-ver que la comparación no se limita a posiciones, sino que también se vigilan
-empujes, momentos y velocidades de rotor.
+casos nativos del dataset clásico. El caso \texttt{hold} permite reconocer el
+nivel de empuje alrededor del peso del vehículo; el círculo con viento exige
+correcciones sostenidas; y la trayectoria Lissajous combinada muestra cómo se
+reparten empuje, momentos y velocidades de rotor en una referencia multieje.
 
 \begin{figure}[H]
 \centering
 \begin{subfigure}[t]{0.48\textwidth}
 \centering
-\includegraphics[width=\textwidth]{sim_hover_clean/control_effort.pdf}
-\caption{Esfuerzo de control en \texttt{hover\_clean}.}
+\includegraphics[width=\textwidth]{classic_hold_combined/control_effort.pdf}
+\caption{Esfuerzo de control en \texttt{hold\_g05\_P5}.}
 \end{subfigure}\hfill
 \begin{subfigure}[t]{0.48\textwidth}
 \centering
-\includegraphics[width=\textwidth]{sim_circle_noisy_wind/control_effort.pdf}
-\caption{Esfuerzo de control en \texttt{circle\_noisy\_wind}.}
+\includegraphics[width=\textwidth]{classic_circle_wind/control_effort.pdf}
+\caption{Esfuerzo de control en \texttt{circle\_g07\_P2}.}
 \end{subfigure}
 
 \vspace{0.5em}
 \begin{subfigure}[t]{0.48\textwidth}
 \centering
-\includegraphics[width=\textwidth]{sim_composite_ood/control_effort.pdf}
-\caption{Esfuerzo de control en \texttt{composite\_ood}.}
+\includegraphics[width=\textwidth]{classic_lissajous_combined/control_effort.pdf}
+\caption{Esfuerzo de control en \texttt{lissajous\_g07\_P5}.}
 \end{subfigure}\hfill
 \begin{subfigure}[t]{0.48\textwidth}
 \centering
-\includegraphics[width=\textwidth]{sim_composite_ood/rotor_speeds.pdf}
-\caption{Velocidad de rotores en \texttt{composite\_ood}.}
+\includegraphics[width=\textwidth]{classic_lissajous_combined/rotor_speeds.pdf}
+\caption{Velocidad de rotores en \texttt{lissajous\_g07\_P5}.}
 \end{subfigure}
-\caption{Señales de actuación inspeccionadas tras la simulación cerrada.
-Fuente: elaboración propia.}
+\caption{Señales de actuación inspeccionadas tras la simulación cerrada con PD
+experto nativo. Fuente: elaboración propia.}
 \label{fig:sim-telemetry-actuation}
 \end{figure}
 
@@ -221,15 +225,53 @@ actitud o en demandas rápidas del lazo interno.
 \centering
 \begin{subfigure}[t]{0.48\textwidth}
 \centering
-\includegraphics[width=\textwidth]{sim_circle_noisy_wind/angular_velocity_time.pdf}
-\caption{Velocidades angulares en \texttt{circle\_noisy\_wind}.}
+\includegraphics[width=\textwidth]{classic_circle_wind/angular_velocity_time.pdf}
+\caption{Velocidades angulares en \texttt{circle\_g07\_P2}.}
 \end{subfigure}\hfill
 \begin{subfigure}[t]{0.48\textwidth}
 \centering
-\includegraphics[width=\textwidth]{sim_waypoint_clean/angular_velocity_time.pdf}
-\caption{Velocidades angulares en \texttt{waypoint\_clean}.}
+\includegraphics[width=\textwidth]{classic_waypoint_combined/angular_velocity_time.pdf}
+\caption{Velocidades angulares en \texttt{waypoint\_g03\_P5}.}
 \end{subfigure}
 \caption{Velocidades angulares del vehículo en cuerpo para dos escenarios de
-seguimiento. Fuente: elaboración propia.}
+seguimiento del dataset clásico. Fuente: elaboración propia.}
 \label{fig:sim-telemetry-rates}
+\end{figure}
+
+\subsubsection*{Ejemplo de transferencia cruzada}
+
+El dataset \texttt{results\_transfer} permite ejecutar un mismo escenario con
+PD de otras familias sin reajustar sus ganancias. La
+\autoref{fig:sim-telemetry-transfer} muestra un caso ilustrativo: el escenario
+\texttt{circle\_g04\_P5} con su PD nativo de círculo y con el PD de Lissajous.
+No se pretende añadir una conclusión cuantitativa distinta a la del capítulo de
+resultados; la figura solo enseña qué aspecto tiene una transferencia cruzada
+cuando se inspecciona como telemetría.
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{transfer_circle_native/tracking_error.pdf}
+\caption{Error con PD nativo de \texttt{circle}.}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{transfer_circle_lissajous/tracking_error.pdf}
+\caption{Error con PD transferido de \texttt{lissajous}.}
+\end{subfigure}
+
+\vspace{0.5em}
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{transfer_circle_native/attitude_time.pdf}
+\caption{Actitud con PD nativo.}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{transfer_circle_lissajous/attitude_time.pdf}
+\caption{Actitud con PD transferido.}
+\end{subfigure}
+\caption[Inspección visual de una transferencia cruzada en el escenario circular.]{Inspección visual de una transferencia cruzada en el escenario \path{circle_g04_P5}: comparación entre el PD nativo y un PD de otra familia. Fuente: elaboración propia.}
+\label{fig:sim-telemetry-transfer}
 \end{figure}
