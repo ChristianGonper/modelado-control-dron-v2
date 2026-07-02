@@ -1,0 +1,106 @@
+Este anejo complementa la descripción metodológica con una lectura de
+ingeniería del código. No pretende duplicar el repositorio, sino aislar los
+puntos que sostienen la reproducibilidad del trabajo: el contrato de simulación,
+la separación entre dinámica, control, telemetría y visualización, y la forma en
+que se integra el controlador neuronal dentro del lazo clásico.
+
+\subsubsection*{Organización funcional del paquete}
+
+El paquete \texttt{simulador\_quad} está dividido por responsabilidades. La
+dinámica de cuerpo rígido y los actuadores se encuentran en
+\texttt{src/simulador\_quad/dynamics}; los sistemas de referencia, contratos de
+datos y utilidades comunes en \texttt{src/simulador\_quad/core}; los
+controladores en \texttt{src/simulador\_quad/control}; las trayectorias en
+\texttt{src/simulador\_quad/trajectories}; el registro de telemetría en
+\texttt{src/simulador\_quad/telemetry}; las métricas en
+\texttt{src/simulador\_quad/metrics}; y las salidas gráficas en
+\texttt{src/simulador\_quad/visualization}. Los scripts de \texttt{tools/}
+orquestan datasets, bancos de expertos, entrenamiento neuronal, ejecución
+masiva y consolidación de resultados.
+
+Esta separación es relevante porque el trabajo compara controladores sin
+cambiar el entorno físico. La campaña puede sustituir el lazo externo por una
+red, congelar expertos PD o ejecutar una batería OOD, pero el integrador, el
+mixer, los actuadores, las perturbaciones y las métricas siguen siendo comunes.
+
+\subsubsection*{Bucle de simulación multirrate}
+
+El fragmento siguiente resume el núcleo del contrato temporal. En cada ciclo se
+comprueban límites de seguridad, se calcula la referencia, se actualiza el
+control con retención de orden cero, se aplica el sistema de actuadores, se
+registra telemetría a una frecuencia menor y se integra la física mediante
+RK4. Esta estructura es la que permite fijar \SI{100}{Hz} para la física,
+\SI{50}{Hz} para control y \SI{10}{Hz} para telemetría sin mezclar
+responsabilidades.
+
+\begin{lstlisting}[language=Python,caption={Esquema simplificado del bucle de simulación.},label={lst:bucle-simulacion}]
+while True:
+    is_saturated = any(current_applied.saturation_flags)
+    term, reason = self._check_safety_termination(state, is_saturated)
+    if term:
+        break
+
+    current_ref = trajectory.get_reference_for_state(time_s, state)
+
+    if time_s - last_control_time >= self.control_dt_s:
+        obs_pos, obs_vel = self.noise.apply_noise(
+            state.position_W_m,
+            state.velocity_W_m_s,
+        )
+        current_control = controller.compute_control(time_s, current_obs, current_ref)
+        current_rotor_cmd = self.mixer.compute_rotor_commands(
+            current_control.collective_thrust_N,
+            current_control.body_moments_Nm,
+        )
+
+    current_applied, torque_B, thrust_B = \
+        self.actuators.compute_applied_forces(current_rotor_cmd.target_omega_rad_s)
+
+    if time_s - last_telemetry_time >= self.telemetry_dt_s:
+        telemetry.append(sample_from_state_control_and_reference(...))
+
+    state = rk4_step(..., thrust_B, torque_B, wind_W_m_s, drag_coefficients)
+\end{lstlisting}
+
+\subsubsection*{Integración del controlador neuronal}
+
+El controlador neuronal empleado en la comparación principal no sustituye todo
+el piloto automático. La red estima la fuerza deseada del lazo externo en el
+sistema mundo y el controlador clásico conserva la conversión fuerza-actitud,
+el lazo interno, las saturaciones y el mixer. La inferencia recurrente se hace
+con una ventana de longitud fija; por tanto, la red no se ejecuta en modo
+\textit{stateful} persistente, sino reconstruyendo la entrada secuencial en cada
+paso a partir de la cola FIFO de muestras normalizadas.
+
+\begin{lstlisting}[language=Python,caption={Preparación de entrada para MLP y redes recurrentes.},label={lst:ventana-inferencia}]
+x = build_outer_force_min_features_from_observation(obs_state, reference)
+x_norm = self.normalizer.normalize_x(torch.tensor(x, dtype=torch.float32))
+
+if self.architecture == "mlp":
+    model_input = x_norm.unsqueeze(0)          # [1, input_dim]
+else:
+    self.window.append(x_norm)
+    while len(self.window) < self.sequence_length:
+        self.window.appendleft(x_norm)
+    model_input = torch.stack(list(self.window)).unsqueeze(0)  # [1, 20, input_dim]
+
+with torch.no_grad():
+    y_norm = self.model(model_input).squeeze(0)
+\end{lstlisting}
+
+La decisión anterior facilita una interfaz común entre MLP, GRU y LSTM y evita
+que el estado oculto dependa de ejecuciones previas. Como contrapartida,
+introduce recálculo de las muestras históricas en cada inferencia recurrente.
+Por ese motivo, una línea futura razonable es estudiar variantes que conserven
+estado interno entre pasos o que actualicen la ventana de forma incremental,
+comprobando explícitamente si el cambio altera el comportamiento cerrado.
+
+\subsubsection*{Trazabilidad de salidas}
+
+Cada ejecución escribe \texttt{telemetry.json} y \texttt{metrics.json}. La
+telemetría conserva estado, observación, referencia, orden de control, comando
+de rotores, actuación aplicada, viento y, cuando procede, fuerzas neuronales
+antes y después del recorte. Las métricas agregan RMSE, error máximo, duración,
+causa de terminación, saturación, degradación del mixer y metadatos de
+procedencia. Esta separación permite reconstruir figuras diagnósticas sin
+relanzar la simulación y, a la vez, consolidar campañas completas en CSV.

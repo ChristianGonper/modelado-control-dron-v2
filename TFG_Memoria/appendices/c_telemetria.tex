@@ -1,0 +1,235 @@
+Las figuras de este anejo no se emplean como prueba cuantitativa principal. Su
+función es mostrar el tipo de evidencia visual que se inspecciona después de una
+simulación cerrada y dar contexto a las métricas agregadas del capítulo de
+resultados. Se han escogido casos limpios, casos con perturbaciones y
+trayectorias con cambios geométricos para que el lector pueda ver el alcance
+práctico del banco de simulación.
+
+\subsubsection*{Atlas de trayectorias}
+
+Antes de entrar en señales temporales, la \autoref{fig:atlas-trayectorias-id},
+la \autoref{fig:atlas-trayectorias-ood} y la
+\autoref{fig:atlas-trayectoria-helix-3d} sitúan visualmente la variedad de
+referencias. Las dos primeras figuras resumen familias conocidas y trayectorias
+fuera de distribución, mientras que la tercera separa una hélice para que se
+aprecie su componente tridimensional.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{atlas_trayectorias_id.pdf}
+\caption{Muestra visual de familias conocidas: \texttt{hold}, \texttt{circle},
+\texttt{lissajous} y \texttt{waypoint}. Fuente: elaboración propia.}
+\label{fig:atlas-trayectorias-id}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{atlas_trayectorias_ood.pdf}
+\caption{Muestra visual de trayectorias fuera de distribución:
+\texttt{lemniscate}, \texttt{lissajous} 3D, composición y hélice. Fuente:
+elaboración propia.}
+\label{fig:atlas-trayectorias-ood}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.78\textwidth]{atlas_trayectoria_helix_3d.pdf}
+\caption{Vista tridimensional de una hélice OOD representativa. Fuente:
+elaboración propia.}
+\label{fig:atlas-trayectoria-helix-3d}
+\end{figure}
+
+\subsubsection*{Episodios seleccionados}
+
+La \autoref{tab:casos-telemetria-anejo} resume los episodios incluidos en las
+figuras siguientes. La selección no busca maximizar o minimizar una métrica,
+sino cubrir situaciones distintas: estacionario, seguimiento curvo limpio,
+seguimiento con ruido y viento, navegación por waypoints y una trayectoria
+compuesta que encadena segmentos.
+
+\begin{table}[H]
+\caption{Casos de telemetría incluidos en el anejo.}
+\label{tab:casos-telemetria-anejo}
+\small
+\begin{tabularx}{\textwidth}{p{0.24\textwidth} p{0.22\textwidth} X}
+\toprule
+Caso & Escenario & Motivo de inclusión \\
+\midrule
+\texttt{hover\_clean} & Estacionario limpio & Verifica equilibrio vertical,
+empuje próximo al peso y ausencia de excitaciones laterales. \\
+\texttt{lissajous\_clean} & Curva 3D limpia & Muestra seguimiento continuo con
+acoplamiento simultáneo en los tres ejes. \\
+\texttt{circle\_noisy\_wind} & Círculo con drag, ruido y viento & Ilustra la
+respuesta ante perturbaciones y límites de actuador más restrictivos. \\
+\texttt{waypoint\_clean} & Secuencia por puntos & Enseña cambios discretos de
+referencia, tramos de avance y parada en destino. \\
+\texttt{composite\_ood} & Trayectoria compuesta & Presenta transiciones entre
+familias y mayor diversidad de consignas dentro de un mismo episodio. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsubsection*{Lectura geométrica}
+
+La \autoref{fig:sim-telemetry-geometry-a} y la
+\autoref{fig:sim-telemetry-geometry-b} comparan la referencia y el estado en el
+plano horizontal para cuatro situaciones representativas. En hover la
+geometría queda prácticamente degenerada en un punto; en Lissajous y círculo
+aparece el seguimiento curvo; y en waypoint se observan los tramos rectos con
+cambios de dirección.
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{sim_hover_clean/trajectory_xy.pdf}
+\caption{\texttt{hover\_clean}.}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{sim_lissajous_clean/trajectory_xy.pdf}
+\caption{\texttt{lissajous\_clean}.}
+\end{subfigure}
+\caption{Seguimiento geométrico en escenarios limpios. Fuente: elaboración
+propia.}
+\label{fig:sim-telemetry-geometry-a}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{sim_circle_noisy_wind/trajectory_xy.pdf}
+\caption{\texttt{circle\_noisy\_wind}.}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{sim_waypoint_clean/trajectory_xy.pdf}
+\caption{\texttt{waypoint\_clean}.}
+\end{subfigure}
+\caption{Seguimiento geométrico en un caso perturbado y en una misión por
+waypoints. Fuente: elaboración propia.}
+\label{fig:sim-telemetry-geometry-b}
+\end{figure}
+
+\subsubsection*{Error y actitud}
+
+Para interpretar una simulación no basta con ver la trayectoria. La
+\autoref{fig:sim-telemetry-error-attitude} combina error de seguimiento y
+actitud en dos episodios: un círculo con viento, ruido y drag, y una trayectoria
+compuesta OOD. Esto permite relacionar errores transitorios con los cambios de
+actitud que el lazo interno debe estabilizar.
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{sim_circle_noisy_wind/tracking_error.pdf}
+\caption{Error en \texttt{circle\_noisy\_wind}.}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{sim_circle_noisy_wind/attitude_time.pdf}
+\caption{Actitud en \texttt{circle\_noisy\_wind}.}
+\end{subfigure}
+
+\vspace{0.5em}
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{sim_composite_ood/tracking_error.pdf}
+\caption{Error en \texttt{composite\_ood}.}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{sim_composite_ood/attitude_time.pdf}
+\caption{Actitud en \texttt{composite\_ood}.}
+\end{subfigure}
+\caption{Relación visual entre error de seguimiento y actitud en dos episodios
+con mayor exigencia dinámica. Fuente: elaboración propia.}
+\label{fig:sim-telemetry-error-attitude}
+\end{figure}
+
+\subsubsection*{Series temporales por eje}
+
+La lectura por ejes de la \autoref{fig:sim-telemetry-position-time} resulta
+útil cuando la geometría en planta no muestra toda la exigencia de la misión.
+En Lissajous se aprecia la variación simultánea de altura, mientras que en
+waypoint se distinguen tramos de avance y mesetas asociadas a la llegada a cada
+punto.
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{sim_lissajous_clean/position_time.pdf}
+\caption{Posición por eje en \texttt{lissajous\_clean}.}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{sim_waypoint_clean/position_time.pdf}
+\caption{Posición por eje en \texttt{waypoint\_clean}.}
+\end{subfigure}
+\caption{Evolución temporal de la posición frente a la referencia en dos
+familias con lectura geométrica diferente. Fuente: elaboración propia.}
+\label{fig:sim-telemetry-position-time}
+\end{figure}
+
+\subsubsection*{Actuación}
+
+La \autoref{fig:sim-telemetry-actuation} muestra señales de actuación en tres
+casos. El hover permite reconocer el nivel de empuje cercano al peso; el caso
+con viento exige variaciones sostenidas de control; y la trayectoria compuesta
+presenta cambios de consigna asociados a sus segmentos. Estas figuras ayudan a
+ver que la comparación no se limita a posiciones, sino que también se vigilan
+empujes, momentos y velocidades de rotor.
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{sim_hover_clean/control_effort.pdf}
+\caption{Esfuerzo de control en \texttt{hover\_clean}.}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{sim_circle_noisy_wind/control_effort.pdf}
+\caption{Esfuerzo de control en \texttt{circle\_noisy\_wind}.}
+\end{subfigure}
+
+\vspace{0.5em}
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{sim_composite_ood/control_effort.pdf}
+\caption{Esfuerzo de control en \texttt{composite\_ood}.}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{sim_composite_ood/rotor_speeds.pdf}
+\caption{Velocidad de rotores en \texttt{composite\_ood}.}
+\end{subfigure}
+\caption{Señales de actuación inspeccionadas tras la simulación cerrada.
+Fuente: elaboración propia.}
+\label{fig:sim-telemetry-actuation}
+\end{figure}
+
+Finalmente, la \autoref{fig:sim-telemetry-rates} completa la lectura de
+actuación con velocidades angulares del cuerpo. Estas señales permiten detectar
+si una misión aparentemente aceptable en posición se apoya en oscilaciones de
+actitud o en demandas rápidas del lazo interno.
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{sim_circle_noisy_wind/angular_velocity_time.pdf}
+\caption{Velocidades angulares en \texttt{circle\_noisy\_wind}.}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{sim_waypoint_clean/angular_velocity_time.pdf}
+\caption{Velocidades angulares en \texttt{waypoint\_clean}.}
+\end{subfigure}
+\caption{Velocidades angulares del vehículo en cuerpo para dos escenarios de
+seguimiento. Fuente: elaboración propia.}
+\label{fig:sim-telemetry-rates}
+\end{figure}

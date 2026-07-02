@@ -1,107 +1,178 @@
-\subsubsection*{Regeneración de la batería OOD}
+Este anejo recoge los comandos mínimos necesarios para reconstruir la evidencia
+experimental usada en la memoria. La intención no es sustituir al
+\texttt{README.md}, sino dejar una ruta de ejecución compacta y verificable:
+preparar el entorno, comprobar el paquete, generar datos, ejecutar campañas,
+consolidar resultados y regenerar figuras.
 
-La batería OOD usada en resultados procede de
-\texttt{data/neural\_ood/battery\_v1}. La auditoría de las hélices detectó que
-\texttt{max\_duration\_s}=35\,s no daba margen a dos perfiles trapezoidales; por
-ello se fijó \texttt{max\_duration\_s}=60\,s en el generador. Tras el ajuste,
-\texttt{helix\_ascending\_fast} y \texttt{helix\_descending\_noise\_wind}
-completan la misión, mientras que \texttt{helix\_tight\_aggressive} se conserva
-como caso de estrés.
+\subsubsection*{Preparación del entorno}
+
+El proyecto se gestiona con \texttt{uv}. La primera orden sincroniza el entorno
+definido por \texttt{pyproject.toml} y \texttt{uv.lock}; la segunda ejecuta las
+pruebas disponibles antes de lanzar campañas largas.
 
 \begin{verbatim}
-uv run python tools/generate_ood_battery.py ^
-  --out data/neural_ood/battery_v1 ^
-  --pid-source-dataset data/classic_dataset/v1 ^
-  --overwrite
+uv sync
+uv run pytest
 \end{verbatim}
 
-\subsubsection*{Campaña OOD y consolidación}
+\subsubsection*{Ejecución mínima de un escenario}
 
-Los controladores clásicos transferidos y las tres arquitecturas outer-force se
-ejecutaron sobre la batería OOD corregida. Después se consolidaron las tablas
-comparativas usadas por el capítulo de resultados.
+La ejecución elemental toma un escenario YAML, instancia vehículo, trayectoria,
+controlador, perturbaciones y condiciones de terminación, y escribe dos
+artefactos: \texttt{telemetry.json} con la serie temporal y
+\texttt{metrics.json} con las métricas agregadas.
 
 \begin{verbatim}
-uv run python tools/run_classic_transfer_dataset.py ^
-  --dataset data/neural_ood/battery_v1 ^
-  --pid-source-dataset data/classic_dataset/v1 ^
+uv run simulador-quad run scenarios\hover_clean.yaml --no-visualization
+
+uv run simulador-quad plot ^
+  results\hover_clean\telemetry.json ^
+  --metrics results\hover_clean\metrics.json ^
+  --out results\hover_clean\figures_report ^
+  --profile report --formats png pdf
+\end{verbatim}
+
+El mismo patrón permite ejecutar casos diagnósticos más exigentes:
+
+\begin{verbatim}
+uv run simulador-quad run scenarios\circle_noisy_wind.yaml --no-visualization
+uv run simulador-quad run scenarios\lissajous_clean.yaml --no-visualization
+uv run simulador-quad run scenarios\waypoint_clean.yaml --no-visualization
+uv run simulador-quad run scenarios\composite_ood.yaml --no-visualization
+\end{verbatim}
+
+\subsubsection*{Dataset clásico y expertos PD}
+
+El dataset clásico fija escenarios reproducibles y permite ajustar o congelar
+controladores PD por familia. Tras modificar ganancias o criterios de ajuste,
+los escenarios deben regenerarse con \texttt{--overwrite} para que las ganancias
+embebidas y los manifiestos vuelvan a ser coherentes.
+
+\begin{verbatim}
+uv run python tools\generate_classic_dataset.py ^
+  --version v1 --out data\classic_dataset\v1 --overwrite
+
+uv run python tools\tune_classic_pid.py ^
+  --dataset data\classic_dataset\v1 ^
+  --out data\classic_dataset\v1\pids --workers 8
+
+uv run python tools\run_classic_dataset.py ^
+  --dataset data\classic_dataset\v1 ^
+  --no-visualization --workers 4
+
+uv run python tools\summarize_classic_dataset.py ^
+  --dataset data\classic_dataset\v1
+\end{verbatim}
+
+\subsubsection*{Dataset neuronal de fuerza externa}
+
+El controlador neuronal principal aprende por imitación la fuerza deseada del
+lazo externo. Para ello se genera primero un banco de candidatos PD externos,
+se selecciona el experto seguro por escenario y se exportan las muestras de
+entrada y salida usadas por MLP, GRU y LSTM.
+
+\begin{verbatim}
+uv run python tools\generate_outer_force_pid_bank.py ^
+  --dataset data\classic_dataset\v1 ^
+  --out data\outer_force_pid_bank\v1 --workers 8
+
+uv run python tools\generate_outer_force_dataset.py ^
+  --source-dataset data\classic_dataset\v1 ^
+  --pid-bank data\outer_force_pid_bank\v1 ^
+  --out data\outer_force_dataset\v1
+
+uv run python tools\train_neural_controller.py ^
+  --dataset data\outer_force_dataset\v1 ^
+  --architecture mlp ^
+  --feature-version outer_force_min_v1 ^
+  --out data\neural_control\outer_force_mlp_min_v1 ^
+  --device auto
+
+uv run python tools\evaluate_neural_controller.py ^
+  --dataset data\outer_force_dataset\v1 ^
+  --run data\neural_control\outer_force_mlp_min_v1 ^
+  --device auto
+\end{verbatim}
+
+Las arquitecturas recurrentes se entrenan cambiando
+\texttt{--architecture gru} o \texttt{--architecture lstm}. En la evaluación
+cerrada se pasan siempre el checkpoint y la normalización correspondientes para
+evitar mezclar modelos y escalados.
+
+\subsubsection*{Batería OOD y comparación cerrada}
+
+La batería OOD usada en resultados procede de
+\texttt{data/neural\_ood/battery\_v1}. La auditoría de hélices fijó
+\texttt{max\_duration\_s}=60\,s en el generador para que las trayectorias
+trapezoidales rápidas dispongan de margen suficiente.
+
+\begin{verbatim}
+uv run python tools\generate_ood_battery.py ^
+  --out data\neural_ood\battery_v1 ^
+  --pid-source-dataset data\classic_dataset\v1 ^
+  --overwrite
+
+uv run python tools\run_classic_transfer_dataset.py ^
+  --dataset data\neural_ood\battery_v1 ^
+  --pid-source-dataset data\classic_dataset\v1 ^
   --pid-family all --include-native --workers 8 ^
   --no-visualization --rerun
 
-uv run python tools/run_neural_outer_force_dataset.py ^
-  --dataset data/neural_ood/battery_v1 --split ood ^
+uv run python tools\run_neural_outer_force_dataset.py ^
+  --dataset data\neural_ood\battery_v1 --split ood ^
   --architecture mlp --device auto --workers 4 ^
   --no-visualization --rerun
 
-uv run python tools/run_neural_outer_force_dataset.py ^
-  --dataset data/neural_ood/battery_v1 --split ood ^
+uv run python tools\run_neural_outer_force_dataset.py ^
+  --dataset data\neural_ood\battery_v1 --split ood ^
   --architecture gru --device auto --workers 4 ^
   --no-visualization --rerun
 
-uv run python tools/run_neural_outer_force_dataset.py ^
-  --dataset data/neural_ood/battery_v1 --split ood ^
+uv run python tools\run_neural_outer_force_dataset.py ^
+  --dataset data\neural_ood\battery_v1 --split ood ^
   --architecture lstm --device auto --workers 4 ^
   --no-visualization --rerun
 
-uv run python tools/summarize_comparison.py
+uv run python tools\summarize_comparison.py
 \end{verbatim}
 
-Los comandos reales incluyen las rutas completas de checkpoint y normalización
-de cada arquitectura en \texttt{data/neural\_control/outer\_force\_*}. Dichas
-rutas quedan registradas en \texttt{results/evidence\_manifest.csv}.
+\subsubsection*{Figuras de resultados y anejos}
 
-\subsubsection*{Figuras finales de resultados}
+Las figuras comparativas del capítulo de resultados se regeneran desde el CSV
+consolidado. Las figuras de telemetría de los anejos se generan desde
+ejecuciones concretas para mostrar señales internas de simulación.
 
 \begin{verbatim}
 uv run simulador-quad plot-comparison ^
-  results/comparison_all_runs.csv ^
-  --out TFG_Memoria/Figuras/resultados ^
+  results\comparison_all_runs.csv ^
+  --out TFG_Memoria\Figuras\resultados ^
   --formats pdf png
+
+uv run simulador-quad plot ^
+  results\circle_noisy_wind\telemetry.json ^
+  --metrics results\circle_noisy_wind\metrics.json ^
+  --out TFG_Memoria\Figuras\resultados\sim_circle_noisy_wind ^
+  --profile report --formats pdf png
 \end{verbatim}
 
-El comando anterior genera las figuras de cuerpo \texttt{res\_*} y las figuras
-del atlas \texttt{atlas\_*}. La trayectoria representativa también puede
-recibir telemetrías explícitas mediante opciones repetidas
-\texttt{--trajectory-telemetry LABEL:PATH}.
+El mismo comando de \texttt{plot} se ha aplicado a \texttt{hover\_clean},
+\texttt{lissajous\_clean}, \texttt{waypoint\_clean}, \texttt{circle\_drag} y
+\texttt{composite\_ood}. En todos los casos, el perfil \texttt{report} elimina
+títulos diagnósticos redundantes y conserva ejes, unidades, leyendas y formato
+apto para memoria.
 
 \subsubsection*{Artefactos de evidencia}
 
 \begin{itemize}
-  \item \texttt{results/comparison\_all\_runs.csv}: 264 corridas comparables.
-  \item \texttt{results/comparison\_all\_runs\_full.csv}: historial consolidado
-    con splits adicionales cuando existen.
+  \item \texttt{results/comparison\_all\_runs.csv}: corridas comparables usadas
+    por las figuras principales de resultados.
   \item \texttt{results/comparison\_summary.csv}: agregación por controlador,
     split y familia.
   \item \texttt{results/evidence\_manifest.csv}: procedencia de datasets,
     checkpoints y decisiones de inclusión.
-  \item \texttt{TFG\_Memoria/Figuras/resultados/}: figuras finales en PDF y PNG.
+  \item \texttt{results/*/telemetry.json}: series temporales por episodio.
+  \item \texttt{results/*/metrics.json}: métricas y metadatos de cada
+    ejecución.
+  \item \texttt{TFG\_Memoria/Figuras/resultados/}: figuras finales en PDF y
+    PNG.
 \end{itemize}
-
-\subsubsection*{Atlas de trayectorias representativas}
-
-Las figuras de esta sección no se usan como prueba cuantitativa principal. Su
-función es mostrar la variedad geométrica y experimental cubierta por el
-trabajo: familias vistas, trayectorias OOD y un caso helicoidal tridimensional.
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{atlas_trayectorias_id.pdf}
-\caption{Muestra visual de familias conocidas: \texttt{hold}, \texttt{circle},
-\texttt{lissajous} y \texttt{waypoint}.}
-\label{fig:atlas-trayectorias-id}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{atlas_trayectorias_ood.pdf}
-\caption{Muestra visual de trayectorias fuera de distribución:
-\texttt{lemniscate}, \texttt{lissajous} 3D, composición y hélice.}
-\label{fig:atlas-trayectorias-ood}
-\end{figure}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.74\textwidth]{atlas_trayectoria_helix_3d.pdf}
-\caption{Vista tridimensional de una hélice OOD representativa.}
-\label{fig:atlas-trayectoria-helix-3d}
-\end{figure}

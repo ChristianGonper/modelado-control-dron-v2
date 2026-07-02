@@ -2,11 +2,13 @@
 \label{subsec:resultados-cobertura}
 
 La comparativa usada para contrastar las hipótesis se apoya en una ejecución
-cerrada, reproducible y trazable. La \autoref{tab:cobertura-ejecucion} resume el
-alcance de esa ejecución: número de escenarios base, controladores evaluados,
+cerrada, reproducible y trazable. Antes de interpretar errores o fallos conviene
+fijar el tamaño real de la batería evaluada; por eso la
+\autoref{tab:cobertura-ejecucion} resume escenarios, controladores,
 ejecuciones agregadas y porcentaje de casos que completan la misión sin rebasar
 los límites de seguridad definidos. Los comandos de generación, consolidación y
-visualización se recogen en el \anejoref{anejo:comandos}.
+visualización se recogen en el \anejoref{anejo:comandos}; la estructura de
+código que produce estos artefactos se sintetiza en el \anejoref{anejo:codigo}.
 
 \begin{table}[H]
 \caption{Cobertura de la ejecución comparativa principal.}
@@ -28,10 +30,13 @@ Split & Escenarios & Controladores & Ejecuciones & Completadas [\%] & Límites [
 \end{tabularx}
 \end{table}
 
-Los episodios fallidos no se eliminan antes de agregar los resultados. Esta
-decisión evita que las medias de error oculten escenarios donde el controlador
-alcanza límites de actitud, agota el tiempo disponible o demanda una actuación
-por encima de las restricciones impuestas.
+La tabla marca una diferencia clara entre condiciones conocidas y OOD: el
+primer bloque es casi completamente estable, mientras que el segundo introduce
+fallos suficientes como para que la terminación forme parte del resultado. Por
+ello, los episodios fallidos no se eliminan antes de agregar los resultados.
+Esta decisión evita que las medias de error oculten escenarios donde el
+controlador alcanza límites de actitud, agota el tiempo disponible o demanda
+una actuación por encima de las restricciones impuestas.
 
 \subsection{Referencia clásica y transferencia entre familias}
 \label{subsec:resultados-referencia-clasica}
@@ -42,6 +47,11 @@ es relevante para el objetivo del trabajo: si una única implementación neurona
 pretende condensar demostraciones de varios expertos, la comparación debe
 incluir también qué ocurre cuando un único PD se saca de la familia para la que
 fue sintonizado.
+
+La matriz de la \autoref{fig:res-pid-transfer-matrix} permite leer esa
+transferencia de forma directa: cada fila fija el PD de origen y cada columna
+la familia de evaluación. Así se separa el rendimiento nativo, situado en la
+diagonal, de las aplicaciones cruzadas.
 
 \begin{figure}[H]
 \centering
@@ -75,11 +85,12 @@ cambios de dirección.
 
 La evaluación supervisada no mide seguimiento de trayectoria, sino fidelidad a
 la fuerza deseada calculada por los expertos PD. Por tanto, la
-\autoref{tab:fidelidad-supervisada} debe leerse como una medida de imitación de
-la señal de entrenamiento, no como una garantía de buen comportamiento en bucle
-cerrado. Las columnas de clipping indican el porcentaje de muestras en las que
-la fuerza predicha supera los límites de inclinación antes de aplicarse el
-recorte, tanto en la evaluación supervisada como durante la ejecución cerrada.
+\autoref{tab:fidelidad-supervisada} se introduce antes que las figuras de RMSE
+para separar dos preguntas: cuánto imita cada red la señal de entrenamiento y
+qué ocurre después cuando esa señal se cierra sobre la dinámica. Las columnas
+de clipping indican el porcentaje de muestras en las que la fuerza predicha
+supera los límites de inclinación antes de aplicarse el recorte, tanto en la
+evaluación supervisada como durante la ejecución cerrada.
 
 \begin{table}[H]
 \caption{Fidelidad supervisada de fuerza y recorte de inclinación asociado. Los porcentajes de recorte corresponden a la activación del límite de inclinación antes de aplicar la fuerza en el lazo interno.}
@@ -106,6 +117,10 @@ queda por detrás pese a su mejor fidelidad de fuerza. En \texttt{hold} todas
 las redes se mantienen en errores bajos, y en \texttt{waypoint} ninguna supera
 con claridad al PD representativo.
 
+Una vez fijada la fidelidad supervisada, la \autoref{fig:res-id-rmse-family}
+muestra la variable que realmente decide la comparación en simulación: el error
+de posición en bucle cerrado por familia conocida.
+
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.92\textwidth]{res_id_rmse_family.pdf}
@@ -130,6 +145,10 @@ PD representativo se toma del experto familiar más próximo al escenario:
 \texttt{lissajous} para \texttt{lemniscate}, \texttt{composite} y
 \texttt{lissajous}, y \texttt{waypoint} para las hélices.
 
+La \autoref{fig:res-ood-rmse-family} agrega primero por familia OOD para
+identificar tendencias generales sin entrar todavía en cada escenario
+individual.
+
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.92\textwidth]{res_ood_rmse_family.pdf}
@@ -144,6 +163,11 @@ exigentes. GRU obtiene mejor resultado que MLP en las familias completamente
 nuevas de \texttt{lemniscate} y \texttt{composite}, mientras que MLP se mantiene
 especialmente competitivo en las variantes OOD más próximas a familias conocidas,
 como \texttt{lissajous} y \texttt{waypoint}.
+
+Esa agregación puede ocultar fallos localizados. Por ello, la
+\autoref{fig:res-ood-scenario-matrix} desciende al nivel de escenario y deja
+visible qué combinaciones concretas de controlador y trayectoria concentran el
+error.
 
 \begin{figure}[H]
 \centering
@@ -163,6 +187,11 @@ trayectorias rápidas o con cambios geométricos pronunciados. El patrón sugier
 que la memoria temporal no aporta una ventaja uniforme y puede introducir
 sensibilidad adicional cuando el estado visitado se aleja de la distribución de
 entrenamiento.
+
+El siguiente paso es distinguir error alto de fallo de misión. La
+\autoref{fig:res-ood-termination-summary} agrupa las causas de terminación para
+leer si la degradación procede de actitud, saturación, tiempo máximo u otras
+condiciones de seguridad.
 
 \begin{figure}[H]
 \centering
@@ -199,8 +228,11 @@ MLP presenta un error inicial mayor, pero estabiliza el seguimiento y completa
 la geometría de forma razonable. LSTM, por el contrario, se separa de la
 referencia durante gran parte del episodio. El resultado refuerza la necesidad
 de evaluar el comportamiento en trayectoria, no solo la fidelidad supervisada,
-y justifica que el atlas del \anejoref{anejo:comandos} incluya más ejemplos
-geométricos para interpretar el trabajo experimental realizado.
+y justifica que el \anejoref{anejo:telemetria} incluya un atlas visual de
+geometrías y varios paquetes de señales internas: trayectoria, error temporal,
+actitud, esfuerzo de control y velocidades de rotor. Estas figuras no
+sustituyen a la comparación cuantitativa, sino que ayudan a interpretar el tipo
+de simulación que sostiene los resultados.
 
 \subsection{Actuación, protecciones y límites compartidos}
 \label{subsec:resultados-protecciones}
@@ -212,6 +244,11 @@ el mezclador, la saturación de actuadores y los recortes de fuerza limitan las
 de tiempo en el que el reparto de mandos reduce el colectivo para respetar
 límites de actuación; los porcentajes de clipping indican cuánto se recortan las
 fuerzas neuronales antes de pasar al lazo interno.
+
+La \autoref{fig:res-protections-ood} cierra esta lectura separando la métrica
+de seguimiento de las señales de protección. De este modo se evita atribuir a
+la arquitectura neuronal efectos que también dependen del lazo interno y del
+mixer.
 
 \begin{figure}[H]
 \centering
@@ -230,6 +267,10 @@ medida, aunque ello no implica por sí solo menor RMSE.
 
 \subsection{Lecturas principales de la ejecución}
 \label{subsec:resultados-sintesis}
+
+La \autoref{tab:sintesis-resultados} condensa las lecturas anteriores. Su
+función no es añadir evidencia nueva, sino ordenar qué demuestra cada bloque de
+figuras y tablas antes de pasar a la discusión.
 
 \begin{table}[H]
 \caption{Síntesis de resultados de la ejecución comparativa.}
