@@ -321,6 +321,17 @@ actitud nivelada y empuje inicial de estacionario. Así se evalúa el seguimient
 de la trayectoria y no la recuperación desde una caída inicial provocada por
 arrancar con los rotores apagados.
 
+La elección del formato no es solo estética. En este trabajo los escenarios
+contienen bloques jerárquicos para vehículo, rotores, trayectoria,
+perturbaciones, temporización, terminación y salida. YAML permite mantener esa
+estructura próxima al lenguaje usado en la memoria y en la revisión manual de
+experimentos. JSON habría sido adecuado para intercambio estricto entre
+programas, pero resulta menos cómodo para editar escenarios largos; TOML es
+muy legible para parámetros de configuración, aunque se vuelve menos natural
+cuando predominan listas de puntos, rotores o secuencias de trayectorias. Por
+ello, YAML se reserva para escenarios experimentales y JSON se emplea en las
+salidas generadas automáticamente, como telemetría y métricas.
+
 La caracterización experimental de cada geometría se desarrolla en el
 \apartadoref{subsec:datos-metricas}. Además de estas familias principales, el
 simulador admite composiciones secuenciales de trayectorias y lemniscatas para

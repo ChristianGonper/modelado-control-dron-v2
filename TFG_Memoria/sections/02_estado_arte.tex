@@ -137,10 +137,16 @@ experimentales. Herramientas como \texttt{uv} permiten declarar, resolver y
 ejecutar entornos Python de forma repetible \cite{uvDocs}. El uso de archivos de
 configuración legibles, como YAML, facilita que escenarios, semillas,
 trayectorias, controladores y condiciones de terminación puedan revisarse sin
-modificar código. Finalmente, Git y GitHub proporcionan un soporte común para
-historial de cambios, distribución del código y trazabilidad de los experimentos
-\cite{githubDocs}. Estas herramientas no sustituyen la validez física o
-experimental, pero sí ayudan a que el trabajo pueda auditarse y repetirse.
+modificar código. Frente a JSON, que es muy interoperable pero más rígido para
+lectura manual, y frente a TOML, que resulta claro para configuraciones
+relativamente planas, YAML ofrece una sintaxis cómoda para describir estructuras
+jerárquicas con listas, diccionarios y bloques anidados \cite{yamlSpec,jsonRFC,tomlSpec}.
+Por ello se utiliza con frecuencia cuando el fichero debe ser revisado por una
+persona además de procesado por una máquina. Finalmente, Git y GitHub
+proporcionan un soporte común para historial de cambios, distribución del código
+y trazabilidad de los experimentos \cite{githubDocs}. Estas herramientas no
+sustituyen la validez física o experimental, pero sí ayudan a que el trabajo
+pueda auditarse y repetirse.
 
 \subsection{Control clásico en cascada y programación de ganancias}
 

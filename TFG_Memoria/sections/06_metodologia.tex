@@ -1,33 +1,46 @@
 \subsection{Conjuntos de datos y métricas de desempeño}
 \label{subsec:datos-metricas}
 
-\subsubsection*{Contrastes e hipótesis operativas}
+\subsubsection*{Criterios de comparación experimental}
 
-El procedimiento se define antes de interpretar resultados y descompone la
-hipótesis central en cinco comprobaciones experimentales. Cada una vincula una
-parte de la comparación con las métricas que permiten juzgarla.
+La evaluación se define antes de observar los resultados para evitar que la
+comparación dependa de una lectura oportunista de una única métrica. El objetivo
+no es demostrar que una arquitectura sea superior en todos los casos, sino
+determinar en qué condiciones un controlador neuronal común puede sustituir a
+varios PD especializados del lazo externo, qué se pierde al transferir un PD
+fuera de su familia y qué papel desempeña la memoria temporal en redes GRU y
+LSTM.
 
-\begin{table}[H]
-\caption{Contrastes e hipótesis operativas predefinidos.}
-\label{tab:hipotesis-operativas}
-\begin{tabularx}{\textwidth}{p{0.08\textwidth} X X}
-\toprule
-ID & Comprobación & Hipótesis operativa \\
-\midrule
-H1 & Especialización del PD experto & El PD nativo de cada familia actúa como referencia especializada y debe superar a los PD no nativos en su propia familia sin perder seguridad. \\
-H2 & Transferencia de los PD con parámetros fijados & La transferencia cruzada de PD entre familias es desigual y delimita el rendimiento esperable sin reajuste. \\
-H3 & Fidelidad de imitación y seguimiento cerrado & Una pérdida supervisada baja es necesaria, pero no suficiente, para obtener seguimiento cerrado competitivo. \\
-H4 & Procedimiento neuronal común frente a transferencia clásica & Un único procedimiento neuronal de fuerza deseada puede competir mejor que los PD aplicados fuera de su familia sin reajuste. \\
-H5 & Efecto de la memoria temporal & GRU o LSTM pueden beneficiarse de historia bajo ruido y retardo, sin asumir cuál será superior. \\
-\bottomrule
-\end{tabularx}
-\end{table}
+La primera referencia es el PD especializado de cada familia. Su función es
+marcar el rendimiento esperable cuando el controlador clásico se ajusta para el
+tipo de trayectoria evaluado. La segunda referencia es la transferencia cruzada:
+aplicar esos mismos PD, ya congelados, a familias distintas sin reajuste. Esta
+comparación permite separar dos fenómenos que de otro modo quedarían mezclados:
+la calidad del control clásico cuando se usa en su dominio natural y la pérdida
+que aparece cuando se saca de él.
 
-Los contrastes se juzgan con éxito de misión, seguridad, error de seguimiento,
+Sobre esa base se evalúan las redes neuronales entrenadas por imitación. Primero
+se mide la fidelidad supervisada con la fuerza deseada de los expertos, pero ese
+valor no se toma como resultado final de control. Una red puede aproximar bien
+la señal del experto muestra a muestra y, aun así, cerrar peor el bucle dinámico
+si acumula errores, visita estados no representados o demanda fuerzas que activan
+recortes. Por ello, la comparación principal se realiza siempre en simulación
+cerrada.
+
+La evaluación de MLP, GRU y LSTM no presupone que la recurrencia deba mejorar
+necesariamente el seguimiento. La memoria temporal puede ser útil ante ruido,
+retardos o dependencia de estados anteriores, pero también puede introducir una
+sensibilidad distinta cuando la trayectoria se aleja de la distribución de
+entrenamiento. Por este motivo, las arquitecturas se comparan con las mismas
+entradas, las mismas ventanas temporales cuando proceden y el mismo lazo interno
+clásico.
+
+Los resultados se juzgan con éxito de misión, seguridad, error de seguimiento,
 actuación, saturación y uso de protecciones; no mediante una única media global.
-La síntesis de resultados separa condiciones conocidas, transferencia clásica y
-escenarios OOD para identificar en qué parte del procedimiento aparece cada
-diferencia.
+La síntesis separa condiciones conocidas, transferencia clásica y escenarios OOD
+para identificar en qué parte del procedimiento aparece cada diferencia y si esa
+diferencia procede del seguimiento, de la terminación o de la cadena de
+actuación.
 
 \subsubsection*{Diseño del conjunto de datos clásico}
 

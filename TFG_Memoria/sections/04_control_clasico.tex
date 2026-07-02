@@ -173,6 +173,18 @@ candidatos seguros de esa ronda y se generan 16 perturbaciones locales alrededor
 de ellos, recortadas al mismo intervalo. El presupuesto nominal por familia es,
 por tanto, de 49 evaluaciones cerradas.
 
+La segunda fase se plantea como un refinamiento local tipo simplex, inspirado en
+la lógica de Nelder--Mead \cite{nelder1965simplex}: explorar la vecindad de los
+mejores candidatos sin exigir derivadas de la función objetivo. Esta elección es
+adecuada en este contexto porque cada evaluación exige cerrar la simulación,
+aplicar filtros de seguridad y calcular una puntuación agregada que no tiene por
+qué ser suave ni diferenciable. En la implementación del trabajo no se busca un
+simplex continuo hasta convergencia, sino una versión acotada y reproducible:
+se perturban los mejores multiplicadores seguros, se evalúa un número fijo de
+candidatos y se conserva únicamente lo que supera los filtros duros. Por tanto,
+el método debe leerse como búsqueda local sin gradiente bajo presupuesto
+limitado, no como una prueba de optimalidad global.
+
 \begin{lstlisting}[caption={Esquema del ajuste progresivo de PD por familia.},label={lst:tune-pd}]
 evaluar PD inicial en casos diagnostico train
 si pasa filtros duros y RMSE medio <= umbral familiar:
@@ -221,7 +233,7 @@ solo por diferencias numéricas pequeñas.
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.75\textwidth]{FIG-005}
-  \caption{Flujo lógico de optimización y ajuste progresivo de ganancias clásicas. Los candidatos aleatorios globales se filtran por condiciones de estabilidad y seguridad antes de que se inicie la optimización local. Fuente: elaboración propia.}
+  \caption{Flujo lógico de optimización y ajuste progresivo de ganancias clásicas. Los candidatos aleatorios globales se filtran por condiciones de estabilidad y seguridad antes de que se inicie el refinamiento local tipo simplex/Nelder--Mead. Fuente: elaboración propia.}
   \label{fig:optimizacion-pid}
 \end{figure}
 Los pesos de \eqnref{eq:score-pd}, los umbrales, el intervalo de
