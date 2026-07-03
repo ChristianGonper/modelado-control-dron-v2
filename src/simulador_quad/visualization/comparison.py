@@ -174,7 +174,7 @@ def _load_trajectory_series(path: Path, label: str) -> tuple[str, np.ndarray, np
 
 
 def _plot_xy_panel(ax, series: tuple[str, np.ndarray, np.ndarray, np.ndarray], *, title: str) -> None:
-    label, _, position_W_m, reference_W_m = series
+    _, _, position_W_m, reference_W_m = series
     ax.plot(
         reference_W_m[:, 0],
         reference_W_m[:, 1],
@@ -183,7 +183,7 @@ def _plot_xy_panel(ax, series: tuple[str, np.ndarray, np.ndarray, np.ndarray], *
         linewidth=1.0,
         label="Referencia",
     )
-    ax.plot(position_W_m[:, 0], position_W_m[:, 1], color=COLORS["real"], linewidth=1.2, label=label)
+    ax.plot(position_W_m[:, 0], position_W_m[:, 1], color=COLORS["real"], linewidth=1.2, label="Seguimiento")
     ax.scatter(position_W_m[0, 0], position_W_m[0, 1], color=COLORS["start"], s=18, zorder=4)
     ax.scatter(position_W_m[-1, 0], position_W_m[-1, 1], color=COLORS["failure"], s=18, zorder=4)
     ax.set_title(title, fontsize=8)

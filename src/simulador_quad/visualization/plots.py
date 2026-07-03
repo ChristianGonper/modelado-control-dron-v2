@@ -116,9 +116,10 @@ def _plot_position_time(
         ax.plot(time_s, reference_W_m[:, idx], "--", color=COLORS["reference"], label="Referencia")
         ax.plot(time_s, position_W_m[:, idx], color=COLORS["real"], label="Estado")
         ax.set_ylabel(labels[idx])
-        ax.legend(loc="best")
 
     axes[-1].set_xlabel("Tiempo [s]")
+    handles, legend_labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, legend_labels, loc="upper center", ncol=2)
     if profile != "report":
         fig.suptitle("Evolución de la Posición frente a Referencia (Mundo)")
 
