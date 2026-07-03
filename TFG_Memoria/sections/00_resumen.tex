@@ -2,7 +2,10 @@
 \thispagestyle{empty}
 
 \noindent
-\begin{longtable}{|p{0.47\textwidth}|p{0.47\textwidth}|}
+\small
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{0.96}
+\begin{tabular}{|p{0.46\textwidth}|p{0.46\textwidth}|}
 \hline
 \multicolumn{2}{|c|}{} \\
 \multicolumn{2}{|c|}{\textbf{\large UNIVERSIDAD DE LEÓN}} \\
@@ -12,32 +15,42 @@
 \multicolumn{2}{|c|}{\textbf{Trabajo de Fin de Grado}} \\
 \multicolumn{2}{|c|}{} \\
 \hline
-\multicolumn{2}{|p{0.97\textwidth}|}{\textbf{ESTUDIANTE:} \autorTFG} \\
+\multicolumn{2}{|p{0.95\textwidth}|}{\textbf{ESTUDIANTE:} \autorTFG} \\
 \hline
-\multicolumn{2}{|p{0.97\textwidth}|}{%
+\multicolumn{2}{|p{0.95\textwidth}|}{%
   \textbf{TUTORES:}
   \begin{tabular}[t]{@{}l@{}}
     \tutorTFGa \\
     \tutorTFGb
   \end{tabular}} \\
 \hline
-\multicolumn{2}{|p{0.97\textwidth}|}{\textbf{TÍTULO:} \tituloTFG} \\
+\multicolumn{2}{|p{0.95\textwidth}|}{\textbf{TÍTULO:} \tituloTFG} \\
 \hline
-\multicolumn{2}{|p{0.97\textwidth}|}{\textbf{TITLE:} \tituloTFGEnglish} \\
+\multicolumn{2}{|p{0.95\textwidth}|}{\textbf{TITLE:} \tituloTFGEnglish} \\
 \hline
-\multicolumn{2}{|p{0.97\textwidth}|}{\textbf{CONVOCATORIA:} \convocatoriaTFG} \\
+\multicolumn{2}{|p{0.95\textwidth}|}{\textbf{CONVOCATORIA:} \convocatoriaTFG} \\
 \hline
-\multicolumn{2}{|p{0.97\textwidth}|}{\textbf{RESUMEN:}\newline
-Pendiente de redacción tras cerrar la evidencia experimental. Debe resumir objetivo, metodología, simulador, control clásico, control neuronal, escenarios y resultados principales en un único párrafo de aproximadamente 300 palabras y nunca superior a una página.} \\
+\multicolumn{2}{|p{0.95\textwidth}|}{\textbf{RESUMEN:}\newline
+Este trabajo estudia si un controlador neuronal entrenado por imitación puede sustituir a un conjunto de controladores proporcional--derivativos (PD) especializados en el seguimiento de trayectorias de un cuadricóptero simulado. Para ello se desarrolla un entorno reproducible de simulación que modela la dinámica de cuerpo rígido en sistemas de referencia ENU/FRD, la actitud mediante cuaterniones, actuadores con saturación y retardo, perturbaciones y frecuencias diferenciadas de física, control y telemetría. Sobre este entorno se implementa una arquitectura en cascada con un lazo externo que genera la fuerza deseada y un lazo interno clásico que conserva la estabilización de actitud y la asignación a rotores. Primero se sintonizan controladores PD especializados para familias de trayectorias \texttt{hold}, círculo, Lissajous y \texttt{waypoint}; después se usan como expertos para generar datos de imitación. Se entrenan y comparan tres arquitecturas, MLP, GRU y LSTM, con las mismas entradas, objetivos y procedimiento. La evaluación distingue fidelidad supervisada, seguimiento en bucle cerrado dentro de distribución, transferencia clásica entre familias y escenarios fuera de distribución con variaciones, composiciones, y trayectorias nuevas. Los resultados muestran que la imitación neuronal es viable y puede sustituir a varios PD especializados en condiciones conocidas y en algunas variaciones no vistas. Sin embargo, no se observa una superioridad global de las redes. GRU y LSTM aproximan mejor la fuerza en evaluación supervisada, pero esa ventaja no se traduce de forma sistemática en menor RMSE de posición; MLP resulta competitivo en varias familias y LSTM se degrada en trayectorias geométrica o dinámicamente exigentes. El estudio concluye que la calidad del seguimiento depende de la arquitectura, de la distribución de entrenamiento, de los límites de actuación y del lazo clásico compartido, por lo que la generalización debe evaluarse en simulación cerrada.} \\
 \hline
-\multicolumn{2}{|p{0.97\textwidth}|}{\textbf{ABSTRACT:}\newline
-Pending final experimental evidence.} \\
+\end{tabular}
+
+\clearpage
+\thispagestyle{empty}
+\noindent
+\begin{tabular}{|p{0.46\textwidth}|p{0.46\textwidth}|}
 \hline
-\multicolumn{2}{|p{0.97\textwidth}|}{\textbf{Palabras clave:} cuadricóptero; simulación 6DOF; control PD; aprendizaje por imitación; redes neuronales.} \\
+\multicolumn{2}{|p{0.95\textwidth}|}{\textbf{ABSTRACT:}\newline
+This work studies whether an imitation-trained neural controller can replace a set of specialized proportional--derivative (PD) controllers for trajectory tracking of a simulated quadrotor. For this purpose, a reproducible simulation environment is developed that models rigid-body dynamics in ENU/FRD reference frames, attitude using quaternions, actuators with saturation and lag, disturbances, and differentiated frequencies for physics, control, and telemetry. On this environment, a cascaded architecture is implemented with an outer loop that generates the desired force and a classical inner loop that preserves attitude stabilization and rotor allocation. First, specialized PD controllers are tuned for the \texttt{hold}, circle, Lissajous, and \texttt{waypoint} trajectory families; they are then used as experts to generate imitation data. Three architectures, MLP, GRU, and LSTM, are trained and compared with the same inputs, targets, and procedure. The evaluation distinguishes supervised fidelity, in-distribution closed-loop tracking, classical transfer between families, and out-of-distribution scenarios with variations, compositions, and new trajectories. The results show that neural imitation is feasible and can replace several specialized PD controllers in known conditions and in some unseen variations. However, no global superiority of the networks is observed. GRU and LSTM approximate the force better in supervised evaluation, but this advantage does not systematically translate into lower position RMSE; MLP is competitive in several families, and LSTM degrades in geometrically or dynamically demanding trajectories. The study concludes that tracking quality depends on the architecture, the training distribution, the actuation limits, and the shared classical loop, which is why generalization must be evaluated in closed-loop simulation.} \\
+\hline
+\multicolumn{2}{|p{0.95\textwidth}|}{\textbf{Palabras clave:} cuadricóptero; simulación 6DOF; control PD; aprendizaje por imitación; redes neuronales.} \\
 \hline
 \textbf{Firma del estudiante:} & \textbf{V.\textordmasculine{} B.\textordmasculine{} Tutor/es:} \\[1.5cm]
 \hline
-\end{longtable}
+\end{tabular}
+\normalsize
+\setlength{\tabcolsep}{6pt}
+\renewcommand{\arraystretch}{1}
 
 \clearpage
 \thispagestyle{empty}

@@ -8,56 +8,170 @@
 
 \hypersetup{allcolors=black}
 \setlength{\parindent}{0cm}
+\renewcommand{\arraystretch}{1.06}
 
-Esta lista recoge la notación recurrente de la memoria. Salvo indicación
-contraria, las magnitudes vectoriales de posición, velocidad, aceleración y
-fuerza se expresan en el sistema mundo ENU, y las magnitudes de actitud, giro,
-momento e inercia se expresan en el sistema cuerpo FRD.
+Salvo indicación contraria, las magnitudes vectoriales de posición,
+velocidad, aceleración y fuerza se expresan en el sistema mundo ENU, y las
+magnitudes de actitud, giro, momento e inercia se expresan en el sistema
+cuerpo FRD.
 
-\begin{description}[leftmargin=3.2cm, labelindent=0cm]
-  \item[$\frameW$] Sistema de referencia mundo, con convención ENU.
-  \item[$\frameB$] Sistema de referencia cuerpo, con convención FRD.
-  \item[$x_W,y_W,z_W$] Ejes del sistema mundo: este, norte y arriba [m].
-  \item[$x_B,y_B,z_B$] Ejes del sistema cuerpo: delante, derecha y abajo [m].
-  \item[$\bm{x}$] Estado del vehículo en la simulación.
-  \item[$\posW$] Posición del centro de masas en el sistema mundo [m].
-  \item[$\velW$] Velocidad lineal en el sistema mundo [m/s].
-  \item[$\bm{a}$, $\bm{a}_r$] Aceleración y aceleración de referencia [m/s$^2$].
-  \item[$\quatWB$] Cuaternión de actitud que relaciona cuerpo y mundo.
-  \item[$\omegaB$] Velocidad angular del vehículo en el sistema cuerpo [rad/s].
-  \item[$\bm{R}_{WB}$] Matriz de rotación de cuerpo FRD a mundo ENU.
-  \item[$m$] Masa del vehículo [kg].
-  \item[$g$] Aceleración de la gravedad [m/s$^2$].
-  \item[$\bm{I}_B$] Matriz de inercia respecto al centro de masas [kg\,m$^2$].
-  \item[$\bm{F}_B$] Fuerza aplicada expresada en cuerpo [N].
-  \item[$\bm{F}_{d,W}$] Fuerza deseada o fuerza de drag, según el contexto indicado [N].
-  \item[$\widehat{\bm{F}}_{d,W}$] Fuerza deseada predicha por el controlador neuronal [N].
-  \item[$T$] Empuje colectivo total [N].
-  \item[$T_i$] Empuje generado por el rotor $i$ [N].
-  \item[$\omega_i$] Velocidad angular del rotor $i$ [rad/s].
-  \item[$\bm{r}_{i,B}$] Posición del rotor $i$ respecto al centro de masas [m].
-  \item[$s_i$] Signo del par de reacción de guiñada del rotor $i$.
-  \item[$\bm{\tau}_B$] Momento aplicado en el sistema cuerpo [N\,m].
-  \item[$\tau_x,\tau_y,\tau_z$] Componentes de momento de alabeo, cabeceo y guiñada [N\,m].
-  \item[$\bm{M}$] Matriz de asignación entre empujes de rotores y mando colectivo/momentos.
-  \item[$\bm{D}_B$] Matriz de drag lineal expresada en cuerpo [N/(m/s)].
-  \item[$\bm{v}_{w,W}$] Velocidad del viento constante en el sistema mundo [m/s].
-  \item[$\bm{e}_p$, $\bm{e}_v$] Errores de posición y velocidad [m; m/s].
-  \item[$\bm{e}_q$] Error de actitud usado por el lazo interno.
-  \item[$\bm{K}_{p,p}$, $\bm{K}_{d,p}$] Ganancias proporcional y derivativa del lazo de posición.
-  \item[$\bm{K}_{p,a}$, $\bm{K}_{d,a}$] Ganancias proporcional y derivativa del lazo de actitud.
-  \item[$k$] Índice temporal discreto de una muestra.
-  \item[$\Delta t$] Periodo de integración, control o muestreo indicado en cada contexto [s].
-  \item[$N$] Número de muestras usadas en una métrica.
-  \item[$e_k$] Error escalar de seguimiento en la muestra $k$ [m].
-  \item[$e_{\mathrm{RMSE}}$] Raíz del error cuadrático medio de posición [m].
-  \item[$\theta$] Conjunto de parámetros entrenables de una red neuronal.
-  \item[$\eta$] Tasa de aprendizaje en descenso por gradiente.
-  \item[$\bm{W}$, $\bm{b}$] Pesos y sesgos de una capa neuronal.
-  \item[$\bm{h}_k$] Estado oculto de una red recurrente en el instante $k$.
-  \item[$\bm{c}_k$] Estado de celda de una LSTM en el instante $k$.
-  \item[$L$] Longitud de ventana temporal usada por modelos recurrentes [muestras].
-\end{description}
+\newcommand{\simbolosbloque}[1]{%
+  \vspace{0.7em}\noindent\textbf{#1}\par\vspace{0.2em}%
+}
+\newcommand{\cabeceratablasimbolos}{%
+  \toprule
+  \textbf{Símbolo} & \textbf{Significado} & \textbf{Unidad} \\
+  \midrule
+}
+
+\simbolosbloque{Sistemas de referencia y estado}
+\footnotesize
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.23\textwidth}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{0.17\textwidth}@{}}
+\cabeceratablasimbolos
+$\frameW$ & Sistema de referencia mundo, con convención ENU. & -- \\
+$\frameB$ & Sistema de referencia cuerpo, con convención FRD. & -- \\
+$x_W,y_W,z_W$ & Ejes del sistema mundo: este, norte y arriba. & -- \\
+$x_B,y_B,z_B$ & Ejes del sistema cuerpo: delante, derecha y abajo. & -- \\
+$\bm{x}$ & Estado del vehículo en la simulación. & -- \\
+$\posW$, $\bm{p}$ & Posición del centro de masas en el sistema mundo. & m \\
+$\velW$, $\bm{v}$ & Velocidad lineal en el sistema mundo. & m/s \\
+$\bm{p}_r$, $\bm{v}_r$ & Posición y velocidad de referencia. & m; m/s \\
+$\bm{a}$, $\bm{a}_r$ & Aceleración y aceleración de referencia. & m/s$^2$ \\
+$\bm{a}_{cmd}$ & Aceleración comandada por el lazo externo. & m/s$^2$ \\
+$\bm{v}_{w,W}$ & Velocidad del viento constante en el sistema mundo. & m/s \\
+$\bm{v}_{r,B}$ & Velocidad relativa respecto al viento expresada en cuerpo. & m/s \\
+\bottomrule
+\end{tabularx}
+\normalsize
+
+\simbolosbloque{Actitud, orientación y rotación}
+\footnotesize
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.23\textwidth}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{0.17\textwidth}@{}}
+\cabeceratablasimbolos
+$\quatWB$ & Cuaternión de actitud que relaciona cuerpo y mundo. & -- \\
+$\bm{q}_{WB,d}$ & Cuaternión de actitud deseada usado por el lazo interno. & -- \\
+$q_0,q_1,q_2,q_3$ & Componentes del cuaternión de actitud. & -- \\
+$\bm{q}_e$, $\bm{q}_{e,v}$ & Cuaternión de error y parte vectorial del error de actitud. & -- \\
+$\omegaB$ & Velocidad angular del vehículo en el sistema cuerpo. & rad/s \\
+$\bm{R}_{WB}$ & Matriz de rotación de cuerpo FRD a mundo ENU. & -- \\
+$\bm{R}_{WB,d}$ & Matriz de rotación deseada de cuerpo FRD a mundo ENU. & -- \\
+$\bm{x}_C$ & Vector auxiliar horizontal construido a partir de la guiñada de referencia. & -- \\
+$\bm{x}_{B,d}$, $\bm{y}_{B,d}$, $\bm{z}_{B,d}$ & Ejes deseados del sistema cuerpo usados para construir la actitud de referencia. & -- \\
+$\psi_r$ & Guiñada de referencia. & rad \\
+$\otimes$ & Producto de cuaterniones. & -- \\
+\bottomrule
+\end{tabularx}
+\normalsize
+
+\clearpage
+\simbolosbloque{Vehículo, fuerzas y actuadores}
+\footnotesize
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.23\textwidth}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{0.17\textwidth}@{}}
+\cabeceratablasimbolos
+$m$ & Masa del vehículo. & kg \\
+$g$ & Aceleración de la gravedad. & m/s$^2$ \\
+$\bm{I}_B$ & Matriz de inercia respecto al centro de masas. & kg\,m$^2$ \\
+$\bm{F}_B$ & Fuerza aplicada expresada en cuerpo. & N \\
+$\bm{F}_{i,B}$ & Fuerza generada por el rotor $i$ expresada en cuerpo. & N \\
+$\bm{F}_{d,W}$ & Fuerza con subíndice $d$ en mundo: fuerza deseada en el lazo de control o fuerza de drag en el modelo de perturbaciones, según el contexto. & N \\
+$\widehat{\bm{F}}_{d,W}$ & Fuerza deseada predicha por el controlador neuronal. & N \\
+$T$ & Empuje colectivo total. & N \\
+$T_i$ & Empuje generado por el rotor $i$. & N \\
+$T_{\min}$, $T_{\max}$ & Límites inferior y superior del empuje individual de rotor. & N \\
+$T_{\text{req},i}$ & Empuje requerido para el rotor $i$ tras el mixer. & N \\
+$T_{\text{target}}$ & Empuje medio objetivo usado en la ruta saturada del mixer. & N \\
+$T_{\text{thrust\_part}}$ & Contribución de empuje colectivo antes de aplicar momentos. & N \\
+$T_{\text{moment\_part}}$ & Contribución de momentos antes de aplicar límites de rotor. & N \\
+$\omega_i$ & Velocidad angular del rotor $i$. & rad/s \\
+$\omega_{\max}$ & Velocidad angular máxima de rotor usada en los escenarios. & rad/s \\
+$\mathrm{rpm}$ & Revoluciones por minuto, unidad auxiliar de lectura para velocidades de rotor en telemetría. & rev/min \\
+$k_f$ & Coeficiente cuadrático de empuje del rotor. & N\,s$^2$\,rad$^{-2}$ \\
+$k_m$ & Coeficiente cuadrático de par de reacción del rotor. & N\,m\,s$^2$/rad$^2$ \\
+$Q_i$ & Par de reacción del rotor $i$. & N\,m \\
+$\bm{r}_{i,B}$ & Posición del rotor $i$ respecto al centro de masas. & m \\
+$x_i,y_i$ & Coordenadas del rotor $i$ en el sistema cuerpo. & m \\
+$s_i$ & Signo del par de reacción de guiñada del rotor $i$. & -- \\
+$\bm{\tau}_B$ & Momento aplicado en el sistema cuerpo. & N\,m \\
+$\tau_x,\tau_y,\tau_z$ & Componentes de momento de alabeo, cabeceo y guiñada. & N\,m \\
+$\tau$ & Constante de tiempo del lag de primer orden del actuador. & s \\
+$\bm{M}$ & Matriz de asignación entre empujes de rotores y mando colectivo/momentos. & -- \\
+$\bm{D}_B$ & Matriz de drag lineal expresada en cuerpo. & N/(m/s) \\
+$\delta_{\min}$, $\delta_{\max}$, $\delta$ & Límites y desplazamiento de holgura del empuje colectivo en el mixer. & N \\
+$\times$ & Producto vectorial. & -- \\
+\bottomrule
+\end{tabularx}
+\normalsize
+
+\clearpage
+\simbolosbloque{Control clásico y métricas}
+\footnotesize
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.23\textwidth}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{0.17\textwidth}@{}}
+\cabeceratablasimbolos
+$\bm{e}_p$, $\bm{e}_v$ & Errores de posición y velocidad. & m; m/s \\
+$\bm{e}_q$ & Error de actitud usado por el lazo interno. & -- \\
+$\bm{K}_{p,p}$, $\bm{K}_{d,p}$ & Ganancias proporcional y derivativa del lazo de posición. & s$^{-2}$; s$^{-1}$ \\
+$\bm{K}_{p,a}$, $\bm{K}_{d,a}$ & Ganancias proporcional y derivativa del lazo de actitud. & N\,m; N\,m\,s \\
+$J$ & Puntuación usada para seleccionar controladores PD. & -- \\
+$e_k$ & Error escalar de seguimiento en la muestra $k$. & m \\
+$e_{\mathrm{RMSE}}$, $e_{\mathrm{rms}}$ & Raíz del error cuadrático medio de posición. & m \\
+$e_{\mathrm{MAE}}$ & Error absoluto medio de posición. & m \\
+$e_{\max}$ & Error máximo de posición. & m \\
+$e_{\mathrm{att}}$ & RMS de los ángulos de actitud en la puntuación de ajuste. & rad \\
+$u$ & Esfuerzo de control normalizado usado en la puntuación. & -- \\
+$s$, $d$ & Fracciones de muestras con saturación y degradación del mando. & -- \\
+$\overline{T}$ & Empuje medio usado en el término de esfuerzo de control. & N \\
+$N$ & Número de muestras usadas en una métrica. & -- \\
+\bottomrule
+\end{tabularx}
+\normalsize
+
+\simbolosbloque{Tiempo, muestreo y trayectorias}
+\footnotesize
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.23\textwidth}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{0.17\textwidth}@{}}
+\cabeceratablasimbolos
+$t$ & Tiempo continuo usado en trayectorias y referencias. & s \\
+$k$ & Índice temporal discreto de una muestra. & -- \\
+$\Delta t$ & Periodo de integración, control o muestreo indicado en cada contexto. & s \\
+$f_{\mathrm{phys}}$, $f_{\mathrm{ctrl}}$, $f_{\mathrm{tel}}$ & Frecuencias de física, control y telemetría. & Hz \\
+$T_p$, $T_c$, $T_t$ & Periodos asociados a física, control y telemetría. & s \\
+$L$ & Longitud de ventana temporal usada por modelos recurrentes; en perfiles de waypoint puede indicar longitud escalar de tramo cuando se especifica en una figura. & muestras; m \\
+$c_x,c_y,c_z$ & Coordenadas del centro de una trayectoria Lissajous. & m \\
+$A_x,A_y,A_z$ & Amplitudes espaciales de una trayectoria Lissajous. & m \\
+$\omega_x,\omega_y,\omega_z$ & Frecuencias angulares por eje en una trayectoria Lissajous. & rad/s \\
+$s(t)$ & Coordenada escalar de avance usada para generar perfiles entre waypoints. & m \\
+\bottomrule
+\end{tabularx}
+\normalsize
+
+\clearpage
+\simbolosbloque{Redes neuronales y optimización}
+\footnotesize
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.23\textwidth}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{0.17\textwidth}@{}}
+\cabeceratablasimbolos
+$B$ & Tamaño del lote de entrenamiento o inferencia. & muestras \\
+$\bm{x}_k$ & Vector de entrada de la red en el instante $k$. & norm. \\
+$\bm{y}_k$ & Salida de una red recurrente en el instante $k$. & norm. \\
+$\theta$ & Conjunto de parámetros entrenables de una red neuronal. & -- \\
+$\mathcal{L}(\theta)$ & Función de pérdida dependiente de los parámetros entrenables. & -- \\
+$n$ & Índice de iteración en descenso por gradiente. & -- \\
+$\eta$ & Tasa de aprendizaje en descenso por gradiente. & -- \\
+$\nabla_\theta$ & Gradiente respecto a los parámetros de la red. & -- \\
+$\bm{W}$, $\bm{b}$ & Pesos y sesgos de una capa neuronal, incluidas matrices y sesgos específicos de capas o compuertas recurrentes. & norm. \\
+$\bm{z}^{(\ell)}$, $\bm{a}^{(\ell)}$ & Pre-activación y activación de la capa $\ell$. & norm. \\
+$\ell$ & Índice de capa neuronal. & -- \\
+$\bm{h}_k$ & Estado oculto de una red recurrente en el instante $k$. & -- \\
+$\bm{c}_k$ & Estado de celda de una LSTM en el instante $k$. & -- \\
+$\bm{f}_k$, $\bm{i}_k$, $\bm{o}_k$ & Compuertas de olvido, entrada y salida de una LSTM. & -- \\
+$\tilde{\bm{c}}_k$ & Estado candidato de celda de una LSTM. & -- \\
+$\bm{z}_k$, $\bm{r}_k$ & Compuertas de actualización y reinicio de una GRU. & -- \\
+$\tilde{\bm{h}}_k$ & Estado oculto candidato de una GRU. & -- \\
+$\phi$, $\sigma$, $\tanh$ & Activación no lineal genérica, sigmoide y tangente hiperbólica; $\phi$ también puede denotar el ángulo de alabeo cuando el contexto es actitud. & -- \\
+$\odot$ & Producto componente a componente. & -- \\
+$\mathbb{R}^n$ & Espacio vectorial real de dimensión $n$. & -- \\
+$\|\cdot\|$ & Norma vectorial. & -- \\
+\bottomrule
+\end{tabularx}
+\normalsize
 
 \clearpage
 \hypersetup{allcolors=blue}
