@@ -1,14 +1,12 @@
 Este anejo recoge los comandos mínimos necesarios para reconstruir la evidencia
-experimental usada en la memoria. La intención no es sustituir al
-\texttt{README.md}, sino dejar una ruta de ejecución compacta y verificable:
-preparar el entorno, comprobar el paquete, generar datos, ejecutar campañas,
-consolidar resultados y regenerar figuras.
+experimental usada en la memoria. No sustituye al \texttt{README.md} del repositorio,
+sino que deja una ruta de ejecución compacta.
 
 \subsubsection*{Preparación del entorno}
 
 El proyecto se gestiona con \texttt{uv}. La primera orden sincroniza el entorno
 definido por \texttt{pyproject.toml} y \texttt{uv.lock}; la segunda ejecuta las
-pruebas disponibles antes de lanzar campañas largas.
+pruebas disponibles antes de realizar ejecuciones largas.
 
 \begin{verbatim}
 uv sync
@@ -17,10 +15,13 @@ uv run pytest
 
 \subsubsection*{Ejecución mínima de un escenario}
 
-La ejecución elemental toma un escenario YAML, instancia vehículo, trayectoria,
-controlador, perturbaciones y condiciones de terminación, y escribe dos
-artefactos: \texttt{telemetry.json} con la serie temporal y
-\texttt{metrics.json} con las métricas agregadas.
+La ejecución elemental toma un escenario YAML, inicia el vehículo, trayectoria,
+controlador, perturbaciones y condiciones de finalización, y escribe dos
+archivos:
+\begin{itemize}
+  \item \texttt{telemetry.json} con la serie temporal y
+  \item \texttt{metrics.json} con las métricas agregadas.
+\end{itemize}
 
 \begin{verbatim}
 uv run simulador-quad run scenarios\hover_clean.yaml --no-visualization
@@ -33,10 +34,9 @@ uv run simulador-quad plot ^
   --profile report --formats png pdf
 \end{verbatim}
 
-El mismo patrón permite ejecutar escenarios sueltos de diagnóstico durante el
-desarrollo. Para las figuras finales del anejo visual, sin embargo, se emplean
-las telemetrías ya consolidadas del dataset clásico y no ejecuciones manuales
-aisladas.
+El mismo comando permite ejecutar escenarios sueltos durante el desarrollo.
+Para las figuras finales del anejo visual, sin embargo, se emplean las telemetrías
+del dataset clásico y no ejecuciones aisladas.
 
 \begin{verbatim}
 uv run simulador-quad run ^
@@ -46,10 +46,10 @@ uv run simulador-quad run ^
 
 \subsubsection*{Dataset clásico y expertos PD}
 
-El dataset clásico fija escenarios reproducibles y permite ajustar o congelar
+El dataset clásico fija escenarios reproducibles y permite ajustar o fijar
 controladores PD por familia. Tras modificar ganancias o criterios de ajuste,
 los escenarios deben regenerarse con \texttt{--overwrite} para que las ganancias
-embebidas y los manifiestos vuelvan a ser coherentes.
+incorporadas y los manifiestos vuelvan a ser coherentes.
 
 \begin{verbatim}
 uv run python tools\generate_classic_dataset.py ^
@@ -58,6 +58,7 @@ uv run python tools\generate_classic_dataset.py ^
 uv run python tools\tune_classic_pid.py ^
   --dataset data\classic_dataset\v1 ^
   --out data\classic_dataset\v1\pids --workers 8
+  %% Ejecuta en paralelo en 8 núcleos de CPU
 
 uv run python tools\run_classic_dataset.py ^
   --dataset data\classic_dataset\v1 ^
@@ -69,9 +70,9 @@ uv run python tools\summarize_classic_dataset.py ^
 
 \subsubsection*{Dataset neuronal de fuerza externa}
 
-El controlador neuronal principal aprende por imitación la fuerza deseada del
-lazo externo. Para ello se genera primero un banco de candidatos PD externos,
-se selecciona el experto seguro por escenario y se exportan las muestras de
+El controlador neuronal aprende por imitación la fuerza deseada del lazo externo.
+Para ello se genera primero una serie de candidatos PD externos, se selecciona
+el experto seguro por escenario y se exportan las muestras de
 entrada y salida usadas por MLP, GRU y LSTM.
 
 \begin{verbatim}
@@ -102,12 +103,12 @@ Las arquitecturas recurrentes se entrenan con el mismo comando, sustituyendo
 siempre el checkpoint y la normalización correspondientes para evitar mezclar
 modelos y escalados.
 
-\subsubsection*{Batería OOD y comparación cerrada}
+\subsubsection*{Serie OOD y comparación cerrada}
 
-La batería OOD usada en resultados procede de
-\texttt{data/neural\_ood/battery\_v1}. La auditoría de hélices fijó
-\texttt{max\_duration\_s}=60\,s en el generador para que las trayectorias
-trapezoidales rápidas dispongan de margen suficiente.
+La serie OOD usada en resultados procede de \texttt{data/neural\_ood/battery\_v1}. 
+La auditoría de hélices fijó \texttt{max\_duration\_s}=60\,s en el
+generador para que las trayectorias trapezoidales rápidas dispongan de
+margen suficiente.
 
 \begin{verbatim}
 uv run python tools\generate_ood_battery.py ^
@@ -141,11 +142,11 @@ uv run python tools\summarize_comparison.py
 
 \subsubsection*{Figuras de resultados y anejos}
 
-Las figuras comparativas del capítulo de resultados se regeneran desde el CSV
-consolidado. Las figuras de telemetría del anejo visual se generan desde el
-dataset clásico, donde se guardan las ejecuciones de los PD expertos congelados
-usadas en train, validación y test. Cuando se quiere ilustrar transferencia
-cruzada se usa la carpeta de resultados de transferencia.
+Las figuras comparativas del capítulo de resultados se regeneran desde el CSV.
+Las figuras de telemetría del anejo visual se generan desde el dataset clásico,
+donde se guardan las ejecuciones de los PD expertos con parámetros fijados
+para train, validación y test. Cuando se quiere ilustrar transferencia cruzada
+se usa la carpeta de resultados de transferencia.
 
 \begin{verbatim}
 uv run simulador-quad plot-comparison ^
@@ -177,10 +178,10 @@ para una pareja de transferencia del caso circular. En todos ellos, el perfil
 \texttt{report} elimina títulos diagnósticos redundantes y conserva ejes,
 unidades, leyendas y formato apto para memoria.
 
-\subsubsection*{Artefactos de evidencia}
+\subsubsection*{Archivos de evidencia}
 
 \begin{itemize}
-  \item \path{results/comparison_all_runs.csv}: Corridas comparables usadas
+  \item \path{results/comparison_all_runs.csv}: Ejecuciones comparables usadas
     por las figuras principales de resultados.
   \item \path{results/comparison_summary.csv}: Agregación por controlador,
     split y familia.
@@ -192,6 +193,6 @@ unidades, leyendas y formato apto para memoria.
     \path{data/classic_dataset/v1/results/*/*/metrics.json}.
   \item Ejecuciones de transferencia cruzada entre familias de PD en
     \path{data/classic_dataset/v1/results_transfer/*/}.
-  \item Directorio de figuras finales de la memoria en
+  \item Directorio de figuras de la memoria en
     \path{TFG_Memoria/Figuras/resultados/}.
 \end{itemize}

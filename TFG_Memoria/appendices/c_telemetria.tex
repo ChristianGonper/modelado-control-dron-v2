@@ -1,20 +1,18 @@
-Las figuras de este anejo no se emplean como prueba cuantitativa principal. Su
-función es mostrar el tipo de evidencia visual que se inspecciona después de una
-simulación cerrada y dar contexto a las métricas agregadas del capítulo de
-resultados. A diferencia de una ejecución manual aislada, las telemetrías usadas
-en este anejo proceden del dataset clásico consolidado:
-\texttt{data/classic\_dataset/v1/results}. Por tanto, corresponden a los PD
-expertos congelados que alimentan las fases de entrenamiento, validación y
-prueba. Al final se añade un ejemplo de \texttt{results\_transfer} para ilustrar
-la transferencia cruzada de esos mismos PD.
+Las figuras de este anejo tienen como objetivo mostrar la evidencia visual
+tras una simulación y dar contexto a las métricas agregadas visibles en el
+capítulo de resultados. Las telemetrías usadas en este anejo proceden del
+dataset clásico \path{data/classic\_dataset/v1/results}. Por tanto, corresponden
+a los PD especializados con parámetros fijados que alimentan las fases de
+entrenamiento, validación y prueba. Al final se añade un ejemplo de
+\path{results\_transfer} para ilustrar la transferencia cruzada de esos mismos PD.
 
 \subsubsection*{Atlas de trayectorias}
 
 Antes de entrar en señales temporales, la \autoref{fig:atlas-trayectorias-id},
 la \autoref{fig:atlas-trayectorias-ood} y la
 \autoref{fig:atlas-trayectoria-helix-3d} sitúan visualmente la variedad de
-referencias. Las dos primeras figuras resumen familias conocidas y trayectorias
-fuera de distribución, mientras que la tercera separa una hélice para que se
+referencias. Las dos primeras figuras resumen familias ID y trayectorias
+OOD, mientras que la tercera separa una hélice para que se
 aprecie su componente tridimensional.
 
 \begin{figure}[H]
@@ -46,10 +44,8 @@ elaboración propia.}
 
 La \autoref{tab:casos-telemetria-anejo} resume los episodios incluidos en las
 figuras siguientes. Se han escogido casos de \texttt{test} del dataset clásico
-para cubrir familias, perturbaciones y modos de terminación distintos. La
-selección no busca maximizar ni minimizar una métrica concreta, sino enseñar qué
-se revisa cuando una ejecución del banco experimental se inspecciona más allá
-del RMSE agregado.
+para cubrir familias, perturbaciones y modos de finalización distintos. La
+selección busca mostrar qué se revisa de una ejecución más allá del RMSE.
 
 \begin{table}[H]
 \caption{Casos del dataset clásico usados para las figuras de telemetría.}
@@ -64,12 +60,12 @@ Caso & Procedencia & Motivo de inclusión \\
 perturbación combinada; permite ver equilibrio, corrección frente a viento y
 ruido, y empuje próximo al peso. \\
 \texttt{circle\_g04\_P5} & \texttt{test}, PD \texttt{circle} & Seguimiento
-curvo con perturbación combinada y misión de duración fija. \\
+curvo con perturbación combinada y trayectoria de duración fija. \\
 \texttt{circle\_g07\_P2} & \texttt{test}, PD \texttt{circle} & Caso de círculo
 con viento este, útil para observar error transitorio y actitud sostenida. \\
 \texttt{lissajous\_g07\_P5} & \texttt{test}, PD \texttt{lissajous} &
 Trayectoria periódica multieje con perturbación combinada. \\
-\texttt{waypoint\_g03\_P5} & \texttt{test}, PD \texttt{waypoint} & Misión finita
+\texttt{waypoint\_g03\_P5} & \texttt{test}, PD \texttt{waypoint} & Trayectoria finita
 con tramos, cambios de dirección y terminación por trayectoria completada. \\
 \bottomrule
 \end{tabularx}
@@ -81,7 +77,7 @@ La \autoref{fig:sim-telemetry-geometry-a} y la
 \autoref{fig:sim-telemetry-geometry-b} comparan referencia y estado en el plano
 horizontal. La primera muestra el contraste entre una referencia estacionaria y
 una curva periódica; la segunda enfrenta seguimiento circular sostenido y una
-misión por puntos, donde aparecen tramos rectos y cambios de dirección.
+trayectoria por puntos, donde aparecen tramos rectos y cambios de dirección.
 
 \begin{figure}[H]
 \centering
@@ -95,7 +91,7 @@ misión por puntos, donde aparecen tramos rectos y cambios de dirección.
 \includegraphics[width=\textwidth]{classic_lissajous_combined/trajectory_xy.pdf}
 \caption{\texttt{lissajous\_g07\_P5}.}
 \end{subfigure}
-\caption{Seguimiento geométrico de dos expertos PD del dataset clásico: caso
+\caption{Seguimiento geométrico de dos PD especializados del dataset clásico: caso
 estacionario perturbado y trayectoria Lissajous multieje. Fuente: elaboración
 propia.}
 \label{fig:sim-telemetry-geometry-a}
@@ -114,7 +110,7 @@ propia.}
 \caption{\texttt{waypoint\_g03\_P5}.}
 \end{subfigure}
 \caption{Seguimiento geométrico en una referencia circular perturbada y en una
-misión por waypoints del split de prueba. Fuente: elaboración propia.}
+trayectoria por waypoints del split de prueba. Fuente: elaboración propia.}
 \label{fig:sim-telemetry-geometry-b}
 \end{figure}
 
@@ -158,7 +154,7 @@ dataset clásico con perturbaciones. Fuente: elaboración propia.}
 \subsubsection*{Series temporales por eje}
 
 La lectura por ejes de la \autoref{fig:sim-telemetry-position-time} resulta
-útil cuando la geometría en planta no muestra toda la exigencia de la misión. En
+útil cuando la geometría en planta no muestra toda la exigencia de la ejecución. En
 Lissajous se aprecia la variación simultánea de altura, mientras que en waypoint
 se distinguen tramos de avance y mesetas asociadas a la llegada a cada punto.
 
@@ -181,8 +177,8 @@ familias con lectura geométrica diferente. Fuente: elaboración propia.}
 
 \subsubsection*{Actuación}
 
-La \autoref{fig:sim-telemetry-actuation} muestra señales de actuación en tres
-casos nativos del dataset clásico. El caso \texttt{hold} permite reconocer el
+La \autoref{fig:sim-telemetry-actuation} muestra telemetría de actuación en tres
+casos del dataset clásico. El caso \texttt{hold} permite reconocer el
 nivel de empuje alrededor del peso del vehículo; el círculo con viento exige
 correcciones sostenidas; y la trayectoria Lissajous combinada muestra cómo se
 reparten empuje, momentos y velocidades de rotor en una referencia multieje.
@@ -217,8 +213,8 @@ experto nativo. Fuente: elaboración propia.}
 \end{figure}
 
 Finalmente, la \autoref{fig:sim-telemetry-rates} completa la lectura de
-actuación con velocidades angulares del cuerpo. Estas señales permiten detectar
-si una misión aparentemente aceptable en posición se apoya en oscilaciones de
+actuación con velocidades angulares en FRD. Estos datos permiten detectar
+si una ejecución aparentemente aceptable en posición se apoya en oscilaciones de
 actitud o en demandas rápidas del lazo interno.
 
 \begin{figure}[H]
@@ -242,11 +238,9 @@ seguimiento del dataset clásico. Fuente: elaboración propia.}
 
 El dataset \texttt{results\_transfer} permite ejecutar un mismo escenario con
 PD de otras familias sin reajustar sus ganancias. La
-\autoref{fig:sim-telemetry-transfer} muestra un caso ilustrativo: el escenario
+\autoref{fig:sim-telemetry-transfer} muestra el escenario
 \texttt{circle\_g04\_P5} con su PD nativo de círculo y con el PD de Lissajous.
-No se pretende añadir una conclusión cuantitativa distinta a la del capítulo de
-resultados; la figura solo enseña qué aspecto tiene una transferencia cruzada
-cuando se inspecciona como telemetría.
+El objetivo es ilustrar lo que ocurre, y cómo lissajous falla al comienzo. 
 
 \begin{figure}[H]
 \centering

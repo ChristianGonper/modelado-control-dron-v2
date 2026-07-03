@@ -1,6 +1,6 @@
 Este anejo complementa la descripción metodológica con una lectura de
-ingeniería del código. No pretende duplicar el repositorio, sino aislar los
-puntos que sostienen la reproducibilidad del trabajo: el contrato de simulación,
+ingeniería del código. Pretende aislar los puntos que sostienen la
+reproducibilidad del trabajo, el contrato de simulación,
 la separación entre dinámica, control, telemetría y visualización, y la forma en
 que se integra el controlador neuronal dentro del lazo clásico.
 
@@ -17,20 +17,20 @@ responsabilidades bajo el directorio \path{src/simulador_quad/}:
     \item \path{metrics}: Cálculo de métricas de rendimiento y error.
     \item \path{visualization}: Renderizado y salidas gráficas.
 \end{itemize}
-Los scripts de \path{tools/} orquestan la generación de datasets, bancos de
+Los scripts de \path{tools/} gestionan la generación de datasets, series de PD
 expertos, entrenamiento neuronal, ejecución masiva y consolidación de
 resultados.
 
 Esta separación es relevante porque el trabajo compara controladores sin
-cambiar el entorno físico. La campaña puede sustituir el lazo externo por una
-red, congelar expertos PD o ejecutar una batería OOD, pero el integrador, el
+cambiar el entorno físico. La ejecución puede sustituir el lazo externo por una
+red, fijar expertos PD o ejecutar una serie OOD, pero el integrador, el
 mixer, los actuadores, las perturbaciones y las métricas siguen siendo comunes.
 
 \subsubsection*{Bucle de simulación multirrate}
 
 El fragmento siguiente resume el núcleo del contrato temporal. En cada ciclo se
 comprueban límites de seguridad, se calcula la referencia, se actualiza el
-control con retención de orden cero, se aplica el sistema de actuadores, se
+control con bloqueo de orden cero, se aplica el sistema de actuadores, se
 registra telemetría a una frecuencia menor y se integra la física mediante
 RK4. Esta estructura es la que permite fijar \SI{100}{Hz} para la física,
 \SI{50}{Hz} para control y \SI{10}{Hz} para telemetría sin mezclar
@@ -67,8 +67,8 @@ while True:
 
 \subsubsection*{Integración del controlador neuronal}
 
-El controlador neuronal empleado en la comparación principal no sustituye todo
-el piloto automático. La red estima la fuerza deseada del lazo externo en el
+El controlador neuronal no sustituye todo el piloto automático.
+La red estima la fuerza deseada del lazo externo en el
 sistema mundo y el controlador clásico conserva la conversión fuerza-actitud,
 el lazo interno, las saturaciones y el mixer. La inferencia recurrente se hace
 con una ventana de longitud fija; por tanto, la red no se ejecuta en modo
@@ -91,12 +91,9 @@ with torch.no_grad():
     y_norm = self.model(model_input).squeeze(0)
 \end{lstlisting}
 
-La decisión anterior facilita una interfaz común entre MLP, GRU y LSTM y evita
+Esta decisión facilita una interfaz común entre MLP, GRU y LSTM y evita
 que el estado oculto dependa de ejecuciones previas. Como contrapartida,
 introduce recálculo de las muestras históricas en cada inferencia recurrente.
-Por ese motivo, una línea futura razonable es estudiar variantes que conserven
-estado interno entre pasos o que actualicen la ventana de forma incremental,
-comprobando explícitamente si el cambio altera el comportamiento cerrado.
 
 \subsubsection*{Trazabilidad de salidas}
 
@@ -104,6 +101,6 @@ Cada ejecución escribe \texttt{telemetry.json} y \texttt{metrics.json}. La
 telemetría conserva estado, observación, referencia, orden de control, comando
 de rotores, actuación aplicada, viento y, cuando procede, fuerzas neuronales
 antes y después del recorte. Las métricas agregan RMSE, error máximo, duración,
-causa de terminación, saturación, degradación del mixer y metadatos de
-procedencia. Esta separación permite reconstruir figuras diagnósticas sin
+causa de finalización, saturación, degradación del mixer y metadatos de
+procedencia. Esta separación permite reconstruir figuras de diagnóstico sin
 relanzar la simulación y, a la vez, consolidar campañas completas en CSV.
