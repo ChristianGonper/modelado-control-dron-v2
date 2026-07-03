@@ -40,7 +40,7 @@ agotamiento de tiempo en trayectorias finitas.
 
 \subsubsection*{Dependencia del PD especializado y del conjunto de datos}
 
-Las redes imitan la fuerza deseada calculada por PD especializados; no se entrenan por
+Las redes imitan la fuerza deseada calculada por PD especializados, no se entrenan por
 refuerzo ni optimizan directamente el error de posición. Por ello, su desempeño
 está limitado por la calidad de los PD especializados, los filtros aplicados
 a las simulaciones de entrada y la cobertura geométrica y dinámica del conjunto de datos.
@@ -94,13 +94,13 @@ incluye diez escenarios y contiene casos de alta exigencia.
 La ejecución es determinista por escenario y semilla, por lo que no se ha
 estimado incertidumbre estadística sobre múltiples repeticiones. Además, durante
 el trabajo se exploraron otras formulaciones neuronales que no se incorporan a
-la comparativa final. Tampoco se reentrenan las redes tras definir la serie OOD;
+la comparativa final. Tampoco se reentrenan las redes tras definir la serie OOD y
 los checkpoints permanecen fijos, de manera que se evalúa una transferencia directa
 y no un proceso de adaptación recurrente. 
 
 Otra limitación procede de la elección del PD representativo en OOD. Para
 lemniscatas, lissajous y trayectorias compuestas se usa el PD de
-\texttt{lissajous}; para hélices se usa el PD de \texttt{waypoint}. Esta
+\texttt{lissajous} y para hélices se usa el PD de \texttt{waypoint}. Esta
 decisión es razonable por la similitud geométrica entre las trayectorias, pero
 no deja de ser una aproximación. Las curvas comparten algunos rasgos y las trayectorias
 compuestas dependen del tramo que suponga una mayor dificultad. Finalmente, si bien

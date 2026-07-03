@@ -71,7 +71,7 @@ El controlador neuronal no sustituye todo el piloto automático.
 La red estima la fuerza deseada del lazo externo en el
 sistema mundo y el controlador clásico conserva la conversión fuerza-actitud,
 el lazo interno, las saturaciones y el mixer. La inferencia recurrente se hace
-con una ventana de longitud fija; por tanto, la red no se ejecuta en modo
+con una ventana de longitud fija, por tanto, la red no se ejecuta en modo
 \textit{stateful} persistente, sino reconstruyendo la entrada secuencial en cada
 paso a partir de la cola FIFO de muestras normalizadas.
 
