@@ -4,89 +4,101 @@
 El seguimiento autónomo de trayectorias de un cuadricóptero exige disponer de
 una estimación suficiente de su estado respecto al entorno y a la referencia, y
 transformar el error de seguimiento en una actuación que estabilice el vehículo
-mientras lo conduce por el recorrido prescrito. La dificultad no reside
-únicamente en reducir el error instantáneo respecto a una posición fija: la
-referencia evoluciona con el tiempo y el controlador actúa sobre la dinámica
-acoplada de un sólido rígido, limitada por los actuadores y expuesta a
-perturbaciones internas y externas. Debe coordinar, por tanto, el movimiento de
-traslación y la actitud sin perder la estabilidad ni incumplir la misión.
+mientras lo conduce por el recorrido indicado. La dificultad no reside en
+minimizar un error instantáneo respecto a una posición fija, sino que la referencia
+evoluciona con el tiempo y el controlador actúa sobre un sólido rígido con dinámica
+acoplada y expuesto a perturbaciones internas y externas. Por tanto, debe coordinar
+la traslación y actitud sin perder la estabilidad ni fallar en el desplazamiento.
 
 Esta naturaleza acoplada motiva el uso de una arquitectura de control en dos
 niveles \cite{beard2012small,mellinger2011minimum,lee2010geometric}. En este
-trabajo, un PD en cascada transforma primero los errores de posición y
-velocidad en una fuerza deseada en el sistema de referencia local
-East--North--Up (ENU). El lazo interno convierte esa fuerza, junto con la
-referencia de guiñada, en una
-actitud deseada, un empuje colectivo y unos momentos de cuerpo; a continuación,
-el mezclador distribuye estos mandos entre los cuatro rotores.
-Ajustar un único
-controlador para maniobras de distinta naturaleza puede imponer un compromiso
-entre, por ejemplo, mantener una posición y recorrer una geometría exigente. La
-especialización evita parte de ese compromiso, pero multiplica el coste de
-ajuste, validación y selección de ganancias. Por ello se construye un conjunto
-de controladores con un PD especializado para cada familia de trayectorias y se estudia si una
-implementación neuronal puede condensar las demostraciones de esos expertos. La
-idea de disponer de parámetros de control distintos según el régimen de
-operación está relacionada con la programación de ganancias
-\cite{leith2000survey}.
+caso, un PD en cascada transforma en primer lugar los errores de posición y
+velocidad en una fuerza deseada en el sistema de referencia local East--North--Up
+(ENU). Posteriormente, el lazo interno convierte esa fuerza, junto con la referencia
+de guiñada, en una actitud deseada, empuje y momentos en el sistema de referencia
+cuerpo Forward--Right--Down (FRD). Finalmente, el mezclador (mixer) distribuye
+estos mandos entre los cuatro rotores. Ajustar un único controlador para maniobras
+de diversa naturaleza puede imponer un compromiso entre, por ejemplo, mantener una
+posición y recorrer una geometría con movimiento cambiante continuo. La especialización
+evita ese compromiso, pero escala el número de controladores a ajustar y validar
+así como el cambio constante de ganancias en operación. Es por ello que en este
+trabajo se decide construir un conjunto de controladores con un PD para cada 
+familia de trayectorias y se estudia si una implementación de tipo neuronal puede
+condensar el funcionamiento en conjunto de los expertos. Esta idea de disponer de 
+parámetros de control distintos en función del régimen de operación está estrechamente
+relacionada con la programación de ganancias (gain scheduling) \cite{leith2000survey}.
 
-La comparación requiere un entorno donde modelo, referencias, perturbaciones,
-semillas de aleatoriedad, límites de actuación y métricas permanezcan bajo control. El simulador 6DOF
-desarrollado proporciona una base experimental común: los controladores comparten
-el mismo vehículo, la misma observación y la misma cadena de actuación; cada
-ejecución conserva la configuración efectiva y la telemetría necesaria para
-revisar y reproducir el experimento. Esta plataforma no pretende sustituir una futura
-validación en vuelo, sino aislar el contraste experimental dentro de unas
-hipótesis explícitas y reproducibles.
+La comparación entre los dos enfoques requiere un entorno donde el modelo, referencias,
+perturbaciones, semillas de aleatoriedad, límites de actuación y métricas permanezcan 
+bajo control. El simulador 6DOF desarrollado proporciona esta base de ensayo donde,
+todos los controladores comparten vehículo, observación de estado y cadena de actuación. 
+Asimismo, cada ejecución conserva trazabilidad sobre la configuración para poder reproducir
+el experimento así como la telemetría necesaria para la revisión posterior. Esta plataforma 
+no pretende sustituir una futura validación en vuelo, sino aislar las diferencias en un
+entorno controlado y reproducible.
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{FIG-001}
-  \caption{Esquema conceptual de la hipótesis y de la estrategia experimental del trabajo. Fuente: elaboración propia.}
+  \caption{Esquema conceptual del flujo experimental del trabajo. Consta de la generación de
+  trayectorias, especialización de controladores clásicos, entrenamiento de redes neuronales
+  y evaluación comparativa. Fuente: elaboración propia.}
   \label{fig:estrategia-experimental}
 \end{figure}
 
-En la \figref{fig:estrategia-experimental} se detalla visualmente esta aproximación experimental estructurada en dos etapas. La primera etapa ilustra la generación de datos a partir del conjunto de expertos clásicos para entrenar las redes neuronales. La segunda etapa muestra la evaluación comparativa paralela en el simulador 6DOF bajo las mismas condiciones: condiciones dentro de la distribución de entrenamiento o \textit{in-distribution} (ID), y condiciones fuera de dicha distribución u \textit{out-of-distribution} (OOD). Con ello se contrastan las tres referencias de control.
+En la \figref{fig:estrategia-experimental} se detalla visualmente la lógica
+experimental estructurada en dos etapas. La primera etapa ilustra la obtención de los 
+controladores expertos y generación de datos para entrenar a las redes neuronales. La
+segunda etapa muestra la evaluación comparativa de las 3 referencias de control en el 
+simulador bajo las mismas condiciones: condiciones dentro de la distribución de 
+entrenamiento o \textit{in-distribution} (ID), y condiciones fuera de dicha distribución 
+u \textit{out-of-distribution} (OOD).
 
 \subsubsection*{Problema abordado}
 
-El problema central del trabajo consiste en determinar si un único sistema
-neuronal, entrenado a partir de demostraciones generadas por controladores PD
-ajustados para distintas familias de trayectorias, puede sustituir ese conjunto de
-controladores cuando se evalúa bajo las mismas referencias y perturbaciones. La
-comparación debe establecer si la implementación neuronal mantiene un comportamiento
-competitivo en las condiciones conocidas y si transfiere mejor a variaciones,
-composiciones y trayectorias nuevas.
+El problema principal del trabajo consiste en determinar si un único controlador mediante
+redes neuronales, entrenado a partir de demostraciones generadas por controladores PD
+optimizados para distintas familias de trayectorias, puede sustituir ese conjunto de
+controladores cuando se evalúa bajo las mismas referencias y perturbaciones. La comparativa
+debe indicar si la implementación neuronal conserva un comportamiento competitivo bajo 
+las condiciones conocidas y si posee una mejor transferencia a trayectorias compuestas,
+nuevas y con variaciones.
 
-La comparación distingue tres referencias. El \emph{PD especializado} es el
-controlador cuyos parámetros se han fijado para la familia a la que pertenece
-el escenario. Un \emph{PD transferido} es uno de esos mismos controladores aplicado, sin
-reajuste, a otra familia o condición. La ruta neuronal principal sustituye el
-lazo externo y realiza una \emph{predicción de fuerza deseada}; a partir de la
-observación y la referencia, produce un vector tridimensional en el sistema de
-referencia ENU mientras conserva el lazo interno clásico. Por tanto, la red no
-ordena directamente velocidades de rotor ni momentos en el sistema de referencia cuerpo.
+Se comparan tres referencias. El \emph{PD especializado} es el controlador cuyos
+parámetros se han fijado para la familia a la que pertenece la trayectoria. Un
+\emph{PD transferido} es uno de esos mismos controladores aplicado, sin reajuste,
+a otra familia. El sistema neuronal sustituye el lazo externo y realiza una 
+\emph{predicción de fuerza deseada} a partir de la observación y la referencia, produce
+un vector tridimensional en el sistema de referencia ENU y conserva el lazo interno 
+clásico. De este modo, la red no transmite comandos directamente a los rotores ni genera
+momentos en el sistema de referencia FRD.
 
-Se denomina rendimiento competitivo a conservar, en bucle cerrado, la
-completitud de misión y la seguridad, y a obtener errores de seguimiento,
-esfuerzo de control y uso de protecciones comparables a la referencia
-pertinente. Las métricas y criterios se
-predefinen en el \apartadoref{subsec:datos-metricas}. La transferencia se
-evalúa al aplicar un controlador fuera de la condición para la que fue ajustado.
-La evaluación separa condiciones dentro de la distribución de entrenamiento
-(ID, \textit{in-distribution}) de condiciones fuera de la distribución de
-entrenamiento (OOD, \textit{out-of-distribution}). En ID se evalúan escenarios
-del mismo tipo que los usados para ajustar expertos y entrenar redes, aunque
-reservados para prueba; en OOD se fuerzan variaciones no vistas, recombinaciones
-o geometrías nuevas. Entre estas últimas se distinguen composiciones de trayectorias conocidas y
-familias geométricas completamente nuevas.
+Por un lado, el \emph{rendimiento competitivo} se define como la capacidad de
+preservar, en bucle cerrado, la finalización de la trayectoria obteniendo al mismo 
+tiempo  errores de seguimiento, esfuerzo de control y un uso de las protecciones
+comparables a los de la referencia pertinente. Las métricas y criterios de evaluación 
+asociados a estos conceptos se definen en el
+\hyperref[subsubsec:metricas-criterios]{epígrafe de métricas, criterios de
+éxito y análisis}. Por otro lado, la \emph{transferencia} se evalúa aplicando el
+controlador fuera de las condiciones de operación para las que fue ajustado
+originalmente. Para estructurar este análisis, la evaluación distingue entre
+escenarios dentro de la distribución de entrenamiento (ID,
+\textit{in-distribution}) y fuera de ella (OOD, \textit{out-of-distribution}),
+cuyos niveles se formalizan posteriormente en el
+\apartadoref{subsec:protocolo-reproducibilidad}.
+En el caso ID, se evalúan escenarios del mismo tipo que los usados para ajustar los
+PD y entrenar las redes, aunque con parámetros reservados para pruebas. En el caso OOD,
+se imponen variaciones dinámicas no vistas, perturbaciones externas o nuevas geometrías.
+Dentro de estas últimas referencias geométricas, se diferencian composiciones
+de trayectorias ya conocidas y familias geométricas completamente inéditas.
 
-El estudio no intenta demostrar una superioridad universal de una arquitectura, 
-robustez frente a cualquier perturbación ni aptitud para vuelo real. Tampoco
-atribuye a la red la acción estabilizadora del lazo interno ni las protecciones
-impuestas mediante saturaciones y límites de fuerza. Su alcance es una
-comparación experimental, sobre el mismo modelo y con evidencia trazable, entre
-especialización clásica, transferencia clásica e imitación neuronal.
+Es importante precisar que este estudio no pretende demostrar la superioridad completa 
+de una arquitectura en particular, ni garantizar la robustez del sistema ante cualquier 
+perturbación física o su aptitud para vuelo real. Asimismo, no se atribuye al controlador
+neuronal la acción de estabilización del lazo interno ni la gestión de protecciones impuestas
+mediante saturaciones y límites de fuerza. El alcance de este trabajo se limita a una comparación
+experimental trazable, realizada sobre un mismo modelo físico y entorno, entre la especialización
+de ganancias, la transferencia de controladores clásicos y la imitación neuronal.
 
 \subsection{Hipótesis y objetivos}
 \label{subsec:hipotesis-objetivos}
@@ -95,52 +107,43 @@ La hipótesis central sostiene que un sistema neuronal único, entrenado por
 imitación para predecir la fuerza deseada del lazo externo, puede alcanzar una
 capacidad de seguimiento competitiva frente al PD especializado de cada familia
 en condiciones conocidas y transferir mejor que los PD aplicados fuera de su
-familia, conservando el lazo interno clásico común. Esta hipótesis es
-experimental: su aceptación o rechazo dependerá conjuntamente de la capacidad
-para completar las trayectorias, el error de seguimiento, el esfuerzo de control
-y el uso de protecciones.
+familia, mientras se conserva el lazo interno clásico en ambos.
 
-El objetivo general es desarrollar un entorno reproducible de simulación 6DOF
-que permita determinar si un controlador neuronal por imitación puede sustituir
-un conjunto de controladores PD especializados y ofrecer una mejor
-capacidad de transferencia a trayectorias y condiciones no empleadas durante el
-entrenamiento.
+El objetivo general es desarrollar un entorno reproducible de simulación que 
+permita determinar si el controlador neuronal por imitación puede sustituir 
+a un conjunto de controladores PD especializados y ofrecer un mejor rendimiento
+en trayectorias no empleadas durante el ajuste de ganancias y entrenamiento.
 
 Este objetivo se descompone en los siguientes objetivos específicos:
 
 \begin{enumerate}
   \item Formular e implementar un modelo 6DOF de cuerpo rígido para un
-  cuadricóptero, con sistemas de referencia apropiados, actuadores limitados,
-  perturbaciones simplificadas y frecuencias de actualización diferenciadas;
-  \item Definir familias de trayectorias y escenarios que permitan repetir las
+  cuadricóptero, con sistemas de referencia apropiados, actuadores,  perturbaciones 
+  simplificadas y frecuencias de actualización diferenciadas;
+  \item Definir familias de trayectorias y parámetros que permitan repetir las
   condiciones experimentales;
-  \item Implementar un PD en cascada y obtener, mediante una búsqueda
-  determinista restringida a los escenarios de entrenamiento, un controlador
-  experto especializado para cada familia;
-  \item Valorar la especialización del conjunto clásico y su capacidad de
-  transferencia al aplicar cada controlador a familias distintas de la nativa;
+  \item Implementar un PD en cascada y obtener, mediante un ajuste determinista
+  sobre los escenarios de entrenamiento, un controlador especializado para cada familia;
+  \item Valorar la especialización de los PD y su capacidad de  transferencia 
+  al aplicar cada controlador a familias distintas de la nativa;
   \item Entrenar MLP, GRU y LSTM para predecir la fuerza deseada y comparar la
-  ausencia o presencia de memoria temporal bajo un protocolo común;
+  ausencia o presencia de memoria temporal bajo las mismas condiciones;
   \item Evaluar la calidad de la predicción supervisada y, de forma separada,
   el seguimiento en bucle cerrado en condiciones ID y OOD; y
-  \item Conservar evidencia trazable suficiente para reconstruir los
-  experimentos y sus resultados.
+  \item Conservar resultados suficientes para reconstruir los experimentos.
 \end{enumerate}
 
 \subsection{Estructura del documento}
 \label{subsec:estructura-documento}
 
-La aportación del trabajo es la integración trazable de cuatro elementos: un
-simulador 6DOF acotado, un conjunto de PD en cascada especializados, un proceso de
-selección de expertos por familia y escenario y una comparación de MLP, GRU y
-LSTM en bucle cerrado. El interés reside en construir una comparación que
-permita distinguir qué propiedades proceden del PD experto, qué aprende la red,
-qué aporta el lazo interno clásico y cuáles son los límites del enfoque.
+La aportación del trabajo es la integración de cuatro elementos: un simulador 
+6DOF, un conjunto de trayectorias y parámetros mediante escenarios, un proceso de
+selección de PD en cascada especializados por familia y una comparación de MLP, GRU 
+y LSTM en bucle cerrado. El interés reside en construir un entorno que permita distinguir
+qué propiedades proceden del PD especializado, qué aprende la red, qué aporta el lazo interno 
+clásico y cuáles son los límites de esta aproximación al problema.
 
-Tras esta introducción, el estado del arte reúne los fundamentos y alternativas
-bibliográficas sobre modelado, control clásico y aprendizaje por imitación,
-incluida la programación de ganancias. La metodología presenta de forma
-integrada el simulador, el PD en cascada, la predicción neuronal de fuerza, los
-conjuntos de datos, las métricas y el procedimiento reproducible. El capítulo de
-resultados experimentales presenta e interpreta la evidencia. Finalmente, las
-conclusiones valoran la hipótesis y los objetivos y delimitan el trabajo futuro.
+Tras esta introducción, el documento se estructura en cuatro bloques. El estado del arte
+sobre modelado, control clásico y control por imitación; la metodología, que detalla el 
+simulador y las arquitecturas de control evaluadas; el análisis de los resultados experimentales; 
+y, por último, las conclusiones y líneas futuras de desarrollo.

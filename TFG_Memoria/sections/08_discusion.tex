@@ -1,109 +1,114 @@
 \subsection{Discusión de resultados y limitaciones}
 \label{subsec:discusion-resultados}
 
+\subsubsection*{Síntesis de la evidencia experimental}
+
+Los resultados muestran que la comparación no puede reducirse a una única métrica.
+La transferencia de los PD especializados depende de la familia de trayectoria,
+algunas combinaciones mantienen errores bajos, mientras que otras se degradan de
+forma clara con el cambio de geometría o requisitos de dinámica. En las redes, la
+fidelidad supervisada tampoco predice por sí sola el comportamiento en bucle
+cerrado. Aunque GRU y LSTM aproximan mejor la fuerza del PD especializado en entrenamiento,
+MLP obtiene errores de seguimiento más favorables en varias familias dentro de
+distribución, confirmando que imitar la acción del PD no equivale necesariamente
+a mejorar la trayectoria resultante.
+
+Fuera de distribución, se rinde mejor en casos moderados mientras que los
+escenarios realmente exigentes muestran las limitaciones. Las arquitecturas neuronales son competitivas en varias recombinaciones próximas a las familias entrenadas,
+pero no superan de forma global al PD representativo. Además, los fallos no
+proceden solo del error de posición, las saturaciones, el clipping y las
+protecciones del lazo interno condicionan la lectura de los resultados. Así,
+el rendimiento depende de la interacción entre familia de trayectoria, arquitectura
+neuronal, PD imitado y los límites del sistema.
+
 \subsubsection*{Interpretación respecto a la hipótesis y los objetivos}
 
-La evidencia de la \autoref{sec:resultados} apoya la hipótesis de que sustituir
-varios PD especializados por una implementación neuronal común es viable en
-familias conocidas, pero no conduce a un comportamiento homogéneo entre
-arquitecturas. En \texttt{test}, MLP, GRU y LSTM completan las trayectorias y se
-mantienen en un rango de RMSE comparable al PD representativo. En OOD, las redes
-resultan competitivas en recombinaciones de dificultad moderada, mientras que
-las geometrías más nuevas, rápidas o exigentes muestran que la generalización
-depende tanto de la novedad geométrica como de la demanda dinámica.
+La evidencia expuesta apoya la hipótesis de que sustituir varios PD especializados
+por una implementación neuronal común es viable en familias conocidas, pero no
+conduce a un comportamiento homogéneo entre arquitecturas. En \texttt{test},
+MLP, GRU y LSTM completan las trayectorias y se mantienen en un rango de RMSE
+comparable al PD especializado. En OOD, las redes resultan competitivas en
+recombinaciones de dificultad moderada, mientras que las geometrías más nuevas,
+rápidas o exigentes muestran que la generalización depende tanto de la novedad
+geométrica como de los requisitos dinámicos.
 
-No puede afirmarse una superioridad neuronal global. El éxito de misión en OOD
+No puede afirmarse una superioridad neuronal global. El éxito de simulación en OOD
 (66.3\,\%) queda claramente por debajo del obtenido en \texttt{test}
-(99.5\,\%), y los fallos no se explican solo por un aumento suave del error de
-seguimiento: también aparecen límites de actitud, saturación persistente y
-agotamiento de tiempo. La contribución principal, por tanto, no es demostrar que
-una red supere siempre al PD, sino caracterizar cuándo la imitación funciona,
-cuándo no, y qué papel desempeña la arquitectura elegida.
+(99.5\,\%), y los fallos no se explican solo por un aumento del error de
+seguimiento sino que también aparecen límites de actitud, saturación persistente y
+agotamiento de tiempo en trayectorias finitas.
 
-\subsubsection*{Dependencia del experto y del conjunto de datos}
+\subsubsection*{Dependencia del PD especializado y del conjunto de datos}
 
-Las redes imitan la fuerza deseada calculada por expertos PD; no se entrenan por
+Las redes imitan la fuerza deseada calculada por PD especializados; no se entrenan por
 refuerzo ni optimizan directamente el error de posición. Por ello, su desempeño
-queda acotado por la calidad de los expertos seleccionados, los filtros aplicados
-a las demostraciones y la cobertura geométrica y dinámica del conjunto de datos.
-Si el experto produce acciones válidas pero no óptimas para una región concreta,
-la red puede reproducir esa limitación.
+está limitado por la calidad de los PD especializados, los filtros aplicados
+a las simulaciones de entrada y la cobertura geométrica y dinámica del conjunto de datos.
+Si el PD especializado produce acciones subóptimas para una región concreta, la red puede
+reproducir tal limitación.
 
 La comparación entre fidelidad supervisada y bucle cerrado muestra precisamente
-esa frontera. GRU y LSTM presentan menor error de fuerza frente al experto, pero
-eso no garantiza menor RMSE de posición. Una interpretación plausible es que
+esa limitación. GRU y LSTM presentan menor error de fuerza en el entrenamiento,
+pero eso no se traslada de forma unánime al RMSE. Una interpretación plausible es que
 MLP, al no depender de una ventana temporal explícita, puede responder de forma
 más local a estados que se parecen a muestras vistas durante el entrenamiento,
 mientras que las redes recurrentes pueden ser más sensibles cuando la historia
-reciente se aleja de los patrones aprendidos. Esta lectura debe mantenerse como
-interpretación, no como causalidad demostrada.
+reciente se aleja de los patrones aprendidos.
 
 \subsubsection*{Valor y límites del enfoque con lazo interno clásico}
 
-Mantener el lazo interno clásico permite aislar mejor la aportación de la red:
-la parte neuronal se responsabiliza de la fuerza externa deseada, mientras que
-el seguimiento de actitud, el mezclador y las limitaciones de actuación siguen
-un diseño clásico interpretable. Esta separación es útil para un TFG centrado en
-comparar control clásico e imitación neuronal sin atribuir a la red mecanismos
-de seguridad que pertenecen al resto de la arquitectura.
+Mantener el lazo interno clásico permite aislar la aportación de la red, de manera
+que la red solo es responsable de la fuerza externa deseada mientras que el seguimiento de
+actitud, el mezclador y las limitaciones de actuación siguen un diseño clásico
+interpretable.
 
 La \autoref{fig:res-protections-ood} muestra que la seguridad final depende de
-esa combinación. Cuando aparecen terminaciones por saturación, la interpretación
-no es que la red sea inestable por sí sola, sino que demanda fuerzas o cambios
-que exceden los límites fijados para el lazo de control y los actuadores. Esos
-límites son necesarios para acotar la simulación, pero también condicionan la
-lectura de los fallos en OOD.
+esa combinación. Las terminaciones por saturación no indican una inestabilidad sino
+que solicitan fuerzas o cambios cinemáticos que exceden los límites fijados. Estos límites
+son necesarios pero también condicionan la lectura de resultados.
 
 \subsubsection*{Papel de la arquitectura neuronal}
 
 Los resultados indican que la arquitectura, y en particular la presencia o no de
 memoria temporal, afecta de forma sustancial al comportamiento. MLP obtiene
-errores bajos en varias familias conocidas y se mantiene competitiva en OOD
-moderado, pero es también la arquitectura que activa clipping de fuerza e
+errores bajos en varias familias ID y se mantiene competitiva en OOD mixto,
+pero es también la arquitectura que activa clipping de fuerza e
 inclinación con mayor claridad. Esto sugiere una respuesta más agresiva ante
 errores instantáneos.
 
 GRU ofrece un compromiso sólido entre fidelidad supervisada y comportamiento en
-varios escenarios OOD, especialmente cuando aparecen familias no vistas de forma
+varios escenarios OOD, especialmente cuando se evalúa en familias no vistas de forma
 directa. LSTM, en cambio, no supera de forma sistemática a GRU y presenta fallos
 muy marcados en algunos escenarios rápidos o geométricamente exigentes, como el
 caso representativo de la \autoref{fig:res-trajectory-lemniscate-mlp-lstm}. La
-memoria recurrente no debe interpretarse como una mejora automática; puede
-aportar contexto temporal, pero también introducir sensibilidad a retardos,
-historiales poco representados y desviaciones acumuladas.
+memoria recurrente no se interpreta como una mejora directa, sino que aporta
+el contexto temporal a la vez que añade sensibilidad ante datos poco representados
+y acumulación de desviaciones.
 
-\subsubsection*{Validez y limitaciones}
+\subsubsection*{Validez, limitaciones y reproducibilidad}
 
 El simulador proporciona una plataforma válida para estudiar la comparación
-planteada, pero no sustituye una validación con hardware real. La serie OOD
-incluye diez escenarios y contiene casos de alta exigencia; incluso tras ampliar
-el tiempo máximo a 60\,s, una de las hélices agresivas permanece como caso no
-completado. Esto limita las conclusiones sobre trayectorias largas, rápidas o
-con cambios verticales exigentes.
+planteada, si bien no sustituye una validación con hardware real. La serie OOD
+incluye diez escenarios y contiene casos de alta exigencia.
 
 La ejecución es determinista por escenario y semilla, por lo que no se ha
 estimado incertidumbre estadística sobre múltiples repeticiones. Además, durante
 el trabajo se exploraron otras formulaciones neuronales que no se incorporan a
-la comparativa final por falta de evidencia consolidada equivalente. Tampoco se
-reentrenan las redes tras definir la serie OOD: los checkpoints permanecen
-fijos, lo que hace que la evaluación mida transferencia real y no adaptación
-posterior.
+la comparativa final. Tampoco se reentrenan las redes tras definir la serie OOD;
+los checkpoints permanecen fijos, de manera que se evalúa una transferencia directa
+y no un proceso de adaptación recurrente. 
 
 Otra limitación procede de la elección del PD representativo en OOD. Para
 lemniscatas, lissajous y trayectorias compuestas se usa el PD de
 \texttt{lissajous}; para hélices se usa el PD de \texttt{waypoint}. Esta
-decisión es razonable por proximidad geométrica, pero no deja de ser una
-aproximación: una lemniscata y una lissajous comparten continuidad y curvatura,
-pero no son equivalentes, y las trayectorias compuestas dependen de qué tramo
-domina la dificultad. Finalmente, aunque se probaron configuraciones de
-entrenamiento suficientes para cerrar la comparación, no se realizó una búsqueda
-exhaustiva de hiperparámetros ni una evaluación con centenares de semillas.
+decisión es razonable por la similitud geométrica entre las trayectorias, pero
+no deja de ser una aproximación. Las curvas comparten algunos rasgos y las trayectorias
+compuestas dependen del tramo que suponga una mayor dificultad. Finalmente, si bien
+se probaron diversas configuraciones de parámetros e hiperparámetros para defender
+las decisiones finales, no se ejecutó una búsqueda exhaustiva de hiperparámetros ni
+una evaluación del orden de miles de semillas.
 
-\subsubsection*{Implicaciones para la reproducibilidad}
-
-La regeneración de escenarios, la ejecución de controladores, la consolidación
-de resultados y la generación de figuras quedan recogidas en los artefactos del
-repositorio. Los comandos principales se documentan en el
-\anejoref{anejo:comandos}, de modo que las tablas y figuras del capítulo pueden
-reconstruirse a partir de los CSV consolidados y de las telemetrías usadas como
-evidencia.
+La regeneración de escenarios, la ejecución de controladores y la generación de
+figuras quedan recogidas en el repositorio de GitHub. Los comandos principales
+se documentan en el \anejoref{anejo:comandos},
+de modo que las tablas y figuras del capítulo pueden reconstruirse.

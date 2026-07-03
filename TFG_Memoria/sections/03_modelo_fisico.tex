@@ -4,34 +4,29 @@
 \subsubsection*{Requisitos, convenciones e hipótesis}
 
 El simulador se ha planteado para que el controlador clásico y el controlador
-neuronal se enfrenten al mismo problema físico y al mismo flujo de actuación.
-Desde el punto de vista del simulador no cambia la naturaleza del controlador:
-en ambos casos se recibe un mando con la misma estructura, se pasa por el mismo
-mixer de actuadores y se integra el mismo modelo dinámico. Esta separación es
-importante porque permite atribuir las diferencias observadas al controlador y
-no a una realidad física distinta para cada ensayo.
+neuronal se enfrenten al mismo problema físico y al mismo flujo de actuación, es
+decir, comparten la misma interfaz, de manera que el simulador no diferencia la
+naturaleza del controlador. De esta manera, las diferencias observadas se deberán
+exclusivamente al controlador y no a factores externos.
 
-El estado se escribe como
-$\bm{x}=(\posW,\velW,\quatWB,\omegaB)$: posición y velocidad en el sistema de
-referencia mundo $\frameW$, orientación del cuerpo respecto del mundo y
-velocidad angular en el sistema de referencia cuerpo $\frameB$. La entrada que
-se aplica al simulador está formada por la fuerza total de los rotores y el
-momento total, ambos expresados en el sistema de referencia cuerpo. La salida
-registrada incluye el estado, la observación entregada al controlador, la
-referencia de trayectoria, el comando solicitado y la actuación aplicada. Esta
-distinción permite comprobar, por ejemplo, si un mando solicitado no ha podido
-aplicarse exactamente por saturación o degradación del mixer.
+El estado se escribe como $\bm{x}=(\posW,\velW,\quatWB,\omegaB)$, 
+posición y velocidad en el sistema de referencia mundo $\frameW$, 
+orientación del cuerpo respecto del mundo y velocidad angular en el sistema de 
+referencia cuerpo $\frameB$. La entrada que se aplica al simulador está 
+formada por la fuerza total de los rotores y el momento total, ambos 
+expresados en el sistema de referencia cuerpo. La salida registrada incluye 
+el estado, la observación entregada al controlador, la referencia de 
+trayectoria, el comando solicitado y la actuación aplicada. De esta manera
+se puede comprobar cuando y por qué un mando no ha podido aplicarse.
 
-El sistema de referencia $\frameW$ sigue la convención ENU: $x$ apunta al Este,
-$y$ al Norte y $z$ hacia arriba. El sistema de referencia $\frameB$ es FRD:
-$x_B$ apunta hacia delante, $y_B$ a la derecha y $z_B$ hacia abajo. Por tanto,
-los rotores deben generar empuje en dirección $-z_B$. La matriz
-$\bm{R}_{WB}(\quatWB)$ transforma vectores expresados en cuerpo a vectores
-expresados en mundo. La actitud se almacena mediante el cuaternión
-$\quatWB=[q_0,q_1,q_2,q_3]^\mathsf{T}$, con la parte escalar en primer lugar y
-la parte vectorial a continuación. Las magnitudes se expresan en el Sistema
-Internacional; los ángulos solo se convierten a grados para visualización y
-análisis gráfico.
+El sistema de referencia $\frameW$ sigue la convención ENU, donde $x$ apunta al Este,
+$y$ al Norte y $z$ hacia arriba. El sistema de referencia $\frameB$ es FRD, donde
+$x_B$ apunta hacia delante, $y_B$ a la derecha y $z_B$ hacia abajo. Los rotores
+deben generar empuje en dirección $-z_B$ (véase \figref{fig:marcos-referencia}). La 
+matriz de rotación $\bm{R}_{WB}(\quatWB)$ transforma vectores expresados en FRD a 
+vectores expresados en ENU. La actitud se almacena mediante el cuaternión 
+$\quatWB=[q_0,q_1,q_2,q_3]^\mathsf{T}$. Las magnitudes se expresan en el Sistema 
+Internacional y los ángulos solo se convierten a grados para visualización.
 
 \begin{figure}[H]
   \centering
@@ -42,29 +37,23 @@ análisis gráfico.
 
 Se supone un cuerpo rígido de masa e inercia constantes, centro de masas fijo y
 gravedad uniforme. Los rotores se modelan con un empuje proporcional al cuadrado
-de su velocidad angular, con retardo y lag de primer orden cuando el escenario
-lo requiere. No se modelan aerodinámica avanzada, flapping de rotores,
-flexibilidad estructural ni sensores físicos detallados. Estas hipótesis son
-adecuadas para comparar controladores en un entorno de ensayo común, pero
-limitan la extrapolación de los resultados fuera del simulador.
+de su velocidad angular, con retardo y lag de primer orden. No se modelan aerodinámica avanzada, flapping de rotores, flexibilidad estructural ni sensores físicos detallados.
+Estas hipótesis permiten comparar los controladores en este entorno pero la extrapolación
+de resultados fuera del simulador queda limitada.
 
 \subsubsection*{Vehículo de referencia y parámetros físicos}
 
 Se ha definido un cuadricóptero hipotético de \SI{1}{kg}, gravedad
 \SI{9.81}{m.s^{-2}} e inercia en ejes principales
 $\bm{I}_B=\operatorname{diag}(0.05,0.05,0.10)\,\si{kg.m^2}$. Los cuatro rotores
-se sitúan, en el sistema de referencia cuerpo, en
+se sitúan, en el sistema de referencia FRD, en
 \[
  \bm{r}_{i,B}\in
  \{(0.17,0.17,0),(0.17,-0.17,0),(-0.17,0.17,0),(-0.17,-0.17,0)\}\,\si{m},
 \]
 
-lo que corresponde a una configuración en X respecto a los ejes de cuerpo. En
-ese orden, las posiciones representan los rotores delantero-derecho,
-delantero-izquierdo, trasero-derecho y trasero-izquierdo. Los sentidos de giro
-se codifican mediante $s_i=\{-1,1,1,-1\}$; este signo determina el par de
-reacción de guiñada que aparece en
-\eqnref{eq:rotor-cuadratico}.
+lo que corresponde a una configuración en X respecto a los ejes de cuerpo. Los sentidos 
+de giro se codifican mediante $s_i=\{-1,1,1,-1\}$, donde el signo determina el par de reacción de guiñada. En \figref{fig:configuracion-rotores} se muestra un esquema de la configuración del vehículo.
 
 \begin{figure}[H]
   \centering
@@ -80,26 +69,23 @@ máximo por rotor es
  T_{\max}=k_f\omega_{\max}^2=\SI{25}{N}.
  \label{eq:empuje-maximo-rotor}
 \end{equation}
-Este límite no pretende especificar un vehículo comercial; es una cota elegida
-para el caso de estudio, muy superior al empuje por rotor en estacionario
-($mg/4\simeq\SI{2.45}{N}$). El controlador impone además una envolvente de
-fuerza deseada de $2.5mg$ antes de la conversión a actitud; por tanto, la
-saturación de rotor se interpreta sobre todo como límite de asignación y de
-momentos, no como una orden nominal de usar toda la capacidad individual de cada
-rotor.
+
+Este límite no pretende especificar un vehículo comercial sino que es un límite arbitrario
+escogido, muy superior al empuje por rotor en estacionario
+($mg/4\simeq\SI{2.45}{N}$). El controlador impone además un límite de
+fuerza total de $2.5mg$ antes de la conversión a actitud, de manera que una
+saturación de rotor se interpretará como límite en la asignación.
 
 La metodología seguida mantiene el mismo vehículo en todos los escenarios de
-comparación. Aunque el simulador permitiría cambiar masa, inercia o parámetros
-de rotor, hacerlo mezclaría el efecto del controlador con el efecto del propio
-vehículo. Al no disponer de una identificación experimental de una plataforma
-concreta, estos valores se adoptan como caso de estudio académico. Lo relevante
-en este trabajo es disponer de un entorno coherente para probar controladores, no
-demostrar representatividad cuantitativa de un modelo comercial determinado.
+comparación, si bien el simulador permitiría cambiar masa, inercia o parámetros
+de rotor en la configuración individual de cada escenario. 
 
 \subsubsection*{Cinemática y dinámica del cuerpo rígido}
+\phantomsection
+\label{subsubsec:cinematica-dinamica-cuerpo}
 
-Sean $\bm{F}_B$ y $\bm{\tau}_B$ la fuerza y el momento aplicados en cuerpo. La
-dinámica traslacional implementada es
+Sean $\bm{F}_B$ y $\bm{\tau}_B$ la fuerza y el momento aplicados en el sistema
+de referencia FRD. La dinámica traslacional es
 \begin{align}
  \dot{\posW} &= \velW,\\
  m\dot{\velW} &= \bm{R}_{WB}\bm{F}_B+\bm{F}_{d,W}
@@ -116,19 +102,17 @@ perturbaciones, observación y seguridad}. La dinámica rotacional se expresa co
  \label{eq:dinamica-rotacional}
 \end{align}
 Durante las evaluaciones intermedias del método de Runge--Kutta y al final de
-cada paso se normaliza el cuaternión. Con ello se evita que los errores
-numéricos acumulados separen su norma de la unidad.
+cada paso se normaliza el cuaternión, evitando así que los errores numéricos
+acumulados separen su norma de la unidad.
 
 El estado avanza mediante Runge--Kutta de cuarto orden (RK4) y paso fijo de
-\SI{0.01}{s}. El comando aplicado se mantiene constante durante cada paso de
-integración. Esta elección ofrece una discretización determinista y un coste
-razonable para trayectorias lentas, sin maniobras agresivas ni cambios bruscos
-de referencia.
-La elección de RK4 se apoya en su uso extendido para ecuaciones diferenciales
-ordinarias cuando se busca una integración determinista de coste moderado
-\cite{butcher2016numerical}.
+\SI{0.01}{s}. Esta elección se sustenta en un menor coste computacional y una
+discretización suficiente para trayectorias sin maniobras bruscas. El comando
+aplicado se mantiene constante durante cada paso de integración \cite{butcher2016numerical}.
 
 \subsubsection*{Actuadores, mixer y límites de actuación}
+\phantomsection
+\label{subsubsec:actuadores-mixer}
 
 Para el rotor $i$, la velocidad aplicada determina empuje y par de reacción
 mediante
@@ -137,17 +121,15 @@ mediante
  \label{eq:rotor-cuadratico}
 \end{equation}
 donde $s_i\in\{-1,1\}$ representa el sentido de giro. La fuerza del rotor en
-cuerpo es $\bm{F}_{i,B}=[0\;0\;-T_i]^\mathsf{T}$ y su contribución al momento
-incluye el término de brazo $\bm{r}_{i,B}\times\bm{F}_{i,B}$ y el par de
-reacción $[0\;0\;Q_i]^\mathsf{T}$.
-El modelo cuadrático de empuje y par de reacción es una aproximación habitual en
-modelos de cuadricóptero de bajo orden \cite{beard2012small,mellinger2011minimum}.
+el sistema FRD es $\bm{F}_{i,B}=[0\;0\;-T_i]^\mathsf{T}$ y su contribución al 
+momento incluye el término de brazo $\bm{r}_{i,B}\times\bm{F}_{i,B}$ y el par de
+reacción $[0\;0\;Q_i]^\mathsf{T}$. El modelo cuadrático de empuje y par de 
+reacción es una aproximación habitual en modelos de cuadricóptero de bajo orden \cite{beard2012small,mellinger2011minimum}.
 
-El mixer, o mezclador de actuadores, transforma una petición de empuje colectivo
-y momentos en comandos individuales de rotor. Para ello construye una matriz de
-asignación $\bm{M}$ cuyas columnas recogen la contribución de cada empuje $T_i$ al
-empuje colectivo, al momento de alabeo, al momento de cabeceo y al momento de
-guiñada:
+El mixer transforma una petición de empuje total y momentos en comandos individuales 
+de rotor. Para ello construye una matriz de asignación $\bm{M}$ cuyas columnas recogen 
+la contribución de cada empuje $T_i$ al empuje total y momentos de alabeo, cabeceo y guiñada:
+
 \begin{equation}
 \begin{bmatrix}
 T\\ \tau_x\\ \tau_y\\ \tau_z
@@ -166,96 +148,126 @@ T_1\\T_2\\T_3\\T_4
 \end{bmatrix}.
 \label{eq:matriz-mixer}
 \end{equation}
-Las tres últimas filas proceden directamente de
-$\bm{r}_{i,B}\times[0\;0\;-T_i]^\mathsf{T}$ y del par de reacción
-$s_i(k_m/k_f)T_i$. Por tanto, un rotor situado a la derecha del vehículo
+
+Por tanto, un rotor situado a la derecha del vehículo
 ($y_i>0$) aporta momento de alabeo negativo cuando aumenta su empuje, mientras
-que un rotor situado delante ($x_i>0$) aporta momento de cabeceo positivo. Esta
-es la misma convención implementada por el mixer del simulador.
+que un rotor situado delante ($x_i>0$) aporta momento de cabeceo positivo, como se
+muestra en \figref{fig:actuacion-movimiento}.
 
 \begin{figure}[H]
-  \includegraphics[width=1.0\textwidth]{FIG-012}
-  \caption{Esquema lógico y toma de decisiones del mezclador de rotores (mixer) ante condiciones factibles y saturadas. Se prioriza el control de actitud mediante el recorte proporcional de momentos ($k$) frente a la desviación del empuje colectivo solicitado. Fuente: elaboración propia.}
+  \centering
+  \includegraphics[width=0.85\textwidth]{FIG-012}
+  \caption{Esquema lógico y toma de decisiones del mezclador de rotores (mixer) ante 
+  condiciones nominales y saturadas. Se prioriza el control de actitud mediante el recorte 
+  proporcional de momentos ($k$) frente a la desviación del empuje colectivo solicitado. 
+  Fuente: elaboración propia.}
   \label{fig:flujo-mixer}
 \end{figure}
 
-La solución se obtiene invirtiendo la matriz de asignación para la geometría
-definida. El mixer separa la parte de la solución debida al empuje colectivo de
-la parte debida a los momentos. Si la suma de ambas exige empujes fuera del
-intervalo realizable, desplaza el componente colectivo común para intentar
-mantener la distribución relativa necesaria para los momentos. Si ni siquiera
-así existe una solución factible, reduce la parte asociada a momentos alrededor
-de un empuje medio realizable. En ambos casos se registra una degradación del
-mando: el simulador indica que no ha sido posible aplicar exactamente la
-petición de empuje y momentos sin violar los límites de rotor. Finalmente cada
-empuje se recorta a $[0,T_{\max}]$ y se convierte en velocidad objetivo con
-$\omega_i=\sqrt{T_i/k_f}$.
+La solución del sistema se obtiene invirtiendo la matriz de asignación ($\bm{M}$) para
+la geometría definida. Tal como se ilustra en el esquema de la \figref{fig:flujo-mixer},
+ el mixer separa la contribución del empuje colectivo solicitado ($T$) de la parte debida 
+a los momentos de actitud ($\bm{\tau}_B$):
+\begin{align}
+ T_{\text{thrust\_part}} &= \bm{M}^{-1} [T, 0, 0, 0]^\mathsf{T}, \\
+ T_{\text{moment\_part}} &= \bm{M}^{-1} [0, \tau_x, \tau_y, \tau_z]^\mathsf{T}.
+\end{align}
+Para evitar que los empujes finales superen los límites físicos individuales de los actuadores,
+establecidos en el rango $[T_{\min}, T_{\max}]$, se evalúa la existencia de una holgura en el
+empuje colectivo. Los límites inferior ($\delta_{\min}$) y superior ($\delta_{\max}$) para el 
+desplazamiento del colectivo se calculan determinando el valor más restrictivo de entre los 
+cuatro rotores
+\begin{align}
+ \delta_{\min} &= \max_i(T_{\min} - T_{\text{thrust\_part},i} - T_{\text{moment\_part},i}), \\
+ \delta_{\max} &= \min_i(T_{\max} - T_{\text{thrust\_part},i} - T_{\text{moment\_part},i}).
+\end{align}
 
-La dinámica de rotor combina, cuando está configurada, un retardo puro
-discretizado y un lag de primer orden. El retardo puro retrasa la consigna un
-número entero de pasos de física; el lag aproxima que la velocidad del rotor no
-alcanza instantáneamente la consigna, sino que se aproxima a ella con una
-constante de tiempo $\tau$. En los escenarios se emplean, según el
-perfil, valores de $\tau=\SI{0.03}{s}$ con retardo de \SI{0.01}{s}, y en
-perfiles más exigentes $\tau=\SI{0.05}{s}$ con retardo de \SI{0.02}{s}. Son
-valores representativos para introducir una dinámica de actuación simplificada;
-no proceden de una identificación de motor, hélice y componentes concretos.
+A partir de estos márgenes de holgura, el algoritmo del mixer bifurca su ejecución en dos posibles
+rutas:
+\begin{itemize}
+ \item \textbf{Ruta Nominal} ($\delta_{\max} \ge \delta_{\min}$): Existe un rango para 
+ajustar el colectivo sin perturbar los momentos. El desplazamiento se halla mediante 
+$\delta = \operatorname{clip}(0.0, \delta_{\min}, \delta_{\max})$, dando lugar al empuje
+solicitado por rotor:
+ \begin{equation}
+   T_{\text{req}, i} = T_{\text{thrust\_part}, i} + \delta + T_{\text{moment\_part}, i}.
+ \end{equation}
+ 
+ \item \textbf{Ruta de Saturación} ($\delta_{\max} < \delta_{\min}$): No existe ninguna solución 
+ factible y los límites de los motores impiden satisfacer simultáneamente el colectivo y la actitud.
+ En esta condición, el mixer prioriza la estabilidad frente a la consigna de empuje colectivo. Se 
+ fija un empuje medio de referencia $T_{\text{target}} = (T_{\min} + T_{\max}) / 2.0$ y se aplica 
+ un recorte proporcional $k \in [0, 1]$ a la parte de momentos para asegurar que ningún rotor sature:
+ \begin{equation}
+   k = \min_i \left( \operatorname{recorte}(T_{\text{target}}, T_{\text{moment\_part}, i}) \right),
+ \end{equation}
+donde la función de recorte evalúa la holgura disponible hasta los límites de empuje en función del sentido
+ de giro y actuación del rotor:
+ \begin{equation}
+   \operatorname{recorte}(T_{\text{target}}, T_{\text{moment\_part}, i}) = 
+   \begin{cases}
+     \dfrac{T_{\max} - T_{\text{target}}}{T_{\text{moment\_part}, i}} & \text{si } T_{\text{moment\_part}, i} > 0, \\[15pt]
+     \dfrac{T_{\min} - T_{\text{target}}}{T_{\text{moment\_part}, i}} & \text{si } T_{\text{moment\_part}, i} < 0.
+   \end{cases}
+ \end{equation}
+ El empuje resultante para cada motor es:
+ \begin{equation}
+   T_{\text{req}, i} = T_{\text{target}} + k \, T_{\text{moment\_part}, i}.
+ \end{equation}
+\end{itemize}
+En cualquiera de los dos casos en que la consigna original deba modificarse para cumplir los límites físicos
+de los actuadores, el simulador registra una degradación del mando. Finalmente, los empujes se limitan de
+forma estricta mediante $T_{\text{req}, i} = \operatorname{clip}(T_{\text{req}, i}, T_{\min}, T_{\max})$
+y se transforman en velocidades angulares de consigna del rotor $\omega_i = \sqrt{T_{\text{req}, i}/k_f}$.
+
+La dinámica de rotor combina un retardo puro discretizado y un lag de primer orden. 
+El retardo puro retrasa la consigna un número entero de pasos del lazo de física,
+mientras que el lag aproxima que la velocidad del rotor no alcanza instantáneamente
+la consigna, sino que se aproxima a ella con una constante de tiempo $\tau$. 
+En las ejecuciones se emplean, según el perfil de la trayectoria, valores de
+$\tau=\SI{0.03}{s}$ con retardo de \SI{0.01}{s} y $\tau=\SI{0.05}{s}$ con retardo
+de \SI{0.02}{s}.
 
 \subsubsection*{Perturbaciones, observación y seguridad}
 \phantomsection
 \label{subsubsec:perturbaciones-observacion-seguridad}
 
-El drag lineal se calcula en el sistema de referencia cuerpo a partir de la
+El drag lineal se calcula en el sistema de referencia FRD a partir de la
 velocidad relativa respecto al viento:
 \begin{equation}
  \bm{v}_{r,B}=\bm{R}_{WB}^{\mathsf{T}}(\velW-\bm{v}_{w,W}),
 \end{equation}
-y se vuelve a expresar en mundo como
+y se vuelve a expresar en ENU como
 \begin{equation}
  \bm{F}_{d,W}=\bm{R}_{WB}\left(-\bm{D}_B\bm{v}_{r,B}\right).
  \label{eq:drag-lineal}
 \end{equation}
-En el simulador se han implementado niveles base de drag y niveles elevados
-para disponer de escenarios con distinta disipación. También puede aplicarse un
-viento definido por una magnitud, dirección y sentido fijos durante el episodio.
-La componente gaussiana de las perturbaciones se introduce en la observación de
-posición y velocidad, no como una racha aleatoria de viento; por tanto, el
-viento se interpreta aquí como sesgo externo medio y el ruido gaussiano como una
-degradación simplificada de la medida.
-
-La observación que recibe el controlador puede incluir este pequeño ruido gaussiano
-que representa de forma simplificada que la señal observada no es perfecta. La dinámica 
-base, la integración y la evaluación siguen usando el estado del simulador sin ruido 
-sensórico; lo perturbado es la información entregada al controlador. La semilla del 
-escenario fija las realizaciones pseudoaleatorias, de modo que un mismo YAML puede 
-reproducirse.
-
-Estos mecanismos permiten probar de forma controlada disipación, perturbaciones
-externas y calidad de observación. No reproducen turbulencia ni las
-características de sensores reales. Los perfiles son niveles heurísticos del
-simulador y se aplican por igual a los controladores comparados dentro de cada
-escenario.
+En el simulador se han implementado dos niveles de trayectorias con distinta
+disipación. También puede aplicarse un viento definido por una magnitud, dirección y
+sentido fijos durante toda la ejecución. La observación que recibe el controlador puede
+incluir una pequeña componente gaussiana que representa de forma simplificada que la
+señal observada no es perfecta. La dinámica base, la integración y la evaluación siguen
+usando el estado real del simulador, siendo la información entregada al simulador lo
+perturbado. La semilla del escenario fija la inicialización pseudoaleatoria, de modo
+que un mismo YAML puede reproducirse.
 
 La simulación termina si el vehículo impacta con el suelo, si la inclinación de
 roll/pitch supera el límite configurado, si aparece un valor no finito o si la
 saturación de actuadores persiste más que el tiempo permitido. En las ejecuciones
-base se usa un umbral de \SI{2}{s} para saturación persistente, si bien es
-completamente configurable. El límite de inclinación por defecto,
-\SI{1.256}{rad}, se usa como frontera operacional del entorno de ensayo; es un
-valor convencional y no un mecanismo de seguridad de un dron real. La ejecución del simulador
-mantiene además límites internos de posición y velocidad para detener
-trayectorias numéricamente divergentes, pero esos límites no forman parte de la
-definición física del vehículo.
+base se usa un umbral de \SI{2}{s} para saturación persistente y un límite de
+inclinación de \SI{1.256}{rad}. La ejecución del simulador mantiene además límites
+internos de posición y velocidad para detener trayectorias numéricamente divergentes.
 
 \subsubsection*{Trayectorias y escenarios reproducibles}
 
-Las familias de trayectoria se eligieron para introducir variabilidad suficiente
-sin convertir la definición de escenarios en un problema innecesariamente
-complejo. \texttt{hold} exige mantener una posición y una guiñada constantes.
-\texttt{circle} impone una trayectoria horizontal con aceleración centrípeta y
-avance continuo; con viento, el controlador no puede resolverla solo con una
-actitud fija, porque debe compensar una perturbación externa. \texttt{lissajous}
-introduce un movimiento periódico acoplado entre ejes:
+Las familias de trayectoria se eligieron para introducir una variabilidad suficiente
+sin convertir este módulo en un problema excesivamente complejo. En \figref{fig:familias-trayectorias}
+se muestra un caso representativo de cada familia. \texttt{hold} exige 
+mantener una posición y una guiñada constantes. \texttt{circle} impone una trayectoria 
+horizontal con aceleración centrípeta y avance continuo, que introduce un efecto no 
+periódico con el viento. \texttt{lissajous} introduce un movimiento periódico acoplado
+entre ejes:
+
 \begin{align}
  x(t) &= c_x + A_x\sin(\omega_x t),\\
  y(t) &= c_y + A_y\sin(\omega_y t),\\
@@ -270,26 +282,31 @@ posición, velocidad y aceleración.
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.9\textwidth]{FIG-009}
-  \caption{Familias de trayectorias analíticas del simulador. Cada geometría introduce estímulos diferentes (estacionario, velocidad variable, aceleración acoplada en 3 ejes o tramos discretos). Fuente: elaboración propia a partir de las clases de trayectoria.}
+  \caption{Familias de trayectorias analíticas del simulador. Cada geometría introduce
+  estímulos diferentes (estacionario, velocidad variable, aceleración acoplada en 3 ejes
+  o tramos discretos). Fuente: elaboración propia.}
   \label{fig:familias-trayectorias}
 \end{figure}
 
-La familia \texttt{waypoint} define una misión punto a punto. El vehículo debe
+La familia \texttt{waypoint} define una trayectoria punto a punto. El vehículo debe
 alcanzar una serie de posiciones, frenar, asentarse dentro de una tolerancia de
 posición y velocidad y permanecer allí durante un tiempo de asentamiento
 configurable (con un valor por defecto de \SI{0.40}{s}) antes de avanzar al
-siguiente punto. El avance no depende solo del tiempo global, sino del estado del vehículo. Para
-cada tramo se genera una coordenada escalar $s(t)$ sobre la recta que une dos
-waypoints. Si la distancia permite alcanzar la velocidad máxima, el perfil es
-trapezoidal: aceleración constante, tramo de velocidad constante y frenado. Si
-el tramo es corto, el perfil es triangular y no se alcanza la velocidad máxima.
-En ambos casos la posición y la velocidad son continuas, evitando escalones
-en la referencia.
+siguiente punto. Para cada tramo se genera una coordenada escalar $s(t)$ sobre
+la recta que une dos waypoints. Si la distancia permite alcanzar la velocidad
+máxima, el perfil es trapezoidal, con aceleración constante, tramo de velocidad
+constante y frenado. Si el tramo es corto, el perfil es triangular y no se alcanza
+la velocidad máxima. En ambos casos la posición y la velocidad son continuas,
+evitando escalones en la referencia. En \figref{fig:perfiles-waypoint} se muestran
+los perfiles cinemáticos de ambas casuísticas.
 
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.9\textwidth]{FIG-010}
-  \caption{Perfiles cinemáticos generados en las transiciones entre waypoints. A la izquierda se ilustra el perfil trapezoidal (para tramos largos) y a la derecha el perfil triangular (para tramos cortos, donde no se alcanza la velocidad de consigna). Todas las magnitudes representadas son escalares sobre el eje de avance del tramo. Fuente: elaboración propia.}
+  \caption{Perfiles cinemáticos generados en las transiciones entre waypoints. A la izquierda 
+  se ilustra el perfil trapezoidal (para tramos largos) y a la derecha el perfil triangular (para 
+  tramos cortos, donde no se alcanza la velocidad de consigna). Todas las magnitudes representadas 
+  son escalares sobre el eje de avance del tramo. Fuente: elaboración propia.}
   \label{fig:perfiles-waypoint}
 \end{figure}
 
@@ -309,54 +326,40 @@ timing: {physics_dt_s: 0.01, control_dt_s: 0.02, telemetry_dt_s: 0.1}
 termination: {max_duration_s: 40.0, z_min_m: -0.1}
 \end{lstlisting}
 
-El formato YAML (\textit{YAML Ain't Markup Language}, un formato de texto
-legible para describir datos estructurados mediante claves, listas y valores)
-se usa porque permite declarar los experimentos de forma
-legible y reproducible sin modificar el código fuente. En cada fichero se fija
+En cada fichero YAML, como se muestra en el \lstref{lst:yaml-escenario}, se fija
 el vehículo, el estado inicial, la trayectoria, el controlador, las
-perturbaciones, la semilla, los periodos de ejecución, las condiciones de
-terminación y el directorio de salida. Por convención, el estado inicial se
-iguala a la referencia de la trayectoria en $t=0$, con velocidades nulas,
-actitud nivelada y empuje inicial de estacionario. Así se evalúa el seguimiento
-de la trayectoria y no la recuperación desde una caída inicial provocada por
-arrancar con los rotores apagados.
+perturbaciones, la semilla, los periodos de ejecución y las condiciones de
+terminación. Por convención, el estado inicial se iguala a la referencia de la 
+trayectoria en $t=0$, con actitud nivelada y empuje inicial de situación
+estacionaria. Así se evalúa el seguimiento de la trayectoria y no la recuperación 
+desde una caída inicial provocada por arrancar con los rotores apagados.
 
-La elección del formato no es solo estética. En este trabajo los escenarios
-contienen bloques jerárquicos para vehículo, rotores, trayectoria,
-perturbaciones, temporización, terminación y salida. YAML permite mantener esa
-estructura próxima al lenguaje usado en la memoria y en la revisión manual de
-experimentos. JSON habría sido adecuado para intercambio estricto entre
-programas, pero resulta menos cómodo para editar escenarios largos; TOML es
-muy legible para parámetros de configuración, aunque se vuelve menos natural
-cuando predominan listas de puntos, rotores o secuencias de trayectorias. Por
-ello, YAML se reserva para escenarios experimentales y JSON se emplea en las
-salidas generadas automáticamente, como telemetría y métricas.
-
-La caracterización experimental de cada geometría se desarrolla en el
-\apartadoref{subsec:datos-metricas}. Además de estas familias principales, el
-simulador admite composiciones secuenciales de trayectorias y lemniscatas para
-evaluación fuera de distribución. La lemniscata se describe allí como parte de
-los escenarios OOD, no como familia principal de entrenamiento.
+La especificación de la cantidad y características de las trayectorias de
+cada familia usadas para entrenamiento, validación y prueba se desarrolla en el
+\hyperref[subsubsec:diseno-dataset-clasico]{epígrafe de diseño del conjunto de
+datos clásico}. Adicionalmente, el simulador permite composiciones secuenciales
+de trayectorias de las familas descritas así como lemniscatas. Estas variantes se desarrollan posteriormente dentro del contexto de evaluación OOD, distinguiendo entre
+\hyperref[subsubsec:variaciones-composiciones-ood]{variaciones y composiciones
+de familias conocidas} y
+\hyperref[subsubsec:trayectorias-nuevas-ood]{trayectorias completamente nuevas}.
 
 \subsubsection*{Flujo multirrate de simulación}
 
 El simulador trabaja con un flujo multirrate, es decir, con varios periodos de
-actualización dentro del mismo episodio. La física se integra típicamente cada
-\SI{0.01}{s}, el controlador calcula un nuevo comando cada \SI{0.02}{s} y la
-telemetría se guarda cada \SI{0.1}{s}. En cada instante se obtiene la
-referencia, se forma la observación y, cuando corresponde, se calcula un comando
-nuevo. El mixer y los actuadores producen la fuerza y el momento aplicados a
-partir del último comando disponible; RK4 avanza el estado y la telemetría
-registra las variables a su propia frecuencia.
+actualización dentro de una misma ejecución, como se puede observar en
+\figref{fig:arquitectura-multirrate}. La física se integra cada \SI{0.01}{s},
+el controlador calcula un nuevo comando cada \SI{0.02}{s} y la telemetría se
+guarda cada \SI{0.1}{s}. Cabe destacar que, al igual que el resto de parámetros,
+estas frecuencias son configurables en el YAML del episodio. En cada instante
+se obtiene la referencia, se forma la observación y, cuando corresponde, 
+se calcula un comando nuevo. El mixer y los actuadores producen la fuerza y el
+momento aplicados a partir del último comando disponible, RK4 avanza el estado y 
+la telemetría registra las variables.
 
-Entre dos ciclos de control se aplica un bloqueador de orden 0: el último
-comando solicitado se mantiene constante hasta que el controlador vuelve a
-actualizarlo. Esto aproxima la situación de un sistema digital, en el que la
-dinámica física evoluciona continuamente, los sensores y el controlador operan a
-frecuencias finitas y el actuador conserva la última orden recibida. En este
-trabajo, la frecuencia de telemetría se ha elegido menor que la de integración
-porque es suficiente para el análisis posterior y evita almacenar datos
-innecesariamente densos.
+Entre dos ciclos de control se aplica un bloqueador de orden 0, de manera que
+el último comando solicitado por el controlador se mantiene constante hasta la
+siguiente actualización. Esto trata de aproximar un sistema real, donde la física
+es continua y los sensores, controladores y actuadores operan a frecuencias finitas.
 
 \begin{figure}[H]
   \centering
@@ -364,49 +367,41 @@ innecesariamente densos.
   \caption{Secuencia de ejecución temporal multirrate y dependencias de datos. Se diferencian las tres bandas de frecuencia asociadas a la integración física (100 Hz), el ciclo digital de control (50 Hz) y el registro periódico de variables (10 Hz). Fuente: elaboración propia.}
   \label{fig:arquitectura-multirrate}
 \end{figure}
-Los periodos son parámetros configurables. En este trabajo se fijan como decisión de
-diseño para construir una plataforma de comparación de controladores; un estudio
-centrado en el simulador podría analizar la sensibilidad frente a otras
-frecuencias, pero ese análisis no forma parte del objetivo principal.
 
 \subsubsection*{Telemetría}
 
-Cada muestra de telemetría conserva el tiempo de simulación, el estado, la
-observación recibida por el controlador, la referencia, el comando de control
-solicitado, el comando objetivo de rotor y la actuación aplicada. En los rotores
-se separan empuje y velocidad objetivo, velocidad aplicada, empuje aplicado, par
-de reacción, revoluciones por minuto y estado de saturación. La causa de
-terminación se anota en la última muestra cuando el episodio finaliza.
+Cada toma de telemetría contiene el tiempo de simulación, el estado, la
+observación que recibe el controlador, la referencia, el comando de control,
+el comando de cada rotor y la actuación aplicada. En los rotores se cuenta con
+el empuje y la velocidad tanto objetivo como aplicado, par de reacción y 
+revoluciones por minuto. También se incluye el motivo de finalización de la
+simulación en la última toma. 
 
-Esta estructura permite analizar a posteriori el error de seguimiento, la
-diferencia entre estado y observación cuando existe ruido, la degradación del
-mixer, la saturación de actuadores y el efecto del retardo o del lag de rotor.
-El resumen de métricas añade valores estadísticos con unidades y metadatos
-experimentales: escenario, semilla, controlador, configuración del vehículo,
-configuración efectiva y causa de terminación. La telemetría queda así como
-puente entre la definición YAML del experimento y las figuras o métricas usadas
-en la comparación.
+Esta estructura permite el estudio posterior del error de seguimiento, la
+diferencia entre estado y observación, estado del mixer, saturación de actuadores
+y el efecto del retardo y lag del rotor. Adicionalmente se cuenta con un resumen de
+valores estadísticos así como los datos de configuración de la simulación.
 
 \subsubsection*{Elección del entorno de implementación}
 
-La implementación se ha realizado en Python porque ofrece un equilibrio adecuado
-entre claridad, disponibilidad y capacidad experimental. Es un entorno de código
-abierto, sin coste de licencia, con una comunidad amplia y con numerosas
-librerías científicas. Además, permite usar PyTorch para el entrenamiento de
-redes neuronales y trabajar de forma natural con YAML, JSON, Markdown y LaTeX,
-formatos usados durante el desarrollo del simulador y de la memoria.
+La implementación se ha realizado en Python ya que ofrece un equilibrio adecuado
+entre capacidades, facilidad de uso y disponibilidad. Es un lenguaje de programación
+abierto, sin coste de licencia, con una amplia cantidad de programadores y numerosas
+librerías científicas. Se cuenta con Pytorch, una librería de altas capacidades y
+flexibilidad para las labores de entrenamiento y trabajo con redes neuronales.
+Asimismo, Python permite trabajar de forma natural con archivos externos usados
+en el desarrollo, como CSV, YAML, JSON, Markdwon y Latex.
 
-La gestión del entorno se realiza con \texttt{uv}, de modo que las dependencias
-y los comandos de reproducción quedan definidos de forma sencilla para otros
-usuarios. El trabajo se ha desarrollado de forma abierta en GitHub, lo que
-facilita la inspección del código, la trazabilidad de cambios y la reutilización
-académica del material\footnote{\url{https://github.com/ChristianGonper/modelado-control-dron-v2}}
+La gestión del entorno se realiza con \texttt{uv}, de manera que las dependencias de
+paquetes y comandos de reproducción quedan definidos de forma clara y sencilla para
+que otros usuarios puedan usarlo. El trabajo en su conjunto ha sido desarrollado de
+forma abierta en un repositorio de GitHub, lo que facilita la inspección de código,
+trazabilidad de cambios y reutilización del material. \footnote{\url{https://github.com/ChristianGonper/modelado-control-dron-v2}}
 \cite{pytorchDocs,uvDocs,githubDocs}.
 
-No se afirma que Python sea la opción de mayor rendimiento. Una implementación
-en C o C++ sería más adecuada para una plataforma embarcada o para requisitos de
-tiempo real, pero también aumentaría la complejidad de desarrollo y
-reproducción. Para este trabajo, cuyo objetivo es disponer de una plataforma
-académica sobre la que comparar estrategias de control, Python resulta
-suficiente y permite avanzar con mayor rapidez en modelado, simulación,
-generación de datos y entrenamiento neuronal.
+No obstante, no se afirma que Python sea la mejor opción para todas las fases del trabajo.
+Una implementación en C o C++ contaría con unos requisitos de rendimiento menores y sería
+ideal para una plataforma embarcada o para ejecución en tiempo real, si bien aumentaría la
+complejidad del desarrollo, especialmente con las redes neuronales. Dado que el objetivo
+central es comparar estrategias de control en un entorno de simulación asíncrono, Python
+resulta suficiente y adecuado para el desarrollo.

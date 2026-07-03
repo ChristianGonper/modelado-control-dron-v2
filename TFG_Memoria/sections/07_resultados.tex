@@ -2,16 +2,15 @@
 \label{subsec:resultados-cobertura}
 
 La comparativa usada para contrastar las hipótesis se apoya en una ejecución
-cerrada, reproducible y trazable. Antes de interpretar errores o fallos conviene
-fijar el tamaño real de la batería evaluada; por eso la
-\autoref{tab:cobertura-ejecucion} resume escenarios, controladores,
-ejecuciones agregadas y porcentaje de casos que completan la misión sin rebasar
-los límites de seguridad definidos. Los comandos de generación, consolidación y
-visualización se recogen en el \anejoref{anejo:comandos}; la estructura de
-código que produce estos artefactos se sintetiza en el \anejoref{anejo:codigo}.
+cerrada, reproducible y trazable. Antes de realizar interpretaciones, se expone
+el tamaño de la serie de evaluación, por ello la \autoref{tab:cobertura-ejecucion}
+resume escenarios, controladores, ejecuciones y porcentaje de casos que completan
+la simulación sin sobrepasar las limitaciones establecidas. Por último, los comandos
+de generación y visualización se recogen en el \anejoref{anejo:comandos} y la estructura
+de código que produce estos artefactos se sintetiza en el \anejoref{anejo:codigo}.
 
 \begin{table}[H]
-\caption{Cobertura de la ejecución comparativa principal.}
+\caption{Cobertura de la ejecución comparativa.}
 \label{tab:cobertura-ejecucion}
 \small
 \begin{tabularx}{\textwidth}{l
@@ -30,67 +29,59 @@ Split & Escenarios & Controladores & Ejecuciones & Completadas [\%] & Límites [
 \end{tabularx}
 \end{table}
 
-La tabla marca una diferencia clara entre condiciones conocidas y OOD: el
-primer bloque es casi completamente estable, mientras que el segundo introduce
-fallos suficientes como para que la terminación forme parte del resultado. Por
-ello, los episodios fallidos no se eliminan antes de agregar los resultados.
-Esta decisión evita que las medias de error oculten escenarios donde el
-controlador alcanza límites de actitud, agota el tiempo disponible o demanda
-una actuación por encima de las restricciones impuestas.
+Los ocho controladores de la tabla corresponden a cuatro PD de las familias
+(\texttt{hold}, \texttt{circle}, \texttt{lissajous} y \texttt{waypoint}), tres
+redes neuronales (MLP, GRU y LSTM) y una referencia PD representativa, para 
+la cual se toma el PD nativo en condiciones nominales y el que ha sido asignado
+para cada escenario OOD 
+
+A la vista de la tabla se puede observar una diferencia clara entre las condiciones
+ID y OOD. En el caso OOD hay una mayor cantidad de fallos que llevan a no finalizar
+la trayectoria así como la superación de los límites de actuación.
 
 \subsection{Referencia clásica y transferencia entre familias}
 \label{subsec:resultados-referencia-clasica}
 
-Antes de valorar las redes, es necesario medir cómo se transfiere un controlador
-PD especializado cuando se aplica sin reajuste a familias distintas. Esta fase
-es relevante para el objetivo del trabajo: si una única implementación neuronal
-pretende condensar demostraciones de varios expertos, la comparación debe
-incluir también qué ocurre cuando un único PD se saca de la familia para la que
-fue sintonizado.
-
-La matriz de la \autoref{fig:res-pid-transfer-matrix} permite leer esa
-transferencia de forma directa: cada fila fija el PD de origen y cada columna
-la familia de evaluación. Así se separa el rendimiento nativo, situado en la
-diagonal, de las aplicaciones cruzadas.
+Antes de valorar las redes se ha de medir la transferencia de los PD especializados
+a familias distintas. Esta fase es de elevada importancia ya que el objetivo con las
+redes neuronales busca competir contra esta transferencia. La matriz de la
+\autoref{fig:res-pid-transfer-matrix} permite observar esto, las filas indican PID empleado
+y las columnas el tipo de trayectoria evaluada.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.72\textwidth]{res_pid_transfer_matrix.pdf}
-\caption{Transferencia cruzada de los controladores PD en el split
+\caption{Transferencia cruzada de los controladores PD en el conjunto de
 \texttt{test}. Las filas indican la familia usada para la sintonización y las
-columnas la familia evaluada. La diagonal marca el uso nativo de cada
-controlador.}
+columnas la familia evaluada. La diagonal marca el uso del controlador especializado
+en su familia. Fuente: evaluación propia}
 \label{fig:res-pid-transfer-matrix}
 \end{figure}
 
-La \autoref{fig:res-pid-transfer-matrix} muestra una especialización parcial,
-no una diagonal dominante en todos los casos. El PD de \texttt{hold} es el que
-peor transfiere al resto de familias, y la propia familia \texttt{hold} obtiene
-mejor RMSE con otros PD que con su controlador nativo. Este resultado sugiere
-que la sintonización de \texttt{hold}, al menos con el criterio aplicado en esta
-ejecución, no agota la mejora posible de esa familia.
+La \autoref{fig:res-pid-transfer-matrix} muestra una especialización parcial.
+El PD de \texttt{hold} es el que peor transfiere al resto de familias, y la propia
+familia \texttt{hold} obtiene mejor RMSE con otros PD que con su controlador especializado.
+Este resultado sugiere que la sintonización de \texttt{hold}, al menos con el criterio
+aplicado en esta ejecución, no logra el mejor resultado de esta familia.
 
-En \texttt{circle}, el PD nativo ofrece un error bajo y también transfiere de
+En \texttt{circle}, el PD especializado ofrece un error bajo y también transfiere de
 forma razonable a \texttt{waypoint}, coherente con que ambas referencias exigen
 seguimiento continuo y regular, aunque con geometría distinta. El PD de
 \texttt{lissajous} presenta el mejor RMSE en su familia y también funciona muy
 bien en \texttt{hold} y \texttt{waypoint}, pero no reproduce el mismo margen en
 \texttt{circle}. Por último, el PD de \texttt{waypoint} no transfiere con la
 misma calidad a \texttt{circle} ni a \texttt{lissajous}, donde el seguimiento
-curvo y sostenido exige una respuesta distinta a la de tramos rectos con
-cambios de dirección.
+curvo y sostenido exige una respuesta distinta a la de tramos esencialmente rectos.
 
 \subsection{Aprendizaje neuronal en condiciones conocidas}
 \label{subsec:resultados-neuronal-id}
 
 La evaluación supervisada no mide seguimiento de trayectoria, sino fidelidad a
-la fuerza deseada calculada por los expertos PD. Por tanto, la
-\autoref{tab:fidelidad-supervisada} se introduce antes que las figuras de RMSE
-para separar dos preguntas: cuánto imita cada red la señal de entrenamiento y
-qué ocurre después cuando esa señal se cierra sobre la dinámica. Las columnas
-de clipping indican el porcentaje de muestras en las que la fuerza predicha
-supera los límites de inclinación antes de aplicarse el recorte, tanto en la
-evaluación supervisada como durante la ejecución cerrada.
+la fuerza deseada calculada por los PD especializados. Así, la
+\autoref{tab:fidelidad-supervisada} se introduce en primera instancia para poder responder
+a dos preguntas. Por un lado, cómo de bien imita cada red la señal de entrenamiento y
+qué ocurre posteriormente al realimentarse a la dinámica. El clipping indica el porcentaje
+de muestras en que la fuerza predicha supera los límites de inclinación.
 
 \begin{table}[H]
 \caption{Fidelidad supervisada de fuerza y recorte de inclinación asociado. Los porcentajes de recorte corresponden a la activación del límite de inclinación antes de aplicar la fuerza en el lazo interno.}
@@ -109,17 +100,18 @@ LSTM & 0.0111 & 0.055 & 0.000 & 0.000 \\
 \end{tabularx}
 \end{table}
 
-GRU y LSTM imitan mejor la fuerza del experto que MLP en la métrica
-supervisada. Sin embargo, esa ventaja no se traslada de forma directa al
-seguimiento de posición. La \autoref{fig:res-id-rmse-family} muestra que MLP
-obtiene menor RMSE en \texttt{circle} y \texttt{lissajous}, mientras que LSTM
-queda por detrás pese a su mejor fidelidad de fuerza. En \texttt{hold} todas
-las redes se mantienen en errores bajos, y en \texttt{waypoint} ninguna supera
-con claridad al PD representativo.
+GRU y LSTM imitan mejor la fuerza del PD especializado. Sin embargo, esa ventaja
+no se traslada de forma directa al seguimiento de posición. La
+\autoref{fig:res-id-rmse-family} muestra que MLP obtiene menor RMSE en
+\texttt{circle} y \texttt{lissajous}, mientras que LSTM queda por detrás pese a
+su mejor fidelidad de fuerza. En \texttt{hold} todas las redes se mantienen en
+errores bajos, y en \texttt{waypoint} ninguna supera con claridad al PD
+representativo.
 
-Una vez fijada la fidelidad supervisada, la \autoref{fig:res-id-rmse-family}
-muestra la variable que realmente decide la comparación en simulación: el error
-de posición en bucle cerrado por familia conocida.
+El contraste entre la \autoref{tab:fidelidad-supervisada} y la
+\autoref{fig:res-id-rmse-family} muestra que una red puede aproximar mejor la
+fuerza del PD especializado en las muestras y aún así no ser la mejor al cerrar el
+bucle.
 
 \begin{figure}[H]
 \centering
@@ -130,24 +122,18 @@ métrica principal en esta comparación.}
 \label{fig:res-id-rmse-family}
 \end{figure}
 
-El contraste entre la \autoref{tab:fidelidad-supervisada} y la
-\autoref{fig:res-id-rmse-family} es uno de los resultados centrales: una red
-puede aproximar mejor la fuerza del experto en muestras aisladas y aun así no
-ser la que mejor cierra el bucle dinámico.
-
 \subsection{Generalización fuera de distribución}
 \label{subsec:resultados-transferencia-ood}
 
-La evaluación OOD es la parte más exigente de la comparativa, porque somete los
-controladores a geometrías, velocidades y combinaciones de perturbaciones no
+La evaluación OOD es la parte más exigente de la comparativa ya que somete a
+los controladores a geometrías, velocidades y combinaciones de perturbaciones no
 presentes de forma directa en el conjunto de entrenamiento. En esta serie, el
-PD representativo se toma del experto familiar más próximo al escenario:
+PD representativo se toma del experto PD especializado más cercano al escenario:
 \texttt{lissajous} para \texttt{lemniscate}, \texttt{composite} y
 \texttt{lissajous}, y \texttt{waypoint} para las hélices.
 
 La \autoref{fig:res-ood-rmse-family} agrega primero por familia OOD para
-identificar tendencias generales sin entrar todavía en cada escenario
-individual.
+identificar tendencias generales.
 
 \begin{figure}[H]
 \centering
@@ -164,34 +150,28 @@ nuevas de \texttt{lemniscate} y \texttt{composite}, mientras que MLP se mantiene
 especialmente competitivo en las variantes OOD más próximas a familias conocidas,
 como \texttt{lissajous} y \texttt{waypoint}.
 
-Esa agregación puede ocultar fallos localizados. Por ello, la
-\autoref{fig:res-ood-scenario-matrix} desciende al nivel de escenario y deja
-visible qué combinaciones concretas de controlador y trayectoria concentran el
-error.
+Esa agregación de alto nivel puede ocultar una gran variabilidad. Por ello la
+\autoref{fig:res-ood-scenario-matrix} desciende al nivel de escenario y muestra
+qué combinaciones concretas de controlador y trayectoria concentran el error.
+
+El desglose por escenario de la \autoref{fig:res-ood-scenario-matrix} matiza las
+medias de \autoref{fig:res-ood-rmse-family}. La mayoría de escenarios mantiene
+errores reducidos, pero los casos que combinan lemniscatas, transiciones
+compuestas o exigencia dinámica elevada concentran los fallos. En particular,
+MLP aumenta mucho el error en escenarios compuestos con lemniscata, mientras
+que LSTM se degrada de forma clara en trayectorias rápidas o con cambios
+geométricos pronunciados. El patrón sugiere que la memoria temporal no aporta
+una ventaja uniforme y puede introducir sensibilidad adicional cuando el estado
+visitado se aleja de la distribución de entrenamiento.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.86\textwidth]{res_ood_scenario_matrix.pdf}
+\includegraphics[width=\textwidth]{res_ood_scenario_matrix.pdf}
 \caption{Desglose OOD por escenario y controlador para las cuatro referencias
 principales. El número de cada celda es el RMSE en metros; el asterisco indica
-que la misión no se completó aunque el episodio se conserva en la agregación.}
+que la ejecución no se completó aunque el episodio se conserva en la agregación.}
 \label{fig:res-ood-scenario-matrix}
 \end{figure}
-
-El desglose por escenario de la \autoref{fig:res-ood-scenario-matrix} matiza las
-medias. La mayoría de escenarios mantiene errores contenidos, pero los casos que
-combinan lemniscatas, transiciones compuestas o exigencia dinámica elevada
-concentran los fallos. En particular, MLP aumenta mucho el error en escenarios
-compuestos con lemniscata, mientras que LSTM se degrada de forma clara en
-trayectorias rápidas o con cambios geométricos pronunciados. El patrón sugiere
-que la memoria temporal no aporta una ventaja uniforme y puede introducir
-sensibilidad adicional cuando el estado visitado se aleja de la distribución de
-entrenamiento.
-
-El siguiente paso es distinguir error alto de fallo de misión. La
-\autoref{fig:res-ood-termination-summary} agrupa las causas de terminación para
-leer si la degradación procede de actitud, saturación, tiempo máximo u otras
-condiciones de seguridad.
 
 \begin{figure}[H]
 \centering
@@ -201,58 +181,50 @@ principales.}
 \label{fig:res-ood-termination-summary}
 \end{figure}
 
-La \autoref{fig:res-ood-termination-summary} separa los modos de terminación. El
-PD representativo acumula fallos de actitud en varios escenarios OOD, mientras
-que las redes concentran sus fallos en saturación o agotamiento del tiempo. Esta
-diferencia es importante: no todos los fallos tienen la misma lectura física ni
-la misma relación con el error medio de seguimiento.
+El siguiente paso es distinguir entre error y fallo en la simulación. La
+\autoref{fig:res-ood-termination-summary} agrupa las causas de finalización para
+analizar si la degradación procede de actitud, saturación, tiempo máximo u otras
+condiciones.
+
+El PD representativo acumula fallos de actitud en varios escenarios OOD, mientras
+que las redes concentran sus fallos en saturación. Además, la cantidad de errores
+es mayor en la implementación clásica, lo cual es relevante para emitir una conclusión.
 
 \subsection{Caso representativo de arquitectura}
 \label{subsec:resultados-caso-representativo}
 
 La \autoref{fig:res-trajectory-lemniscate-mlp-lstm} ilustra un caso concreto en
 el que dos arquitecturas con la misma interfaz producen comportamientos muy
-distintos. No debe leerse como una regla universal, sino como un ejemplo
-representativo de la sensibilidad observada en OOD.
+distintos. MLP presenta un error inicial mayor, pero estabiliza el seguimiento y completa
+la geometría de forma razonable. LSTM, por el contrario, se separa de la
+referencia durante toda la simulación. Este resultado refuerza la necesidad de evaluar
+el comportamiento trayectoria por trayectoria y por ello se presenta en el
+ \anejoref{anejo:telemetria} un conjunto de representaciones de geometrías así como
+ información de telemetría.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.88\textwidth]{res_trajectory_lemniscate_mlp_lstm.pdf}
+\includegraphics[width=0.95\textwidth]{res_trajectory_lemniscate_mlp_lstm.pdf}
 \caption{Escenario OOD \texttt{lemniscate\_fast\_center\_yaw}: comparación
 visual entre MLP y LSTM. El panel superior muestra el plano horizontal y el
 inferior el error de posición a lo largo del episodio.}
 \label{fig:res-trajectory-lemniscate-mlp-lstm}
 \end{figure}
 
-MLP presenta un error inicial mayor, pero estabiliza el seguimiento y completa
-la geometría de forma razonable. LSTM, por el contrario, se separa de la
-referencia durante gran parte del episodio. El resultado refuerza la necesidad
-de evaluar el comportamiento en trayectoria, no solo la fidelidad supervisada,
-y justifica que el \anejoref{anejo:telemetria} incluya un atlas visual de
-geometrías y varios paquetes de señales internas: trayectoria, error temporal,
-actitud, esfuerzo de control y velocidades de rotor. Estas figuras no
-sustituyen a la comparación cuantitativa, sino que ayudan a interpretar el tipo
-de simulación que sostiene los resultados.
-
 \subsection{Actuación, protecciones y límites compartidos}
 \label{subsec:resultados-protecciones}
 
-La seguridad observada no depende únicamente de la red. El lazo interno clásico,
+Los resultados observados no dependen únicamente de la red. El lazo interno clásico,
 el mezclador, la saturación de actuadores y los recortes de fuerza limitan las
 órdenes que finalmente llegan al vehículo. En la
 \autoref{fig:res-protections-ood}, la degradación del mixer mide el porcentaje
-de tiempo en el que el reparto de mandos reduce el colectivo para respetar
-límites de actuación; los porcentajes de clipping indican cuánto se recortan las
-fuerzas neuronales antes de pasar al lazo interno.
-
-La \autoref{fig:res-protections-ood} cierra esta lectura separando la métrica
-de seguimiento de las señales de protección. De este modo se evita atribuir a
-la arquitectura neuronal efectos que también dependen del lazo interno y del
-mixer.
+de tiempo en que se ha de intervenir sobre el colectivo para respetar
+límites de actuación y los porcentajes de clipping indican cuánto se recortan las
+fuerzas antes de pasar al lazo interno.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.78\textwidth]{res_protections_ood.pdf}
+\includegraphics[width=0.9\textwidth]{res_protections_ood.pdf}
 \caption{Activación media de protecciones y límites de actuación en OOD. La
 figura separa error de seguimiento, demanda de control y restricciones
 compartidas por la arquitectura de control.}
@@ -263,37 +235,4 @@ MLP es la única de las tres redes que activa clipping de fuerza e inclinación 
 forma apreciable en OOD. Este comportamiento es coherente con una arquitectura
 sin estado que responde a errores instantáneos con demandas más agresivas. GRU
 y LSTM, al incorporar historia temporal, no activan esos recortes en la misma
-medida, aunque ello no implica por sí solo menor RMSE.
-
-\subsection{Lecturas principales de la ejecución}
-\label{subsec:resultados-sintesis}
-
-La \autoref{tab:sintesis-resultados} condensa las lecturas anteriores. Su
-función no es añadir evidencia nueva, sino ordenar qué demuestra cada bloque de
-figuras y tablas antes de pasar a la discusión.
-
-\begin{table}[H]
-\caption{Síntesis de resultados de la ejecución comparativa.}
-\label{tab:sintesis-resultados}
-\begin{tabularx}{\textwidth}{p{0.25\textwidth} X X}
-\toprule
-Aspecto & Evidencia & Interpretación \\
-\midrule
-Especialización clásica & La matriz PD muestra transferencia favorable en
-algunas combinaciones y degradación clara en otras. & La especialización existe,
-pero la transferencia depende de la familia y de la regularidad geométrica de la
-trayectoria. \\
-Imitación en \texttt{test} & GRU y LSTM imitan mejor la fuerza del experto,
-pero MLP obtiene menor RMSE en varias familias conocidas. & La fidelidad
-supervisada no basta para predecir el comportamiento en bucle cerrado. \\
-Generalización OOD & Los agregados y el desglose por escenario muestran fallos
-en geometrías de mayor exigencia. & La implementación neuronal es competitiva
-en casos moderados, pero no superior de forma global. \\
-Memoria temporal & GRU y LSTM no dominan sistemáticamente a MLP. & La memoria
-recurrente introduce una sensibilidad que cambia con el tipo de trayectoria. \\
-Protecciones & Clipping, saturación y degradación del mixer aparecen de forma
-desigual entre controladores. & La seguridad observada pertenece a la
-combinación entre red, lazo interno y límites de actuación, no solo a la red. \\
-\bottomrule
-\end{tabularx}
-\end{table}
+medida, ya que observan la tendencia reciente. 
