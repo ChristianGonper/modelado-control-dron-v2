@@ -61,7 +61,6 @@ diagrama cambie.
 | `atlas_trayectoria_helix_3d` | `TFG_Memoria/Figuras/resultados/` | Anejo: vista 3D de hélice OOD | Telemetría OOD |
 | `tab:cobertura-campana` | `07_resultados.tex` | Cobertura y validez | `comparison_all_runs.csv` |
 | `tab:fidelidad-supervisada` | `07_resultados.tex` | H3 fidelidad supervisada | `data/neural_control/*/metrics/test_force_metrics.json` |
-| `tab:sintesis-resultados` | `07_resultados.tex` | Lecturas principales de la ejecución | Evidencia consolidada |
 
 Comando de regeneración:
 

@@ -5,6 +5,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage{lmodern}
 \usepackage[spanish,es-tabla]{babel}
+\spanishdecimal{.}
 \usepackage{csquotes}
 \usepackage{microtype}
 \usepackage[all]{nowidow}
@@ -168,6 +169,8 @@
 \newcommand{\anejoref}[1]{\hyperref[#1]{Anejo~\ref*{#1}}}
 \newcommand{\apartadoref}[1]{\hyperref[#1]{apartado~\ref*{#1}}}
 \newcommand{\Apartadoref}[1]{\hyperref[#1]{Apartado~\ref*{#1}}}
+\newcommand{\lstref}[1]{\hyperref[#1]{Listing~\ref*{#1}}}
+\renewcommand{\lstlistingname}{Listing}
 
 % Notacion recurrente del TFG.
 \newcommand{\frameW}{\mathcal{W}}

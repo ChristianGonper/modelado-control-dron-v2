@@ -1,0 +1,64 @@
+% !TeX root = ../main.tex
+\clearpage
+\pagestyle{empty}
+\thispagestyle{empty}
+\phantomsection
+\section*{Símbolos y unidades}
+\addcontentsline{toc}{section}{Símbolos y unidades}
+
+\hypersetup{allcolors=black}
+\setlength{\parindent}{0cm}
+
+Esta lista recoge la notación recurrente de la memoria. Salvo indicación
+contraria, las magnitudes vectoriales de posición, velocidad, aceleración y
+fuerza se expresan en el sistema mundo ENU, y las magnitudes de actitud, giro,
+momento e inercia se expresan en el sistema cuerpo FRD.
+
+\begin{description}[leftmargin=3.2cm, labelindent=0cm]
+  \item[$\frameW$] Sistema de referencia mundo, con convención ENU.
+  \item[$\frameB$] Sistema de referencia cuerpo, con convención FRD.
+  \item[$x_W,y_W,z_W$] Ejes del sistema mundo: este, norte y arriba [m].
+  \item[$x_B,y_B,z_B$] Ejes del sistema cuerpo: delante, derecha y abajo [m].
+  \item[$\bm{x}$] Estado del vehículo en la simulación.
+  \item[$\posW$] Posición del centro de masas en el sistema mundo [m].
+  \item[$\velW$] Velocidad lineal en el sistema mundo [m/s].
+  \item[$\bm{a}$, $\bm{a}_r$] Aceleración y aceleración de referencia [m/s$^2$].
+  \item[$\quatWB$] Cuaternión de actitud que relaciona cuerpo y mundo.
+  \item[$\omegaB$] Velocidad angular del vehículo en el sistema cuerpo [rad/s].
+  \item[$\bm{R}_{WB}$] Matriz de rotación de cuerpo FRD a mundo ENU.
+  \item[$m$] Masa del vehículo [kg].
+  \item[$g$] Aceleración de la gravedad [m/s$^2$].
+  \item[$\bm{I}_B$] Matriz de inercia respecto al centro de masas [kg\,m$^2$].
+  \item[$\bm{F}_B$] Fuerza aplicada expresada en cuerpo [N].
+  \item[$\bm{F}_{d,W}$] Fuerza deseada o fuerza de drag, según el contexto indicado [N].
+  \item[$\widehat{\bm{F}}_{d,W}$] Fuerza deseada predicha por el controlador neuronal [N].
+  \item[$T$] Empuje colectivo total [N].
+  \item[$T_i$] Empuje generado por el rotor $i$ [N].
+  \item[$\omega_i$] Velocidad angular del rotor $i$ [rad/s].
+  \item[$\bm{r}_{i,B}$] Posición del rotor $i$ respecto al centro de masas [m].
+  \item[$s_i$] Signo del par de reacción de guiñada del rotor $i$.
+  \item[$\bm{\tau}_B$] Momento aplicado en el sistema cuerpo [N\,m].
+  \item[$\tau_x,\tau_y,\tau_z$] Componentes de momento de alabeo, cabeceo y guiñada [N\,m].
+  \item[$\bm{M}$] Matriz de asignación entre empujes de rotores y mando colectivo/momentos.
+  \item[$\bm{D}_B$] Matriz de drag lineal expresada en cuerpo [N/(m/s)].
+  \item[$\bm{v}_{w,W}$] Velocidad del viento constante en el sistema mundo [m/s].
+  \item[$\bm{e}_p$, $\bm{e}_v$] Errores de posición y velocidad [m; m/s].
+  \item[$\bm{e}_q$] Error de actitud usado por el lazo interno.
+  \item[$\bm{K}_{p,p}$, $\bm{K}_{d,p}$] Ganancias proporcional y derivativa del lazo de posición.
+  \item[$\bm{K}_{p,a}$, $\bm{K}_{d,a}$] Ganancias proporcional y derivativa del lazo de actitud.
+  \item[$k$] Índice temporal discreto de una muestra.
+  \item[$\Delta t$] Periodo de integración, control o muestreo indicado en cada contexto [s].
+  \item[$N$] Número de muestras usadas en una métrica.
+  \item[$e_k$] Error escalar de seguimiento en la muestra $k$ [m].
+  \item[$e_{\mathrm{RMSE}}$] Raíz del error cuadrático medio de posición [m].
+  \item[$\theta$] Conjunto de parámetros entrenables de una red neuronal.
+  \item[$\eta$] Tasa de aprendizaje en descenso por gradiente.
+  \item[$\bm{W}$, $\bm{b}$] Pesos y sesgos de una capa neuronal.
+  \item[$\bm{h}_k$] Estado oculto de una red recurrente en el instante $k$.
+  \item[$\bm{c}_k$] Estado de celda de una LSTM en el instante $k$.
+  \item[$L$] Longitud de ventana temporal usada por modelos recurrentes [muestras].
+\end{description}
+
+\clearpage
+\hypersetup{allcolors=blue}
+\pagestyle{fancy}

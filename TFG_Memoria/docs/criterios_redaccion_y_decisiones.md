@@ -69,3 +69,8 @@ trabajo futuro, pero no deben confundirse con la comparación principal.
 - Los términos se introducirán primero en español. Los acrónimos ingleses
   aceptados, como OOD, se definirán junto al término y se añadirán de inmediato
   a la lista de abreviaturas.
+- Además del glosario de abreviaturas y acrónimos, se incluye una lista
+  separada de símbolos y unidades. La decisión aplica el requisito reglamentario
+  de glosario "cuando proceda" porque la memoria usa notación física,
+  matemática y experimental recurrente: marcos ENU/FRD, estados, fuerzas,
+  momentos, ganancias, métricas y variables de redes neuronales.
