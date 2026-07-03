@@ -91,7 +91,7 @@ de la cobertura limitada del conjunto de entrenamiento. Además, el PD que se em
 en los escenarios OOD es una aproximación por similitud geométrica, no un controlador optimizado
 para estas geometrías.
 
-El estudio paramétrico se ha manteido limitado. Los PD se sinotinizan por medio de
+El estudio paramétrico se ha mantenido limitado. Los PD se sintonizan por medio de
 un procedimiento reproducible y después se fijan sus parámetros, pero no se ejecuta
 una búsqueda global en el espacio de ganancias posibles ni una optimización multiobjetivo
 exhaustiva. De forma análoga, MLP, GRU y LSTM comparten la configuración de entradas, método de
@@ -121,7 +121,7 @@ identificación, los resultados observados en las simulaciones supondrían una r
 más directa con la capacidad de un dron cuadricóptero real.
 
 La segunda línea es aumentar la fidelidad física del modelo. El simulador actual
-incluye un conjunto acotado de fenómenos, suficiente para la realizar esta comparación,
+incluye un conjunto acotado de fenómenos, suficiente para realizar esta comparación,
 pero se pueden incorporar modelos más avanzados de aerodinámica, efecto suelo, turbulencia,
 interferencia entre rotores, efecto de descarga de baterías, variación del empuje con la
 tensión y restricciones de carácter térmico, eléctrico y espacial flexible. Estas ampliaciones
@@ -130,7 +130,7 @@ de la actuación varía durante una simulación de manera no predecible o cuando
 efectos que ahora se estiman de forma simplificada.
 
 También resulta necesario ampliar y refinar el conjunto de trayectorias. En el trabajo se
-han usado un número reducido de familias representativas, pero una implementación orientada
+han usado pocas familias representativas, pero una implementación orientada
 al vuelo debería aumentar el número de familias, la diversidad geométrica dentro de ellas,
 las velocidades, los perfiles verticales y las transiciones entre diversas trayectorias.
 Este refinamiento debe ir acompañado de una revisión de los límites de finalización, empuje,

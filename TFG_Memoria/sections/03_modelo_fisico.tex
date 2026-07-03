@@ -17,7 +17,7 @@ formada por la fuerza total de los rotores y el momento total, ambos
 expresados en el sistema de referencia cuerpo. La salida registrada incluye 
 el estado, la observación entregada al controlador, la referencia de 
 trayectoria, el comando solicitado y la actuación aplicada. De esta manera
-se puede comprobar cuando y por qué un mando no ha podido aplicarse.
+se puede comprobar cuándo y por qué un mando no ha podido aplicarse.
 
 El sistema de referencia $\frameW$ sigue la convención ENU, donde $x$ apunta al Este,
 $y$ al Norte y $z$ hacia arriba. El sistema de referencia $\frameB$ es FRD, donde
@@ -152,7 +152,7 @@ T_1\\T_2\\T_3\\T_4
 Por tanto, un rotor situado a la derecha del vehículo
 ($y_i>0$) aporta momento de alabeo negativo cuando aumenta su empuje, mientras
 que un rotor situado delante ($x_i>0$) aporta momento de cabeceo positivo, como se
-muestra en \figref{fig:actuacion-movimiento}.
+muestra en la \figref{fig:actuacion-movimiento}.
 
 \begin{figure}[H]
   \centering
@@ -247,7 +247,7 @@ disipación. También puede aplicarse un viento definido por una magnitud, direc
 sentido fijos durante toda la ejecución. La observación que recibe el controlador puede
 incluir una pequeña componente gaussiana que representa de forma simplificada que la
 señal observada no es perfecta. La dinámica base, la integración y la evaluación siguen
-usando el estado real del simulador, siendo la información entregada al simulador lo
+usando el estado real del simulador, siendo la información entregada al simulador la
 perturbado. La semilla del escenario fija la inicialización pseudoaleatoria, de modo
 que un mismo YAML puede reproducirse.
 
@@ -338,16 +338,16 @@ La especificación de la cantidad y características de las trayectorias de
 cada familia usadas para entrenamiento, validación y prueba se desarrolla en el
 \hyperref[subsubsec:diseno-dataset-clasico]{epígrafe de diseño del conjunto de
 datos clásico}. Adicionalmente, el simulador permite composiciones secuenciales
-de trayectorias de las familas descritas así como lemniscatas. Estas variantes se desarrollan posteriormente dentro del contexto de evaluación OOD, distinguiendo entre
+de trayectorias de las familias descritas así como lemniscatas. Estas variantes se desarrollan posteriormente dentro del contexto de evaluación OOD, distinguiendo entre
 \hyperref[subsubsec:variaciones-composiciones-ood]{variaciones y composiciones
 de familias conocidas} y
 \hyperref[subsubsec:trayectorias-nuevas-ood]{trayectorias completamente nuevas}.
 
-\subsubsection*{Flujo multirrate de simulación}
+\subsubsection*{Flujo multirate de simulación}
 
-El simulador trabaja con un flujo multirrate, es decir, con varios periodos de
-actualización dentro de una misma ejecución, como se puede observar en
-\figref{fig:arquitectura-multirrate}. La física se integra cada \SI{0.01}{s},
+El simulador trabaja con un flujo multirate, es decir, con varios periodos de
+actualización dentro de una misma ejecución, como se puede observar en la
+\figref{fig:arquitectura-multirate}. La física se integra cada \SI{0.01}{s},
 el controlador calcula un nuevo comando cada \SI{0.02}{s} y la telemetría se
 guarda cada \SI{0.1}{s}. Cabe destacar que, al igual que el resto de parámetros,
 estas frecuencias son configurables en el YAML del episodio. En cada instante
@@ -364,8 +364,8 @@ es continua y los sensores, controladores y actuadores operan a frecuencias fini
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{FIG-003}
-  \caption{Secuencia de ejecución temporal multirrate y dependencias de datos. Se diferencian las tres bandas de frecuencia asociadas a la integración física (100 Hz), el ciclo digital de control (50 Hz) y el registro periódico de variables (10 Hz). Fuente: elaboración propia.}
-  \label{fig:arquitectura-multirrate}
+  \caption{Secuencia de ejecución temporal multirate y dependencias de datos. Se diferencian las tres bandas de frecuencia asociadas a la integración física (100 Hz), el ciclo digital de control (50 Hz) y el registro periódico de variables (10 Hz). Fuente: elaboración propia.}
+  \label{fig:arquitectura-multirate}
 \end{figure}
 
 \subsubsection*{Telemetría}
@@ -387,10 +387,10 @@ valores estadísticos así como los datos de configuración de la simulación.
 La implementación se ha realizado en Python ya que ofrece un equilibrio adecuado
 entre capacidades, facilidad de uso y disponibilidad. Es un lenguaje de programación
 abierto, sin coste de licencia, con una amplia cantidad de programadores y numerosas
-librerías científicas. Se cuenta con Pytorch, una librería de altas capacidades y
+librerías científicas. Se cuenta con PyTorch, una librería de altas capacidades y
 flexibilidad para las labores de entrenamiento y trabajo con redes neuronales.
 Asimismo, Python permite trabajar de forma natural con archivos externos usados
-en el desarrollo, como CSV, YAML, JSON, Markdwon y Latex.
+en el desarrollo, como CSV, YAML, JSON, Markdown y LaTeX.
 
 La gestión del entorno se realiza con \texttt{uv}, de manera que las dependencias de
 paquetes y comandos de reproducción quedan definidos de forma clara y sencilla para

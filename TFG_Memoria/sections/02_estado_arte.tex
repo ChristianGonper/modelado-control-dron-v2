@@ -161,7 +161,7 @@ interpretabilidad y bajo coste computacional. Un término proporcional corrige e
 error de posición o actitud, un término derivativo amortigua la respuesta a partir
 de la velocidad o la velocidad angular, y un término integral puede reducir errores
 estacionarios. Sin embargo, la acción integral puede acumular mando durante saturaciones, 
-por lo que requeriría mecanismos de anti-windup. En este caso, una estructura de PD
+por lo que requeriría mecanismos de protección contra saturación (anti-windup). En este caso, una estructura de PD
 junto con el dato de aceleración de trayectoria y compensación de fuerza de gravedad
 resulta en una implementación más factible.
 
@@ -406,9 +406,7 @@ supervisado. La normalización calculada solo con el conjunto de
 entrenamiento evita que variables de distinta escala dominen la función de pérdida
 y reduce fugas de información desde validación o prueba. El error cuadrático medio 
 (MSE) es una función útil en este caso, al penalizar con mayor intensidad las desviaciones
-grandes entre la predicción y realidad.
-Es una función natural para regresión de fuerzas, al penalizar desviaciones
-grandes entre predicción y experto. También se emplea validación para seleccionar un
+grandes entre la predicción y la realidad. También se emplea validación para seleccionar un
 checkpoint sin ajustar los pesos sobre el conjunto de prueba y parada temprana para 
 detener el entrenamiento si no hay mejoría tras un número determinado de épocas.
 
@@ -417,7 +415,7 @@ detener el entrenamiento si no hay mejoría tras un número determinado de époc
 En sistemas dinámicos de este tipo, la evaluación se debe realizar tanto de forma
 supervisada como sobre el comportamiento del sistema en lazo cerrado. Puede ocurrir que
 una red aproxime muy bien la fuerza del controlador especializado en las muestras del
-conjunto de prueba y aún así generar una trayectoria peor o incluso divergente cuando 
+conjunto de prueba y, aun así, genere una trayectoria peor o incluso divergente cuando 
 sus predicciones se realimentan en la dinámica. Esta diferencia se debe al hecho de que 
 el control en el bucle cerrado modifica los propios estados futuros que ve la red,
 transformando desviaciones en las fuerzas en datos de entrada diferentes. Por este

@@ -10,10 +10,10 @@ de actitud que acompaña al lazo externo de tipo neuronal.
 
 La estructura se separa en dos lazos. Un lazo externo para traslación, que recibe la observación de
 posición y velocidad y la referencia de la trayectoria en el sistema ENU, y calcula una fuerza deseada
-$\bm{F}_{d,W}$. El lazo interno recibe esa fuerza y la guiñada de referencia, contruye una actitud
+$\bm{F}_{d,W}$. El lazo interno recibe esa fuerza y la guiñada de referencia, construye una actitud
 compatible con la dirección del empuje y calcula los momentos en el sistema FRD. Por último, el mixer
 previamente descrito en el \hyperref[subsubsec:actuadores-mixer]{epígrafe de actuadores, mixer y límites de actuación}
-transforma finalmente el empuje colectivo y los momentos en comandos de rotor. Este flujo se puede ver en
+transforma finalmente el empuje colectivo y los momentos en comandos de rotor. Este flujo se puede ver en la
 \figref{fig:arquitectura-cascada}.
 
 Mediante esta separación se observa de forma clara qué parte será sustituida por aprendizaje y
@@ -37,7 +37,7 @@ idéntico.
 
 La referencia de la trayectoria proporciona en cada instante posición, velocidad,
 aceleración y guiñada. En las familias continuas, la aceleración procede de la
-derivada analítica de la referencia mientras que en \texttt{waypoint}, del perfil descrito ilustrado en \figref{fig:perfiles-waypoint}.
+derivada analítica de la referencia mientras que en la familia \texttt{waypoint}, del perfil descrito e ilustrado en la \figref{fig:perfiles-waypoint}.
 
 Con $\bm{e}_p=\bm{p}_r-\bm{p}$ y
 $\bm{e}_v=\bm{v}_r-\bm{v}$ representando los errores de posición y velocidad,
@@ -64,7 +64,7 @@ $\bm{F}_{d,W}=[0\;0\;mg]^\mathsf{T}$, es decir, a la fuerza ascendente
 necesaria para compensar el peso.
 
 La norma de $\bm{F}_{d,W}$ define el empuje colectivo solicitado, limitado en el
-controlador a $[0,2.5mg]$. Y como se usa un sistema FRD, el empuje actúa en
+controlador a $[0,2.5mg]$. Como se usa un sistema FRD, el empuje actúa en
 dirección $-z_B$, de manera que para que el vehículo genere una fuerza
 $\bm{F}_{d,W}$, el eje $z_B$ deseado se toma opuesto a dicha fuerza:
 \[
@@ -155,7 +155,7 @@ La primera ronda evalúa 32 candidatos con multiplicadores log-uniformes entre
 candidatos de esa ronda y se generan 16 perturbaciones locales alrededor
 de ellos, de manera que cada familia cuenta con 49 evaluaciones para sintonizar
 su controlador. Esta segunda fase se plantea como un refinamiento local tipo simplex, inspirado en
-la lógica de Nelder--Mead \cite{nelder1965simplex}, explorar el entorno de los
+la lógica de Nelder--Mead \cite{nelder1965simplex} para explorar el entorno de los
 mejores candidatos pero sin llegar a la convergencia.
 
 Antes de comparar las puntuaciones de los controladores se aplican filtros. Se descartan
@@ -184,7 +184,7 @@ de la mejor se escoge el de menor esfuerzo medio, y si aún hay empate se prefie
 al controlador inicial en término de multiplicadores. De esta manera, se favorecen los cambios moderados
 a igualdad de resultado.
 
-Los pesos de \eqnref{eq:score-pd}, los umbrales, el intervalo de
+Los pesos de la \eqnref{eq:score-pd}, los umbrales, el intervalo de
 multiplicadores, el número de candidatos y el margen del 5\,\% son decisiones
 heurísticas de la ejecución. No son constantes derivadas de una teoría de control ni
 demuestran una optimización global. Deben interpretarse como un óptimo local bajo un
