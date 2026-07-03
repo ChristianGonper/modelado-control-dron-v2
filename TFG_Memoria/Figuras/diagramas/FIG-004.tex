@@ -29,19 +29,19 @@
   \node[sum] (sum_pos) at (start) {\Large $+$};
   \node[anchor=south west, font=\sffamily\tiny] at (sum_pos.north west) {$-$};
   
-  \node[box, right=of sum_pos] (pd_pos) {
+  \node[box, right=1 cm of sum_pos] (pd_pos) {
     \textbf{PD de Posición}\\
     $\bm{K}_{p,\text{pos}} \bm{e}_p + \bm{K}_{d,\text{pos}} \bm{e}_v$
   };
   
-  \node[sum, right=of pd_pos] (sum_acc) {\Large $+$};
+  \node[sum, right=1.8cm of pd_pos] (sum_acc) {\Large $+$};
   
   % Conectar
   \draw[line] (sum_pos) -- node[above, font=\sffamily\scriptsize] {$\bm{e}_p, \bm{e}_v$} (pd_pos);
   \draw[line] (pd_pos) -- (sum_acc);
   
   % Entradas de prealimentación externas
-  \node[above=0.8cm of sum_pos, xshift=-0.5cm] (ref_pos) {Referencia\\$\bm{x}_{\text{ref}}, \dot{\bm{x}}_{\text{ref}}$};
+  \node[above=0.8cm of sum_pos] (ref_pos) {Referencia\\$\bm{x}_{\text{ref}}, \dot{\bm{x}}_{\text{ref}}$};
   \node[above=0.8cm of sum_acc] (ref_acc) {Prealimentación\\$\ddot{\bm{x}}_{\text{ref}}$};
   \node[below=0.8cm of sum_acc] (g_comp) {Compensación\\gravedad $-m\bm{g}$};
   
@@ -53,32 +53,31 @@
   % CONVERSIÓN FUERZA-ACTITUD
   % ==========================================
   % Distancia horizontal mayor (2.2cm) para acomodar la etiqueta larga sin colisión
-  \node[box, right=3.2cm of sum_acc, fill=orange!5, minimum width=2.4cm] (conversion) {
+  \node[box, right=2.1cm of sum_acc, fill=orange!5, minimum width=2.4cm] (conversion) {
     \textbf{Conversión}\\
     \textbf{Fuerza-Actitud}\\
     $\bm{F}_{d,W} \to (T, \bm{q}_{\text{des}})$
   };
   
   % Conexión del lazo externo a la conversión con etiqueta bien posicionada
-  \draw[line, line width=1.5pt] (sum_acc.east) -- node[above, font=\sffamily\bfseries\scriptsize] {$\bm{F}_{d,W}$ [N]} 
-    node[below, font=\sffamily\bfseries\scriptsize, text=purple!90!black] {(Frontera Neuronal)} (conversion.west);
+  \draw[line, line width=1.5pt] (sum_acc.east) -- node[above, xshift=0.1cm, font=\sffamily\bfseries\scriptsize] {$\bm{F}_{d,W}$ [N]} (conversion.west);
 
-  % Entrada de yaw de referencia a la conversión
-  \node[above=0.6cm of conversion] (ref_yaw) {Yaw deseado\\$\psi_{\text{ref}}$};
-  \draw[line] (ref_yaw) -- (conversion);
+  % Entrada de guiñada de referencia a la conversión
+  \node[above=0.6cm of conversion] (ref_guiñada) {Guiñada\\$\psi_{\text{ref}}$};
+  \draw[line] (ref_guiñada) -- (conversion);
 
   % ==========================================
   % LAZO INTERNO: ACTITUD (FRD / CUERPO)
   % ==========================================
-  \node[sum, right=1.6cm of conversion] (sum_att) {\Large $+$};
+  \node[sum, right=1.2cm of conversion] (sum_att) {\Large $+$};
   \node[anchor=south west, font=\sffamily\tiny] at (sum_att.north west) {$-$};
 
-  \node[box, right=of sum_att] (pd_att) {
+  \node[box, right=0.9cm of sum_att] (pd_att) {
     \textbf{PD de Actitud}\\
     $\bm{K}_{p,\text{att}} \bm{e}_{\text{att}} - \bm{K}_{d,\text{att}} \bm{\omega}_B$
   };
   
-  \node[sum, right=of pd_att] (sum_gyro) {\Large $+$};
+  \node[sum, right=1.4cm of pd_att] (sum_gyro) {\Large $+$};
 
   % Conexiones internas
   \draw[line] (sum_att) -- node[above, font=\sffamily\scriptsize] {$\bm{e}_{\text{att}}$} (pd_att);
@@ -105,25 +104,25 @@
   \node[anchor=south, font=\sffamily\bfseries, color=blue!60!black, align=center] at ($(pd_att.north) + (0,0.5)$) {Lazo Interno (Actitud)\\Cuerpo (FRD)};
 
   % Conexiones de la conversión al lazo interno
-  \draw[line] (conversion.east) -- node[above, font=\sffamily\scriptsize] {$\bm{q}_{\text{des}}$} (sum_att.west);
+  \draw[line] (conversion.east) -- node[above, xshift=-0.2cm, font=\sffamily\scriptsize] {$\bm{q}_{\text{des}}$} (sum_att.west);
 
   % ==========================================
-  % MEZCLADOR Y PLANTA
+  % MIXER Y PLANTA
   % ==========================================
-  \node[box, right=2.6cm of sum_gyro, fill=gray!10] (mixer) {
-    \textbf{Mezclador}\\
+  \node[box, right=1.7cm of sum_gyro, fill=gray!10] (mixer) {
     \textbf{(Mixer)}\\
     Asignación Rotores
   };
   
   % Planta alineada en la cadena directa (mixer -> planta), no desplazada abajo-derecha
-  \node[box, right=1.2cm of mixer, fill=gray!20] (planta) {
-    \textbf{Planta (Cuadricóptero)}\\
-    RK4, Actuadores y Física
+  \node[box, right=0.9cm of mixer, fill=gray!20] (planta) {
+    \textbf{Planta}\\
+    RK4, Actuadores\\
+    y Física
   };
 
-  % Conectar lazo interno al mezclador (más separación respecto al lazo interno azul)
-  \draw[line] (sum_gyro.east) -- node[above, font=\sffamily\scriptsize] {$\bm{\tau}_B$ [N m]} (mixer.west);
+  % Conectar lazo interno al mixer (más separación respecto al lazo interno azul)
+  \draw[line] (sum_gyro.east) -- node[above, xshift=0.2cm, font=\sffamily\scriptsize] {$\bm{\tau}_B$ [N m]} (mixer.west);
   
   % Empuje colectivo: etiqueta T [N] en el tramo horizontal, hacia la izquierda
   \coordinate (t_corner) at ($(conversion.south) + (0,-1.8)$);
@@ -131,7 +130,7 @@
   \draw[line] (t_corner) -| (mixer.south);
   \node[above, font=\sffamily\scriptsize] at ($(t_corner)!0.18!(mixer.south |- t_corner)$) {$T$ [N]};
 
-  % Conexión directa mezclador -> planta
+  % Conexión directa mixer -> planta
   \draw[line] (mixer.east) -- node[above, font=\sffamily\scriptsize] {$\bm{\omega}_{\text{target}}$} (planta.west);
 
   % ==========================================
@@ -141,13 +140,13 @@
   % 1. Realimentación de actitud (Bucle corto): sube por encima del término giroscópico
   \draw[dashline] (planta.north) -- ++(0, 1.8) coordinate (fb_att_h);
   \draw[dashline] (fb_att_h) -| (sum_att.north);
-  \node[above, font=\sffamily\scriptsize] at ($(fb_att_h)!0.5!(sum_att.north |- fb_att_h)$)
+  \node[above, font=\sffamily\scriptsize] at ($(fb_att_h)!0.65!(sum_att.north |- fb_att_h)$)
     {Actitud $\bm{q}$, vel. angular $\bm{\omega}_B$};
 
   % 2. Realimentación de posición (Bucle largo): más abajo para no pisar compensación ni saturación
   \draw[dashline] (planta.south) -- ++(0, -2.4) coordinate (fb_pos_h);
   \draw[dashline] (fb_pos_h) -| (sum_pos.south);
-  \node[below, font=\sffamily\scriptsize] at ($(fb_pos_h)!0.22!(sum_pos.south |- fb_pos_h)$)
+  \node[below, font=\sffamily\scriptsize] at ($(fb_pos_h)!0.65!(sum_pos.south |- fb_pos_h)$)
     {Posición $\bm{x}$, velocidad $\dot{\bm{x}}$};
 
 \end{tikzpicture}

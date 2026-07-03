@@ -24,7 +24,7 @@
 
   % --- COLUMNA 1: NIVEL 1 (ID) ---
   \node[colbox, draw=green!60!black, fill=green!2] (col1) at (0,0) {};
-  \node[anchor=north, font=\sffamily\bfseries, color=green!60!black, yshift=-0.2cm] (t1) at (col1.north) {Nivel 1\\Interpolación ID};
+  \node[anchor=north, font=\sffamily\bfseries, color=green!60!black, yshift=-0.2cm] (t1) at (col1.north) {Nivel 1\\Variación ID};
   \node[lvlbox] (lvl1) at ($(col1.center) + (0,-0.1)$) {
     \textbf{Familias Nominales}\\
     - Hold\\
@@ -45,13 +45,13 @@
     (e.g., PID de Circle\\
     evaluado en Waypoint)
   };
-  \node[anchor=south, font=\sffamily\bfseries\scriptsize, color=blue!50!black, yshift=0.2cm] at (col2.south) {Robustez Clásica\\(Línea Base)};
+  \node[anchor=south, font=\sffamily\bfseries\scriptsize, color=blue!50!black, yshift=0.2cm] at (col2.south) {Robustez Clásica};
 
   % --- COLUMNA 3: NIVEL 3 (OOD Mixta) ---
   \node[colbox, draw=orange!70!black, fill=orange!3, right=0.6cm of col2] (col3) {};
   \node[anchor=north, font=\sffamily\bfseries, color=orange!70!black, yshift=-0.2cm] (t3) at (col3.north) {Nivel 3\\Composiciones};
   \node[lvlbox] (lvl3) at ($(col3.center) + (0,-0.1)$) {
-    \textbf{Misiones Compuestas}\\
+    \textbf{Rutas Compuestas}\\
     Trayectorias hiladas\\
     secuencialmente\\
     (Hold $\to$ Circle $\to$\\
@@ -67,13 +67,13 @@
     - Lemniscatas\\
     - Lissajous complejas
   };
-  \node[anchor=south, font=\sffamily\bfseries\scriptsize, color=purple!70!black, yshift=0.2cm] at (col4.south) {Generalización\\OOD Total};
+  \node[anchor=south, font=\sffamily\bfseries\scriptsize, color=purple!70!black, yshift=0.2cm] at (col4.south) {Generalización\\OOD Absoluta};
 
   % ==========================================
   % FLECHA INFERIOR DE DIFICULTAD CRECIENTE
   % ==========================================
   \draw[line, line width=2.0pt, color=black!60] 
-    ($(col1.south west) + (0, -0.6)$) -- node[below, font=\sffamily\bfseries\color{black!70}, yshift=-0.1cm] {Grado de Novedad e Independencia de Ensayos Creciente} ($(col4.south east) + (0, -0.6)$);
+    ($(col1.south west) + (0, -0.6)$) -- node[below, font=\sffamily\bfseries\color{black!70}, yshift=-0.1cm] {Grado de Novedad Creciente} ($(col4.south east) + (0, -0.6)$);
 
 \end{tikzpicture}
 \end{document}

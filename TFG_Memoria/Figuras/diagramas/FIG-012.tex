@@ -4,6 +4,7 @@
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 \usepackage[spanish,es-tabla]{babel}
+\spanishdecimal{.}
 \usepackage{amsmath, amssymb, bm}
 
 \begin{document}
@@ -23,13 +24,13 @@
   % ==========================================
   % ENTRADAS
   % ==========================================
-  \node[box, fill=gray!5] (entradas) {\textbf{Entradas del Mixer}:\\Colectivo $T$ [N]\\Momentos $\bm{\tau}_B$ [N m]};
+  \node[box, fill=gray!5] (entradas) {\textbf{Entradas del Mixer}\\Colectivo $T$ [N]\\Momentos $\bm{\tau}_B$ [N m]};
 
   % ==========================================
   % BLOQUE 1: PROYECCIÓN INVERSA
   % ==========================================
-  \node[box, right=of entradas, yshift=0cm, minimum width=3.8cm] (proyeccion) {
-    \textbf{Proyección lineal} ($\bm{M}^{-1}$):\\
+  \node[box, below=of entradas, minimum width=3.8cm] (proyeccion) {
+    \textbf{Proyección lineal} ($\bm{M}^{-1}$)\\
     $T_{\text{thrust\_part}} = \bm{M}^{-1} [T, 0, 0, 0]^\mathsf{T}$\\
     $T_{\text{moment\_part}} = \bm{M}^{-1} [0, \tau_x, \tau_y, \tau_z]^\mathsf{T}$
   };
@@ -38,31 +39,31 @@
   % ==========================================
   % BLOQUE 2: LÍMITES DE HOLGURA
   % ==========================================
-  \node[box, right=of proyeccion, minimum width=3.8cm] (limites) {
-    \textbf{Límites de holgura}:\\
+  \node[box, below=of proyeccion, minimum width=3.8cm] (limites) {
+    \textbf{Límites de holgura}\\
     $\delta_{\min} = \max_i(T_{\min} - T_{\text{thrust\_part},i} - T_{\text{moment\_part},i})$\\
     $\delta_{\max} = \min_i(T_{\max} - T_{\text{thrust\_part},i} - T_{\text{moment\_part},i})$
   };
   \draw[line] (proyeccion) -- (limites);
 
   % ==========================================
-  % BLOQUE DECISIÓN: FACTIBLE
+  % BLOQUE DECISIÓN: NOMINAL
   % ==========================================
   \node[decision, below=1.2cm of limites] (decidir) {{\textquestiondown}$\delta_{\max} \ge \delta_{\min}$?\\({\textquestiondown}Existe holgura?)};
   \draw[line] (limites) -- (decidir);
 
   % ==========================================
-  % RUTA FACTIBLE (SÍ)
+  % RUTA NOMINAL (SÍ)
   % ==========================================
-  \node[pathbox, below left=1.2cm and 0.3cm of decidir, minimum width=4.8cm, minimum height=1.5cm] (factible) {
-    \textbf{Ruta Factible}\\
-    Desplazamiento óptimo de colectivo:\\
+  \node[pathbox, below left=1.2cm and 0.3cm of decidir, minimum width=4.8cm, minimum height=1.5cm] (nominal) {
+    \textbf{Ruta Nominal}\\
+    Desplazamiento de colectivo\\
     $\delta = \operatorname{clip}(0.0, \delta_{\min}, \delta_{\max})$\\[0.1cm]
-    Empuje de motor solicitado:\\
+    Empuje de motor solicitado\\
     $T_{\text{req}} = T_{\text{thrust\_part}} + \delta + T_{\text{moment\_part}}$
   };
-  % Conectar decidir con factible (L-shape elbow)
-  \draw[line] (decidir.west) -| node[above left, pos=0.5, font=\sffamily\bfseries\color{green!60!black}] {SÍ} (factible.north);
+  % Conectar decidir con nominal (L-shape elbow)
+  \draw[line] (decidir.west) -| node[above left, pos=0.3, font=\sffamily\bfseries\color{green!60!black}] {SÍ} (nominal.north);
 
   % ==========================================
   % RUTA SATURADA (NO)
@@ -70,18 +71,18 @@
   \node[pathbox, below right=1.2cm and 0.3cm of decidir, minimum width=4.8cm, minimum height=1.5cm] (saturado) {
     \textbf{Ruta de Saturación}\\
     Fijar empuje medio $T_{\text{target}} = \frac{T_{\min} + T_{\max}}{2.0}$\\[0.1cm]
-    Recorte proporcional de actitud:\\
+    Recorte proporcional de actitud\\
     $k = \min_i \left( \operatorname{recorte}(T_{\text{target}}, T_{\text{moment\_part}}) \right)$\\[0.1cm]
-    Empuje de motor solicitado:\\
+    Empuje de motor solicitado\\
     $T_{\text{req}} = T_{\text{target}} + k \, T_{\text{moment\_part}}$
   };
   % Conectar decidir con saturado (L-shape elbow)
-  \draw[line] (decidir.east) -| node[above right, pos=0.5, font=\sffamily\bfseries\color{red!70!black}] {NO} (saturado.north);
+  \draw[line] (decidir.east) -| node[above right, pos=0.3, font=\sffamily\bfseries\color{red!70!black}] {NO} (saturado.north);
 
   % ==========================================
   % UNIÓN Y BLOQUES FINALES
   % ==========================================
-  \coordinate (union) at ($(factible.south)!0.5!(saturado.south) + (0,-1.0)$);
+  \coordinate (union) at ($(nominal.south)!0.5!(saturado.south) + (0,-1.0)$);
 
   % Bloque de Saturación Hard (Desplazado hacia abajo para dar aire)
   \node[box, below=2.8cm of decidir, yshift=-1.5cm, minimum width=4.0cm] (sat_hard) {
@@ -90,30 +91,29 @@
   };
 
   % Bloque de Conversión a velocidad angular
-  \node[box, right=1.0cm of sat_hard, minimum width=3.8cm] (conversion) {
-    \textbf{Conversión dinámica}\\
-    (Empuje a velocidad de rotor):\\
+  \node[box, below=0.8cm of sat_hard, minimum width=3.8cm] (conversion) {
+    \textbf{Conversión a velocidad del rotor}\\[0.15cm]
     $\omega_i = \sqrt{T_{\text{req}, i} / k_f}$
   };
 
   % Bloque de Salidas
-  \node[box, right=1.0cm of conversion, fill=gray!5] (salidas) {
+  \node[box, below=0.8cm of conversion, fill=gray!5] (salidas) {
     \textbf{Salidas del Mixer}:\\
     Comando $\bm{\omega}_{\text{target}}$ [rad/s]\\
-    Flag de Degradación
+    Aviso de Degradación
   };
 
-  % Conectar rutas a sat_hard.north de forma simétrica sin cruzar la caja (aumentada holgura a -0.8)
-  \draw[line] (factible.south) -- ++(0,-0.8) -| ($(sat_hard.north) + (-0.8,0)$);
-  \draw[line] (saturado.south) -- ++(0,-0.8) -| ($(sat_hard.north) + (0.8,0)$);
+  % Conectar rutas a sat_hard.north de forma simétrica sin cruzar la caja
+  \draw[line] (nominal.south) -- ++(0,-0.8) -| ($(sat_hard.north) + (-0.8,0)$);
+  \draw[line] (saturado.south) -- ++(0,-0.6) -| ($(sat_hard.north) + (0.4,0)$);
   
   % Conectar sat_hard a conversion y salidas
   \draw[line] (sat_hard) -- (conversion);
   \draw[line] (conversion) -- (salidas);
 
   % Anotaciones del flujo (posicionadas a los lados exteriores de las líneas de caída)
-  \node[anchor=north east, font=\sffamily\scriptsize\itshape, text=black!50] at ($(factible.south) + (-0.1, -0.1)$) {Conserva momentos intactos};
-  \node[anchor=north west, font=\sffamily\scriptsize\itshape, text=black!50] at ($(saturado.south) + (0.1, -0.1)$) {Prioriza actitud, reduce colectivo};
+  \node[anchor=north east, font=\sffamily\scriptsize\itshape, text=black!50] at ($(nominal.south) + (3.3, -0.4)$) {Conserva momentos intactos};
+  \node[anchor=north west, font=\sffamily\scriptsize\itshape, text=black!50] at ($(saturado.south) + (-3.9, -0.25)$) {Prioriza actitud, reduce colectivo};
 
 \end{tikzpicture}
 \end{document}

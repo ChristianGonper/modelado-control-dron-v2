@@ -60,130 +60,133 @@
   \draw[line] (x2) -- (h2);
 
   % Conexiones horizontales (paso del tiempo)
-  \draw[line] ($(h0.east) + (0,0.15)$) -- node[above=0.02cm, font=\sffamily\scriptsize, text=black!60] {$h_{t-1} \to h_t$} ($(h1.west) + (0,0.15)$);
+  \draw[line] ($(h0.east) + (0,0.15)$) -- node[above=0.02cm, font=\sffamily\small, text=black!60] {$h_{t-1} \to h_t$} ($(h1.west) + (0,0.15)$);
   \draw[line] ($(h1.east) + (0,0.15)$) -- ($(h2.west) + (0,0.15)$);
   \draw[line] (h2) -- (outputB);
   
   % Conexiones del gradiente (retropropagación hacia atrás)
-  \draw[gradline, red!60!black, line width=1.2pt] ($(h1.west) + (0,-0.15)$) -- node[below, font=\sffamily\tiny\bfseries, text=red!80!black] {Gradiente} ($(h0.east) + (0,-0.15)$);
-  \draw[gradline, red!30!black, line width=0.6pt] ($(h2.west) + (0,-0.15)$) -- node[below, font=\sffamily\tiny, text=red!60!black] {Atenuación} ($(h1.east) + (0,-0.15)$);
+  \draw[gradline, red!60!black, line width=1.2pt] ($(h1.west) + (0,-0.15)$) -- node[below, font=\sffamily\scriptsize\bfseries, text=red!80!black] {Gradiente} ($(h0.east) + (0,-0.15)$);
+  \draw[gradline, red!30!black, line width=0.6pt] ($(h2.west) + (0,-0.15)$) -- node[below, font=\sffamily\scriptsize, text=red!60!black] {Atenuación} ($(h1.east) + (0,-0.15)$);
   
   % Entrada y salida del flujo temporal general
   \draw[line, dashed, gray] ($(h0.west) + (-0.8,0.15)$) -- ($(h0.west) + (0,0.15)$);
-  \node[left=0.8cm of h0, yshift=0.15cm, font=\sffamily\scriptsize, text=black!60] {$h_{k-3}$};
+  \node[left=0.8cm of h0, yshift=0.15cm, font=\sffamily\small, text=black!60] {$h_{k-3}$};
 
   % ==========================================
-  % PANEL C: ARQUITECTURAS CON COMPUERTAS (LSTM / GRU) - MEMORIA SELECTIVA
+  % PANEL C: CÉLULA LONG SHORT-TERM MEMORY (LSTM)
   % ==========================================
-  \node[font=\sffamily\bfseries\large, text=black!85, anchor=center] (tituloC) at (11.2, 0.2) {C. Arquitecturas Recurrentes con Compuertas -- Regulación selectiva de la memoria};
+  \node[font=\sffamily\bfseries\large, text=black!85, anchor=center] (tituloC) at (11.2, 0.4) {C. Célula Long Short-Term Memory (LSTM) -- Regulación mediante estado de celda};
 
-  % --- SUB-PANEL LSTM ---
-  \coordinate (lstmorigen) at (0.2, -1.0);
+  \coordinate (lstmorigen) at (5.2, -0.6);
 
-  \node[cellbox, minimum width=10.2cm, minimum height=6.0cm, anchor=north west] (lstmcella) at (lstmorigen) {};
+  \node[cellbox, minimum width=12.0cm, minimum height=4.8cm, anchor=north west] (lstmcella) at (lstmorigen) {};
   \node[above=0.05cm of lstmcella.north west, anchor=south west, font=\sffamily\bfseries\small, text=purple!80!black] {Célula LSTM};
 
-  % Carril superior: estado de celda
+  % Carril superior: estado de celda c_k
   \node[labeltext, anchor=east] (c_prev) at ($(lstmorigen) + (0, -1.0)$) {$c_{k-1}$};
-  \node[op] (mult_f) at ($(lstmorigen) + (2.6, -1.0)$) {$\otimes$};
-  \node[op] (add_i) at ($(lstmorigen) + (5.8, -1.0)$) {$\oplus$};
-  \node[labeltext, anchor=west] (c_next) at ($(lstmorigen) + (10.2, -1.0)$) {$c_k$};
+  \node[op] (mult_f) at ($(lstmorigen) + (2.5, -1.0)$) {$\otimes$};
+  \node[op] (add_i) at ($(lstmorigen) + (6.0, -1.0)$) {$\oplus$};
+  \node[labeltext, anchor=west] (c_next) at ($(lstmorigen) + (12.0, -1.0)$) {$c_k$};
 
-  % Fila de compuertas (columnas alineadas con operaciones)
-  \node[gate] (gate_f) at ($(lstmorigen) + (2.6, -3.3)$) {Compuerta\\olvido ($f_k$)};
-  \node[gate] (gate_i) at ($(lstmorigen) + (5.8, -3.3)$) {Compuerta\\entrada ($i_k$)};
-  \node[gate] (gate_o) at ($(lstmorigen) + (7.8, -3.3)$) {Compuerta\\salida ($o_k$)};
+  % Fila de compuertas y candidato (columnas alineadas con operaciones)
+  \node[gate] (gate_f) at ($(lstmorigen) + (2.5, -3.6)$) {Compuerta\\olvido ($f_k$)};
+  \node[gate] (gate_i) at ($(lstmorigen) + (4.8, -3.6)$) {Compuerta\\entrada ($i_k$)};
+  \node[gate, draw=purple!80!black, fill=purple!5, thick] (gate_c) at ($(lstmorigen) + (7.2, -3.6)$) {Candidato\\celda ($\tilde{\bm{c}}_k$)};
+  \node[gate] (gate_o) at ($(lstmorigen) + (11.0, -3.6)$) {Compuerta\\salida ($o_k$)};
 
-  % Carril de salida oculta (columna derecha, por encima de compuertas)
-  \node[labeltext, anchor=east] (h_prev) at ($(lstmorigen) + (0, -2.1)$) {$h_{k-1}$};
-  \node[op] (tanh_act) at ($(lstmorigen) + (7.6, -2.1)$) {$\tanh$};
-  \node[op] (mult_o) at ($(lstmorigen) + (9.3, -2.1)$) {$\otimes$};
-  \node[labeltext, anchor=west] (h_next) at ($(lstmorigen) + (10.2, -2.1)$) {$h_k$};
+  % Carril de salida oculta (operaciones intermedias)
+  \node[labeltext, anchor=east] (h_prev) at ($(lstmorigen) + (0, -2.2)$) {$h_{k-1}$};
+  \node[op] (mult_i) at ($(lstmorigen) + (6.0, -2.2)$) {$\otimes$};
+  \node[op] (tanh_act) at ($(lstmorigen) + (8.6, -2.2)$) {$\tanh$};
+  \node[op] (mult_o) at ($(lstmorigen) + (11.0, -2.2)$) {$\otimes$};
+  \node[labeltext, anchor=west] (h_next) at ($(lstmorigen) + (12.0, -2.2)$) {$h_k$};
 
-  \node[box, draw=gray!40, fill=gray!1, minimum width=1.0cm, minimum height=0.5cm] (x_lstm) at ($(lstmorigen) + (5.0, -6.35)$) {$\bm{x}_k$};
+  \node[box, draw=gray!40, fill=gray!1, minimum width=0.7cm, minimum height=0.5cm] (x_lstm) at ($(lstmorigen) + (6.0, -5.2)$) {$\bm{x}_k$};
 
   % Flujo de estado de celda (carril alto, sin cruces)
   \draw[line] (c_prev.east) -- (mult_f.west);
   \draw[line] (mult_f.east) -- (add_i.west);
   \draw[line] (add_i.east) -- (c_next.west);
 
-  % Compuertas al carril superior (verticales cortas)
+  % Compuertas al carril superior e intermedio
   \draw[line] (gate_f.north) -- (mult_f.south);
-  \draw[line] (gate_i.north) -- (add_i.south);
+  \draw[line] (gate_i.north) |- (mult_i.west);
+  \draw[line] (gate_c.north) |- (mult_i.east);
+  \draw[line] (mult_i.north) -- (add_i.south);
 
-  % Salida oculta: rama de $c_k$ entra a tanh por la izquierda
-  \draw[line] (add_i.east) -- ++(0.5, 0) coordinate (lstm_branch_c);
-  \draw[line] (lstm_branch_c) |- (tanh_act.west);
+  % Salida oculta: rama de c_k entra a tanh por arriba
+  \coordinate (lstm_branch_c) at ($(lstmorigen) + (8.6, -1.0)$);
+  \draw[line] (lstm_branch_c) -- (tanh_act.north);
   \draw[line] (tanh_act.east) -- (mult_o.west);
+  \draw[line] (gate_o.north) -- (mult_o.south);
   \draw[line] (mult_o.east) -- (h_next.west);
 
-  % Compuerta de salida: sale por el este, baja y entra al $\otimes$ desde abajo
-  \draw[line] (gate_o.east) -- ++(0.55, 0) coordinate (lstm_o_east);
-  \draw[line] (lstm_o_east) -| (mult_o.south);
-
-  % $h_{k-1}$: anillo inferior amplio; entra a compuertas por la derecha
-  \coordinate (lstm_hdrop) at ($(lstmorigen) + (1.1, -2.1)$);
-  \coordinate (lstm_hwrap) at ($(lstmorigen) + (1.1, -6.7)$);
-  \coordinate (lstm_hring) at ($(lstmorigen) + (8.53, -6.7)$);
-  \draw[line] (h_prev.east) -- (lstm_hdrop);
+  % h_{k-1}: anillo inferior amplio; entra a compuertas por la derecha
+  \coordinate (lstm_hdrop) at ($(lstmorigen) + (1.0, -2.2)$);
+  \coordinate (lstm_hwrap) at ($(lstmorigen) + (1.0, -5.5)$);
+  \coordinate (lstm_hring) at ($(lstmorigen) + (11.725, -5.5)$);
+  \draw[thick] (h_prev.east) -- (lstm_hdrop);
   \draw[line] (lstm_hdrop) -- (lstm_hwrap);
   \draw[line] (lstm_hwrap) -- (lstm_hring);
   \draw[line] (lstm_hwrap) -| (gate_f.south east);
   \draw[line] (lstm_hwrap) -| (gate_i.south east);
+  \draw[line] (lstm_hwrap) -| (gate_c.south east);
   \draw[line] (lstm_hring) -| (gate_o.south east);
 
-  % $x_k$: bus intermedio; entra a compuertas por la izquierda
+  % x_k: bus intermedio; entra a compuertas por la izquierda
   \coordinate (lstm_xbus) at ($(x_lstm.north) + (0, 0.45)$);
   \draw[line] (x_lstm.north) -- (lstm_xbus);
   \draw[line] (lstm_xbus) -| (gate_f.south west);
   \draw[line] (lstm_xbus) -| (gate_i.south west);
+  \draw[line] (lstm_xbus) -| (gate_c.south west);
   \draw[line] (lstm_xbus) -| (gate_o.south west);
 
 
-  % --- SUB-PANEL GRU ---
-  \coordinate (gruorigen) at (13.0, -1.0);
+  % ==========================================
+  % PANEL D: CÉLULA GATED RECURRENT UNIT (GRU)
+  % ==========================================
+  \node[font=\sffamily\bfseries\large, text=black!85, anchor=center] (tituloD) at (11.2, -7.5) {D. Célula Gated Recurrent Unit (GRU) -- Compuertas simplificadas};
 
-  \node[grubox, minimum width=9.2cm, minimum height=6.0cm, anchor=north west] (grucella) at (gruorigen) {};
+  \coordinate (gruorigen) at (6.2, -8.5);
+
+  \node[grubox, minimum width=10.0cm, minimum height=4.8cm, anchor=north west] (grucella) at (gruorigen) {};
   \node[above=0.05cm of grucella.north west, anchor=south west, font=\sffamily\bfseries\small, text=orange!80!black] {Célula GRU};
 
-  % Carril superior: actualización de $h_k$
+  % Carril superior: actualización de h_k (operadores alineados con compuertas)
   \node[labeltext, anchor=east] (h_gru_prev) at ($(gruorigen) + (0, -1.2)$) {$h_{k-1}$};
-  \node[op] (mix) at ($(gruorigen) + (3.2, -1.2)$) {$\otimes$};
-  \node[op] (add_gru) at ($(gruorigen) + (6.8, -1.2)$) {$\oplus$};
-  \node[labeltext, anchor=west] (h_gru_next) at ($(gruorigen) + (9.2, -1.2)$) {$h_k$};
+  \node[op] (mix) at ($(gruorigen) + (2.5, -1.2)$) {$\otimes$};
+  \node[op] (add_gru) at ($(gruorigen) + (8.2, -1.2)$) {$\oplus$};
+  \node[labeltext, anchor=west] (h_gru_next) at ($(gruorigen) + (10.0, -1.2)$) {$h_k$};
 
-  % Fila inferior: compuertas y candidato (más separados)
-  \node[gate] (gate_z) at ($(gruorigen) + (2.2, -3.4)$) {Compuerta\\act. ($z_k$)};
-  \node[gate] (gate_r) at ($(gruorigen) + (4.8, -3.4)$) {Compuerta\\reinicio ($r_k$)};
-  \node[box, draw=orange!40, fill=orange!2, minimum width=1.6cm, minimum height=0.6cm, font=\sffamily\scriptsize] (cand) at ($(gruorigen) + (7.8, -3.4)$) {Candidato $\tilde{h}_k$};
+  % Fila inferior: compuertas y candidato (posiciones originales revertidas)
+  \node[gate] (gate_z) at ($(gruorigen) + (2.5, -3.4)$) {Compuerta\\act. ($z_k$)};
+  \node[gate] (gate_r) at ($(gruorigen) + (5.2, -3.4)$) {Compuerta\\reinicio ($r_k$)};
+  \node[box, draw=orange!40, fill=orange!2, minimum width=1.6cm, minimum height=0.6cm, font=\sffamily\scriptsize] (cand) at ($(gruorigen) + (8.2, -3.4)$) {Candidato $\tilde{h}_k$};
 
-  \node[box, draw=gray!40, fill=gray!1, minimum width=1.0cm, minimum height=0.5cm] (x_gru) at ($(gruorigen) + (4.5, -6.35)$) {$\bm{x}_k$};
+  \node[box, draw=gray!40, fill=gray!1, minimum width=0.7cm, minimum height=0.5cm] (x_gru) at ($(gruorigen) + (5.0, -5.2)$) {$\bm{x}_k$};
 
-  % Flujo principal de $h_k$ (margen izquierdo, por encima de compuertas)
-  \coordinate (gru_hdrop) at ($(gruorigen) + (1.1, -1.2)$);
-  \draw[line] (h_gru_prev.east) -- (gru_hdrop);
+  % Flujo principal de h_k
+  \coordinate (gru_hdrop) at ($(gruorigen) + (1.0, -1.2)$);
+  \draw[thick] (h_gru_prev.east) -- (gru_hdrop);
   \draw[line] (gru_hdrop) -- (mix.west);
   \draw[line] (mix.east) -- (add_gru.west);
   \draw[line] (add_gru.east) -- (h_gru_next.west);
 
-  % Compuerta de actualización al $\otimes$ con codo ortogonal
-  \draw[line] (gate_z.north) -- ++(0, 0.55) coordinate (gru_z_elbow);
-  \draw[line] (gru_z_elbow) -| (mix.south);
-
-  % Candidato al sumador (columna propia, separada del reinicio)
+  % Conexiones de compuertas a los operadores (ahora verticales y rectos)
+  \draw[line] (gate_z.north) -- (mix.south);
   \draw[line] (gate_r.east) -- (cand.west);
-  \draw[line] (cand.north) -- ++(0, 0.575) -| (add_gru.south);
+  \draw[line] (cand.north) -- (add_gru.south);
 
-  % $h_{k-1}$: anillo inferior amplio; entra por la derecha de compuertas y candidato
-  \coordinate (gru_hwrap) at ($(gruorigen) + (1.1, -6.7)$);
-  \coordinate (gru_hring) at ($(gruorigen) + (8.5, -6.7)$);
+  % h_{k-1}: anillo inferior amplio; entra por la derecha de compuertas y candidato (cercano a x_k)
+  \coordinate (gru_hwrap) at ($(gruorigen) + (1.0, -5.5)$);
+  \coordinate (gru_hring) at ($(gruorigen) + (9.1, -5.5)$);
   \draw[line] (gru_hdrop) -- (gru_hwrap);
   \draw[line] (gru_hwrap) -- (gru_hring);
   \draw[line] (gru_hwrap) -| (gate_z.south east);
   \draw[line] (gru_hwrap) -| (gate_r.south east);
   \draw[line] (gru_hring) -| (cand.south east);
 
-  % $x_k$: bus intermedio; entra por la izquierda
+  % x_k: bus intermedio; entra por la izquierda
   \coordinate (gru_xbus) at ($(x_gru.north) + (0, 0.45)$);
   \draw[line] (x_gru.north) -- (gru_xbus);
   \draw[line] (gru_xbus) -| (gate_z.south west);

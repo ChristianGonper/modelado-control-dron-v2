@@ -23,77 +23,74 @@
   % ==========================================
   % FILA 1: ETAPA I (y = 0.0)
   % ==========================================
-  \node[phasebox] (f1) at (0,0) {\textbf{Fase 1}\\Tests\\(\texttt{pytest})};
+  \node[phasebox] (f1) at (0,0) {\textbf{Fase 1}\\Tests y validación\\ de entradas};
   \node[phasebox] (f2) at (3.6,0) {\textbf{Fase 2}\\Dataset Clásico\\Inicial};
-  \node[phasebox] (f3) at (7.2,0) {\textbf{Fase 3}\\Diagnóstico y\\Ajuste PID};
-  \node[phasebox] (f4) at (10.8,0) {\textbf{Fase 4}\\Baseline Clásico\\con PIDs Congelados};
+  \node[phasebox] (f3) at (7.2,0) {\textbf{Fase 3}\\Diagnóstico y\\Ajuste PD};
+  \node[phasebox] (f4) at (10.8,0) {\textbf{Fase 4}\\Simulaciones clásicas\\y transferencia};
 
   \draw[line] (f1) -- (f2);
   \draw[line] (f2) -- (f3);
   \draw[line] (f3) -- (f4);
 
   % Artefacto de PIDs congelados - centrado en X=9.0, y=-1.55
-  \node[artbox] (art_pids) at (9.0,-1.55) {YAMLs de PIDs\\congelados por\\escenario};
+  \node[artbox] (art_pids) at (9.0,-1.55) {YAMLs de PDs\\congelados por\\escenario};
   
   \draw[dashline] (f3.south) |- (art_pids.west);
 
   % ==========================================
-  % FILA 2: ETAPA II (Fase 5 en y=-3.9, Fase 6 en y=-5.5, Fase 7 y art_weights en y=-4.7)
+  % FILA 2: ETAPA II (Fase 5 en y=-4.7, Fase 6 y art_weights en y=-4.7)
   % ==========================================
-  \node[phasebox] (f5) at (2.0,-4.1) {\textbf{Fase 5}\\Dataset Fuerza\\Externa (Imitación)};
-  \node[phasebox] (f6) at (2.0,-5.7) {\textbf{Fase 6}\\Dataset Ganancias\\de Posición};
-  \node[phasebox] (f7) at (7.2,-4.7) {\textbf{Fase 7}\\Entrenamiento\\MLP / GRU / LSTM};
+  \node[phasebox] (f5) at (2.7,-4.7) {\textbf{Fase 5}\\Dataset Fuerza\\Externa (Imitación)};
+  \node[phasebox] (f6) at (7.2,-4.7) {\textbf{Fase 6}\\Entrenamiento\\MLP / GRU / LSTM};
   \node[artbox] (art_weights) at (10.8,-4.7) {Checkpoints de\\modelos entrenados\\(\texttt{best.pt})};
 
-  % Entradas de la Etapa I a las Fases 5 y 6 (cableado paralelo continuo/discontinuo)
-  \coordinate (in_cont) at (-0.5,-3.25);
-  \coordinate (in_dash) at (0,-3.1);
+  % Entradas de la Etapa I a la Fase 5
+  \coordinate (in_cont) at (0.8,-3.65);
+  \coordinate (in_dash) at (0.3,-3.35);
   
   % Conexión del YAML (art_pids) a Fase 4 (entrada en X=10.5)
   \draw[dashline] (art_pids.east) -- (10.5,-1.55) -- (10.5,-0.55);
 
   % Canal de datos continuo: sale de f4.south desplazado a la derecha (en X=11.1), baja y va a la izquierda
-  \draw[thick] ($(f4.south)+(0.3,0)$) -- (11.1,-3.25) -- (in_cont);
-  \draw[line] (in_cont) |- ($(f5.west)+(0,0.15)$);
-  \draw[line] (in_cont) |- ($(f6.west)+(0,0.15)$);
+  \draw[thick] ($(f4.south)+(0.3,0)$) -- (11.1,-3.65) -- (in_cont);
+  \draw[line] (in_cont) |- ($(f5.west)+(0,+0.2)$);
 
   % Canal de parámetros discontinuo: derivación en X=10.5, baja y va a la izquierda
-  \draw[thick, dashed] (10.5,-1.55) -- (10.5,-3.1) -- (in_dash);
-  \draw[dashline] (in_dash) |- ($(f5.west)+(0,-0.15)$);
-  \draw[dashline] (in_dash) |- ($(f6.west)+(0,-0.15)$);
+  \draw[thick, dashed] (10.5,-1.55) -- (10.5,-3.35) -- (in_dash);
+  \draw[dashline] (in_dash) |- ($(f5.west)+(0,-0.3)$);
 
-  % Conexión limpia en "Y" de F5/F6 hacia F7 (flechas más directas al estar desplazadas a la izquierda)
-  \draw[line] (f5.east) -- ++(0.8,0) |- ($(f7.west)+(0,0.25)$);
-  \draw[line] (f6.east) -- ++(0.8,0) |- ($(f7.west)+(0,-0.25)$);
+  % Conexión directa de F5 a F6
+  \draw[line] (f5.east) -- (f6.west);
   
-  \draw[line] (f7.east) -- (art_weights.west);
+  \draw[line] (f6.east) -- (art_weights.west);
 
   % ==========================================
   % FILA 3: ETAPA III (y = -9.0, Panel más alto)
   % ==========================================
-  \node[phasebox] (f8) at (0,-9.0) {\textbf{Fase 8}\\Evaluación\\Supervisada};
-  \node[phasebox] (f9) at (3.6,-9.0) {\textbf{Fase 9}\\Simulación bucle\\cerrado (Test ID)};
-  \node[phasebox] (f10) at (7.2,-9.0) {\textbf{Fase 10}\\Simulación bucle\\cerrado (OOD)};
-  \node[phasebox] (f11) at (10.8,-9.0) {\textbf{Fase 11}\\Consolidación y\\tablas LaTeX};
-  \node[artbox] (art_latex) at (10.8,-10.65) {Tablas comparativas\\de rendimiento en\\LaTeX};
+  \node[phasebox] (f7) at (0,-9.0) {\textbf{Fase 7}\\Evaluación\\Supervisada};
+  \node[phasebox] (f8) at (3.6,-9.0) {\textbf{Fase 8}\\Simulación bucle\\cerrado (Test ID)};
+  \node[phasebox] (f9) at (7.2,-9.0) {\textbf{Fase 9}\\Simulación bucle\\cerrado (OOD)};
+  \node[phasebox] (f10) at (10.8,-9.0) {\textbf{Fase 10}\\Resumen\\
+  de métricas};
+  \node[artbox] (art_latex) at (10.8,-10.65) {Tablas comparativas\\de rendimiento};
 
   % Bus de checkpoints: baja de art_weights y corre horizontal a Y=-7.8 (por debajo del título)
   \draw[thick, dashed] (art_weights.south) -- (10.8,-7.8) -- (0,-7.8);
   
-  \draw[dashline] (0,-7.8) -- (f8.north);
-  \draw[dashline] (3.6,-7.8) -- (f9.north);
-  \draw[dashline] (7.2,-7.8) -- (f10.north);
+  \draw[dashline] (0,-7.8) -- (f7.north);
+  \draw[dashline] (3.6,-7.8) -- (f8.north);
+  \draw[dashline] (7.2,-7.8) -- (f9.north);
 
+  \draw[line] (f7) -- (f8);
   \draw[line] (f8) -- (f9);
   \draw[line] (f9) -- (f10);
-  \draw[line] (f10) -- (f11);
   
-  \draw[dashline] (f11.south) -- (art_latex.north);
+  \draw[dashline] (f10.south) -- (art_latex.north);
 
   % ==========================================
   % LÍNEA BASE CLÁSICA (Extremo derecho, exterior)
   % ==========================================
-  \draw[line, draw=black!30] (f4.east) -- (13.0,0) -- (13.0,-9.0) -- (f11.east);
+  \draw[line, draw=black!30] (f4.east) -- (13.0,0) -- (13.0,-9.0) -- (f10.east);
   \node[right, font=\sffamily\scriptsize\itshape, text=black!50] at (13.0,-4.5) {Línea base clásica};
 
   % ==========================================
@@ -109,8 +106,8 @@
   \end{scope}
 
   % Títulos de las Etapas colocados en la esquina superior izquierda
-  \node[anchor=north west, font=\sffamily\bfseries\footnotesize, color=blue!60!black] at (-1.25, 1.25) {ETAPA I: SINTONIZACIÓN Y LÍNEA DE BASE CLÁSICA};
-  \node[anchor=north west, font=\sffamily\bfseries\footnotesize, color=red!60!black] at (-1.25, -2.55) {ETAPA II: GENERACIÓN DE DEMOSTRACIONES Y ENTRENAMIENTO NEURONAL};
+  \node[anchor=north west, font=\sffamily\bfseries\footnotesize, color=blue!60!black] at (-1.25, 1.25) {ETAPA I: SINTONIZACIÓN Y SIMULACIONES CLÁSICAS};
+  \node[anchor=north west, font=\sffamily\bfseries\footnotesize, color=red!60!black] at (-1.25, -2.55) {ETAPA II: GENERACIÓN DE DATOS Y ENTRENAMIENTO NEURONAL};
   \node[anchor=north west, font=\sffamily\bfseries\footnotesize, color=green!50!black] at (-1.25, -6.95) {ETAPA III: EVALUACIÓN Y CONSOLIDACIÓN DE RESULTADOS};
 
 \end{tikzpicture}

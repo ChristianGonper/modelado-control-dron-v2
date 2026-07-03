@@ -35,17 +35,11 @@ def draw_spin_arrow(ax, rx, ry, direction, radius=0.20, color='gray'):
         
     x = rx + radius * np.cos(angles)
     y = ry + radius * np.sin(angles)
-    ax.plot(x, y, color=color, linewidth=1.0, zorder=8)
+    # Trazamos la línea pero paramos antes del final para dar espacio a la punta de la flecha
+    ax.plot(x[:-5], y[:-5], color=color, linewidth=1.0, zorder=8)
     
-    dt = angles[-1] - angles[-2]
-    dx = -radius * np.sin(angles[-1]) * np.sign(dt)
-    dy = radius * np.cos(angles[-1]) * np.sign(dt)
-    
-    length = np.hypot(dx, dy)
-    dx /= length
-    dy /= length
-    
-    ax.annotate('', xy=(x[-1], y[-1]), xytext=(x[-1]-dx*0.01, y[-1]-dy*0.01),
+    # Anotamos desde el punto donde termina la línea hasta el final real, con punta de flecha
+    ax.annotate('', xy=(x[-1], y[-1]), xytext=(x[-6], y[-6]),
                 arrowprops=dict(arrowstyle="-|>", color=color, lw=1.0, patchB=None, shrinkA=0, shrinkB=0, mutation_scale=6),
                 zorder=9)
 
@@ -128,7 +122,10 @@ def draw_plant_view(ax, xc, yc, thrust_states, yaw_net_moment=0.0):
                                     facecolor='#9ca3af', edgecolor='#4b5563', alpha=0.25, lw=0.6, zorder=5)
         ax.add_patch(propeller)
         
-        ax.text(rx, ry, f"{i}\n({sign})", ha='center', va='center', fontsize=7, color=text_color, fontweight='bold', zorder=7)
+        # Numeración de rotor (ligeramente bajada para no pisar el borde superior)
+        ax.text(rx, ry + 0.05, str(i), ha='center', va='center', fontsize=7, color=text_color, fontweight='bold', zorder=7)
+        # Signo de empuje (ligeramente subido para no pisar el borde inferior)
+        ax.text(rx, ry - 0.04, f"({sign})", ha='center', va='center', fontsize=6.2, color=text_color, fontweight='bold', zorder=7)
         
         spin_color = '#b91c1c' if spin == 'CW' else '#1d4ed8'
         draw_spin_arrow(ax, rx, ry, spin, radius=0.18, color=spin_color)
@@ -141,7 +138,7 @@ def draw_plant_view(ax, xc, yc, thrust_states, yaw_net_moment=0.0):
                                        color='#b45309', lw=1.8, zorder=10)
         ax.add_patch(arrow)
         # Etiqueta de momento colocada abajo a la izquierda en el hueco entre R1 y R3 para dar aire
-        ax.text(xc - 0.3, yc, r"$\tau_z > 0$", color='#b45309', ha='right', va='center', fontsize=8.5, fontweight='bold', zorder=10)
+        ax.text(xc - 0.1, yc, r"$\tau_z > 0$", color='#b45309', ha='right', va='center', fontsize=8.5, fontweight='bold', zorder=10)
     elif yaw_net_moment < 0.0:
         arrow = patches.FancyArrowPatch((xc + 0.22, yc + 0.22), (xc - 0.22, yc + 0.22),
                                        connectionstyle="arc3,rad=0.8",
@@ -159,11 +156,13 @@ def draw_rotated_drone_guiñada(ax, xc, yc, psi_deg=20):
     ax.plot([xc - d, xc + d], [yc + d, yc - d], color='#e2e8f0', linestyle='--', linewidth=1.5, zorder=1)
     ax.plot([xc + d, xc - d], [yc + d, yc - d], color='#e2e8f0', linestyle='--', linewidth=1.5, zorder=1)
     
-    # Ejes de referencia inercial
-    ax.annotate('', xy=(xc, yc + 0.75), xytext=(xc, yc),
-                arrowprops=dict(arrowstyle="->", color='#cbd5e1', lw=1.0, linestyle='--'), zorder=1)
-    ax.annotate('', xy=(xc + 0.75, yc), xytext=(xc, yc),
-                arrowprops=dict(arrowstyle="->", color='#cbd5e1', lw=1.0, linestyle='--'), zorder=1)
+    # Ejes de referencia inercial (líneas discontinuas con punta sólida y simétrica)
+    ax.plot([xc, xc], [yc, yc + 0.73], color='#cbd5e1', lw=1.0, linestyle='--', zorder=1)
+    ax.annotate('', xy=(xc, yc + 0.75), xytext=(xc, yc + 0.71),
+                arrowprops=dict(arrowstyle="->", color='#cbd5e1', lw=1.0, shrinkA=0, shrinkB=0), zorder=1)
+    ax.plot([xc, xc + 0.73], [yc, yc], color='#cbd5e1', lw=1.0, linestyle='--', zorder=1)
+    ax.annotate('', xy=(xc + 0.75, yc), xytext=(xc + 0.71, yc),
+                arrowprops=dict(arrowstyle="->", color='#cbd5e1', lw=1.0, shrinkA=0, shrinkB=0), zorder=1)
     
     # Función auxiliar para rotar puntos (sentido horario: guiñada positiva)
     def rotate(x, y):
@@ -195,19 +194,10 @@ def draw_rotated_drone_guiñada(ax, xc, yc, psi_deg=20):
     
     # Arco de rotación en el CM desde el eje vertical (90 deg) hasta el rotado (90 - psi_deg)
     # Reducimos el radio del arco de guiñada (R = 0.22) para que no se pase de largo y sea proporcional
+    # Se elimina la punta de la flecha y se deja solo el arco
     r_arc = 0.22
     arc_t = np.linspace(np.radians(90), np.radians(90 - psi_deg), 40)
     ax.plot(xc + r_arc * np.cos(arc_t), yc + r_arc * np.sin(arc_t), color='#4b5563', lw=1.0, zorder=4)
-    
-    # Punta de flecha fina al final del arco (en 90 - psi_deg)
-    phi_dest = np.radians(90 - psi_deg)
-    # Dirección tangente en sentido horario (CW)
-    dx = np.sin(phi_dest)
-    dy = -np.cos(phi_dest)
-    xf_arc = xc + r_arc * np.cos(phi_dest)
-    yf_arc = yc + r_arc * np.sin(phi_dest)
-    ax.annotate('', xy=(xf_arc, yf_arc), xytext=(xf_arc - dx*0.01, yf_arc - dy*0.01),
-                arrowprops=dict(arrowstyle="->", color='#4b5563', lw=1.0, mutation_scale=4), zorder=4)
     
     # Etiqueta de ángulo psi al lado del arco (a la derecha)
     ax.text(xc + 0.08, yc + 0.27, r"$\psi$", color='#4b5563', ha='center', va='bottom', fontsize=8)
@@ -294,7 +284,7 @@ def draw_lateral_view(ax, xc, yc, mode):
         # Corregido: Ahora el arco de phi está a la derecha del empuje (de 75 a 90 grados)
         arc = patches.Arc((xc, yc), 0.5, 0.5, theta1=75, theta2=90, color='#4b5563', lw=1.0)
         ax.add_patch(arc)
-        ax.text(xc + 0.08, yc + 0.3, r"$\phi$", color='#4b5563', ha='left', va='center', fontsize=8)
+        ax.text(xc + 0.1, yc + 0.3, r"$\phi$", color='#4b5563', ha='left', va='center', fontsize=8)
         
         # Fuerza neta inclinada
         tx, ty = xc + 0.7 * dx_f, yc + 0.7 * dy_f
@@ -302,9 +292,10 @@ def draw_lateral_view(ax, xc, yc, mode):
                     arrowprops=dict(arrowstyle="->", color='#b45309', lw=2.0))
         ax.text(tx + 0.05, ty + 0.05, r"$T$", color='#b45309', ha='left', va='bottom', fontsize=9, fontweight='bold')
         
-        # Descomposición de T
-        ax.annotate('', xy=(xc, yc + 0.7 * cos_p), xytext=(xc, yc),
-                    arrowprops=dict(arrowstyle="->", color='#4b5563', lw=1.0, linestyle=':'))
+        # Descomposición de T (eje vertical con línea punteada y punta sólida/simétrica)
+        ax.plot([xc, xc], [yc, yc + 0.7 * cos_p - 0.02], color='#4b5563', lw=1.0, linestyle=':', zorder=3)
+        ax.annotate('', xy=(xc, yc + 0.7 * cos_p), xytext=(xc, yc + 0.7 * cos_p - 0.05),
+                    arrowprops=dict(arrowstyle="->", color='#4b5563', lw=1.0, shrinkA=0, shrinkB=0), zorder=3)
         
         ax.annotate('', xy=(xc + 0.7 * dx_f, yc), xytext=(xc, yc),
                     arrowprops=dict(arrowstyle="->", color='#be185d', lw=1.2))
@@ -349,7 +340,7 @@ def draw_lateral_view(ax, xc, yc, mode):
         # Corregido: El arco de theta ahora está al lado derecho de la vertical, igual que el empuje T inclinado (de 75 a 90 grados)
         arc = patches.Arc((xc, yc), 0.5, 0.5, theta1=75, theta2=90, color='#4b5563', lw=1.0)
         ax.add_patch(arc)
-        ax.text(xc + 0.08, yc + 0.3, r"$|\theta|$", color='#4b5563', ha='left', va='center', fontsize=8)
+        ax.text(xc + 0.11, yc + 0.28, r"$|\theta|$", color='#4b5563', ha='left', va='center', fontsize=8)
         
         # Fuerza neta inclinada
         tx, ty = xc + 0.7 * dx_f, yc + 0.7 * dy_f
@@ -357,9 +348,10 @@ def draw_lateral_view(ax, xc, yc, mode):
                     arrowprops=dict(arrowstyle="->", color='#b45309', lw=2.0))
         ax.text(tx + 0.05, ty + 0.05, r"$T$", color='#b45309', ha='left', va='bottom', fontsize=9, fontweight='bold')
         
-        # Descomposición de T
-        ax.annotate('', xy=(xc, yc + 0.7 * cos_t), xytext=(xc, yc),
-                    arrowprops=dict(arrowstyle="->", color='#4b5563', lw=1.0, linestyle=':'))
+        # Descomposición de T (eje vertical con línea punteada y punta sólida/simétrica)
+        ax.plot([xc, xc], [yc, yc + 0.7 * cos_t - 0.02], color='#4b5563', lw=1.0, linestyle=':', zorder=3)
+        ax.annotate('', xy=(xc, yc + 0.7 * cos_t), xytext=(xc, yc + 0.7 * cos_t - 0.05),
+                    arrowprops=dict(arrowstyle="->", color='#4b5563', lw=1.0, shrinkA=0, shrinkB=0), zorder=3)
         
         ax.annotate('', xy=(xc + 0.7 * dx_f, yc), xytext=(xc, yc),
                     arrowprops=dict(arrowstyle="->", color='#0f766e', lw=1.2))

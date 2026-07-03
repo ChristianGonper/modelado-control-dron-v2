@@ -94,8 +94,8 @@
   % ==========================================
   \node[box, below=of local] (seleccion) {
     \textbf{Fase 5: Selección y Desempate}\\
-    1. Minimizar coste RMSE pos/vel\\
-    2. Penalizar esfuerzo ($\int \|\bm{\tau}_B\|^2 dt$)\\
+    1. Minimizar RMSE pos/vel\\
+    2. Penalizar esfuerzo de actuación\\
     3. Penalizar desviación de ganancias base
   };
   \draw[line] (local) -- (seleccion);
@@ -105,7 +105,7 @@
   % ==========================================
   \node[box, fill=gray!10, below=1.0cm of  seleccion, minimum width=4.5cm] (yaml) {
     \textbf{Resultado Final}\\
-    Ganancias ganadoras congeladas
+    Ganancias ganadoras fijadas
   };
   \draw[line] (seleccion) -- (yaml);
 

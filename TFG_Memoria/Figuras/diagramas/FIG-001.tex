@@ -27,7 +27,7 @@
 % ETAPA 1: GENERACIÓN DE DATOS Y ENTRENAMIENTO
 % ==========================================
 \node[box] (trayectorias) {Familias de\\Trayectorias\\(Escenarios)};
-\node[specialized, right=of trayectorias] (expertos) {Banco de\\Expertos PD};
+\node[specialized, right=of trayectorias] (expertos) {Conjunto de\\Expertos PD};
 \node[box, right=of expertos] (seleccion) {Selección de\\Experto};
 \node[box, right=of seleccion] (fuerza) {Obtención\\de Fuerza\\$\forceW$ [N] (ENU)};
 \node[neural, right=of fuerza] (entrenamiento) {Entrenamiento\\MLP / GRU / LSTM};
@@ -58,14 +58,14 @@
 \draw[line] (eval.east) -- ++(0.6,0) |- (ctrl_neuronal.west);
 
 % Simulador común
-\node[box, minimum width=3.2cm, right=1.6cm of pd_esp] (simulador) {Simulador 6DOF Común\\(Modelo cuadricóptero,\\lazo interno clásico,\\perturbaciones y límites)};
+\node[box, minimum width=3.2cm, right=1.6cm of pd_esp] (simulador) {Simulador 6DOF \\(Modelo cuadricóptero,\\lazo interno clásico,\\perturbaciones y límites)};
 
 \draw[line] (pd_trans.east) -| ($(simulador.west) + (-0.6,0.35)$) -- ($(simulador.west) + (0,0.35)$);
 \draw[line] (pd_esp.east) -- (simulador.west);
 \draw[line] (ctrl_neuronal.east) -| ($(simulador.west) + (-0.6,-0.35)$) -- ($(simulador.west) + (0,-0.35)$);
 
 % Comparación y métricas
-\node[box, right=1.2cm of simulador] (comparacion) {Evaluación\\Comparativa\\(Métricas de éxito,\\error y esfuerzo)};
+\node[box, right=1.2cm of simulador] (comparacion) {Evaluación\\Comparativa\\(Métricas de éxito,\\error y esfuerzo \\de actuación)};
 
 \draw[line] (simulador) -- (comparacion);
 
