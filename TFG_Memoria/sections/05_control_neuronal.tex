@@ -111,16 +111,6 @@ común para las 2 arquitecturas. Como comprobación, se ejecutó un estudio de
 sensibilidad con $L=10$ y $L=40$ para ambas redes y las diferencias observadas no
 fueron suficientes para justificar un cambio en la configuración.
 
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.8\textwidth]{FIG-013}
-  \caption{Gestión de la ventana temporal deslizante en redes recurrentes e
-  inicialización mediante repetición de muestra en el arranque ($k = 0$).
-  La cola FIFO genera un lote de dimensiones $[1, 20, 9]$ en cada inferencia.
-  Fuente: elaboración propia.}
-  \label{fig:ventana-deslizante}
-\end{figure}
-
 \subsubsection*{Arquitecturas y parámetros de MLP, GRU y LSTM}
 
 La MLP emplea dos capas ocultas de 64 unidades con activación ReLU y una capa
@@ -139,6 +129,16 @@ capa recurrente se mantienen fijas durante toda la evaluación. La decisión de 
 se contrastó con una variante de 128 unidades; no obstante, la
 mejora supervisada no produjo una ventaja sistemática, por lo que se decidió no
 modificar los parámetros.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\textwidth]{FIG-013}
+  \caption{Gestión de la ventana temporal deslizante en redes recurrentes e
+  inicialización mediante repetición de muestra en el arranque ($k = 0$).
+  La cola FIFO genera un lote de dimensiones $[1, 20, 9]$ en cada inferencia.
+  Fuente: elaboración propia.}
+  \label{fig:ventana-deslizante}
+\end{figure}
 
 \subsubsection*{Normalización, entrenamiento y selección del modelo}
 
