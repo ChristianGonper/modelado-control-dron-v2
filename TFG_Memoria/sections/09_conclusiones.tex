@@ -36,7 +36,7 @@ necesaria, no es suficiente para predecir la calidad del seguimiento dinámica.
 La tercera conclusión se desarrolla en torno a la memoria recurrente, dado que no
 aporta una mejora automática. GRU ofrece un resultado sólido en varias simulaciones,
 mientras que la LSTM presenta fallos graves en trayectorias geométricamente exigentes y más
-rápidas que las que conoció en el entrenamiento.Esto sugiere que la historia puede aportar
+rápidas que las que conoció en el entrenamiento. Esto sugiere que la historia puede aportar
 valor en ciertos estados, pero también puede introducir una sensibilidad a estados menos
 representados, retardos mayores y desviaciones acumuladas. En consecuencia, la elección
 de la arquitectura se debería analizar junto al tipo de trayectoria y sus características
@@ -81,7 +81,7 @@ de manera exhaustiva todas las geometrías, perfiles de velocidad, acciones vert
 o maniobras que aparecerían en un vuelo real.
 
 La comparación de controladores se limita a los PD especializados con parámetros
-fijados y a tres arquitecturas de redes neuronales para predecir fuerza externa,
+fijados y a tres arquitecturas de redes neuronales para predecir fuerza externa;
 MLP, GRU y LSTM. Las redes se entrenan por clonación supervisada de la fuerza deseada
 calculada por PD especializados y se conserva el lazo interno clásico de actitud, el mixer,
 las saturaciones y los límites de fuerza e inclinación. Por ello, no se evalúa un procedimiento
@@ -118,7 +118,7 @@ concreto. Esto requiere identificar masa, inercia, geometría de rotores, límit
 de los actuadores, curva de empuje, retardos, saturaciones y parámetros de los
 sensores a partir de ensayos o documentación técnica precisa. Una vez cerrada la
 identificación, los resultados observados en las simulaciones supondrían una relación
-más directa con la capacidad de un dron cuadricóptero real.
+más directa con la capacidad de un cuadricóptero real.
 
 La segunda línea es aumentar la fidelidad física del modelo. El simulador actual
 incluye un conjunto acotado de fenómenos, suficiente para realizar esta comparación,
@@ -170,7 +170,7 @@ establecer límites seguros de operación.
 
 Finalmente, una línea de cierre consiste en emplear el simulador como plataforma de
 validación antes del vuelo. Esto permitiría probar trayectorias nuevas, detectar regímenes
-donde el controlador demanda fuerzas excesivas, ajustar los límites de proyección y
+donde el controlador demanda fuerzas excesivas, ajustar los límites de protección y
 acotar el riesgo para ensayos reales. De esta forma, el trabajo desarrollado serviría como
 una base para transicionar de una simulación para realizar comparativas a una evaluación
 experimental sobre hardware.

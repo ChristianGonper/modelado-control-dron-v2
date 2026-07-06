@@ -40,7 +40,7 @@
   % ==========================================
   % FILA 2: ETAPA II (Fase 5 en y=-4.7, Fase 6 y art_weights en y=-4.7)
   % ==========================================
-  \node[phasebox] (f5) at (2.7,-4.7) {\textbf{Fase 5}\\Dataset Fuerza\\Externa (Imitación)};
+  \node[phasebox] (f5) at (2.7,-4.7) {\textbf{Fase 5}\\Dataset Imitación};
   \node[phasebox] (f6) at (7.2,-4.7) {\textbf{Fase 6}\\Entrenamiento\\MLP / GRU / LSTM};
   \node[artbox] (art_weights) at (10.8,-4.7) {Checkpoints de\\modelos entrenados\\(\texttt{best.pt})};
 
@@ -57,7 +57,7 @@
 
   % Canal de parámetros discontinuo: derivación en X=10.5, baja y va a la izquierda
   \draw[thick, dashed] (10.5,-1.55) -- (10.5,-3.35) -- (in_dash);
-  \draw[dashline] (in_dash) |- ($(f5.west)+(0,-0.3)$);
+  \draw[dashline] (in_dash) |- ($(f5.west)+(0,-0.2)$);
 
   % Conexión directa de F5 a F6
   \draw[line] (f5.east) -- (f6.west);

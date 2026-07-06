@@ -85,14 +85,19 @@ def main():
     # ----------------------------------------------------
     # TRAYECTORIA Y VECTOR DE POSICIÓN
     # ----------------------------------------------------
-    # Vector de posición r_WB
-    ax.plot([OW[0], OB[0]], [OW[1], OB[1]], [OW[2], OB[2]], color='#9ca3af', linestyle='--', lw=1.2, zorder=2)
-    # Flecha fina en la punta
-    dx_r, dy_r, dz_r = OB - OW
-    ax.quiver(OW[0], OW[1], OW[2], dx_r, dy_r, dz_r, color='#9ca3af', arrow_length_ratio=0.08, lw=1.2, pivot='tail', zorder=2)
+    # Vector de posición r_WB (trazado discontinuo que llega hasta el origen del cuerpo)
+    # Se establece un zorder=1 y color gris azulado para que pase por detrás del chasis y los rotores
+    ax.plot([OW[0], OB[0]], [OW[1], OB[1]], [OW[2], OB[2]], color='#64748b', linestyle='--', lw=1.1, zorder=1)
+    
+    # Flecha indicadora de dirección en la mitad del vector de posición (desplazada del cuerpo)
+    arrow_start = OW + 0.42 * (OB - OW)
+    dx_arrow, dy_arrow, dz_arrow = 0.08 * (OB - OW)
+    ax.quiver(arrow_start[0], arrow_start[1], arrow_start[2], dx_arrow, dy_arrow, dz_arrow, 
+              color='#64748b', arrow_length_ratio=0.45, lw=1.3, pivot='tail', zorder=1)
+    
     # Etiqueta en el punto medio
     mid = (OW + OB) / 2.0
-    ax.text(mid[0] - 0.15, mid[1] + 0.15, mid[2] + 0.15, r"$\mathbf{r}_{WB}$ (Posición)", color='#4b5563', fontsize=8, ha='right', va='center')
+    ax.text(mid[0] - 0.1, mid[1] + 0.15, mid[2] + 0.1, r"$\mathbf{r}_{WB}$ (Posición)", color='#4b5563', fontsize=8, ha='right', va='center')
     
     # ----------------------------------------------------
     # DIBUJO DEL SISTEMA DE REFERENCIA CUERPO B (FRD)
@@ -139,19 +144,20 @@ def main():
     r_rotors_W = [OB + R_WB @ r_B for r_B in r_rotors_B]
     
     # Brazos del chasis
-    # Brazo 1: R1 (Del-Izq) a R2 (Tras-Der)
-    ax.plot([r_rotors_W[1][0], r_rotors_W[2][0]], [r_rotors_W[1][1], r_rotors_W[2][1]], [r_rotors_W[1][2], r_rotors_W[2][2]],
-            color='#9ca3af', linewidth=3.0, zorder=3)
-    # Brazo 2: R0 (Del-Der) a R3 (Tras-Izq)
-    ax.plot([r_rotors_W[0][0], r_rotors_W[3][0]], [r_rotors_W[0][1], r_rotors_W[3][1]], [r_rotors_W[0][2], r_rotors_W[3][2]],
-            color='#9ca3af', linewidth=3.0, zorder=3)
+    # Se dibujan individualmente desde el centro de masa (OB) hasta el 95% de la longitud 
+    # del brazo, asegurando que las líneas grises no solapen ni tapen el punto negro central
+    # de los motores en ninguna de las proyecciones 3D.
+    for i in range(4):
+        r_arm_end_W = OB + 0.86 * (r_rotors_W[i] - OB)
+        ax.plot([OB[0], r_arm_end_W[0]], [OB[1], r_arm_end_W[1]], [OB[2], r_arm_end_W[2]],
+                color='#9ca3af', linewidth=3.0, zorder=3)
             
     # Dibujar rotores y hélices
     r_prop = 0.18  # Radio de la hélice
     beta = np.linspace(0, 2*np.pi, 50)
     for i, r_rot_W in enumerate(r_rotors_W):
-        # Punto del motor
-        ax.scatter([r_rot_W[0]], [r_rot_W[1]], [r_rot_W[2]], color='black', s=8, zorder=4)
+        # Punto del motor (tamaño aumentado para evitar oclusiones y mejorar visibilidad)
+        ax.scatter([r_rot_W[0]], [r_rot_W[1]], [r_rot_W[2]], color='black', s=25, zorder=5)
         
         # Puntos del círculo de la hélice en cuerpo
         prop_circle_B = np.array([r_prop * np.cos(beta), r_prop * np.sin(beta), np.zeros_like(beta)])

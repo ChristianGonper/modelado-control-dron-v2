@@ -33,11 +33,11 @@ Los ocho controladores de la tabla corresponden a cuatro PD de las familias
 (\texttt{hold}, \texttt{circle}, \texttt{lissajous} y \texttt{waypoint}), tres
 redes neuronales (MLP, GRU y LSTM) y una referencia PD representativa, para 
 la cual se toma el PD nativo en condiciones nominales y el que ha sido asignado
-para cada escenario OOD 
+para cada escenario OOD.
 
-A la vista de la tabla se puede observar una diferencia clara entre las condiciones
-ID y OOD. En el caso OOD hay una mayor cantidad de fallos que llevan a no finalizar
-la trayectoria así como la superación de los límites de actuación.
+En la tabla se observa una clara diferencia entre las condiciones ID y OOD. En esta
+última aparecen una mayor cantidad de fallos en la trayectoria y superación de los
+límites de actuación.
 
 \subsection{Referencia clásica y transferencia entre familias}
 \label{subsec:resultados-referencia-clasica}
@@ -74,12 +74,11 @@ curvo y sostenido exige una respuesta distinta a la de tramos esencialmente rect
 \subsection{Aprendizaje neuronal en condiciones conocidas}
 \label{subsec:resultados-neuronal-id}
 
-La evaluación supervisada no mide seguimiento de trayectoria, sino fidelidad a
+La evaluación supervisada no mide seguimiento de trayectorias, sino fidelidad a
 la fuerza deseada calculada por los PD especializados. Así, la
 \autoref{tab:fidelidad-supervisada} se introduce en primera instancia para poder responder
 a dos preguntas. Por un lado, cómo de bien imita cada red la señal de entrenamiento y
-qué ocurre posteriormente al realimentarse a la dinámica. El clipping indica el porcentaje
-de muestras en que la fuerza predicha supera los límites de inclinación.
+qué ocurre posteriormente al realimentarse a la dinámica.
 
 \begin{table}[H]
 \caption{Fidelidad supervisada de fuerza y recorte de inclinación asociado. Los porcentajes de recorte corresponden a la activación del límite de inclinación antes de aplicar la fuerza en el lazo interno.}
@@ -126,12 +125,9 @@ métrica principal en esta comparación.}
 La evaluación OOD es la parte más exigente de la comparativa ya que somete a
 los controladores a geometrías, velocidades y combinaciones de perturbaciones no
 presentes de forma directa en el conjunto de entrenamiento. En esta serie, el
-PD representativo se toma del experto PD especializado más cercano al escenario:
+PD representativo se toma del PD especializado más cercano al escenario:
 \texttt{lissajous} para \texttt{lemniscate}, \texttt{composite} y
 \texttt{lissajous}, y \texttt{waypoint} para las hélices.
-
-La \autoref{fig:res-ood-rmse-family} agrega primero por familia OOD para
-identificar tendencias generales.
 
 \begin{figure}[H]
 \centering
@@ -140,7 +136,8 @@ identificar tendencias generales.
 \label{fig:res-ood-rmse-family}
 \end{figure}
 
-La \autoref{fig:res-ood-rmse-family} muestra que el PD representativo conserva
+La \autoref{fig:res-ood-rmse-family} agrega primero por familia OOD para
+identificar tendencias generales. Muestra que el PD representativo conserva
 un comportamiento competitivo en varios grupos OOD. También confirma que LSTM
 vuelve a ser la arquitectura con mayor error medio en las familias más
 exigentes. GRU obtiene mejor resultado que MLP en las familias completamente

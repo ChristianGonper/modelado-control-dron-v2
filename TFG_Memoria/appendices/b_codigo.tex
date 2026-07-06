@@ -67,7 +67,7 @@ while True:
 
 \subsubsection*{Integración del controlador neuronal}
 
-El controlador neuronal no sustituye todo el piloto automático.
+El controlador neuronal no sustituye todo el control.
 La red estima la fuerza deseada del lazo externo en el
 sistema mundo y el controlador clásico conserva la conversión fuerza-actitud,
 el lazo interno, las saturaciones y el mixer. La inferencia recurrente se hace
@@ -102,5 +102,4 @@ telemetría conserva estado, observación, referencia, orden de control, comando
 de rotores, actuación aplicada, viento y, cuando procede, fuerzas neuronales
 antes y después del recorte. Las métricas agregan RMSE, error máximo, duración,
 causa de finalización, saturación, degradación del mixer y metadatos de
-procedencia. Esta separación permite reconstruir figuras de diagnóstico sin
-relanzar la simulación y, a la vez, consolidar campañas completas en CSV.
+procedencia.

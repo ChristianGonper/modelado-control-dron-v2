@@ -1,7 +1,7 @@
 \subsection{Conjuntos de datos y métricas de evaluación}
 \label{subsec:datos-metricas}
 
-\subsubsection*{Criterios de comparación experimental}
+\subsubsection*{Criterios de comparación}
 
 El objetivo no es demostrar una superioridad de una arquitectura en todos los
 casos, sino determinar en qué condiciones un controlador neuronal puede sustituir
@@ -18,11 +18,10 @@ especializadas y la pérdida en el resto de situaciones.
 
 Sobre esa base se evalúan las redes neuronales entrenadas por imitación. Primero
 se mide la fidelidad supervisada con la fuerza deseada de los PD, si bien este valor
-no se emplea como resultado final sino que la comparativa principal se ejecuta en la
-simulación. La evaluación de MLP, GRU y LSTM no presupone que la recurrencia deba mejorar
-necesariamente el seguimiento. La memoria temporal puede ser útil ante retardos o dependencia
-de estados anteriores, pero también puede introducir una sensibilidad distinta cuando
-la trayectoria se aleja de la distribución de entrenamiento.
+no sustituye a la ejecución en lazo cerrado. La evaluación de MLP, GRU y LSTM no presupone
+que la recurrencia deba mejorar necesariamente el seguimiento. La memoria temporal puede ser
+útil ante retardos o dependencia de estados anteriores, pero también puede introducir una
+sensibilidad distinta cuando la trayectoria se aleja de la distribución de entrenamiento.
 
 Los resultados se juzgan con error de seguimiento, actuación, saturación y uso de
 limitaciones de manera independiente. Asimismo, se separa entre condiciones conocidas,
@@ -34,7 +33,7 @@ aparece cada diferencia y su origen.
 \label{subsubsec:diseno-dataset-clasico}
 
 El conjunto contiene 150 episodios: 18 de \texttt{hold}, 48 de círculo, 48 de
-Lissajous y 36 de \texttt{waypoint}. Sus particiones por familia son
+Lissajous y 36 de \texttt{waypoint}. Sus divisiones por familia son
 12/3/3, 34/7/7, 34/7/7 y 25/5/6 para entrenamiento, validación y prueba. En
 total resultan 105 episodios de entrenamiento, 22 de validación y 23 de prueba.
 La asignación de escenarios a cada conjunto se genera de forma determinista usando la semilla 1042.
@@ -44,7 +43,7 @@ periódico en un plano, movimiento periódico en múltiples ejes y ejecuciones f
 aceleración, frenado y establecimiento. Cada una combina geometrías de distinta
 exigencia con perfiles de drag, viento, ruido y actuadores. \texttt{hold} usa 18
 combinaciones y menos perfiles porque no introduce la
-diversidad geométrica del resto de familias y así evitar una sobrerrepresentación
+diversidad geométrica del resto de familias y así evita una sobrerrepresentación
 de muestras en el entrenamiento.
 
 \subsubsection*{Métricas y criterios de éxito}
@@ -72,7 +71,7 @@ alcanzar el límite temporal mientras \texttt{waypoint} debe completar su ruta.
 \subsection{Flujo experimental y reproducibilidad}
 \label{subsec:flujo-reproducibilidad}
 
-\subsubsection*{Diseño global del procedimiento experimental}
+\subsubsection*{Diseño global del procedimiento}
 
 El procedimiento experimental sigue diez fases. Primero se ejecutan
 comprobaciones iniciales del simulador y de escenarios representativos. Después
@@ -85,8 +84,8 @@ A partir de esa base se generan los datos de imitación. Las fases siguientes en
 MLP, GRU y LSTM, evalúan su fidelidad supervisada, ejecutan la comparación cerrada sobre
 el conjunto de prueba, evalúan el rendimiento ante la serie de escenarios OOD y, finalmente,
 se preparan los resultados en tablas comparativas. Los comandos extensos de estas
-fases se remiten al \anejoref{anejo:comandos}. La \figref{fig:procedimiento-experimental} sintetiza esta secuencia y separa conjuntos
-de pasos diferenciados.
+fases se remiten al \anejoref{anejo:comandos}. La \figref{fig:procedimiento-experimental}
+sintetiza esta secuencia y separa conjuntos de pasos diferenciados.
 
 El conjunto de entrenamiento interviene en el ajuste de controladores, la
 normalización y la optimización de pesos, validación se usa para seleccionar el
@@ -124,8 +123,8 @@ la referencia de mayor exigencia.
 
 La transferencia clásica aplica los cuatro PD con parámetros fijados a cada uno de
 los 23 escenarios. Esto produce $23\times4=92$ ejecuciones y una matriz controlador--familia.
-Y dado que se mantienen el resto de parámetros fijos, incluida la semilla, las diferencias se
-atribuyen únicamente al cambio de controlador.
+Las diferencias se atribuyen únicamente al cambio de controlador dado que se mantienen
+el resto de parámetros fijos, incluida la semilla.
 
 \subsubsection*{Evaluación fuera de la distribución de entrenamiento}
 \phantomsection
@@ -165,7 +164,7 @@ así como trayectorias helicoidales aproximadas mediante waypoints.
 Esta separación permite evaluar dos preguntas distintas. Las variaciones de una
 familia conocida miden si el controlador tolera cambios de parámetros de una estructura
 ya presente. Las composiciones evalúan si un único procedimiento puede atravesar tramos
-heterogéneos sin cambiar un controlador de forma explícita. Por ello, un PD especializado
+heterogéneos sin cambiar un controlador de forma explícita. Un PD especializado
 puede funcionar bien en la parte para la que fue ajustado y degradarse al cambiar de
 geometría, mientras que las redes MLP, GRU y LSTM se evalúan como controladores
 únicos aplicados a toda la trayectoria.

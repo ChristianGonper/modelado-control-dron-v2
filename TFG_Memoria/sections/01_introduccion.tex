@@ -48,7 +48,7 @@ entorno controlado y reproducible.
 
 En la \figref{fig:estrategia-experimental} se detalla visualmente la lógica
 experimental estructurada en dos etapas. La primera etapa ilustra la obtención de los 
-controladores expertos y generación de datos para entrenar a las redes neuronales. La
+controladores expertos y generación de datos para entrenar las redes neuronales. La
 segunda etapa muestra la evaluación comparativa de las tres referencias de control en el 
 simulador bajo las mismas condiciones: condiciones dentro de la distribución de 
 entrenamiento o \textit{in-distribution} (ID), y condiciones fuera de dicha distribución 
@@ -57,7 +57,7 @@ u \textit{out-of-distribution} (OOD).
 \subsubsection*{Problema abordado}
 
 El problema principal del trabajo consiste en determinar si un único controlador mediante
-redes neuronales, entrenado a partir de demostraciones generadas por controladores PD
+redes neuronales, entrenado a partir de datos generados por controladores PD
 optimizados para distintas familias de trayectorias, puede sustituir ese conjunto de
 controladores cuando se evalúa bajo las mismas referencias y perturbaciones. La comparativa
 debe indicar si la implementación neuronal conserva un comportamiento competitivo bajo 
@@ -84,7 +84,7 @@ controlador fuera de las condiciones de operación para las que fue ajustado
 originalmente. Para estructurar este análisis, la evaluación distingue entre
 escenarios dentro de la distribución de entrenamiento (ID,
 \textit{in-distribution}) y fuera de ella (OOD, \textit{out-of-distribution}),
-cuyos niveles se formalizan posteriormente en el
+cuyos atributos se definen posteriormente en el
 \apartadoref{subsec:flujo-reproducibilidad}.
 En el caso ID, se evalúan escenarios del mismo tipo que los usados para ajustar los
 PD y entrenar las redes, aunque con parámetros reservados para pruebas. En el caso OOD,
@@ -128,7 +128,7 @@ Este objetivo se descompone en los siguientes objetivos específicos:
   al aplicar cada controlador a familias distintas de la nativa;
   \item Entrenar MLP, GRU y LSTM para predecir la fuerza deseada y comparar la
   ausencia o presencia de memoria temporal bajo las mismas condiciones;
-  \item Evaluar la calidad de la predicción supervisada y, de forma separada,
+  \item Evaluar la calidad de la predicción en ejecución supervisada y, de forma separada,
   el seguimiento en bucle cerrado en condiciones ID y OOD; y
   \item Conservar resultados suficientes para reconstruir los experimentos.
 \end{enumerate}
@@ -138,7 +138,7 @@ Este objetivo se descompone en los siguientes objetivos específicos:
 
 La aportación del trabajo es la integración de cuatro elementos: un simulador 
 6DOF, un conjunto de trayectorias y parámetros mediante escenarios, un proceso de
-selección de PD en cascada especializados por familia y una comparación de MLP, GRU 
+selección de PD en cascada especializado por familia y una comparación de MLP, GRU 
 y LSTM en bucle cerrado. El interés reside en construir un entorno que permita distinguir
 qué propiedades proceden del PD especializado, qué aprende la red, qué aporta el lazo interno 
 clásico y cuáles son los límites de esta aproximación al problema.

@@ -38,8 +38,6 @@ Internacional y los ángulos solo se convierten a grados para visualización.
 Se supone un cuerpo rígido de masa e inercia constantes, centro de masas fijo y
 gravedad uniforme. Los rotores se modelan con un empuje proporcional al cuadrado
 de su velocidad angular, con retardo y lag de primer orden. No se modelan aerodinámica avanzada, flapping de rotores, flexibilidad estructural ni sensores físicos detallados.
-Estas hipótesis permiten comparar los controladores en este entorno pero la extrapolación
-de resultados fuera del simulador queda limitada.
 
 \subsubsection*{Vehículo de referencia y parámetros físicos}
 
@@ -69,9 +67,7 @@ máximo por rotor es
  T_{\max}=k_f\omega_{\max}^2=\SI{25}{N}.
  \label{eq:empuje-maximo-rotor}
 \end{equation}
-
-Este límite no pretende especificar un vehículo comercial sino que es un límite arbitrario
-escogido, muy superior al empuje por rotor en estacionario
+Este límite es arbitrario y muy superior al empuje por rotor en estacionario
 ($mg/4\simeq\SI{2.45}{N}$). El controlador impone además un límite de
 fuerza total de $2.5mg$ antes de la conversión a actitud, de manera que una
 saturación de rotor se interpretará como límite en la asignación.
@@ -224,7 +220,7 @@ y se transforman en velocidades angulares de consigna del rotor $\omega_i = \sqr
 La dinámica de rotor combina un retardo puro discretizado y un lag de primer orden. 
 El retardo puro retrasa la consigna un número entero de pasos del lazo de física,
 mientras que el lag aproxima que la velocidad del rotor no alcanza instantáneamente
-la consigna, sino que se aproxima a ella con una constante de tiempo $\tau$. 
+el comando, sino que se aproxima a él con una constante de tiempo $\tau$. 
 En las ejecuciones se emplean, según el perfil de la trayectoria, valores de
 $\tau=\SI{0.03}{s}$ con retardo de \SI{0.01}{s} y $\tau=\SI{0.05}{s}$ con retardo
 de \SI{0.02}{s}.
@@ -243,26 +239,24 @@ y se vuelve a expresar en ENU como
  \bm{F}_{d,W}=\bm{R}_{WB}\left(-\bm{D}_B\bm{v}_{r,B}\right).
  \label{eq:drag-lineal}
 \end{equation}
+
 En el simulador se han implementado dos niveles de trayectorias con distinta
 disipación. También puede aplicarse un viento definido por una magnitud, dirección y
 sentido fijos durante toda la ejecución. La observación que recibe el controlador puede
 incluir una pequeña componente gaussiana que representa de forma simplificada que la
-señal observada no es perfecta. La dinámica base, la integración y la evaluación siguen
-usando el estado real del simulador, siendo la información entregada al simulador la
-perturbado. La semilla del escenario fija la inicialización pseudoaleatoria, de modo
-que un mismo YAML puede reproducirse.
+señal observada no es perfecta; mientras que la dinámica base, la integración y la evaluación continúan usando el estado real. La semilla del escenario fija la
+inicialización pseudoaleatoria, de modo que un mismo YAML puede reproducirse.
 
 La simulación termina si el vehículo impacta con el suelo, si la inclinación de
 roll/pitch supera el límite configurado, si aparece un valor no finito o si la
-saturación de actuadores persiste más que el tiempo permitido. En las ejecuciones
-base se usa un umbral de \SI{2}{s} para saturación persistente y un límite de
+saturación de actuadores persiste más que el tiempo permitido. En las ejecuciones se usa un umbral de \SI{2}{s} para saturación persistente y un límite de
 inclinación de \SI{1.256}{rad}. La ejecución del simulador mantiene además límites
 internos de posición y velocidad para detener trayectorias numéricamente divergentes.
 
 \subsubsection*{Trayectorias y escenarios reproducibles}
 
-Las familias de trayectoria se eligieron para introducir una variabilidad suficiente
-sin convertir este módulo en un problema excesivamente complejo. En \figref{fig:familias-trayectorias}
+Las familias de trayectorias se eligieron para introducir una variabilidad suficiente
+sin convertir este módulo en un problema excesivamente complejo. En la \figref{fig:familias-trayectorias}
 se muestra un caso representativo de cada familia. \texttt{hold} exige 
 mantener una posición y una guiñada constantes. \texttt{circle} impone una trayectoria 
 horizontal con aceleración centrípeta y avance continuo, que introduce un efecto no 
@@ -298,7 +292,7 @@ la recta que une dos waypoints. Si la distancia permite alcanzar la velocidad
 máxima, el perfil es trapezoidal, con aceleración constante, tramo de velocidad
 constante y frenado. Si el tramo es corto, el perfil es triangular y no se alcanza
 la velocidad máxima. En ambos casos la posición y la velocidad son continuas,
-evitando escalones en la referencia. En \figref{fig:perfiles-waypoint} se muestran
+evitando escalones en la referencia. En la \figref{fig:perfiles-waypoint} se muestran
 los perfiles cinemáticos de ambas casuísticas.
 
 \begin{figure}[H]
@@ -340,7 +334,7 @@ cada familia usadas para entrenamiento, validación y prueba (train, validation,
 se desarrolla en el
 \hyperref[subsubsec:diseno-dataset-clasico]{epígrafe de diseño del conjunto de
 datos clásico}. Adicionalmente, el simulador permite composiciones secuenciales
-de trayectorias de las familias descritas así como lemniscatas. Estas variantes se desarrollan posteriormente dentro del contexto de evaluación OOD, distinguiendo entre
+de trayectorias de las familias descritas, así como lemniscatas. Estas variantes se desarrollan posteriormente dentro del contexto de evaluación OOD, distinguiendo entre
 \hyperref[subsubsec:variaciones-composiciones-ood]{variaciones y composiciones
 de familias conocidas} y
 \hyperref[subsubsec:trayectorias-nuevas-ood]{trayectorias completamente nuevas}.

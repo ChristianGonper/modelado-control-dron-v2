@@ -48,10 +48,10 @@ Entre los candidatos de cada escenario se identifica primero el menor
 RMSE de posición. Se admiten después los candidatos situados hasta un 5\,\% por
 encima de ese valor y, dentro de ese subconjunto, se escoge el de menor esfuerzo
 de control y, si persiste el empate, se escoge el perfil más conservador. Esta segunda
-ronda de ajuste genera permite generar objetivos de imitación sin modificar el lazo interno
+ronda de ajuste permite generar objetivos de imitación sin modificar el lazo interno
 de la referencia clásica cuyos parámetros se habían fijado previamente.
 
-Esta procedimiento debe interpretarse como una clonación de comportamiento. La red
+Este procedimiento debe interpretarse como una clonación de comportamiento. La red
 observa las acciones de los PD externos y aprende a aproximar sus
 fuerzas, no optimiza directamente el error de trayectoria ni posee una función
 de recompensa por seguimiento. En consecuencia, también puede heredar sesgos o
@@ -82,7 +82,7 @@ de cómo se trata la aceleración de referencia, entre el PD y la red neuronal.
 Podrían añadirse variables de actitud, actuación, guiñada o estado observado
 completo. Sin embargo, el objetivo de esta comparación es imitar el lazo externo
 y no proporcionar a la red información que el lazo no necesita para calcular la
-fuerza. Esta elección reduce la dimensionalidad, mantiene la interpretación como
+fuerza. Esta elección reduce la dimensionalidad y mantiene la interpretación como
 sustitución del PD externo.
 
 La MLP procesa tensores de forma $[B,9]$, donde $B$ es el tamaño del lote de
@@ -92,7 +92,8 @@ control es \SI{0.02}{s}, la ventana recurrente cubre \SI{0.40}{s} de muestra.
 En entrenamiento, las ventanas se construyen dentro de cada simulación mediante
 una ventana deslizante y se mantienen acotadas al conjunto de entrenamiento y sin
 atravesar a otras simulaciones. Cada vez que se añade una nueva muestra, se elimina la
-última en la cola, manteniendo el tamaño en 20. En inferencia, al comienzo de una simulación, dado que todavía no existen muestras previas, se rellena la cola con la primera entrada hasta
+última en la cola, manteniendo el tamaño en 20. En inferencia, al comienzo de una simulación,
+dado que todavía no existen muestras previas, se rellena la cola con la primera entrada hasta
 rellenar la longitud.
 
 La inferencia recurrente usada en este trabajo no es \emph{stateful} en el
@@ -102,7 +103,7 @@ de la siguiente. En cada ciclo se reconstruye una ventana con las últimas veint
 entradas normalizadas y se procesa completa, obteniendo la fuerza aplicada en el
 último instante de esa ventana. Así, dos ejecuciones con la misma cola de entradas
 producen la misma salida, sin depender de un estado interno acumulado fuera de
-la ventana. En \figref{fig:ventana-deslizante} se ilustra este funcionamiento.
+la ventana. En la \figref{fig:ventana-deslizante} se ilustra este funcionamiento.
 
 La ventana temporal permite estudiar si la historia reciente aporta información
 útil frente a retardos y dinámica de actuadores. El valor $L=20$ fija una ventana corta y
@@ -153,23 +154,22 @@ El aprendizaje minimiza el error cuadrático medio (MSE) entre la fuerza
 normalizada predicha por la red y la fuerza normalizada calculada por el PD especializado. La optimización se realiza con Adam \cite{kingma2015adam} y una tasa de
 aprendizaje $10^{-3}$. Se configura un límite de 100 épocas, lotes de 64 muestras y
 semilla 42 para reproducibilidad del entrenamiento. La robustez frente a la semilla
-se comprobó con 2 adicionales y la variabilidad resultante no supuso un cambio significativo
-en la interpretación de resultados. Este orden aleatorio se aplica solo
+se comprobó con 2 valores adicionales y la variabilidad resultante no supuso un cambio
+significativo en la interpretación de resultados. Este orden aleatorio se aplica solo
 durante el entrenamiento, para reducir la dependencia del gradiente respecto a la secuencia
 de lectura de los episodios.
 
 Tras cada época se calcula la pérdida de validación y se guarda el checkpoint
-con menor valor. Se aplica parada temprana con una paciencia de 10 épocas, de manera que
-si la pérdida de validación no mejora durante diez épocas consecutivas, el
-entrenamiento se detiene y se conserva el mejor modelo observado. Esta regla
-reduce pasadas y limita el sobreajuste al conjunto de entrenamiento.
+con menor valor. El entrenamiento se detiene si el resultado de la validación no
+obtiene una mejora tras diez épocas consecutivas y se conserva el mejor modelo,
+reduciendo así el número de ejecuciones y limitando el sobreajuste.
 
 Una pérdida supervisada baja indica que la red replica con precisión las fuerzas
 emitidas por los controlados especializados en las muestras observadas.
 No obstante, no implica necesariamente que minimice el error de posición en bucle
 cerrado ya que pequeñas desviaciones de fuerza se pueden acumular y hacer a la red
-visitar estados poco representados en el entrenamiento. Por ello, la evaluación supervisada
-supone únicamente una comprobación de fidelidad al controlador clásico
+visitar estados poco representados en el entrenamiento. Por ello, la evaluación
+supervisada únicamente comprueba la fidelidad al controlador clásico.
 
 \subsubsection*{Inferencia en bucle cerrado}
 

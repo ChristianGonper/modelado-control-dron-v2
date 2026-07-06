@@ -78,11 +78,10 @@
 
   \node[box, left=1.2cm of lazo_interno, fill=white] (mixer) {
     \textbf{Mixer}\\
-    Asignación y clipping\\
-    $\bm{\omega}_{\text{target}}$
+    Asignación y clipping
   };
   \draw[line] (lazo_interno) -- node[above, font=\sffamily\scriptsize] {$\bm{\tau}_B$} (mixer);
-  \draw[line] (conversion.south) |- ++(-1.5, -0.4) -| (mixer.south);
+  \draw[line] (conversion.south) |- ++(-1.5, -0.3) -| node[pos=0.4, yshift=-0.05cm, above, font=\sffamily\scriptsize] {$T$} (mixer.south);
 
   % ==========================================
   % GRUPOS DE CONTEXTO (Dibujados en el fondo)

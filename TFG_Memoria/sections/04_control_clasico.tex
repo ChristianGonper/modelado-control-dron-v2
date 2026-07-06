@@ -13,14 +13,14 @@ posición y velocidad y la referencia de la trayectoria en el sistema ENU, y cal
 $\bm{F}_{d,W}$. El lazo interno recibe esa fuerza y la guiñada de referencia, construye una actitud
 compatible con la dirección del empuje y calcula los momentos en el sistema FRD. Por último, el mixer
 previamente descrito en el \hyperref[subsubsec:actuadores-mixer]{epígrafe de actuadores, mixer y límites de actuación}
-transforma finalmente el empuje colectivo y los momentos en comandos de rotor. Este flujo se puede ver en la
+transforma el empuje colectivo y los momentos en comandos de rotor. Este flujo se puede ver en la
 \figref{fig:arquitectura-cascada}.
 
 Mediante esta separación se observa de forma clara qué parte será sustituida por aprendizaje y
 por qué se dice que emplea la misma interfaz. Tanto el lazo externo clásico como la red neuronal
 reciben los errores de posición y velocidad y entregan la fuerza deseada. Cabe mencionar que la
 red recibirá como entrada también la aceleración requerida por la referencia, mientras que la compensación
-de gravedad se añadirá de la misma manera. A partir de la salida de fuerza, el resto del flujo permanecerá
+de gravedad se añadirá de la misma manera que con el lazo externo clásico. A partir de la salida de fuerza, el resto del flujo permanecerá
 idéntico.
 
 \begin{figure}[H]
@@ -143,7 +143,7 @@ familia se toman dos geometrías representativas, una lenta y otra exigente, y s
 combinan con tres perfiles, nominal, viento Este y perturbación combinada. Si el
 controlador inicial supera los filtros en todos los casos y su RMSE medio
 queda por debajo del umbral seleccionado para la familia, se conserva sin reajuste. Los umbrales,
-establecidos de forma heurística, son de \SI{0.25}{m}, \SI{0.35}{m}, \SI{0.45}{m} y \SI{0.40}{m} para
+establecidos por heurística, son de \SI{0.25}{m}, \SI{0.35}{m}, \SI{0.45}{m} y \SI{0.40}{m} para
  \texttt{hold}, \texttt{circle}, \texttt{lissajous} y \texttt{waypoint} respectivamente.
 
 Cuando el diagnóstico exige ajuste, se modifican de forma conjunta los cuatro
@@ -180,9 +180,9 @@ segundo usa \SI{0.1}{N.m} como escala para los momentos. Esta métrica busca fav
 controladores que requieren una menor actuación.
 
 La selección final se realiza sobre la menor puntuación del conjunto. Dentro de un 5\,\%
-de la mejor se escoge el de menor esfuerzo medio, y si aún hay empate se prefiere el más cercano
-al controlador inicial en término de multiplicadores. De esta manera, se favorecen los cambios moderados
-a igualdad de resultado.
+de la mejor se escoge el controlador de menor esfuerzo medio, y si aún hay empate se prefiere
+el más cercano al controlador inicial en término de multiplicadores. De esta manera, se favorecen
+los cambios moderados a igualdad de resultado.
 
 Los pesos de la \eqnref{eq:score-pd}, los umbrales, el intervalo de
 multiplicadores, el número de candidatos y el margen del 5\,\% son decisiones

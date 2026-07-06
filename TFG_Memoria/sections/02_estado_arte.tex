@@ -30,8 +30,8 @@ que se dice que el seguimiento de posición y el control de actitud están acopl
 
 Los sistemas de referencia son una parte esencial de esta formulación. En
 aeronaves y vehículos aéreos se distinguen un sistema de referencia asociado al 
-entorno y otro al vehículo. El primero permite expresar la posición, velocidad y
-referencias de trayectorias de forma absoluta; mientras que el segundo facilita la
+entorno y otro asociado al vehículo. El primero permite expresar la posición, velocidad y
+referencia de trayectorias de forma absoluta; mientras que el segundo facilita la
 determinación de los momentos y fuerzas generados por los rotores. La transformación
 entre ambos se realiza mediante una matriz de rotación asociada a la actitud. En este
 contexto, los cuaterniones son una alternativa habitual a los ángulos de Euler ya que
@@ -47,8 +47,8 @@ par de reacción asociado a su sentido de giro \cite{beard2012small,pounds2010mo
 El mixer de los actuadores permite resolver el problema inverso, dado un empuje total
 y tres momentos, calcula los empujes individuales que deberían producir los rotores.
 Cuando la solución exige empujes negativos o que superan el máximo disponible,
-aparecen saturaciones de comandos. En este caso, el controlador podría haber calculado
-una orden coherente, pero no realizable. Por ello, la comparación de controladores no se
+aparecen saturaciones en los mandos. En este caso, el controlador podría haber calculado
+una orden coherente, si bien no realizable. Por ello, la comparación de controladores no se
 limita al error de posición sino que también se registra cuando una actuación no
 se ha podido llevar a cabo.
 
@@ -99,7 +99,7 @@ sensores, viento y validación frente a datos reales \cite{folk2023rotorpy}.
 
 El presente trabajo no necesita reproducir toda la amplitud de esas
 plataformas, sino que la modularidad completa y trazabilidad son los aspectos
-más importantes. Se implementan las partes tratadas previamente, dinámica 6DOF,
+más importantes. Se implementan las partes tratadas previamente; dinámica 6DOF,
 sistemas de referencia concretos, actitud mediante cuaterniones, ley de control
 cuadrática, mixer con saturación, perturbaciones de carácter simplificado, integración
 y telemetría suficiente para reproducir y revisar cada ejecución.
@@ -189,19 +189,21 @@ del lazo externo a partir de los mismos datos que usa el PD.
 
 \subsection{Aprendizaje por imitación y control híbrido}
 
-El aprendizaje por imitación busca entrenar a partir de datos generados por un sistema
-experto. En su forma más directa, esta clonación de comportamiento plantea un problema 
-supervisado, se reciben las observaciones del sistema y se aprende a reproducir sus acciones.
-Este concepto tiene antecedentes en conducción autónoma, como ALVINN, donde una red
-aprendía a producir comandos de dirección a partir de ejemplos humanos \cite{pomerleau1989alvinn}. 
-En robótica y control, la imitación evita el diseño de una función de recompensa completa
-y permite la transferencia de comportamiento de un controlador del que ya se dispone.
+El aprendizaje por imitación busca realizar un entrenamiento a partir de datos generados 
+por un sistema experto. En su forma más directa, esta clonación de comportamiento plantea 
+un problema supervisado, se reciben las observaciones del sistema y se aprende a reproducir 
+sus acciones. Este concepto tiene antecedentes en conducción autónoma, como ALVINN, 
+donde una red aprendía a producir comandos de dirección a partir de ejemplos humanos 
+\cite{pomerleau1989alvinn}. En robótica y control, la imitación evita el diseño de una 
+función de recompensa completa y permite la transferencia de comportamiento de un controlador 
+del que ya se dispone.
 
 Sin embargo, la clonación de comportamiento tiene una limitación importante, los datos 
 proceden de estados visitados por el experto, pero durante la ejecución del procedimiento
 aprendido se pueden cometer pequeños errores y visitar estados no representados en los datos
 de entrenamiento. Esta diferencia entre las distribuciones de entrenamiento y la inducida por 
 el sistema aprendido se conoce como desplazamiento de distribución. Existen métodos como DAgger
+\cite{ross2011dagger}
 que reducen este problema mediante la agregación de datos de los estados visitados por el sistema
 neuronal y consultando de nuevo al sistema original. Si bien este trabajo no implementa
 DAgger, es importante recordar que una pérdida supervisada baja en el entrenamiento no garantiza
@@ -211,8 +213,8 @@ En aplicaciones de control físico, un procedimiento de aprendizaje automático 
 todo el controlador o solo una parte de la arquitectura. Los enfoques híbridos conservan elementos
 clásicos cuando estos aportan estabilidad, límites o interpretación. En este caso, una red aprende
 el comportamiento del lazo externo, mientras que el lazo interno, el mixer y las protecciones
-siguen siendo clásicos. No obstante, esto hace necesario separar las 
-contribuciones de cada elemento.
+siguen siendo clásicos. No obstante, esto introduce el riesgo de atribuir efectos erróneamente a la red,
+por lo que se han de identificar y separar las contribuciones de cada elemento.
 
 \subsection{Redes neuronales para control}
 
@@ -335,14 +337,14 @@ en el conjunto de datos de entrenamiento.
   \caption{Comparativa conceptual de arquitecturas neuronales para control. En (A) 
   se muestra el carácter puramente estático de la MLP. En (B) se detalla el flujo 
   desenrollado de la RNN básica y su vulnerabilidad al desvanecimiento del gradiente. 
-  En (C) se contrasta la estructura selectiva con compuertas de la célula LSTM y 
+  En (C) y (D) se contrasta la estructura selectiva con compuertas de la célula LSTM y 
   la célula GRU. Fuente: elaboración propia.}
   \label{fig:comparativa-arquitecturas-control}
 \end{figure}
 
 La LSTM separa dos magnitudes internas. El estado oculto $\bm{h}_k$ es la
 representación que se entrega al exterior de la celda y se usa para calcular la
-salida o servir como entrada para el siguiente paso. El estado de celda $\bm{c}_k$ 
+salida o que sirve como entrada para el siguiente paso. El estado de celda $\bm{c}_k$ 
 actúa como una memoria interna más directa, diseñada para transportar información 
 a lo largo de la secuencia. Las tres compuertas principales regulan esa memoria,
 la compuerta de olvido decide qué parte de $\bm{c}_{k-1}$ se conserva,
@@ -374,7 +376,6 @@ En una GRU, la compuerta de actualización $\bm{z}_k$ regula cuánto del estado
 anterior se conserva frente a cuánto se reemplaza por una nueva propuesta. La
 compuerta de reinicio $\bm{r}_k$ controla cuánto influye el estado anterior al
 calcular el candidato $\tilde{\bm{h}}_k$. Una formulación habitual es
-
 \begin{align}
   \bm{z}_k &= \sigma(\bm{W}_z[\bm{h}_{k-1},\bm{x}_k]+\bm{b}_z),\\
   \bm{r}_k &= \sigma(\bm{W}_r[\bm{h}_{k-1},\bm{x}_k]+\bm{b}_r),\\
@@ -394,12 +395,12 @@ ejecución \emph{stateful}, el estado oculto calculado en un paso se conserva y
 se entrega como estado inicial del paso siguiente. En una ejecución
 basada en ventana, en cambio, para cada predicción se reconstruye una secuencia
 de longitud fija, se procesa completamente y se provee la salida. La primera 
-opción evita recalcular de forma repetida información pasada, pero genera una 
-dependencia del estado interno de cómo se ha ido propagando la red durante todo
-el episodio. La segunda es más costosa computacionalmente, pero mantiene un impacto
-local, no atado al estado oculto acumulado fuera de la ventana. Esta distinción será
-relevante posteriormente, ya que la implementación efectuada usa ventanas temporales
-de longitud fija en vez de una inferencia recurrente plenamente stateful.
+opción evita recalcular de forma repetida información pasada, pero provoca una 
+dependencia del estado interno de la propagación de la red durante el episodio. 
+La segunda es más costosa computacionalmente, pero mantiene un impacto local dentro
+de la ventana. Esta distinción será relevante posteriormente, ya que la implementación
+efectuada usa ventanas temporales de longitud fija en vez de una inferencia recurrente
+plenamente stateful.
 
 El entrenamiento de estas arquitecturas conserva elementos del aprendizaje 
 supervisado. La normalización calculada solo con el conjunto (split) de
@@ -434,7 +435,7 @@ recombinaciones o geometrías nuevas.
 Las métricas de seguimiento han de capturar aspectos complementarios al error. De esta
 manera, el RMSE penaliza con más intensidad errores grandes, MAE describe el error medio 
 y el error máximo detecta extremos puntuales. Estas magnitudes se deben interpretar
-junto a saturaciones, esfuerzos de saturación y causas de finalización de las simulaciones,
+junto a saturaciones, esfuerzos de control y causas de finalización de las simulaciones,
 ya que se puede lograr un error medio bajo con una demanda continua de acciones no 
 realizables. 
 

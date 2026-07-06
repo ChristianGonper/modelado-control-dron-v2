@@ -13,12 +13,12 @@ MLP obtiene errores de seguimiento más favorables en varias familias dentro de
 distribución, confirmando que imitar la acción del PD no equivale necesariamente
 a mejorar la trayectoria resultante.
 
-Fuera de distribución, se rinde mejor en casos moderados mientras que los
-escenarios realmente exigentes muestran las limitaciones. Las arquitecturas neuronales son competitivas en varias recombinaciones próximas a las familias entrenadas,
-pero no superan de forma global al PD representativo. Además, los fallos no
-proceden solo del error de posición, las saturaciones, el clipping y las
-protecciones del lazo interno condicionan la lectura de los resultados. Así,
-el rendimiento depende de la interacción entre familia de trayectoria, arquitectura
+Fuera de distribución, se observa un mejor rendimiento en los casos moderados mientras que
+los escenarios exigentes muestran limitaciones en los controladores. Las arquitecturas neuronales
+son competitivas en varias recombinaciones próximas a las familias entrenadas, pero no superan de
+forma global al PD representativo. Además, los fallos no proceden solo del error de posición;
+las saturaciones, el clipping y las protecciones del lazo interno condicionan la lectura de los resultados.
+Así, el rendimiento depende de la interacción entre familia de trayectoria, arquitectura
 neuronal, PD imitado y los límites del sistema.
 
 \subsubsection*{Interpretación respecto a la hipótesis y los objetivos}
@@ -64,8 +64,8 @@ interpretable.
 
 La \autoref{fig:res-protections-ood} muestra que la seguridad final depende de
 esa combinación. Las terminaciones por saturación no indican una inestabilidad sino
-que solicitan fuerzas o cambios cinemáticos que exceden los límites fijados. Estos límites
-son necesarios pero también condicionan la lectura de resultados.
+que se solicitan fuerzas o cambios cinemáticos que exceden los límites fijados que, si
+bien son necesarios, condicionan la lectura de los resultados.
 
 \subsubsection*{Papel de la arquitectura neuronal}
 

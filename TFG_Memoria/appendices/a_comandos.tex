@@ -48,7 +48,7 @@ uv run simulador-quad run ^
 
 El dataset clásico fija escenarios reproducibles y permite ajustar o fijar
 controladores PD por familia. Tras modificar ganancias o criterios de ajuste,
-los escenarios deben regenerarse con \texttt{-{}-overwrite} para que las ganancias
+los escenarios deben regenerarse con \texttt{-}\texttt{-overwrite} para que las ganancias
 incorporadas y los manifiestos vuelvan a ser coherentes.
 
 \begin{verbatim}
@@ -105,10 +105,9 @@ modelos y escalados.
 
 \subsubsection*{Serie OOD y comparación cerrada}
 
-La serie OOD usada en resultados procede de \texttt{data/neural\_ood/battery\_v1}. 
-La auditoría de hélices fijó \texttt{max\_duration\_s}=60\,s en el
-generador para que las trayectorias trapezoidales rápidas dispongan de
-margen suficiente.
+La serie OOD usada en resultados procede de \texttt{data/neural\_ood/battery\_v1}. Se fijó
+\texttt{max\_duration\_s}=60\,s en el generador para que las trayectorias trapezoidales
+rápdas dispongan de margen suficiente.
 
 \begin{verbatim}
 uv run python tools\generate_ood_battery.py ^
@@ -175,8 +174,7 @@ El mismo comando de \texttt{plot} se ha aplicado a cinco casos nativos:
 \texttt{hold\_g05\_P5}, \texttt{circle\_g04\_P5}, \texttt{circle\_g07\_P2},
 \texttt{lissajous\_g07\_P5} y \texttt{waypoint\_g03\_P5}. También se ha usado
 para una pareja de transferencia del caso circular. En todos ellos, el perfil
-\texttt{report} elimina títulos diagnósticos redundantes y conserva ejes,
-unidades, leyendas y formato apto para memoria.
+\texttt{report} elimina títulos redundantes y conserva ejes, unidades y leyendas.
 
 \subsubsection*{Archivos de evidencia}
 
