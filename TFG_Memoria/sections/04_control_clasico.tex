@@ -191,6 +191,13 @@ demuestran una optimización global. Deben interpretarse como un óptimo local b
 presupuesto de cómputo razonable y con criterios declarados antes de evaluar
 test u OOD.
 
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.73\textwidth]{FIG-005}
+  \caption{Flujo lógico de optimización y ajuste progresivo de ganancias clásicas. Los candidatos aleatorios globales se filtran por condiciones de estabilidad y seguridad antes de que se inicie el refinamiento local tipo simplex/Nelder--Mead. Fuente: elaboración propia.}
+  \label{fig:optimizacion-pid}
+\end{figure}
+
 \subsubsection*{Controladores con parámetros fijados y transferencia cruzada}
 
 El ajuste solo consulta escenarios del conjunto de entrenamiento. Una vez elegido
@@ -207,10 +214,3 @@ La matriz de transferencia permite cuantificar la importancia de disponer de un
 PD optimizado por familia. También define una referencia para el controlador neuronal,
 que debe compararse con los PD transferidos al evaluar la capacidad de usar la red
 para condiciones distintas.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.73\textwidth]{FIG-005}
-  \caption{Flujo lógico de optimización y ajuste progresivo de ganancias clásicas. Los candidatos aleatorios globales se filtran por condiciones de estabilidad y seguridad antes de que se inicie el refinamiento local tipo simplex/Nelder--Mead. Fuente: elaboración propia.}
-  \label{fig:optimizacion-pid}
-\end{figure}

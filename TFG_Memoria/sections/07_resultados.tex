@@ -43,10 +43,14 @@ la trayectoria así como la superación de los límites de actuación.
 \label{subsec:resultados-referencia-clasica}
 
 Antes de valorar las redes se ha de medir la transferencia de los PD especializados
-a familias distintas. Esta fase es de elevada importancia ya que el objetivo con las
-redes neuronales busca competir contra esta transferencia. La matriz de la
-\autoref{fig:res-pid-transfer-matrix} permite observar esto, las filas indican PID empleado
-y las columnas el tipo de trayectoria evaluada.
+a familias distintas. Esta fase es de elevada importancia ya que el objetivo de las
+redes neuronales reside en competir contra esta transferencia.
+
+La \autoref{fig:res-pid-transfer-matrix} muestra una especialización parcial.
+El PD de \texttt{hold} es el que peor transfiere al resto de familias, y la propia
+familia \texttt{hold} obtiene mejor RMSE con otros PD que con su controlador especializado.
+Este resultado sugiere que la sintonización de \texttt{hold}, al menos con el criterio
+aplicado en esta ejecución, no logra el mejor resultado de esta familia.
 
 \begin{figure}[H]
 \centering
@@ -57,12 +61,6 @@ columnas la familia evaluada. La diagonal marca el uso del controlador especiali
 en su familia. Fuente: evaluación propia}
 \label{fig:res-pid-transfer-matrix}
 \end{figure}
-
-La \autoref{fig:res-pid-transfer-matrix} muestra una especialización parcial.
-El PD de \texttt{hold} es el que peor transfiere al resto de familias, y la propia
-familia \texttt{hold} obtiene mejor RMSE con otros PD que con su controlador especializado.
-Este resultado sugiere que la sintonización de \texttt{hold}, al menos con el criterio
-aplicado en esta ejecución, no logra el mejor resultado de esta familia.
 
 En \texttt{circle}, el PD especializado ofrece un error bajo y también transfiere de
 forma razonable a \texttt{waypoint}, coherente con que ambas referencias exigen
@@ -164,6 +162,11 @@ geométricos pronunciados. El patrón sugiere que la memoria temporal no aporta
 una ventaja uniforme y puede introducir sensibilidad adicional cuando el estado
 visitado se aleja de la distribución de entrenamiento.
 
+El siguiente paso es distinguir entre error y fallo en la simulación. La
+\autoref{fig:res-ood-termination-summary} agrupa las causas de finalización para
+analizar si la degradación procede de actitud, saturación, tiempo máximo u otras
+condiciones.
+
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{res_ood_scenario_matrix.pdf}
@@ -180,11 +183,6 @@ que la ejecución no se completó aunque el episodio se conserva en la agregaci�
 principales.}
 \label{fig:res-ood-termination-summary}
 \end{figure}
-
-El siguiente paso es distinguir entre error y fallo en la simulación. La
-\autoref{fig:res-ood-termination-summary} agrupa las causas de finalización para
-analizar si la degradación procede de actitud, saturación, tiempo máximo u otras
-condiciones.
 
 El PD representativo acumula fallos de actitud en varios escenarios OOD, mientras
 que las redes concentran sus fallos en saturación. Además, la cantidad de errores
@@ -215,7 +213,7 @@ inferior el error de posición a lo largo del episodio.}
 \label{subsec:resultados-protecciones}
 
 Los resultados observados no dependen únicamente de la red. El lazo interno clásico,
-el mezclador, la saturación de actuadores y los recortes de fuerza limitan las
+el mixer, la saturación de actuadores y los recortes de fuerza limitan las
 órdenes que finalmente llegan al vehículo. En la
 \autoref{fig:res-protections-ood}, la degradación del mixer mide el porcentaje
 de tiempo en que se ha de intervenir sobre el colectivo para respetar

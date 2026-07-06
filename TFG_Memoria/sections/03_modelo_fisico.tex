@@ -19,6 +19,13 @@ el estado, la observación entregada al controlador, la referencia de
 trayectoria, el comando solicitado y la actuación aplicada. De esta manera
 se puede comprobar cuándo y por qué un mando no ha podido aplicarse.
 
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.82\textwidth, trim=0 3.5cm 0 4.0cm, clip]{FIG-002}
+  \caption{Sistemas de referencia empleados por el simulador. El sistema mundo sigue la convención ENU y el sistema cuerpo la convención FRD; el empuje total se aplica en la dirección opuesta al eje vertical del cuerpo ($z_B$). Fuente: elaboración propia.}
+  \label{fig:marcos-referencia}
+\end{figure}
+
 El sistema de referencia $\frameW$ sigue la convención ENU, donde $x$ apunta al Este,
 $y$ al Norte y $z$ hacia arriba. El sistema de referencia $\frameB$ es FRD, donde
 $x_B$ apunta hacia delante, $y_B$ a la derecha y $z_B$ hacia abajo. Los rotores
@@ -27,13 +34,6 @@ matriz de rotación $\bm{R}_{WB}(\quatWB)$ transforma vectores expresados en FRD
 vectores expresados en ENU. La actitud se almacena mediante el cuaternión 
 $\quatWB=[q_0,q_1,q_2,q_3]^\mathsf{T}$. Las magnitudes se expresan en el Sistema 
 Internacional y los ángulos solo se convierten a grados para visualización.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.82\textwidth, trim=0 3.5cm 0 4.0cm, clip]{FIG-002}
-  \caption{Sistemas de referencia empleados por el simulador. El sistema mundo sigue la convención ENU y el sistema cuerpo la convención FRD; el empuje total se aplica en la dirección opuesta al eje vertical del cuerpo ($z_B$). Fuente: elaboración propia.}
-  \label{fig:marcos-referencia}
-\end{figure}
 
 Se supone un cuerpo rígido de masa e inercia constantes, centro de masas fijo y
 gravedad uniforme. Los rotores se modelan con un empuje proporcional al cuadrado
@@ -154,16 +154,6 @@ Por tanto, un rotor situado a la derecha del vehículo
 que un rotor situado delante ($x_i>0$) aporta momento de cabeceo positivo, como se
 muestra en la \figref{fig:actuacion-movimiento}.
 
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.85\textwidth]{FIG-012}
-  \caption{Esquema lógico y toma de decisiones del mezclador de rotores (mixer) ante 
-  condiciones nominales y saturadas. Se prioriza el control de actitud mediante el recorte 
-  proporcional de momentos ($k$) frente a la desviación del empuje colectivo solicitado. 
-  Fuente: elaboración propia.}
-  \label{fig:flujo-mixer}
-\end{figure}
-
 La solución del sistema se obtiene invirtiendo la matriz de asignación ($\bm{M}$) para
 la geometría definida. Tal como se ilustra en el esquema de la \figref{fig:flujo-mixer},
  el mixer separa la contribución del empuje colectivo solicitado ($T$) de la parte debida 
@@ -172,6 +162,7 @@ a los momentos de actitud ($\bm{\tau}_B$):
  T_{\text{thrust\_part}} &= \bm{M}^{-1} [T, 0, 0, 0]^\mathsf{T}, \\
  T_{\text{moment\_part}} &= \bm{M}^{-1} [0, \tau_x, \tau_y, \tau_z]^\mathsf{T}.
 \end{align}
+
 Para evitar que los empujes finales superen los límites físicos individuales de los actuadores,
 establecidos en el rango $[T_{\min}, T_{\max}]$, se evalúa la existencia de una holgura en el
 empuje colectivo. Los límites inferior ($\delta_{\min}$) y superior ($\delta_{\max}$) para el 
@@ -181,6 +172,16 @@ cuatro rotores
  \delta_{\min} &= \max_i(T_{\min} - T_{\text{thrust\_part},i} - T_{\text{moment\_part},i}), \\
  \delta_{\max} &= \min_i(T_{\max} - T_{\text{thrust\_part},i} - T_{\text{moment\_part},i}).
 \end{align}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{FIG-012}
+  \caption{Esquema lógico y toma de decisiones del mezclador de rotores (mixer) ante 
+  condiciones nominales y saturadas. Se prioriza el control de actitud mediante el recorte 
+  proporcional de momentos ($k$) frente a la desviación del empuje colectivo solicitado. 
+  Fuente: elaboración propia.}
+  \label{fig:flujo-mixer}
+\end{figure}
 
 A partir de estos márgenes de holgura, el algoritmo del mixer bifurca su ejecución en dos posibles
 rutas:
@@ -344,6 +345,13 @@ de trayectorias de las familias descritas así como lemniscatas. Estas variantes
 de familias conocidas} y
 \hyperref[subsubsec:trayectorias-nuevas-ood]{trayectorias completamente nuevas}.
 
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{FIG-003}
+  \caption{Secuencia de ejecución temporal multirate y dependencias de datos. Se diferencian las tres bandas de frecuencia asociadas a la integración física (100 Hz), el ciclo digital de control (50 Hz) y el registro periódico de variables (10 Hz). Fuente: elaboración propia.}
+  \label{fig:arquitectura-multirate}
+\end{figure}
+
 \subsubsection*{Flujo multirate de simulación}
 
 El simulador trabaja con un flujo multirate, es decir, con varios periodos de
@@ -361,13 +369,6 @@ Entre dos ciclos de control se aplica un bloqueador de orden 0, de manera que
 el último comando solicitado por el controlador se mantiene constante hasta la
 siguiente actualización. Esto trata de aproximar un sistema real, donde la física
 es continua y los sensores, controladores y actuadores operan a frecuencias finitas.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=\textwidth]{FIG-003}
-  \caption{Secuencia de ejecución temporal multirate y dependencias de datos. Se diferencian las tres bandas de frecuencia asociadas a la integración física (100 Hz), el ciclo digital de control (50 Hz) y el registro periódico de variables (10 Hz). Fuente: elaboración propia.}
-  \label{fig:arquitectura-multirate}
-\end{figure}
 
 \subsubsection*{Telemetría}
 

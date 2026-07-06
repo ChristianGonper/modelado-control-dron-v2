@@ -52,6 +52,19 @@ una orden coherente, pero no realizable. Por ello, la comparación de controlado
 limita al error de posición sino que también se registra cuando una actuación no
 se ha podido llevar a cabo.
 
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1 \textwidth]{FIG-015}
+  \caption{Mecanismos de actuación y movimiento en un cuadricóptero. Para cada maniobra 
+  se muestra la vista superior del vehículo en planta (izquierda) con la dirección de 
+  giro de cada rotor e indicaciones de desequilibrio de empuje ($+$, $-$, $=$), y el 
+  efecto físico resultante en vista lateral (derecha). La inclinación del vehículo 
+  ($\phi$, $\theta$) desvía el vector de empuje total ($T$) generando las componentes 
+  de fuerza lateral ($F_y$) o longitudinal ($F_x$) que posibilitan la traslación 
+  horizontal. Fuente: elaboración propia.}
+  \label{fig:actuacion-movimiento}
+\end{figure}
+
 La gestión de la actuación puede entenderse a partir de cuatro combinaciones
 básicas (véase la figura~\ref{fig:actuacion-movimiento}). Si los cuatro rotores
 aumentan o reducen su empuje de forma parecida, cambia el empuje total y, por tanto, 
@@ -65,19 +78,6 @@ resumida, cada rotor aporta una fuerza $T_i$ y el conjunto produce una salida de
 \]
 donde $T$ es el empuje colectivo y $\tau_x$, $\tau_y$ y $\tau_z$ son los momentos en el 
 sistema FRD.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=1 \textwidth]{FIG-015}
-  \caption{Mecanismos de actuación y movimiento en un cuadricóptero. Para cada maniobra 
-  se muestra la vista superior del vehículo en planta (izquierda) con la dirección de 
-  giro de cada rotor e indicaciones de desequilibrio de empuje ($+$, $-$, $=$), y el 
-  efecto físico resultante en vista lateral (derecha). La inclinación del vehículo 
-  ($\phi$, $\theta$) desvía el vector de empuje total ($T$) generando las componentes 
-  de fuerza lateral ($F_y$) o longitudinal ($F_x$) que posibilitan la traslación 
-  horizontal. Fuente: elaboración propia.}
-  \label{fig:actuacion-movimiento}
-\end{figure}
 
 La integración temporal del modelo exige discretizar las ecuaciones diferenciales. 
 Los métodos de Runge--Kutta, y en particular RK4, son una opción
@@ -318,17 +318,6 @@ se actualiza o se descarta \cite{bengio1994longterm}. En la \figref{fig:comparat
 se ilustra la diferencia fundamental entre los enfoques estáticos y los temporales de los
 dos tipos de arquitecturas.
 
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=\textwidth]{FIG-014}
-  \caption{Comparativa conceptual de arquitecturas neuronales para control. En (A) 
-  se muestra el carácter puramente estático de la MLP. En (B) se detalla el flujo 
-  desenrollado de la RNN básica y su vulnerabilidad al desvanecimiento del gradiente. 
-  En (C) se contrasta la estructura selectiva con compuertas de la célula LSTM y 
-  la célula GRU. Fuente: elaboración propia.}
-  \label{fig:comparativa-arquitecturas-control}
-\end{figure}
-
 \paragraph*{Long short-term memory (LSTM).}
 La arquitectura LSTM introduce un estado de celda y varias compuertas que
 controlan la entrada, el olvido y la salida de información. Su objetivo es
@@ -339,6 +328,17 @@ memoria es positiva si la historia reciente contiene información sobre retardos
 o evolución del error. Sin embargo, también provoca un aumento de parámetros en la
 red y puede introducir sensibilidad ante patrones temporales débilmente representados
 en el conjunto de datos de entrenamiento.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{FIG-014}
+  \caption{Comparativa conceptual de arquitecturas neuronales para control. En (A) 
+  se muestra el carácter puramente estático de la MLP. En (B) se detalla el flujo 
+  desenrollado de la RNN básica y su vulnerabilidad al desvanecimiento del gradiente. 
+  En (C) se contrasta la estructura selectiva con compuertas de la célula LSTM y 
+  la célula GRU. Fuente: elaboración propia.}
+  \label{fig:comparativa-arquitecturas-control}
+\end{figure}
 
 La LSTM separa dos magnitudes internas. El estado oculto $\bm{h}_k$ es la
 representación que se entrega al exterior de la celda y se usa para calcular la

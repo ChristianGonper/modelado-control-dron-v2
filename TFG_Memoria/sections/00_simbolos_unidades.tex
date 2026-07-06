@@ -1,5 +1,6 @@
 % !TeX root = ../main.tex
 \clearpage
+\begingroup
 \pagestyle{empty}
 \thispagestyle{empty}
 \phantomsection
@@ -8,8 +9,7 @@
 
 \hypersetup{allcolors=black}
 \setlength{\parindent}{0cm}
-\renewcommand{\arraystretch}{1.06}
-
+\renewcommand{\arraystretch}{1.06}\begin{singlespace}
 Salvo indicación contraria, las magnitudes vectoriales de posición,
 velocidad, aceleración y fuerza se expresan en el sistema mundo ENU, y las
 magnitudes de actitud, giro, momento e inercia se expresan en el sistema
@@ -64,13 +64,27 @@ $\otimes$ & Producto de cuaterniones. & -- \\
 \normalsize
 
 \clearpage
-\simbolosbloque{Vehículo, fuerzas y actuadores}
+\simbolosbloque{Vehículo y parámetros físicos}
 \footnotesize
 \begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.23\textwidth}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{0.17\textwidth}@{}}
 \cabeceratablasimbolos
 $m$ & Masa del vehículo. & kg \\
 $g$ & Aceleración de la gravedad. & m/s$^2$ \\
 $\bm{I}_B$ & Matriz de inercia respecto al centro de masas. & kg\,m$^2$ \\
+$\bm{r}_{i,B}$ & Posición del rotor $i$ respecto al centro de masas. & m \\
+$x_i,y_i$ & Coordenadas del rotor $i$ en el sistema cuerpo. & m \\
+$s_i$ & Signo del par de reacción de guiñada del rotor $i$. & -- \\
+$\tau$ & Constante de tiempo del lag de primer orden del actuador. & s \\
+$\bm{M}$ & Matriz de asignación entre empujes de rotores y mando colectivo/momentos. & -- \\
+$\bm{D}_B$ & Matriz de drag lineal expresada en cuerpo. & N/(m/s) \\
+\bottomrule
+\end{tabularx}
+\normalsize
+
+\simbolosbloque{Fuerzas, momentos y actuación}
+\footnotesize
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.23\textwidth}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{0.17\textwidth}@{}}
+\cabeceratablasimbolos
 $\bm{F}_B$ & Fuerza aplicada expresada en cuerpo. & N \\
 $\bm{F}_{i,B}$ & Fuerza generada por el rotor $i$ expresada en cuerpo. & N \\
 $\bm{F}_{d,W}$ & Fuerza con subíndice $d$ en mundo: fuerza deseada en el lazo de control o fuerza de drag en el modelo de perturbaciones, según el contexto. & N \\
@@ -88,14 +102,8 @@ $\mathrm{rpm}$ & Revoluciones por minuto, unidad auxiliar de lectura para veloci
 $k_f$ & Coeficiente cuadrático de empuje del rotor. & N\,s$^2$\,rad$^{-2}$ \\
 $k_m$ & Coeficiente cuadrático de par de reacción del rotor. & N\,m\,s$^2$/rad$^2$ \\
 $Q_i$ & Par de reacción del rotor $i$. & N\,m \\
-$\bm{r}_{i,B}$ & Posición del rotor $i$ respecto al centro de masas. & m \\
-$x_i,y_i$ & Coordenadas del rotor $i$ en el sistema cuerpo. & m \\
-$s_i$ & Signo del par de reacción de guiñada del rotor $i$. & -- \\
 $\bm{\tau}_B$ & Momento aplicado en el sistema cuerpo. & N\,m \\
 $\tau_x,\tau_y,\tau_z$ & Componentes de momento de alabeo, cabeceo y guiñada. & N\,m \\
-$\tau$ & Constante de tiempo del lag de primer orden del actuador. & s \\
-$\bm{M}$ & Matriz de asignación entre empujes de rotores y mando colectivo/momentos. & -- \\
-$\bm{D}_B$ & Matriz de drag lineal expresada en cuerpo. & N/(m/s) \\
 $\delta_{\min}$, $\delta_{\max}$, $\delta$ & Límites y desplazamiento de holgura del empuje colectivo en el mixer. & N \\
 $\times$ & Producto vectorial. & -- \\
 \bottomrule
@@ -165,14 +173,16 @@ $\bm{f}_k$, $\bm{i}_k$, $\bm{o}_k$ & Compuertas de olvido, entrada y salida de u
 $\tilde{\bm{c}}_k$ & Estado candidato de celda de una LSTM. & -- \\
 $\bm{z}_k$, $\bm{r}_k$ & Compuertas de actualización y reinicio de una GRU. & -- \\
 $\tilde{\bm{h}}_k$ & Estado oculto candidato de una GRU. & -- \\
-$\phi$, $\sigma$, $\tanh$ & Activación no lineal genérica, sigmoide y tangente hiperbólica; $\phi$ también puede denotar el ángulo de alabeo cuando el contexto es actitud. & -- \\
+$\phi, \sigma, \tanh$ & Activación no lineal genérica, sigmoide y tangente hiperbólica; $\phi$ también puede denotar el ángulo de alabeo cuando el contexto es actitud. & -- \\
 $\odot$ & Producto componente a componente. & -- \\
 $\mathbb{R}^n$ & Espacio vectorial real de dimensión $n$. & -- \\
 $\|\cdot\|$ & Norma vectorial. & -- \\
 \bottomrule
 \end{tabularx}
 \normalsize
+\end{singlespace}
 
 \clearpage
+\endgroup
 \hypersetup{allcolors=blue}
 \pagestyle{fancy}

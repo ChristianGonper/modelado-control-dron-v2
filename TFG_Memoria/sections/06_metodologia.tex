@@ -20,7 +20,8 @@ Sobre esa base se evalúan las redes neuronales entrenadas por imitación. Prime
 se mide la fidelidad supervisada con la fuerza deseada de los PD, si bien este valor
 no se emplea como resultado final sino que la comparativa principal se ejecuta en la
 simulación. La evaluación de MLP, GRU y LSTM no presupone que la recurrencia deba mejorar
-necesariamente el seguimiento. La memoria temporal puede ser útil ante retardos o dependencia de estados anteriores, pero también puede introducir una sensibilidad distinta cuando
+necesariamente el seguimiento. La memoria temporal puede ser útil ante retardos o dependencia
+de estados anteriores, pero también puede introducir una sensibilidad distinta cuando
 la trayectoria se aleja de la distribución de entrenamiento.
 
 Los resultados se juzgan con error de seguimiento, actuación, saturación y uso de
@@ -84,21 +85,13 @@ A partir de esa base se generan los datos de imitación. Las fases siguientes en
 MLP, GRU y LSTM, evalúan su fidelidad supervisada, ejecutan la comparación cerrada sobre
 el conjunto de prueba, evalúan el rendimiento ante la serie de escenarios OOD y, finalmente,
 se preparan los resultados en tablas comparativas. Los comandos extensos de estas
-fases se remiten al \anejoref{anejo:comandos}.
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=\textwidth]{FIG-007}
-  \caption{Flujo general del procedimiento experimental estructurado en 10 fases
-  reproducibles. Se ilustran la generación progresiva de los datasets de entrenamiento,
-  el flujo de optimización clásico, el entrenamiento neuronal y las etapas de validación
-  y evaluación OOD. Fuente: elaboración propia.}
-  \label{fig:procedimiento-experimental}
-\end{figure}
+fases se remiten al \anejoref{anejo:comandos}. La \figref{fig:procedimiento-experimental} sintetiza esta secuencia y separa conjuntos
+de pasos diferenciados.
 
 El conjunto de entrenamiento interviene en el ajuste de controladores, la
 normalización y la optimización de pesos, validación se usa para seleccionar el
-checkpoint de las redes y prueba y OOD se emplean para comprobación final del rendimiento
+checkpoint de las redes, y prueba y OOD se emplean para la comprobación final del
+rendimiento.
 
 \subsubsection*{Configuración y comparación del entrenamiento}
 
@@ -118,6 +111,16 @@ La evaluación ID utiliza los 23 episodios de prueba, 3
 se ejecutan el PD nativo y las tres redes bajo idéntica configuración física. Así,
 se realiza una primera comparativa contra el PD especializado de cada familia, que es
 la referencia de mayor exigencia. 
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{FIG-007}
+  \caption{Flujo general del procedimiento experimental estructurado en 10 fases
+  reproducibles. Se ilustran la generación progresiva de los datasets de entrenamiento,
+  el flujo de optimización clásico, el entrenamiento neuronal y las etapas de validación
+  y evaluación OOD. Fuente: elaboración propia.}
+  \label{fig:procedimiento-experimental}
+\end{figure}
 
 La transferencia clásica aplica los cuatro PD con parámetros fijados a cada uno de
 los 23 escenarios. Esto produce $23\times4=92$ ejecuciones y una matriz controlador--familia.
