@@ -1,6 +1,6 @@
 # Simulador quad 6DOF para TFG
 
-Este repositorio contiene el desarrollo de un simulador 6DOF de cuadricoptero para un Trabajo de Fin de Grado. El objetivo academico es disponer de un banco de ensayo trazable para comparar un controlador clasico con controladores neuronales entrenados por imitacion.
+Este repositorio contiene el desarrollo de un simulador 6DOF de cuadricoptero para un Trabajo de Fin de Grado. El objetivo es disponer de un banco de ensayo trazable para comparar un controlador clasico con controladores neuronales entrenados por imitacion.
 
 El estado actual incluye la parte clasica del simulador y un controlador hibrido `neural`: la red predice la fuerza deseada del lazo externo en mundo ENU y el PID clasico conserva el lazo interno de actitud. Se pueden entrenar y ejecutar redes MLP y recurrentes (GRU/LSTM); la MLP es la opcion inicial de menor complejidad.
 
@@ -20,13 +20,6 @@ Implementado:
 - Postproceso visual con perfiles `diagnostic`/`report`, figuras por episodio (`plot`) y comparativas agregadas de campaña (`plot-comparison`).
 - Tooling para generar el dataset `outer_force`, batería OOD (`generate_ood_battery.py`), batch cerrado (`run_neural_outer_force_dataset.py`), sensibilidad neuronal (`run_neural_sensitivity_study.py`, `summarize_neural_sensitivity.py`), tabla comparativa (`build_comparison_closed_loop.py`) y entrenar/evaluar modelos mediante scripts en `tools/`.
 - Control neuronal alternativo en el lazo externo de posición (`neural_position`), donde la red predice ganancias variables y el lazo interno clásico estabiliza actitud.
-
-## Evidencia versionada y alcance consolidado
-
-- **Comparacion principal**: `results/evidence_manifest.csv` declara la procedencia de los PID congelados (`classic_pid_hold`, `classic_pid_circle`, `classic_pid_lissajous`, `classic_pid_waypoint` y `classic_pid_representative`) y de los controladores `neural_outer_force` MLP, GRU y LSTM. La matriz de transferencia clasica registrada contiene 92 corridas `test` y 40 OOD; no son los conteos totales de la comparacion consolidada.
-- **Snapshot versionado**: los CSV incorporados en el commit `fe2e075` el 2026-06-10 contienen 264 corridas comparables: 184 `test` y 80 `ood`. `comparison_all_runs_full.csv` contiene 518 filas al incluir `train` y `val`. Estas cifras describen ese snapshot y deben volver a calcularse si se regenera la campaña.
-- **Ramas secundarias**: el pipeline `neural_position` esta implementado, pero el manifiesto versionado declara cero corridas consolidadas y lo mantiene fuera de la comparacion principal. `outer_force_oracle` esta implementado como generador de demostraciones para entrenamiento, no como controlador incluido en la tabla comparativa final.
-- **Uso de Git**: `data/` se ignora mediante `data/.gitignore`; telemetrias y checkpoints no estan versionados. En `results/` se versionan `evidence_manifest.csv`, `comparison_all_runs.csv`, `comparison_all_runs_full.csv` y `comparison_summary.csv`. Las conclusiones experimentales requieren contrastar esos agregados con la evidencia descrita por el manifiesto.
 
 ## Comandos minimos
 
@@ -165,6 +158,7 @@ uv run simulador-quad run scenarios\composite_ood.yaml --no-visualization
 - `data/outer_force_dataset/`: ubicacion prevista de demostraciones de fuerza externa seleccionadas por escenario.
 - `results/`: salidas generadas por ejecuciones.
 - `docs/`: documentacion normativa, viva, planes y revisiones.
+- `TFG_Memoria/`: memoria LaTeX cerrada del TFG.
 
 ## Regla de mantenimiento
 
