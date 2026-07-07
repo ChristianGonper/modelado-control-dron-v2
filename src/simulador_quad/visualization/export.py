@@ -12,13 +12,13 @@ def save_figure(
     dpi: int = 300,
 ) -> list[str]:
     """
-    Save a Matplotlib figure in multiple formats (e.g., PDF, PNG) to the target directory.
+    Save a Matplotlib figure in multiple formats (e.g., PDF, PNG, SVG) to the target directory.
 
     Args:
         fig: The Matplotlib Figure object.
         output_dir: Path to the directory where the figure will be saved.
         filename_base: Base filename without extension (e.g. 'trajectory_xy').
-        formats: List of file extensions to export (e.g. ['png', 'pdf']).
+        formats: List of file extensions to export (e.g. ['png', 'pdf', 'svg']).
                  Defaults to ['png'].
         dpi: Dots per inch for raster formats (PNG). Defaults to 300.
 

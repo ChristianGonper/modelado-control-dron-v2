@@ -73,8 +73,10 @@ def test_plot_cli_generates_report_figures(tmp_path):
         "--formats",
         "png",
         "pdf",
+        "svg",
     )
 
     assert result.returncode == 0, result.stderr
     assert (out_dir / "tracking_error.png").exists()
     assert (out_dir / "tracking_error.pdf").exists()
+    assert (out_dir / "tracking_error.svg").exists()

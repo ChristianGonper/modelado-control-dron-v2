@@ -234,13 +234,13 @@ def main():
     plot_parser.add_argument("--out", required=True, help="Directorio donde se escribirán las figuras")
     plot_parser.add_argument("--profile", choices=["diagnostic", "report"], default="diagnostic",
                             help="Perfil de estilo visual a aplicar (diagnostic o report)")
-    plot_parser.add_argument("--formats", nargs="+", choices=["png", "pdf"], default=None,
-                            help="Formatos de imagen a generar (ej: png pdf)")
+    plot_parser.add_argument("--formats", nargs="+", choices=["png", "pdf", "svg"], default=None,
+                            help="Formatos de imagen a generar (ej: png pdf svg)")
 
     plot_comp_parser = subparsers.add_parser("plot-comparison", help="Generar figuras comparativas agregadas desde CSV")
     plot_comp_parser.add_argument("comparison_csv", help="Ruta al archivo CSV de comparación (comparison_all_runs.csv)")
     plot_comp_parser.add_argument("--out", required=True, help="Directorio donde se escribirán las figuras comparativas")
-    plot_comp_parser.add_argument("--formats", nargs="+", choices=["png", "pdf"], default=["png", "pdf"],
+    plot_comp_parser.add_argument("--formats", nargs="+", choices=["png", "pdf", "svg"], default=["png", "pdf"],
                                    help="Formatos de imagen a generar (default: png pdf)")
     plot_comp_parser.add_argument(
         "--trajectory-telemetry",

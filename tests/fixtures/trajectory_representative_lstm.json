@@ -1,0 +1,17 @@
+[
+  {
+    "time_s": 0.0,
+    "state": {"position_W_m": [0.0, 0.0, 1.5]},
+    "reference": {"position_W_m": [0.0, 0.0, 1.5]}
+  },
+  {
+    "time_s": 1.0,
+    "state": {"position_W_m": [0.45, 0.2, 1.5]},
+    "reference": {"position_W_m": [0.8, 0.45, 1.5]}
+  },
+  {
+    "time_s": 2.0,
+    "state": {"position_W_m": [0.75, -0.15, 1.5]},
+    "reference": {"position_W_m": [1.2, 0.0, 1.5]}
+  }
+]
