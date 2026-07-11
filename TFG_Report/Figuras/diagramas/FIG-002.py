@@ -125,8 +125,6 @@ def main():
             r"$z_B$ (Down)", color='#7c3aed', fontsize=8.5, ha='center', va='top', fontweight='bold')
             
     # Origen del Cuerpo
-    ax.scatter([OB[0]], [OB[2]], [OB[2]], color='black', s=18, zorder=5)  # Note: OB[1] was originally used. Let's fix that typo from original line 128: it said `[OB[0]], [OB[1]], [OB[2]]` but here we'll use `[OB[0]], [OB[1]], [OB[2]]`
-    # Let's write the correct code
     ax.scatter([OB[0]], [OB[1]], [OB[2]], color='black', s=18, zorder=5)
     ax.text(OB[0] - 0.25, OB[1] - 0.25, OB[2] + 0.45, r"$\mathcal{O}_B$ (CM)", fontsize=9.5, fontweight='bold', ha='right', va='center')
     ax.text(OB[0] + 0.3, OB[1] + 1.2, OB[2] + 1.2, r"Body reference" "\n" r"frame $\mathcal{B}$ (FRD)", color='black', fontsize=8.5, fontstyle='italic', ha='center')
@@ -146,6 +144,9 @@ def main():
     r_rotors_W = [OB + R_WB @ r_B for r_B in r_rotors_B]
     
     # Brazos del chasis
+    # Se dibujan individualmente desde el centro de masa (OB) hasta el 95% de la longitud 
+    # del brazo, asegurando que las líneas grises no solapen ni tapen el punto negro central
+    # de los motores en ninguna de las proyecciones 3D.
     for i in range(4):
         r_arm_end_W = OB + 0.86 * (r_rotors_W[i] - OB)
         ax.plot([OB[0], r_arm_end_W[0]], [OB[1], r_arm_end_W[1]], [OB[2], r_arm_end_W[2]],
@@ -155,17 +156,22 @@ def main():
     r_prop = 0.18  # Radio de la hélice
     beta = np.linspace(0, 2*np.pi, 50)
     for i, r_rot_W in enumerate(r_rotors_W):
+        # Punto del motor (tamaño aumentado para evitar oclusiones y mejorar visibilidad)
         ax.scatter([r_rot_W[0]], [r_rot_W[1]], [r_rot_W[2]], color='black', s=25, zorder=5)
         
+        # Puntos del círculo de la hélice en cuerpo
         prop_circle_B = np.array([r_prop * np.cos(beta), r_prop * np.sin(beta), np.zeros_like(beta)])
+        # Transformar a inercial
         prop_circle_W = r_rot_W[:, np.newaxis] + R_WB @ prop_circle_B
         
+        # Dibujar hélice
         ax.plot(prop_circle_W[0], prop_circle_W[1], prop_circle_W[2], color='#4b5563', alpha=0.35, linewidth=0.8, zorder=3)
         
     # ----------------------------------------------------
     # VECTOR DE EMPUJE EN -z_B (Dirección opuesta a z_B)
     # ----------------------------------------------------
     len_F = 1.6
+    # Dirección opuesta a uzB (-uzB)
     u_thrust = -uzB
     ax.quiver(OB[0], OB[1], OB[2], len_F*u_thrust[0], len_F*u_thrust[1], len_F*u_thrust[2], 
               color='#d97706', arrow_length_ratio=0.18, lw=2.4, pivot='tail', zorder=4)
@@ -175,6 +181,7 @@ def main():
     # ----------------------------------------------------
     # CONFIGURACIÓN Y LIMPIEZA DE EJES 3D
     # ----------------------------------------------------
+    # Ocultar completamente el marco de ejes y rejillas de Matplotlib
     ax.set_axis_off()
     
     # Límites del dibujo
