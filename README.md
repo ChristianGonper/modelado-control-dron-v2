@@ -4,6 +4,8 @@
 
 Simulador reproducible de dinámica 6DOF para estudiar el seguimiento de trayectorias de un cuadricóptero y comparar control clásico PID con control neuronal entrenado por imitación. El proyecto reúne el modelo físico, los controladores, los escenarios, las campañas experimentales y las herramientas de análisis en un único paquete de Python.
 
+Desarrollado por Christian González Pérez como Trabajo de Fin de Grado (TFG) en la Universidad de León. [Visitar la página del proyecto](https://christiangonper.github.io/modelado-control-dron-v2/).
+
 ## Características
 
 - Dinámica de cuerpo rígido 6DOF con mundo ENU, cuerpo FRD y actitud mediante cuaterniones.
