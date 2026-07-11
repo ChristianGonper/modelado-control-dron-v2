@@ -473,13 +473,18 @@ def _plot_res_trajectory_lemniscate(
     formats: list[str] | None,
     *,
     trajectory_telemetry: Sequence[tuple[str, str | os.PathLike[str]]] | None = None,
+    label_colors: dict[str, str] | None = None,
 ) -> tuple[list[str], str | None]:
     paths = _resolve_trajectory_sources(trajectory_telemetry)[1]
     series = [_load_trajectory_series(Path(path), label) for label, path in paths]
     series = [item for item in series if item is not None]
     if not series:
         return [], "telemetría ausente o incompleta"
-    label_colors = {"MLP": COLORS["mlp"], "LSTM": COLORS["lstm"], "GRU": COLORS["gru"]}
+    label_colors = label_colors or {
+        "MLP": COLORS["mlp"],
+        "LSTM": COLORS["lstm"],
+        "GRU": COLORS["gru"],
+    }
     fig, axes = plt.subplots(2, 1, figsize=(6.2, 5.0))
     ref = series[0][3]
     axes[0].plot(ref[:, 0], ref[:, 1], "--", color=COLORS["reference"], linewidth=1.1, label="Referencia")
@@ -571,6 +576,7 @@ def plot_comparison(
     output_dir: str | os.PathLike[str],
     formats: list[str] | None = None,
     trajectory_telemetry: Sequence[tuple[str, str | os.PathLike[str]]] | None = None,
+    trajectory_label_colors: dict[str, str] | None = None,
 ) -> ComparisonPlotResult:
     """
     Generate comparison plots C1 to C7 from aggregated campaign runs.
@@ -635,6 +641,7 @@ def plot_comparison(
             out,
             formats,
             trajectory_telemetry=trajectory_telemetry,
+            label_colors=trajectory_label_colors,
         )
         if traj_paths:
             generated_paths.extend(traj_paths)
