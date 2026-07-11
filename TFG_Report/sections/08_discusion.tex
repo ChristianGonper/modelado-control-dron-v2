@@ -1,0 +1,43 @@
+% !TeX root = ../main_en.tex
+\subsection{Discussion of Results and Limitations}
+\label{subsec:discusion-resultados}
+
+\subsubsection*{Synthesis of Results}
+
+The results show that the comparison cannot be reduced to a single metric. The transfer of specialized PDs depends on the trajectory family: some combinations maintain low errors, while others clearly degrade with changes in geometry or dynamic requirements. In the networks, supervised fidelity alone does not predict closed-loop behavior either. Although GRU and LSTM approximate the force of the specialized PD better during training, the MLP obtains more favorable tracking errors in several in-distribution families, confirming that mimicking the PD's action does not necessarily equate to improving the resulting trajectory.
+
+Out of distribution, better performance is observed in moderate cases, whereas demanding scenarios show limitations in the controllers. The neural architectures are competitive in several recombinations close to the trained families, but they do not globally outperform the representative PD. Furthermore, failures do not stem solely from position error; saturations, clipping, and inner-loop protections condition the interpretation of the results. Thus, performance depends on the interaction between trajectory family, neural architecture, the imitated PD, and system limits.
+
+\subsubsection*{Interpretation with Respect to Hypotheses and Objectives}
+
+The presented evidence supports the hypothesis that replacing several specialized PDs with a common neural implementation is viable for known families, but it does not lead to homogeneous behavior across architectures. On the \texttt{test} set, the MLP, GRU, and LSTM complete the trajectories and remain within an RMSE range comparable to the specialized PD. In OOD, the networks are competitive in moderate-difficulty recombinations, while newer, faster, or more demanding geometries show that generalization depends on both geometric novelty and dynamic requirements.
+
+No global neural superiority can be claimed. The simulation success rate in OOD (66.3\%) falls clearly below that obtained on the \texttt{test} set (99.5\%), and failures are not explained solely by an increase in tracking error but also involve attitude limits, persistent saturation, and timeout in finite trajectories.
+
+\subsubsection*{Dependency on the Specialized PD and the Dataset}
+
+The networks mimic the desired force calculated by specialized PDs; they are not trained by reinforcement learning, nor do they directly optimize the position error. Therefore, their performance is limited by the quality of the specialized PDs, the filters applied to the input simulations, and the geometric and dynamic coverage of the dataset. If the specialized PD produces suboptimal actions for a specific region, the network is likely to reproduce that limitation.
+
+The comparison between supervised fidelity and closed-loop performance illustrates precisely this limitation. GRU and LSTM present lower force error during training, but this does not translate uniformly to RMSE. A plausible interpretation is that the MLP, by not depending on an explicit time window, can respond more locally to states that resemble samples seen during training, whereas recurrent networks can be more sensitive when recent history deviates from learned patterns.
+
+\subsubsection*{Value and Limits of the Classic Inner-Loop Approach}
+
+Maintaining the classic inner loop allows isolating the network's contribution, so that the network is only responsible for the desired outer force, while attitude tracking, the mixer, and actuation limits follow an interpretable classic design.
+
+Figure~\ref{fig:res-protections-ood} shows that the ultimate safety depends on this combination. Saturating terminations do not indicate instability, but rather that forces or kinematic changes exceeding the set limits are requested, which, although necessary, condition the interpretation of the results.
+
+\subsubsection*{Role of the Neural Architecture}
+
+The results indicate that the architecture, and in particular the presence or absence of temporal memory, substantially affects behavior. The MLP obtains low errors in several ID families and remains competitive in mixed OOD, but it is also the architecture that activates force and inclination clipping most clearly. This suggests a more aggressive response to instantaneous errors.
+
+The GRU offers a solid compromise between supervised fidelity and performance in several OOD scenarios, especially when evaluated on families not directly seen. The LSTM, by contrast, does not systematically outperform the GRU and exhibits very marked failures in some fast or geometrically demanding scenarios, such as the representative case in Figure~\ref{fig:res-trajectory-lemniscate-mlp-lstm}. Recurrent memory should not be interpreted as a direct improvement; it provides temporal context while introducing sensitivity to poorly represented data and the accumulation of deviations.
+
+\subsubsection*{Validity, Limitations, and Reproducibility}
+
+The simulator provides a valid platform for studying the comparison, although it does not substitute validation with real hardware. The OOD series includes ten scenarios and contains highly demanding cases.
+
+The execution is deterministic per scenario and seed, meaning statistical uncertainty over multiple runs has not been estimated. Furthermore, other neural formulations were explored during the work but are not incorporated into the final comparison. The networks are not retrained after defining the OOD series, and the checkpoints remain fixed, meaning direct transfer is evaluated rather than a recurrent adaptation process.
+
+Another limitation comes from the choice of the representative PD in OOD. For lemniscatas, Lissajous, and composite trajectories, the \texttt{lissajous} PD is used, and for helices, the \texttt{waypoint} PD is used. This decision is reasonable due to the geometric similarity between the trajectories, but remains an approximation. The curves share some features, and composite trajectories depend on the segment that poses the greatest difficulty. Finally, although various configurations of parameters and hyperparameters were tested to support the final decisions, no exhaustive hyperparameter search or evaluation over thousands of seeds was performed.
+
+The regeneration of scenarios, controller execution, and figure generation are contained within the GitHub repository. The main commands are documented in \hyperref[anejo:comandos]{Appendix~\ref{anejo:comandos}}, so that the chapter's tables and figures can be reconstructed.

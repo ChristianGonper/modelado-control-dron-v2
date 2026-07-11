@@ -1,0 +1,140 @@
+% !TeX root = ../main_en.tex
+\subsection{Execution Coverage and Validity}
+\label{subsec:resultados-cobertura}
+
+The comparison used to test the hypotheses is based on a closed-loop, reproducible, and traceable execution. Before presenting interpretations, the size of the evaluation series is detailed; therefore, Table~\ref{tab:cobertura-ejecucion} summarizes scenarios, controllers, runs, and the percentage of cases that complete the simulation without exceeding the established constraints. Finally, generation and visualization commands are compiled in \anejoref{anejo:comandos}, and the code structure producing these artifacts is synthesized in \anejoref{anejo:codigo}.
+
+\begin{table}[H]
+\caption{Coverage of the comparative execution.}
+\label{tab:cobertura-ejecucion}
+\small
+\begin{tabularx}{\textwidth}{l
+  >{\hsize=0.8\hsize\raggedleft\arraybackslash}X
+  >{\hsize=1.1\hsize\raggedleft\arraybackslash}X
+  >{\hsize=0.8\hsize\raggedleft\arraybackslash}X
+  >{\hsize=1.4\hsize\raggedleft\arraybackslash}X
+  >{\hsize=0.9\hsize\raggedleft\arraybackslash}X%
+}
+\toprule
+Split & Scenarios & Controllers & Runs & Completed [\%] & Limits [\%] \\
+\midrule
+\texttt{test} & 23 & 8 & 184 & 99.5 & 99.5 \\
+\texttt{ood} & 10 & 8 & 80 & 66.3 & 76.3 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The eight controllers in the table correspond to four PDs of the families (\texttt{hold}, \texttt{circle}, \texttt{lissajous}, and \texttt{waypoint}), three neural networks (MLP, GRU, and LSTM), and a representative PD benchmark, for which the native PD is taken under nominal conditions and the assigned PD is used for each OOD scenario.
+
+In the table, a clear difference between ID and OOD conditions is observed. In the latter, a higher number of trajectory failures and violations of actuation limits occur.
+
+\subsection{Classic Reference and Cross-Family Transfer}
+\label{subsec:resultados-referencia-clasica}
+
+Before assessing the networks, the transfer of specialized PDs to other families must be measured. This phase is highly important since the goal of the neural networks is to compete against this transfer.
+
+Figure~\ref{fig:res-pid-transfer-matrix} shows a partial specialization. The \texttt{hold} PD transfers the worst to the other families, and the \texttt{hold} family itself achieves a better RMSE with other PDs than with its own specialized controller. This result suggests that the tuning of \texttt{hold}, at least with the criteria applied in this run, does not achieve the best possible result for this family.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.72\textwidth]{res_pid_transfer_matrix.pdf}
+\caption{Cross-transfer of PD controllers on the \texttt{test} set. The rows indicate the family used for tuning and the columns the evaluated family. The diagonal marks the use of the specialized controller in its native family. Source: own evaluation.}
+\label{fig:res-pid-transfer-matrix}
+\end{figure}
+
+In \texttt{circle}, the specialized PD offers a low error and also transfers reasonably to \texttt{waypoint}, consistent with both references requiring continuous and smooth tracking, albeit with different geometries. The \texttt{lissajous} PD presents the best RMSE in its family and also performs very well on \texttt{hold} and \texttt{waypoint}, but does not replicate the same margin on \texttt{circle}. Finally, the \texttt{waypoint} PD does not transfer with the same quality to \texttt{circle} or \texttt{lissajous}, where sustained curved tracking requires a different response compared to essentially straight segments.
+
+\subsection{Neural Learning under Known Conditions}
+\label{subsec:resultados-neuronal-id}
+
+Supervised evaluation does not measure trajectory tracking, but rather fidelity to the desired force calculated by the specialized PDs. Thus, Table~\ref{tab:fidelidad-supervisada} is introduced first to address two questions: on one hand, how well each network mimics the training signal, and on the other, what happens subsequently when it is fed back into the dynamics.
+
+\begin{table}[H]
+\caption{Supervised force fidelity and associated inclination clipping. Clipping percentages correspond to the activation of the inclination limit before applying the force in the inner loop.}
+\label{tab:fidelidad-supervisada}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.20\textwidth}
+  *{4}{>{\centering\arraybackslash}X}}
+\toprule
+Architecture & Norm. MSE & Force RMSE [N] & Supervised Clip [\%] & Closed-loop Clip [\%] \\
+\midrule
+MLP  & 0.0185 & 0.083 & 0.057 & 0.062 \\
+GRU  & 0.0102 & 0.053 & 0.000 & 0.000 \\
+LSTM & 0.0111 & 0.055 & 0.000 & 0.000 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+GRU and LSTM mimic the specialized PD's force better. However, this advantage does not directly translate to position tracking. Figure~\ref{fig:res-id-rmse-family} shows that the MLP obtains a lower RMSE on \texttt{circle} and \texttt{lissajous}, while the LSTM lags behind despite its superior force fidelity. On \texttt{hold}, all networks maintain low errors, and on \texttt{waypoint}, none clearly outperform the representative PD.
+
+The contrast between Table~\ref{tab:fidelidad-supervisada} and Figure~\ref{fig:res-id-rmse-family} shows that a network can approximate the specialized PD's force better on the samples and yet not be the best once the loop is closed.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{res_id_rmse_family.pdf}
+\caption{Average RMSE under known conditions for the representative PD and the three neural architectures. Only tracking error is shown, as it is the primary metric in this comparison.}
+\label{fig:res-id-rmse-family}
+\end{figure}
+
+\subsection{Out-of-Distribution Generalization}
+\label{subsec:resultados-transferencia-ood}
+
+OOD evaluation is the most demanding part of the comparison, as it subjects the controllers to geometries, speeds, and combinations of disturbances not directly present in the training set. In this series, the representative PD benchmark is taken from the specialized PD closest to the scenario: \texttt{lissajous} for \texttt{lemniscate}, \texttt{composite}, and \texttt{lissajous}, and \texttt{waypoint} for helices.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.92\textwidth]{res_ood_rmse_family.pdf}
+\caption{Average out-of-distribution RMSE by scenario family.}
+\label{fig:res-ood-rmse-family}
+\end{figure}
+
+Figure~\ref{fig:res-ood-rmse-family} first aggregates by OOD family to identify general trends. It shows that the representative PD maintains a competitive behavior in several OOD groups. It also confirms that the LSTM is once again the architecture with the largest average error in the most demanding families. The GRU achieves a better result than the MLP in the completely new \texttt{lemniscate} and \texttt{composite} families, while the MLP remains particularly competitive in the OOD variants closest to known families, such as \texttt{lissajous} and \texttt{waypoint}.
+
+This high-level aggregation can mask significant variability. Therefore, Figure~\ref{fig:res-ood-scenario-matrix} descends to the scenario level, showing which specific combinations of controller and trajectory concentrate the error.
+
+The breakdown by scenario in Figure~\ref{fig:res-ood-scenario-matrix} qualifies the averages in Figure~\ref{fig:res-ood-rmse-family}. Most scenarios maintain low errors, but cases combining lemniscatas, composite transitions, or high dynamic demands concentrate the failures. In particular, the MLP exhibits a sharp increase in error in composite scenarios with lemniscatas, while the LSTM degrades significantly in fast trajectories or those with pronounced geometric changes. The pattern suggests that temporal memory does not provide a uniform advantage and can introduce additional sensitivity when the visited state deviates from the training distribution.
+
+The next step is to distinguish between error and failure in the simulation. Figure~\ref{fig:res-ood-termination-summary} groups the termination causes to analyze whether degradation stems from attitude, saturation, maximum duration, or other conditions.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{res_ood_scenario_matrix.pdf}
+\caption{OOD breakdown by scenario and controller for the four main references. The number in each cell is the RMSE in meters; the asterisk indicates that the run did not complete, although the episode is kept in the aggregation.}
+\label{fig:res-ood-scenario-matrix}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.76\textwidth]{res_ood_termination_summary.pdf}
+\caption{Termination types in the OOD series for the main controllers.}
+\label{fig:res-ood-termination-summary}
+\end{figure}
+
+The representative PD accumulates attitude failures in several OOD scenarios, while the networks concentrate their failures on saturation. Furthermore, the number of errors is larger in the classic implementation, which is relevant for drawing a conclusion.
+
+\subsection{Representative Architecture Case}
+\label{subsec:resultados-caso-representativo}
+
+Figure~\ref{fig:res-trajectory-lemniscate-mlp-lstm} illustrates a specific case where two architectures with the same interface produce very different behaviors. The MLP exhibits a larger initial error but stabilizes tracking and completes the geometry reasonably. The LSTM, by contrast, drifts from the reference throughout the simulation. This result reinforces the need to evaluate behavior on a trajectory-by-trajectory basis, which is why a set of geometry plots and telemetry information is presented in \hyperref[anejo:telemetria]{Appendix~\ref{anejo:telemetria}}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{res_trajectory_lemniscate_mlp_lstm.pdf}
+\caption{OOD scenario \texttt{lemniscate\_fast\_center\_yaw}: visual comparison between MLP and LSTM. The top panel shows the horizontal plane and the bottom panel shows the position error throughout the episode.}
+\label{fig:res-trajectory-lemniscate-mlp-lstm}
+\end{figure}
+
+\subsection{Actuation, Protections, and Shared Limits}
+\label{subsec:resultados-protecciones}
+
+The observed results do not depend solely on the network. The classic inner loop, mixer, actuator saturation, and force clipping limit the commands that ultimately reach the vehicle. In Figure~\ref{fig:res-protections-ood}, mixer degradation measures the percentage of time collective command scaling is required to respect actuation limits, and the clipping percentages indicate how much forces are clipped before passing to the inner loop.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{res_protections_ood.pdf}
+\caption{Average activation of protections and actuation limits in OOD. The figure separates tracking error, control demand, and constraints shared by the control architecture.}
+\label{fig:res-protections-ood}
+\end{figure}
+
+The MLP is the only one of the three networks that activates force and inclination clipping appreciably in OOD. This behavior is consistent with a stateless architecture that responds to instantaneous errors with more aggressive demands. The GRU and LSTM, by incorporating temporal history, do not activate these clippings to the same extent, as they observe the recent trend.

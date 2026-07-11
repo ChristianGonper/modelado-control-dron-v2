@@ -1,0 +1,104 @@
+\documentclass[tikz,border=10pt]{standalone}
+\usetikzlibrary{positioning, arrows.meta, calc, babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[english]{babel}
+\usepackage{amsmath, amssymb, bm}
+
+\begin{document}
+\begin{tikzpicture}[
+  scale=2.5,
+  align=center,
+  font=\sffamily\small,
+  % Estilos de ejes
+  axisB/.style={-{Stealth[scale=1.2]}, line width=1.5pt},
+  % Estilos del dron
+  arm/.style={line width=4.5pt, color=gray!70},
+  rotor/.style={fill=gray!20, draw=black!70, line width=1.2pt},
+  propeller/.style={fill=white!90!black, opacity=0.4, draw=black!30},
+  % Estilo de flechas de giro (un solo arco de ~270° por rotor)
+  spinCW/.style={-{Stealth[scale=1.0]}, line width=1.2pt, color=red!70!black},
+  spinCCW/.style={-{Stealth[scale=1.0]}, line width=1.2pt, color=blue!70!black},
+]
+
+  % Coordenadas de los rotores (en metros de cuerpo, escalados para la figura)
+  % En cuerpo FRD: x_B hacia delante (arriba), y_B hacia la derecha (derecha)
+  \coordinate (R0) at (0.75, 0.75);   % Delantero-Derecho
+  \coordinate (R1) at (-0.75, 0.75);  % Delantero-Izquierdo
+  \coordinate (R2) at (0.75, -0.75);  % Trasero-Derecho
+  \coordinate (R3) at (-0.75, -0.75); % Trasero-Izquierdo
+  \coordinate (CM) at (0, 0);
+  \coordinate (zAxis) at (-1.35, 0);
+
+  % ==========================================
+  % BODY B REFERENCE FRAME (FRD)
+  % ==========================================
+  % x_B points forward (up)
+  \draw[axisB, color=cyan!80!black] (CM) -- (0, 1.3) node[above, font=\sffamily\bfseries] {$x_B$ (Forward)};
+  % y_B points right (right)
+  \draw[axisB, color=magenta!80!black] (CM) -- (1.3, 0) node[right, font=\sffamily\bfseries] {$y_B$ (Right)};
+  % z_B points down (into the page) — callout to the left
+  \node[draw=violet!80!black, circle, line width=1.2pt, inner sep=2pt] (zSym) at (zAxis) {};
+  \draw[violet!80!black, line width=1.2pt] ($(zSym)+(-0.08,0.08)$) -- ($(zSym)+(0.08,-0.08)$);
+  \draw[violet!80!black, line width=1.2pt] ($(zSym)+(-0.08,-0.08)$) -- ($(zSym)+(0.08,0.08)$);
+  \node[below=0.12cm of zSym, font=\sffamily\bfseries, color=violet!80!black] {$z_B$ (Down)};
+
+  % ==========================================
+  % QUADCOPTER ARMS (X Configuration)
+  % ==========================================
+  \draw[arm] (R1) -- (R2);
+  \draw[arm] (R0) -- (R3);
+
+  % Center of mass
+  \draw[fill=white, draw=black, line width=1.5pt] (CM) circle (0.15cm);
+  \fill[black] (0,0) -- (0,0.15) arc (90:180:0.15) -- (0,0) -- (-0.15,0) arc (180:270:0.15) -- (0,0);
+  \node[anchor=south west, font=\sffamily\scriptsize\bfseries] at (0.05, 0.05) {CM};
+
+  % ==========================================
+  % ROTORS, PROPELLERS AND SPIN DIRECTIONS
+  % ==========================================
+
+  % --- ROTOR 0: Front-Right ---
+  \draw[rotor] (R0) circle (0.15cm);
+  \draw[propeller] (R0) ellipse (0.35cm and 0.1cm);
+  \node[draw=black!60, fill=white, circle, inner sep=1pt, font=\sffamily\scriptsize] at (R0) {0};
+  \node[anchor=west, xshift=1.0cm, font=\sffamily\scriptsize, text=black!70] at (R0)
+    {$\bm{r}_0 = (0.17, 0.17)$ m};
+  \draw[spinCW, ->] ($(R0) + (0, 0.28)$) arc (90:-180:0.28);
+
+  % --- ROTOR 1: Front-Left ---
+  \draw[rotor] (R1) circle (0.15cm);
+  \draw[propeller] (R1) ellipse (0.35cm and 0.1cm);
+  \node[draw=black!60, fill=white, circle, inner sep=1pt, font=\sffamily\scriptsize] at (R1) {1};
+  \node[anchor=east, xshift=-1.0cm, font=\sffamily\scriptsize, text=black!70] at (R1)
+    {$\bm{r}_1 = (0.17, -0.17)$ m};
+  \draw[spinCCW, ->] ($(R1) + (0, 0.28)$) arc (90:360:0.28);
+
+  % --- ROTOR 2: Rear-Right ---
+  \draw[rotor] (R2) circle (0.15cm);
+  \draw[propeller] (R2) ellipse (0.35cm and 0.1cm);
+  \node[draw=black!60, fill=white, circle, inner sep=1pt, font=\sffamily\scriptsize] at (R2) {2};
+  \node[anchor=west, xshift=1.0cm, font=\sffamily\scriptsize, text=black!70] at (R2)
+    {$\bm{r}_2 = (-0.17, 0.17)$ m};
+  \draw[spinCCW, ->] ($(R2) + (0, 0.28)$) arc (90:360:0.28);
+
+  % --- ROTOR 3: Rear-Left ---
+  \draw[rotor] (R3) circle (0.15cm);
+  \draw[propeller] (R3) ellipse (0.35cm and 0.1cm);
+  \node[draw=black!60, fill=white, circle, inner sep=1pt, font=\sffamily\scriptsize] at (R3) {3};
+  \node[anchor=east, xshift=-1.0cm, font=\sffamily\scriptsize, text=black!70] at (R3)
+    {$\bm{r}_3 = (-0.17, -0.17)$ m};
+  \draw[spinCW, ->] ($(R3) + (0, 0.28)$) arc (90:-180:0.28);
+
+  % ==========================================
+  % EXPLANATORY LEGEND
+  % ==========================================
+  \node[draw=gray!30, fill=gray!3, rounded corners=2pt, below=3.0cm of CM, inner sep=5pt, minimum width=2.4cm, font=\sffamily\scriptsize] (leyenda) {
+    \textbf{Sign of reaction torque $s_i$ (in yaw):} \\
+    \textcolor{red!70!black}{$\bm{\curvearrowright}$} Clockwise (CW), $s_i = -1$\\
+    \textcolor{blue!70!black}{$\bm{\curvearrowleft}$} Counter-clockwise (CCW), $s_i = +1$
+  };
+
+\end{tikzpicture}
+\end{document}

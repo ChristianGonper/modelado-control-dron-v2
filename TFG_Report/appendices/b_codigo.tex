@@ -1,0 +1,77 @@
+% !TeX root = ../main_en.tex
+This appendix complements the methodological description with an engineering perspective on the code. It aims to highlight the elements supporting the reproducibility of the work, the simulation contract, the separation between dynamics, control, telemetry, and visualization, and the integration of the neural controller within the classic loop.
+
+\subsubsection*{Functional Organization of the Package}
+
+The \texttt{simulador\_quad} package is organized modularly according to responsibilities under the \path{src/simulador_quad/} directory:
+\begin{itemize}
+    \item \path{dynamics}: Rigidbody dynamics and actuators.
+    \item \path{core}: Reference frames, data contracts, and common utilities.
+    \item \path{control}: Implementation of the different controllers.
+    \item \path{trajectories}: Reference trajectory generation and management.
+    \item \path{telemetry}: Structured logging of simulation telemetry.
+    \item \path{metrics}: Performance and error metrics calculation.
+    \item \path{visualization}: Rendering and graphical outputs.
+\end{itemize}
+The scripts in \path{tools/} manage dataset generation, expert PD series, neural training, batch execution, and results consolidation.
+
+This separation is relevant because the work compares controllers without modifying the physical environment. An execution can replace the outer loop with a network, fix expert PDs, or run an OOD series, while the integrator, mixer, actuators, disturbances, and metrics remain common.
+
+\subsubsection*{Multirate Simulation Loop}
+
+The following snippet summarizes the core of the temporal contract. In each cycle, safety limits are verified, the reference is computed, the control is updated using zero-order hold, the actuator system is applied, telemetry is logged at a lower frequency, and physics are integrated using RK4. This structure is what allows setting \SI{100}{Hz} for physics, \SI{50}{Hz} for control, and \SI{10}{Hz} for telemetry without mixing responsibilities.
+
+\begin{lstlisting}[language=Python,caption={Simplified schematic of the simulation loop.},label={lst:bucle-simulacion}]
+while True:
+    is_saturated = any(current_applied.saturation_flags)
+    term, reason = self._check_safety_termination(state, is_saturated)
+    if term:
+        break
+
+    current_ref = trajectory.get_reference_for_state(time_s, state)
+
+    if time_s - last_control_time >= self.control_dt_s:
+        obs_pos, obs_vel = self.noise.apply_noise(
+            state.position_W_m,
+            state.velocity_W_m_s,
+        )
+        current_control = controller.compute_control(time_s, current_obs, current_ref)
+        current_rotor_cmd = self.mixer.compute_rotor_commands(
+            current_control.collective_thrust_N,
+            current_control.body_moments_Nm,
+        )
+
+    current_applied, torque_B, thrust_B = \
+        self.actuators.compute_applied_forces(current_rotor_cmd.target_omega_rad_s)
+
+    if time_s - last_telemetry_time >= self.telemetry_dt_s:
+        telemetry.append(sample_from_state_control_and_reference(...))
+
+    state = rk4_step(..., thrust_B, torque_B, wind_W_m_s, drag_coefficients)
+\end{lstlisting}
+
+\subsubsection*{Neural Controller Integration}
+
+The neural controller does not replace the entire control loop. The network estimates the desired force of the outer loop in the world frame, while the classic controller retains the force-to-attitude conversion, the inner loop, saturations, and the mixer. Recurrent inference is performed using a window of fixed length; thus, the network is not run in a persistent \textit{stateful} mode, but rather reconstructs the sequential input at each step from a FIFO queue of normalized samples.
+
+\begin{lstlisting}[language=Python,caption={Input preparation for MLP and recurrent networks.},label={lst:ventana-inferencia}]
+x = build_outer_force_min_features_from_observation(obs_state, reference)
+x_norm = self.normalizer.normalize_x(torch.tensor(x, dtype=torch.float32))
+
+if self.architecture == "mlp":
+    model_input = x_norm.unsqueeze(0)          # [1, input_dim]
+else:
+    self.window.append(x_norm)
+    while len(self.window) < self.sequence_length:
+        self.window.appendleft(x_norm)
+    model_input = torch.stack(list(self.window)).unsqueeze(0)  # [1, 20, input_dim]
+
+with torch.no_grad():
+    y_norm = self.model(model_input).squeeze(0)
+\end{lstlisting}
+
+This decision facilitates a common interface across MLP, GRU, and LSTM and prevents the hidden state from depending on previous runs. As a trade-off, it introduces recalculation of historical samples at each recurrent inference step.
+
+\subsubsection*{Output Traceability}
+
+Each execution writes \texttt{telemetry.json} and \texttt{metrics.json}. Telemetry preserves state, observation, reference, control command, rotor commands, applied actuation, wind, and, where applicable, neural forces before and after clipping. Metrics aggregate RMSE, maximum error, duration, termination cause, saturation, mixer degradation, and provenance metadata.

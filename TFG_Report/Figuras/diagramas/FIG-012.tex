@@ -1,0 +1,116 @@
+\documentclass[tikz,border=10pt]{standalone}
+\usetikzlibrary{positioning, arrows.meta, calc, shapes.geometric, babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[english]{babel}
+\usepackage{amsmath, amssymb, bm}
+
+\begin{document}
+\begin{tikzpicture}[
+  node distance=0.9cm and 1.0cm,
+  align=center,
+  font=\sffamily\small,
+  % Estilos de bloques
+  box/.style={draw, rectangle, rounded corners=3pt, minimum width=3.0cm, minimum height=1.1cm, thick, fill=white},
+  decision/.style={draw, diamond, aspect=1.8, thick, fill=white, inner sep=2pt},
+  pathbox/.style={box, fill=black!2},
+  % Estilos de flechas
+  line/.style={draw, -{Stealth[scale=1.2]}, thick},
+  dashline/.style={draw, -{Stealth[scale=1.2]}, thick, dashed}
+]
+
+  % ==========================================
+  % INPUTS
+  % ==========================================
+  \node[box, fill=gray!5] (entradas) {\textbf{Mixer Inputs}\\Collective $T$ [N]\\Moments $\bm{\tau}_B$ [N m]};
+
+  % ==========================================
+  % BLOCK 1: LINEAR PROJECTION
+  % ==========================================
+  \node[box, below=of entradas, minimum width=3.8cm] (proyeccion) {
+    \textbf{Linear projection} ($\bm{M}^{-1}$)\\
+    $T_{\text{thrust\_part}} = \bm{M}^{-1} [T, 0, 0, 0]^\mathsf{T}$\\
+    $T_{\text{moment\_part}} = \bm{M}^{-1} [0, \tau_x, \tau_y, \tau_z]^\mathsf{T}$
+  };
+  \draw[line] (entradas) -- (proyeccion);
+
+  % ==========================================
+  % BLOCK 2: SLACK LIMITS
+  % ==========================================
+  \node[box, below=of proyeccion, minimum width=3.8cm] (limites) {
+    \textbf{Slack limits}\\
+    $\delta_{\min} = \max_i(T_{\min} - T_{\text{thrust\_part},i} - T_{\text{moment\_part},i})$\\
+    $\delta_{\max} = \min_i(T_{\max} - T_{\text{thrust\_part},i} - T_{\text{moment\_part},i})$
+  };
+  \draw[line] (proyeccion) -- (limites);
+
+  % ==========================================
+  % DECISION BLOCK: SLACK EXISTENCE
+  % ==========================================
+  \node[decision, below=1.2cm of limites] (decidir) {$\delta_{\max} \ge \delta_{\min}$?\\(Is there slack?)};
+  \draw[line] (limites) -- (decidir);
+
+  % ==========================================
+  % NOMINAL ROUTE (YES)
+  % ==========================================
+  \node[pathbox, below left=1.2cm and 0.3cm of decidir, minimum width=4.8cm, minimum height=1.5cm] (nominal) {
+    \textbf{Nominal Route}\\
+    Collective shifting\\
+    $\delta = \operatorname{clip}(0.0, \delta_{\min}, \delta_{\max})$\\[0.1cm]
+    Requested motor thrust\\
+    $T_{\text{req}} = T_{\text{thrust\_part}} + \delta + T_{\text{moment\_part}}$
+  };
+  \draw[line] (decidir.west) -| node[above left, pos=0.3, font=\sffamily\bfseries\color{green!60!black}] {YES} (nominal.north);
+
+  % ==========================================
+  % SATURATION ROUTE (NO)
+  % ==========================================
+  \node[pathbox, below right=1.2cm and 0.3cm of decidir, minimum width=4.8cm, minimum height=1.5cm] (saturado) {
+    \textbf{Saturation Route}\\
+    Set average thrust $T_{\text{target}} = \frac{T_{\min} + T_{\max}}{2.0}$\\[0.1cm]
+    Proportional attitude scaling\\
+    $k = \min_i \left( \operatorname{scaling}(T_{\text{target}}, T_{\text{moment\_part}}) \right)$\\[0.1cm]
+    Requested motor thrust\\
+    $T_{\text{req}} = T_{\text{target}} + k \, T_{\text{moment\_part}}$
+  };
+  \draw[line] (decidir.east) -| node[above right, pos=0.3, font=\sffamily\bfseries\color{red!70!black}] {NO} (saturado.north);
+
+  % ==========================================
+  % UNION AND FINAL BLOCKS
+  % ==========================================
+  \coordinate (union) at ($(nominal.south)!0.5!(saturado.south) + (0,-1.0)$);
+
+  % Final Physical Limits
+  \node[box, below=2.8cm of decidir, yshift=-1.5cm, minimum width=4.0cm] (sat_hard) {
+    \textbf{Final physical limits}:\\
+    $T_{\text{req}, i} = \operatorname{clip}(T_{\text{req}, i}, T_{\min}, T_{\max})$
+  };
+
+  % Conversion to rotor speed
+  \node[box, below=0.8cm of sat_hard, minimum width=3.8cm] (conversion) {
+    \textbf{Conversion to rotor speed}\\[0.15cm]
+    $\omega_i = \sqrt{T_{\text{req}, i} / k_f}$
+  };
+
+  % Outputs
+  \node[box, below=0.8cm of conversion, fill=gray!5] (salidas) {
+    \textbf{Mixer Outputs}:\\
+    Command $\bm{\omega}_{\text{target}}$ [rad/s]\\
+    Degradation Warning
+  };
+
+  % Connect routes
+  \draw[line] (nominal.south) -- ++(0,-0.8) -| ($(sat_hard.north) + (-0.8,0)$);
+  \draw[line] (saturado.south) -- ++(0,-0.6) -| ($(sat_hard.north) + (0.4,0)$);
+  
+  % Connect sat_hard to conversion and outputs
+  \draw[line] (sat_hard) -- (conversion);
+  \draw[line] (conversion) -- (salidas);
+
+  % Flow annotations
+  \node[anchor=north east, font=\sffamily\scriptsize\itshape, text=black!50] at ($(nominal.south) + (3.3, -0.4)$) {Preserves moments intact};
+  \node[anchor=north west, font=\sffamily\scriptsize\itshape, text=black!50] at ($(saturado.south) + (-3.9, -0.25)$) {Prioritizes attitude, scales collective};
+
+\end{tikzpicture}
+\end{document}

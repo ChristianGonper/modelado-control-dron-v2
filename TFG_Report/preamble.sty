@@ -1,0 +1,197 @@
+\ProvidesPackage{preamble}
+
+% Idioma, codificacion y tipografia.
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[english]{babel}
+\usepackage{csquotes}
+\usepackage{microtype}
+\usepackage[all]{nowidow}
+\usepackage{setspace}
+\onehalfspacing
+
+% Pagina y cabeceras.
+\usepackage{geometry}
+\geometry{
+  a4paper,
+  left=30mm,
+  right=25mm,
+  top=30mm,
+  bottom=25mm,
+  headheight=2cm
+}
+\setlength{\parindent}{0.5cm}
+\setlength{\parskip}{0pt}
+
+\usepackage{graphicx}
+\graphicspath{{Figuras/}{Figuras/diagramas/}{Figuras/resultados/}}
+\usepackage{etoolbox}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\pagestyle{fancy}
+\fancyhf{}
+\newcommand{\totalpaginas}{\pageref*{LastPage}}
+\lhead{\includegraphics[height=1.2cm]{Figuras/ule.jpg}}
+\chead{School of Industrial, \\ Computer and Aerospace Engineering}
+\rhead{Page \thepage\ of \totalpaginas}
+\lfoot{\autorTFG}
+\rfoot{\gradoTFG}
+\renewcommand{\headrulewidth}{1pt}
+\renewcommand{\footrulewidth}{1pt}
+\setlength{\headwidth}{\textwidth}
+
+% Matematicas, unidades y tablas.
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{bm}
+\usepackage{siunitx}
+\sisetup{
+  output-decimal-marker={.},
+  per-mode=symbol,
+  detect-all=true
+}
+\numberwithin{equation}{section}
+
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{tabularray}
+\usepackage{multirow}
+
+% Figuras y flotantes.
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{pdflscape}
+\usepackage{pdfpages}
+\usepackage{chngcntr}
+\counterwithin{figure}{section}
+\counterwithin{table}{section}
+\AtBeginEnvironment{figure}{\centering}
+\AtBeginEnvironment{table}{\centering}
+\DeclareCaptionFont{fuenteimg}{\normalfont\fontsize{12pt}{12pt}\selectfont}
+\captionsetup[figure]{font=fuenteimg,labelsep=period,position=bottom,skip=12pt}
+\captionsetup[table]{font=fuenteimg,labelsep=period,position=top,skip=12pt}
+\captionsetup[subfigure]{font=fuenteimg,labelsep=period,justification=centering}
+
+% Listas, codigo y enlaces.
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{listings}
+\definecolor{codigoFondo}{HTML}{F7F8FA}
+\definecolor{codigoMarco}{HTML}{AAB2BD}
+\definecolor{codigoTexto}{HTML}{20242A}
+\definecolor{codigoComentario}{HTML}{3A6B35}
+\definecolor{codigoPalabraClave}{HTML}{1F4E79}
+\definecolor{codigoCadena}{HTML}{8A3B12}
+\definecolor{codigoNumeroLinea}{HTML}{68707A}
+\lstdefinestyle{codigoTFG}{
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{codigoFondo},
+  rulecolor=\color{codigoMarco},
+  identifierstyle=\color{codigoTexto},
+  keywordstyle=\color{codigoPalabraClave}\bfseries,
+  commentstyle=\color{codigoComentario}\itshape,
+  stringstyle=\color{codigoCadena},
+  breaklines=true,
+  columns=fullflexible,
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny\color{codigoNumeroLinea},
+  numbersep=8pt,
+  xleftmargin=1.5em,
+  framexleftmargin=1em,
+  keepspaces=true,
+  showstringspaces=false,
+  captionpos=b,
+  literate={á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+           {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
+           {ñ}{{\~n}}1 {Ñ}{{\~N}}1 {¿}{{\textquestiondown}}1 {¡}{{\textexclamdown}}1
+}
+\lstset{style=codigoTFG}
+
+\usepackage{titlesec}
+\usepackage{textcase}
+\usepackage{tocloft}
+\AddToHook{cmd/section/before}{\clearpage}
+\titleformat{\section}{\normalfont\fontsize{28pt}{28pt}\selectfont\bfseries\raggedright}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\normalfont\fontsize{14pt}{14pt}\selectfont\bfseries\raggedright\MakeTextUppercase}{\thesubsection.}{0.5em}{}
+\titleformat{\subsubsection}{\normalfont\fontsize{12pt}{12pt}\selectfont\bfseries\raggedright}{\thesubsubsection.}{0.5em}{}
+\titlespacing*{\section}{0pt}{0pt}{12pt}
+\titlespacing*{\subsection}{0pt}{18pt}{12pt}
+\titlespacing*{\subsubsection}{0pt}{12pt}{8pt}
+
+\renewcommand{\cftsubsecfont}{\normalfont}
+\renewcommand{\cftsecpagefont}{\normalfont}
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+\renewcommand{\cfttoctitlefont}{\normalfont\fontsize{28pt}{28pt}\selectfont\bfseries}
+\renewcommand{\cftloftitlefont}{\normalfont\fontsize{28pt}{28pt}\selectfont\bfseries}
+\renewcommand{\cftlottitlefont}{\normalfont\fontsize{28pt}{28pt}\selectfont\bfseries}
+\setlength{\cftaftertoctitleskip}{2cm}
+\setlength{\cftafterloftitleskip}{2cm}
+\setlength{\cftafterlottitleskip}{2cm}
+\cftsetindents{section}{1em}{1em}
+\cftsetindents{subsection}{1em}{2.5em}
+\setlength{\cftsubsecindent}{\dimexpr\cftsecindent+\cftsecnumwidth}
+\setlength{\cftsubsubsecindent}{\dimexpr\cftsubsecindent+\cftsubsecnumwidth}
+\cftsetindents{figure}{1.5em}{1cm}
+\cftsetindents{table}{1.5em}{1cm}
+
+\usepackage[hyphens]{url}
+\usepackage{cite}
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linktoc=all,
+  linkcolor=blue,
+  citecolor=blue,
+  urlcolor=blue,
+  pdfauthor={\autorTFG},
+  pdftitle={\tituloTFGEnglish}
+}
+
+\AtBeginDocument{%
+  \renewcommand{\figureautorefname}{Figure}%
+  \def\figurename{Figure}%
+  \renewcommand{\tableautorefname}{Table}%
+  \def\tablename{Table}%
+}
+
+% Referencias con espacio no separable y enlace unico.
+\newcommand{\figref}[1]{\hyperref[#1]{Figure~\ref*{#1}}}
+\newcommand{\tabref}[1]{\hyperref[#1]{Table~\ref*{#1}}}
+\newcommand{\eqnref}[1]{\hyperref[#1]{equation~(\ref*{#1})}}
+\newcommand{\Eqnref}[1]{\hyperref[#1]{Equation~(\ref*{#1})}}
+\newcommand{\anejoref}[1]{\hyperref[#1]{Appendix~\ref*{#1}}}
+\newcommand{\apartadoref}[1]{\hyperref[#1]{section~\ref*{#1}}}
+\newcommand{\Apartadoref}[1]{\hyperref[#1]{Section~\ref*{#1}}}
+\newcommand{\lstref}[1]{\hyperref[#1]{Listing~\ref*{#1}}}
+\renewcommand{\lstlistingname}{Listing}
+
+% Notacion recurrente del TFG.
+\newcommand{\frameW}{\mathcal{W}}
+\newcommand{\frameB}{\mathcal{B}}
+\newcommand{\posW}{\bm{p}_{\frameW}}
+\newcommand{\velW}{\bm{v}_{\frameW}}
+\newcommand{\forceW}{\bm{F}_{\frameW}}
+\newcommand{\omegaB}{\bm{\omega}_{\frameB}}
+\newcommand{\quatWB}{\bm{q}_{\frameW\frameB}}
+
+% Anejos.
+\newcounter{appendixcounter}
+\renewcommand{\theappendixcounter}{\arabic{appendixcounter}}
+\newcommand{\myappendix}[1]{%
+  \cleardoublepage
+  \thispagestyle{empty}
+  \refstepcounter{appendixcounter}
+  \vspace*{\fill}
+  \begin{center}
+    \parbox{0.9\textwidth}{\centering\Huge\bfseries Appendix \theappendixcounter. #1}
+  \end{center}
+  \vspace*{\fill}
+  \addcontentsline{toc}{section}{Appendix \theappendixcounter: #1}
+  \cleardoublepage
+}

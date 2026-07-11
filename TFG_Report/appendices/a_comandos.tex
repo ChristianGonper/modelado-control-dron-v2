@@ -1,0 +1,163 @@
+% !TeX root = ../main_en.tex
+This appendix compiles the minimal commands required to reconstruct the experimental evidence used in this thesis. It does not replace the repository's \texttt{README.md}, but rather outlines a compact execution path.
+
+\subsubsection*{Environment Setup}
+
+The project is managed using \texttt{uv}. The first command synchronizes the environment defined by \texttt{pyproject.toml} and \texttt{uv.lock}, while the second runs the available tests before launching long-running executions.
+
+\begin{verbatim}
+uv sync
+uv run pytest
+\end{verbatim}
+
+\subsubsection*{Minimal Scenario Execution}
+
+The basic execution takes a YAML scenario, initializes the vehicle, trajectory, controller, disturbances, and termination conditions, and outputs two files:
+\begin{itemize}
+  \item \texttt{telemetry.json} with the time series and
+  \item \texttt{metrics.json} with the aggregated metrics.
+\end{itemize}
+
+\begin{verbatim}
+uv run simulador-quad run scenarios\hover_clean.yaml --no-visualization
+
+set CASE=results\hover_clean
+uv run simulador-quad plot ^
+  %CASE%\telemetry.json ^
+  --metrics %CASE%\metrics.json ^
+  --out %CASE%\figures_report ^
+  --profile report --formats png pdf --lang en
+\end{verbatim}
+
+The same command allows executing individual scenarios during development. For the final figures of the visual appendix, however, the telemetry files from the classic dataset are used instead of isolated runs.
+
+\begin{verbatim}
+uv run simulador-quad run ^
+  scenarios\lissajous_clean.yaml ^
+  --no-visualization
+\end{verbatim}
+
+\subsubsection*{Classic Dataset and Expert PDs}
+
+The classic dataset establishes reproducible scenarios and allows tuning or fixing PD controllers per family. After modifying gains or tuning criteria, the scenarios must be regenerated using \texttt{-}\texttt{-overwrite} so that the incorporated gains and manifests remain consistent.
+
+\begin{verbatim}
+uv run python tools\generate_classic_dataset.py ^
+  --version v1 --out data\classic_dataset\v1 --overwrite
+
+uv run python tools\tune_classic_pid.py ^
+  --dataset data\classic_dataset\v1 ^
+  --out data\classic_dataset\v1\pids --workers 8
+  %% Runs in parallel on 8 CPU cores
+
+uv run python tools\run_classic_dataset.py ^
+  --dataset data\classic_dataset\v1 ^
+  --no-visualization --workers 4
+
+uv run python tools\summarize_classic_dataset.py ^
+  --dataset data\classic_dataset\v1
+\end{verbatim}
+
+\subsubsection*{Neural Outer-Force Dataset}
+
+The neural controller learns the desired outer-loop force by behavior cloning. To do so, a bank of external PD candidates is generated first, the safe expert per scenario is selected, and the input/output samples used by the MLP, GRU, and LSTM are exported.
+
+\begin{verbatim}
+uv run python tools\generate_outer_force_pid_bank.py ^
+  --dataset data\classic_dataset\v1 ^
+  --out data\outer_force_pid_bank\v1 --workers 8
+
+uv run python tools\generate_outer_force_dataset.py ^
+  --source-dataset data\classic_dataset\v1 ^
+  --pid-bank data\outer_force_pid_bank\v1 ^
+  --out data\outer_force_dataset\v1
+
+uv run python tools\train_neural_controller.py ^
+  --dataset data\outer_force_dataset\v1 ^
+  --architecture mlp ^
+  --feature-version outer_force_min_v1 ^
+  --out data\neural_control\outer_force_mlp_min_v1 ^
+  --device auto
+
+uv run python tools\evaluate_neural_controller.py ^
+  --dataset data\outer_force_dataset\v1 ^
+  --run data\neural_control\outer_force_mlp_min_v1 ^
+  --device auto
+\end{verbatim}
+
+Recurrent architectures are trained using the same command, replacing \texttt{mlp} with \texttt{gru} or \texttt{lstm}. During closed-loop evaluation, the corresponding checkpoint and normalization files must always be supplied to avoid mixing models and scalings.
+
+\subsubsection*{OOD Series and Closed-Loop Comparison}
+
+The OOD series used in the results originates from \texttt{data/neural\_ood/battery\_v1}. The parameter \texttt{max\_duration\_s}=60\,s was set in the generator so that fast trapezoidal trajectories have sufficient margin.
+
+\begin{verbatim}
+uv run python tools\generate_ood_battery.py ^
+  --out data\neural_ood\battery_v1 ^
+  --pid-source-dataset data\classic_dataset\v1 ^
+  --overwrite
+
+uv run python tools\run_classic_transfer_dataset.py ^
+  --dataset data\neural_ood\battery_v1 ^
+  --pid-source-dataset data\classic_dataset\v1 ^
+  --pid-family all --include-native --workers 8 ^
+  --no-visualization --rerun
+
+uv run python tools\run_neural_outer_force_dataset.py ^
+  --dataset data\neural_ood\battery_v1 --split ood ^
+  --architecture mlp --device auto --workers 4 ^
+  --no-visualization --rerun
+
+uv run python tools\run_neural_outer_force_dataset.py ^
+  --dataset data\neural_ood\battery_v1 --split ood ^
+  --architecture gru --device auto --workers 4 ^
+  --no-visualization --rerun
+
+uv run python tools\run_neural_outer_force_dataset.py ^
+  --dataset data\neural_ood\battery_v1 --split ood ^
+  --architecture lstm --device auto --workers 4 ^
+  --no-visualization --rerun
+
+uv run python tools\summarize_comparison.py
+\end{verbatim}
+
+\subsubsection*{Results Figures and Appendices}
+
+The comparative figures in the results chapter are regenerated from the CSV. The telemetry plots in the visual appendix are generated from the classic dataset, which contains the runs of the expert PDs with fixed parameters for training, validation, and testing. When illustrating cross-transfer, the transfer results folder is used instead.
+
+\begin{verbatim}
+uv run simulador-quad plot-comparison ^
+  results\comparison_all_runs.csv ^
+  --out TFG_Report\Figuras\resultados ^
+  --formats pdf png --lang en
+
+set ROOT=data\classic_dataset\v1\results\circle
+set RUN=circle_g04_P5_combined_s1083
+uv run simulador-quad plot ^
+  %ROOT%\%RUN%\telemetry.json ^
+  --metrics %ROOT%\%RUN%\metrics.json ^
+  --out TFG_Report\Figuras\resultados\classic_circle_combined ^
+  --profile report --formats pdf png --lang en
+
+set ROOT=data\classic_dataset\v1\results_transfer
+set RUN=circle_g04_P5_combined_s1083_with_pid_lissajous
+uv run simulador-quad plot ^
+  %ROOT%\%RUN%\telemetry.json ^
+  --metrics %ROOT%\%RUN%\metrics.json ^
+  --out TFG_Report\Figuras\resultados\transfer_circle_lissajous ^
+  --profile report --formats pdf png --lang en
+\end{verbatim}
+
+The same \texttt{plot} command was applied to five native cases: \texttt{hold\_g05\_P5}, \texttt{circle\_g04\_P5}, \texttt{circle\_g07\_P2}, \texttt{lissajous\_g07\_P5}, and \texttt{waypoint\_g03\_P5}. It was also used for a cross-transfer pair of the circular case. In all of them, the \texttt{report} profile removes redundant titles while preserving axes, units, and legends.
+
+\subsubsection*{Evidence Files}
+
+\begin{itemize}
+  \item \path{results/comparison_all_runs.csv}: Comparable runs used by the main results figures.
+  \item \path{results/comparison_summary.csv}: Aggregation by controller, split, and family.
+  \item \path{results/evidence_manifest.csv}: Origin of datasets, checkpoints, and inclusion decisions.
+  \item Time-series files of the native expert PDs in \path{data/classic_dataset/v1/results/*/*/telemetry.json}.
+  \item Metrics and metadata files for those runs in \path{data/classic_dataset/v1/results/*/*/metrics.json}.
+  \item Cross-transfer runs between PD families in \path{data/classic_dataset/v1/results_transfer/*/}.
+  \item Thesis figures directory in \path{TFG_Report/Figuras/resultados/}.
+\end{itemize}

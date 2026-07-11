@@ -1,0 +1,100 @@
+% !TeX root = ../main_en.tex
+\subsection{Classic Cascaded Control}
+\label{subsec:control-clasico-cascada}
+
+\subsubsection*{Cascaded PD Architecture}
+
+The classic controller serves three functions. First, it provides the benchmark against which the neural implementations are compared. Second, it generates the data for behavior cloning itself. Third, it provides the inner attitude loop that accompanies the neural-type outer loop.
+
+The structure is separated into two loops. An outer loop for translation, which receives the position and velocity observation and the trajectory reference in the ENU frame, and calculates a desired force $\bm{F}_{d,W}$. The inner loop receives this force and the reference yaw, constructs an attitude compatible with the thrust direction, and calculates the moments in the FRD body frame. Finally, the mixer previously described in the \hyperref[subsubsec:actuadores-mixer]{section on actuators, mixer, and actuation limits} transforms the collective thrust and moments into rotor commands. This flow can be seen in \figref{fig:arquitectura-cascada}.
+
+Through this separation, it is clear which part will be replaced by learning and why they are said to use the same interface. Both the classic outer loop and the neural network receive position and velocity errors and output the desired force. It is worth mentioning that the network will also receive the acceleration required by the reference as input, while gravity compensation will be added in the same way as with the classic outer loop. From the force output onward, the rest of the flow remains identical.
+
+\begin{figure}[H]
+  \makebox[\textwidth][c]{\includegraphics[width=1.25\textwidth]{FIG-004}}
+  \caption{Architecture of the implemented classic cascaded controller. The outer loop (position in ENU world frame), the geometric conversion of force to attitude, and the inner loop (attitude stabilization in FRD body frame) are highlighted. The neural substitution boundary is located at the desired force signal $\bm{F}_{d,W}$. Source: own elaboration.}
+  \label{fig:arquitectura-cascada}
+\end{figure}
+
+\subsubsection*{Equations, Gains and Limits}
+
+The trajectory reference provides position, velocity, acceleration, and yaw at each instant. In continuous families, acceleration comes from the analytical derivative of the reference, whereas in the \texttt{waypoint} family, it is derived from the profile described and illustrated in \figref{fig:perfiles-waypoint}.
+
+Letting $\bm{e}_p=\bm{p}_r-\bm{p}$ and $\bm{e}_v=\bm{v}_r-\bm{v}$ represent the position and velocity errors, respectively, where $\bm{p}, \bm{v} \in \mathbb{R}^3$ correspond to the observed position and velocity of the vehicle in the ENU world frame, and $\bm{p}_r, \bm{v}_r \in \mathbb{R}^3$ are the reference position and velocity dictated by the trajectory, the outer loop calculates the commanded acceleration $\bm{a}_{cmd}$ and the desired force in ENU $\bm{F}_{d,W}$ via:
+\begin{align}
+ \bm{a}_{cmd} &=
+ \bm{K}_{p,p}\odot\bm{e}_p+
+ \bm{K}_{d,p}\odot\bm{e}_v+\bm{a}_r,\\
+ \bm{F}_{d,W} &=
+ m\left(\bm{a}_{cmd}-[0\;0\;-g]^\mathsf{T}\right).
+ \label{eq:pd-fuerza-deseada}
+\end{align}
+Here, $\bm{a}_r \in \mathbb{R}^3$ represents the reference acceleration, $m$ is the quadcopter mass, $g$ is the acceleration of gravity, and the symbol $\odot$ indicates the Hadamard (element-wise) product. The reference acceleration acts as a trajectory feedforward term, and the gravitational term converts the desired kinematic acceleration into physical force. In a hover, for example, $\bm{a}_r=\bm{0}$ and zero errors lead to $\bm{F}_{d,W}=[0\;0\;mg]^\mathsf{T}$, i.e., the upward force required to balance the weight.
+
+The norm of $\bm{F}_{d,W}$ defines the requested collective thrust, limited in the controller to $[0, 2.5mg]$. Since an FRD frame is used, the thrust acts in the $-z_B$ direction, so for the vehicle to generate a force $\bm{F}_{d,W}$, the desired $z_B$ axis is taken opposite to that force:
+\[
+ \bm{z}_{B,d}=-\frac{\bm{F}_{d,W}}{\|\bm{F}_{d,W}\|}.
+\]
+In case the norm is virtually zero, the attitude is set to level.
+
+The reference yaw completes the desired orientation. First, an auxiliary horizontal axis is formed: $\bm{x}_C=[-\sin\psi_r\;\cos\psi_r\;0]^\mathsf{T}$, obtaining $\bm{y}_{B,d}$ as the vector cross product between $\bm{z}_{B,d}$ and $\bm{x}_C$, normalizing it when possible. Next, $\bm{x}_{B,d}=\bm{y}_{B,d}\times\bm{z}_{B,d}$ is calculated, and the matrix $\bm{R}_{WB,d}$ is constructed with these three axes as columns. This matrix is then transformed into a quaternion to compare the desired attitude with the observed attitude.
+
+The cascaded structure and the force-to-attitude conversion are consistent with standard quadcopter control formulations \cite{beard2012small,mellinger2011minimum}.
+The attitude error is computed as $\bm{q}_e=\bm{q}_{WB}^{-1}\otimes\bm{q}_{WB,d}$, where $\bm{q}_{WB}$ is the quaternion describing the observed attitude of the body $\frameB$ relative to the world $\frameW$, $\bm{q}_{WB,d}$ is the desired attitude calculated in the previous step, and the operator $\otimes$ represents quaternion multiplication. If the scalar part of the error quaternion is negative, its sign is flipped to choose the equivalent shortest-rotation representation. For small errors, the angular deviation is approximated by the vector $\bm{e}_q=2\bm{q}_{e,v}$, where $\bm{q}_{e,v} \in \mathbb{R}^3$ is the vector part of the quaternion $\bm{q}_e$. Assuming a zero reference angular velocity, the commanded moment in the FRD frame $\bm{\tau}_B \in \mathbb{R}^3$ is defined as:
+\begin{equation}
+ \bm{\tau}_B=
+ \bm{K}_{p,a}\odot\bm{e}_q
+ +\bm{K}_{d,a}\odot(-\omegaB)
+ +\omegaB\times\bm{I}_B\omegaB.
+ \label{eq:pd-actitud}
+\end{equation}
+Here, $\bm{K}_{p,a}$ and $\bm{K}_{d,a}$ are the proportional and derivative gain vectors of the attitude loop, $\omegaB \in \mathbb{R}^3$ is the vehicle angular velocity in FRD, and $\bm{I}_B$ is its inertia matrix. The final term compensates for the gyroscopic coupling appearing in the rotational dynamics described in the \hyperref[subsubsec:cinematica-dinamica-cuerpo]{section on rigid-body kinematics and dynamics}. The result is component-wise saturated using the limits declared in the controller.
+
+All controllers start with default gains, which are subsequently tuned and fixed in a specialized PD per family in files named \texttt{pid\_<family>\_v1.yaml}. As can be observed, the controller does not include an integral term. This is due to the risk of integrator windup during saturated phases or continuous reference changes, which would require additional mechanisms such as anti-windup.
+
+\subsubsection*{Choice of Tuning Method}
+
+The goal of tuning is not to find the analytical optimum for an isolated trajectory, but to obtain a controller suitable for an entire family of trajectories, subject to variations in parameters, disturbances, and actuator dynamics. For this reason, tuning is evaluated directly in simulation over a set of training trajectories, using metrics for tracking, attitude, control effort, saturation, degradation, and termination.
+
+The manual tuning alternative would produce a valid controller if all iterations were recorded, but it would provide less traceability than a reproducible search. Classic rules such as Ziegler--Nichols are designed for systems and response criteria that do not directly represent a quadcopter with coupled loops, saturations, and variable spatial trajectories. A design based on a linearized model would also be possible, but it would force setting operating points and local criteria different from the evaluation intended to be run.
+
+\subsubsection*{Progressive Search Algorithm}
+\phantomsection
+\label{subsubsec:busqueda-progresiva}
+The search begins with a diagnostic run per family on the training set defined in \hyperref[subsubsec:diseno-dataset-clasico]{classic dataset design}. A diagram of this algorithm is illustrated in Figure \figref{fig:optimizacion-pid}. For each family, two representative geometries are selected---one slow and one demanding---and combined with three profiles: nominal, East wind, and combined disturbance. If the initial controller passes the filters in all cases and its average RMSE remains below the threshold selected for the family, it is preserved without retuning. The thresholds, established heuristically, are \SI{0.25}{m}, \SI{0.35}{m}, \SI{0.45}{m}, and \SI{0.40}{m} for \texttt{hold}, \texttt{circle}, \texttt{lissajous}, and \texttt{waypoint}, respectively.
+
+When the diagnosis requires tuning, the four gain blocks---$\bm{K}_{p,p}$, $\bm{K}_{d,p}$, $\bm{K}_{p,a}$, and $\bm{K}_{d,a}$---are modified jointly. Each candidate is defined by four multipliers scaling these full blocks. The first round evaluates 32 candidates with log-uniform multipliers between 0.5 and 2, in addition to the initial candidate. Next, the best candidates from that round are selected, and 16 local perturbations are generated around them, resulting in a total of 49 evaluations per family to tune its controller. This second phase is designed as a local simplex-like refinement, inspired by the Nelder--Mead logic \cite{nelder1965simplex} to explore the neighborhood of the best candidates without aiming for full convergence.
+
+Before comparing the scores of the controllers, filters are applied. Candidates with missing or non-finite metrics, invalid termination, more than 2\% saturation, more than 2\% command degradation, or a maximum error exceeding the limit are discarded.
+
+The remaining candidates receive the score
+\begin{equation}
+ J=e_{\mathrm{rms}}+0.5e_{\max}+0.2e_{\mathrm{att}}
+ +0.1u+2s+2d,
+ \label{eq:score-pd}
+\end{equation}
+where $e_{\mathrm{rms}}$ and $e_{\max}$ are position metrics, $e_{\mathrm{att}}$ is the RMS of attitude angles, $s$ and $d$ are the fractions of samples with saturation and degradation, and
+\[
+ u=\frac{\overline{T}}{mg}+
+ \frac{\overline{\|\bm{\tau}_B\|}}{0.1}.
+\]
+The first term of $u$ normalizaes the average thrust by the vehicle's weight, and the second uses \SI{0.1}{N.m} as the scale for moments. This metric aims to favor controllers that require less control effort.
+
+The final selection is based on the lowest score in the set. Within 5\% of the best score, the controller with the lowest average effort is chosen, and if a tie remains, the one closest to the initial controller in terms of multipliers is preferred. In this way, moderate changes are favored when performance is equal.
+
+The weights in Equation~\ref{eq:score-pd}, the thresholds, the multiplier range, the number of candidates, and the 5\% margin are heuristic execution choices. They are not constants derived from control theory, nor do they prove global optimization. They should be interpreted as a local optimum under a reasonable computational budget and criteria declared prior to evaluating test or OOD scenarios.
+
+\subsubsection*{Fixed-Parameter Controllers and Cross-Transfer}
+
+Tuning only queries scenarios from the training set. Once a family's candidate is chosen, its gains, source, diagnostic trajectories set, and metrics are saved to a YAML file. All subsequent runs---validation, test, and OOD scenarios---use these files as a fixed-parameter controller set, without modification.
+
+A specialized PD refers to the controller whose parameters were tuned for the same family as the trajectory being evaluated. Cross-transfer consists of running a scenario with the PDs of the other families without retuning them, keeping the rest of the configuration fixed.
+
+The transfer matrix allows quantifying the importance of having an optimized PD per family. It also defines a baseline for the neural controller, which must be compared against the transferred PDs when evaluating the ability to use the network under different conditions.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.73\textwidth]{FIG-005}
+  \caption{Logical flow of optimization and progressive tuning of classic gains. Global random candidates are filtered by stability and safety conditions before local simplex/Nelder--Mead-like refinement begins. Source: own elaboration.}
+  \label{fig:optimizacion-pid}
+\end{figure}

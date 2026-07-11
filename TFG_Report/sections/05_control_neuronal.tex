@@ -1,0 +1,86 @@
+% !TeX root = ../main_en.tex
+\subsection{Neural Control by Imitation}
+\label{subsec:control-neuronal-imitacion}
+
+\subsubsection*{Hybrid Formulation of Desired Force Prediction}
+
+The adopted neural implementation learns the translational decision defined by the outer loop in the classic controller. In each control cycle, it receives variables constructed from the observation and the reference, and predicts a desired force $\widehat{\bm{F}}_{d,W}\in\mathbb{R}^3$ in the ENU world reference frame. Subsequently, this output follows the same limits and classic components as in the previous implementation. Figure~\ref{fig:control-neuronal-hibrido} represents the operational flow.
+
+The shared interface allows a direct comparison between the learned policy and the classic decision. On the other hand, an end-to-end architecture where the neural network acts directly on the rotors would have a broader scope and mix the learning of tracking capability with stabilization.
+
+The hybrid architecture forces a separation of the classic and neural contributions in the results. For this reason, the evaluation quantifies not only the tracking error but also attitude saturations and limits. In this way, an approximation of the actions observed during training is obtained, as well as the limitations arising from the dependence on the training distribution itself \cite{ross2011dagger}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1.0\textwidth]{FIG-006}
+  \caption{Structure of the hybrid neural controller. The neural network replaces only the translational decision of the outer loop to generate $\bm{F}_{d,W}$, delegating safety filtering, force-to-attitude conversion, and stabilization to the classic inner loop. Source: own elaboration.}
+  \label{fig:control-neuronal-hibrido}
+\end{figure}
+
+\subsubsection*{Construction and Selection of Imitation Data}
+
+The neural dataset is constructed in a phase subsequent to tuning the classic PDs. First, the classic workflow fixes the scenarios, trajectories, disturbances, seeds, and training--validation--testing splits, as well as the reference controllers per family. Then, each scenario is taken, and a set of outer-loop variants is constructed, modifying exclusively the gains $\bm{K}_{p,p}$ and $\bm{K}_{d,p}$ while preserving all other parameters.
+
+The implemented gain variants scale the gains using five profiles: conservative, base, aggressive, and two more damped profiles. In relative terms, these profiles apply the factors $(0.7,0.9)$, $(1.0,1.0)$, $(1.3,1.2)$, $(1.6,2.0)$, and $(1.4,1.8)$ respectively to $(\bm{K}_{p,p},\bm{K}_{d,p})$. Each variant is executed in the same scenario and evaluated with the simulation metrics, considering only those that pass the filters.
+
+Among the candidates for each scenario, the lowest position RMSE is identified first. Candidates situated up to 5\% above that value are then admitted, and within this subset, the one with the lowest control effort is chosen. If a tie remains, the most conservative profile is selected. This second round of tuning allows generating imitation targets without modifying the inner loop of the classic reference, whose parameters were previously fixed.
+
+This procedure should be interpreted as behavior cloning. The network observes the actions of the external PDs and learns to approximate their forces; it does not directly optimize the trajectory error nor does it possess a tracking reward function. Consequently, it can also inherit biases or errors from the PDs in specific regions of the trajectory. In turn, if the training set contains large errors or sufficiently represented transient states, the network can learn responses within that more aggressive coverage away from the reference. Distinguishing the nature of what the network learns to execute justifies the double evaluation of supervised fidelity and closed-loop behavior.
+
+\subsubsection*{Tensors, Input Variables, Targets, and Sequences}
+\phantomsection
+\label{subsubsec:tensores-entradas-objetivos}
+
+The input data represents each step using nine variables:
+\begin{equation}
+ \bm{x}_k=[\bm{e}_{p,k}^{\mathsf T}\;
+           \bm{e}_{v,k}^{\mathsf T}\;
+           \bm{a}_{r,k}^{\mathsf T}]^{\mathsf T}.
+ \label{eq:variables-neuronales}
+\end{equation}
+The position errors $\bm{e}_{p,k}$ and velocity errors $\bm{e}_{v,k}$ are calculated with the observation supplied to the controller, and the third part of the vector is the reference acceleration in ENU. The supervised target is the three-component desired force that the external PD would calculate with those same variables, equivalent to Equation~\ref{eq:pd-fuerza-deseada}. Therefore, there is a direct correspondence, with the nuance of how the reference acceleration is treated, between the PD and the neural network.
+
+Attitude variables, actuation variables, yaw, or the complete observed state could be added. However, the objective of this comparison is to imitate the outer loop, not to provide the network with information that the loop does not need to compute the force. This choice reduces dimensionality and maintains the interpretation as a strict replacement of the external PD.
+
+The MLP processes tensors of shape $[B,9]$, where $B$ is the training batch size. The GRU and LSTM receive tensors of shape $[B,L,9]$, with $L=20$, and produce the force corresponding to the last step of the window. Since the control period is \SI{0.02}{s}, the recurrent window covers \SI{0.40}{s} of samples. During training, windows are constructed within each simulation using a sliding window and are kept bounded within the training set, without crossing into other simulations. Each time a new sample is added, the oldest in the queue is removed, maintaining the size at 20. In inference, at the start of a simulation, since no prior samples exist yet, the queue is filled with the first input until the length is satisfied.
+
+The recurrent inference used in this work is not \emph{stateful} in the strict sense. The GRU and LSTM do not preserve the hidden state calculated in the previous call to use it directly as the initial state of the next cycle. In each cycle, a window with the last twenty normalized inputs is reconstructed and processed fully, obtaining the force applied at the last step of that window. Thus, two executions with the same input queue produce the same output, without depending on an accumulated internal state outside the window. Figure~\ref{fig:ventana-deslizante} illustrates this operation.
+
+The temporal window allows studying whether recent history provides useful information in the presence of actuator delays and dynamics. The value $L=20$ establishes a short and common window for both architectures. As a check, a sensitivity study was performed with $L=10$ and $L=40$ for both networks, and the observed differences were not sufficient to justify a change in configuration.
+
+\subsubsection*{Architectures and Parameters of MLP, GRU, and LSTM}
+
+The MLP employs two hidden layers of 64 units with ReLU activation and a final linear layer with three outputs. With nine inputs, the number of parameters is obtained by summing the weights and biases of each layer: $(9\cdot64+64)+(64\cdot64+64)+(64\cdot3+3)=4995$. GRU and LSTM use a single recurrent layer of 64 units and a final linear projection to three components. Under the PyTorch formulas for a recurrent layer, their sizes are 14,595 and 19,395 trainable parameters, respectively. As indicated, the output originates from the last step of the window.
+
+The MLP acts as the baseline without explicit memory, such that two identical inputs produce the same force; meanwhile, GRU and LSTM allow testing whether recent history improves prediction. The width of 64 units, the two hidden layers of the MLP, and the single recurrent layer are kept fixed throughout the evaluation. The parameter choice was contrasted with a 128-unit variant; however, the supervised improvement did not yield a systematic advantage, so it was decided not to modify the parameters.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\textwidth]{FIG-013}
+  \caption{Management of the temporal sliding window in recurrent networks and initialization by sample repetition at startup ($k = 0$). The FIFO queue generates a batch of dimensions $[1, 20, 9]$ at each inference. Source: own elaboration.}
+  \label{fig:ventana-deslizante}
+\end{figure}
+
+\subsubsection*{Normalization, Training, and Model Selection}
+
+Before training, the mean and standard deviation of inputs and targets are calculated using only the training set. This normalization prevents variables with larger absolute magnitudes from dominating the loss due to scale differences, expressing each component as a deviation relative to the statistics calculated during training. These same statistics are subsequently applied to validation, test, and inference, and the network output is denormalized before being sent to the controller.
+
+Learning minimizes the mean squared error (MSE) between the normalized force predicted by the network and the normalized force computed by the specialized PD. Optimization is performed using Adam \cite{kingma2015adam} with a learning rate of $10^{-3}$. A limit of 100 epochs, batches of 64 samples, and seed 42 are set for training reproducibility. Robustness to the seed was verified with 2 additional values, and the resulting variability did not cause a significant change in the interpretation of results. This random ordering is only applied during training, to reduce gradient dependency on the episode read sequence.
+
+After each epoch, the validation loss is calculated, and the checkpoint with the lowest value is saved. Training stops if the validation performance does not improve for ten consecutive epochs, and the best model is preserved, thus reducing the number of runs and limiting overfitting.
+
+A low supervised loss indicates that the network accurately replicates the forces commanded by the specialized controllers on the observed samples. However, it does not necessarily imply that it minimizes position error in closed loop, since small force deviations can accumulate and lead the network to visit states poorly represented in training. Therefore, supervised evaluation solely verifies fidelity to the classic controller.
+
+\subsubsection*{Closed-Loop Inference}
+
+During inference, the same input variables are constructed in each cycle, normalized using the statistics learned during training, and passed to the network. The predicted force is denormalized and interpreted again as $\widehat{\bm{F}}_{d,W}$. In the MLP, this operation depends only on the current step, whereas in the GRU and LSTM, a queue of the last 20 normalized inputs is maintained, proceeding as detailed in \hyperref[subsubsec:tensores-entradas-objetivos]{tensors of inputs and targets}.
+
+Before converting the force to a desired attitude, just as in the classic implementation, the force norm is limited to $2.5mg$, tilt is restricted by the maximum angle, and negative thrust requests are avoided by imposing a minimum upward component. Subsequently, the classic inner loop calculates moments and rotor saturations are applied.
+
+Telemetry records how many times thrust clipping and tilt clipping are activated, calculating percentages relative to the number of control steps executed in the simulation. These metrics are interpreted alongside the other output parameters, as a trajectory might be completed due to frequent intervention of safety protections, indicating suboptimal operation of the network.
+
+\subsubsection*{Alternatives Implemented Outside the Main Comparison}
+
+During development, alternatives were implemented that are not part of the main comparison of this work. One of them learns an instantaneous, real-time gain scheduling: the network predicts multipliers for the outer-loop gains $\bm{K}_{p,p}$ and $\bm{K}_{d,p}$, bounded within a preset interval, and the cascaded PD then calculates the force, attitude, and commands.
+
+A force-prediction variant with an expanded observation was also implemented. Instead of using only the nine variables necessary to reproduce the external PD, it incorporates 31 variables including observed state, reference, errors, and a continuous representation of yaw. This can serve to study whether the additional context improves prediction, but the network ceases to behave as a strict replacement of the external PD loop.

@@ -1,0 +1,77 @@
+\documentclass[12pt,a4paper]{article}
+
+\newcommand{\tituloTFG}{Cascaded hybrid control of a quadcopter: neural replacement of specialized outer-loop controllers}
+\newcommand{\tituloTFGEnglish}{Control híbrido en cascada de un cuadricóptero: sustitución neuronal de controladores especializados del lazo externo}
+\newcommand{\autorTFG}{Christian González Pérez}
+\newcommand{\tutorTFGa}{José Ramón Rodríguez Ossorio}
+\newcommand{\tutorTFGb}{Guzmán González Mateos}
+\newcommand{\gradoTFG}{Bachelor's Degree in Aerospace Engineering}
+\newcommand{\convocatoriaTFG}{June, 2026}
+
+\usepackage{preamble}
+
+\begin{document}
+
+\hypersetup{pageanchor=false}
+\pagenumbering{gobble}
+\input{sections/00_portada}
+\clearpage
+\hypersetup{pageanchor=true}
+\pagenumbering{roman}
+\renewcommand{\totalpaginas}{\pageref*{LastRomanPage}}
+\input{sections/00_agradecimientos}
+\input{sections/00_resumen}
+\input{sections/00_indices}
+\input{sections/00_abreviaturas}
+\input{sections/00_simbolos_unidades}
+\input{sections/00_declaracion_ia}
+\label{LastRomanPage}
+
+\clearpage
+\pagenumbering{arabic}
+\renewcommand{\totalpaginas}{\pageref*{LastPage}}
+
+\section{Introduction}
+\label{sec:introduccion}
+\input{sections/01_introduccion}
+
+\section{State of the Art}
+\label{sec:estado-arte}
+\input{sections/02_estado_arte}
+
+\section{Methodology}
+\label{sec:metodologia}
+\input{sections/03_modelo_fisico}
+\input{sections/04_control_clasico}
+\input{sections/05_control_neuronal}
+\input{sections/06_metodologia}
+
+\section{Experimental Results}
+\label{sec:resultados}
+\input{sections/07_resultados}
+\input{sections/08_discusion}
+
+\section{Conclusions and Future Work}
+\label{sec:conclusiones}
+\input{sections/09_conclusiones}
+
+\clearpage
+\renewcommand{\refname}{References}
+\bibliographystyle{IEEEtran}
+\phantomsection
+\addcontentsline{toc}{section}{References}
+\bibliography{refs}
+
+\myappendix{Commands and Experimental Traceability}
+\label{anejo:comandos}
+\input{appendices/a_comandos}
+
+\myappendix{Code Architecture and Relevant Snippets}
+\label{anejo:codigo}
+\input{appendices/b_codigo}
+
+\myappendix{Visual Simulation Evidences}
+\label{anejo:telemetria}
+\input{appendices/c_telemetria}
+
+\end{document}

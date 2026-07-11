@@ -1,0 +1,244 @@
+% !TeX root = ../main_en.tex
+\subsection{Physical Model and 6DOF Simulator}
+\label{subsec:modelo-simulador}
+
+\subsubsection*{Requirements, Conventions and Hypotheses}
+
+The simulator has been designed so that the classic controller and the neural controller face the same physical problem and the same actuation flow; that is, they share the same interface, meaning the simulator does not distinguish the nature of the controller. Thus, the observed differences will be due exclusively to the controller and not to external factors.
+
+The state is written as $\bm{x}=(\posW,\velW,\quatWB,\omegaB)$: position and velocity in the world reference frame $\frameW$, orientation of the body relative to the world, and angular velocity in the body reference frame $\frameB$. The input applied to the simulator consists of the total rotor force and total moment, both expressed in the body reference frame. The recorded output includes the state, the observation provided to the controller, the trajectory reference, the commanded control input, and the applied actuation. This allows checking when and why a command could not be executed.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.82\textwidth, trim=0 3.5cm 0 4.0cm, clip]{FIG-002}
+  \caption{Reference frames used by the simulator. The world frame follows the ENU convention and the body frame follows the FRD convention; total thrust is applied in the opposite direction of the vertical body axis ($z_B$). Source: own elaboration.}
+  \label{fig:marcos-referencia}
+\end{figure}
+
+The reference frame $\frameW$ follows the ENU convention, where $x$ points East, $y$ North, and $z$ upward. The reference frame $\frameB$ is FRD, where $x_B$ points forward, $y_B$ to the right, and $z_B$ downward. The rotors must generate thrust in the $-z_B$ direction (see \figref{fig:marcos-referencia}). The rotation matrix $\bm{R}_{WB}(\quatWB)$ transforms vectors expressed in FRD to vectors expressed in ENU. The attitude is represented by the quaternion $\quatWB=[q_0,q_1,q_2,q_3]^\mathsf{T}$. All quantities are expressed in the International System of Units (SI), and angles are only converted to degrees for visualization purposes.
+
+A rigid body of constant mass and inertia is assumed, with a fixed center of mass and uniform gravity. Rotors are modeled with thrust proportional to the square of their angular velocity, subject to a first-order lag and delay. Advanced aerodynamics, rotor flapping, structural flexibility, and detailed physical sensors are not modeled.
+
+\subsubsection*{Reference Vehicle and Physical Parameters}
+
+A hypothetical quadcopter of \SI{1}{kg} mass is defined, with gravity $g = \SI{9.81}{m.s^{-2}}$ and principal moments of inertia $\bm{I}_B=\operatorname{diag}(0.05,0.05,0.10)\,\si{kg.m^2}$. The four rotors are positioned in the FRD body reference frame at
+\[
+ \bm{r}_{i,B}\in
+ \{(0.17,0.17,0),(0.17,-0.17,0),(-0.17,0.17,0),(-0.17,-0.17,0)\}\,\si{m},
+\]
+corresponding to an X configuration relative to the body axes. Rotational directions are encoded by $s_i=\{-1,1,1,-1\}$, where the sign determines the yaw reaction torque. Figure \figref{fig:configuracion-rotores} shows a schematic of the vehicle's layout.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\textwidth]{FIG-011}
+  \caption{X-configuration of the motors and rotor rotational directions in the body reference frame. The physical direction of the rotors is associated with the sign of the reaction yaw moment. Source: own elaboration.}
+  \label{fig:configuracion-rotores}
+\end{figure}
+
+\newpage
+Each rotor uses $k_f=\SI{1e-4}{N.s^2.rad^{-2}}$ for thrust and $k_m=\SI{1e-6}{N.m.s^2.rad^{-2}}$ for reaction torque. In the scenarios, $\omega_{\max}=\SI{500}{rad.s^{-1}}$ is set, so that the maximum thrust per rotor is
+\begin{equation}
+ T_{\max}=k_f\omega_{\max}^2=\SI{25}{N}.
+ \label{eq:empuje-maximo-rotor}
+\end{equation}
+This limit is arbitrary and much higher than the hover thrust per rotor ($mg/4\simeq\SI{2.45}{N}$). The controller also imposes a total force limit of $2.5mg$ before conversion to attitude, so that a rotor saturation is interpreted as a limit in the allocation.
+
+The methodology followed maintains the same vehicle in all comparison scenarios, although the simulator allows changing mass, inertia, or rotor parameters in the individual configuration of each scenario.
+
+\subsubsection*{Rigid-Body Kinematics and Dynamics}
+\phantomsection
+\label{subsubsec:cinematica-dinamica-cuerpo}
+
+Let $\bm{F}_B$ and $\bm{\tau}_B$ be the force and moment applied in the FRD body reference frame. The translational dynamics are
+\begin{align}
+ \dot{\posW} &= \velW,\\
+ m\dot{\velW} &= \bm{R}_{WB}\bm{F}_B+\bm{F}_{d,W}
+                 +[0\;0\;-mg]^\mathsf{T},
+ \label{eq:dinamica-traslacional}
+\end{align}
+where $\bm{F}_{d,W}$ is the linear drag defined in the \hyperref[subsubsec:perturbaciones-observacion-seguridad]{epigraph on disturbances, observation, and safety}. The rotational dynamics are expressed as
+\begin{align}
+ \dot{\quatWB} &= \tfrac{1}{2}\quatWB\otimes[0\;\omegaB^\mathsf{T}]^\mathsf{T},\\
+ \dot{\omegaB} &= \bm{I}_B^{-1}
+ \left(\bm{\tau}_B-\omegaB\times\bm{I}_B\omegaB\right).
+ \label{eq:dinamica-rotacional}
+\end{align}
+During intermediate evaluations of the Runge--Kutta method and at the end of each step, the quaternion is normalized, thereby preventing accumulated numerical errors from causing its norm to deviate from unity.
+
+The state is propagated using fourth-order Runge--Kutta (RK4) with a fixed step of \SI{0.01}{s}. This choice is supported by lower computational cost and sufficient discretization for trajectories without abrupt maneuvers. The applied command remains constant during each integration step \cite{butcher2016numerical}.
+
+\subsubsection*{Actuators, Mixer and Actuation Limits}
+\phantomsection
+\label{subsubsec:actuadores-mixer}
+
+For rotor $i$, the applied speed determines thrust and reaction torque through
+\begin{equation}
+ T_i=k_f\omega_i^2,\qquad Q_i=s_i k_m\omega_i^2,
+ \label{eq:rotor-cuadratico}
+\end{equation}
+where $s_i\in\{-1,1\}$ represents the rotational direction. The rotor force in the FRD body frame is $\bm{F}_{i,B}=[0\;0\;-T_i]^\mathsf{T}$, and its contribution to the moment includes the moment arm term $\bm{r}_{i,B}\times\bm{F}_{i,B}$ and the reaction torque $[0\;0\;Q_i]^\mathsf{T}$. The quadratic model of thrust and reaction torque is a standard approximation in low-order quadcopter models \cite{beard2012small,mellinger2011minimum}.
+
+The mixer transforms a total thrust and moment command into individual rotor commands. To do so, it constructs an allocation matrix $\bm{M}$ whose columns collect the contribution of each thrust $T_i$ to the total thrust and roll, pitch, and yaw moments:
+
+\begin{equation}
+\begin{bmatrix}
+T\\ \tau_x\\ \tau_y\\ \tau_z
+\end{bmatrix}
+=
+\underbrace{
+\begin{bmatrix}
+1 & 1 & 1 & 1\\
+-y_1 & -y_2 & -y_3 & -y_4\\
+x_1 & x_2 & x_3 & x_4\\
+s_1 k_m/k_f & s_2 k_m/k_f & s_3 k_m/k_f & s_4 k_m/k_f
+\end{bmatrix}
+}_{\bm{M}}
+\begin{bmatrix}
+T_1\\T_2\\T_3\\T_4
+\end{bmatrix}.
+\label{eq:matriz-mixer}
+\end{equation}
+
+Therefore, a rotor located on the right side of the vehicle ($y_i>0$) contributes a negative roll moment when its thrust increases, while a rotor located in front ($x_i>0$) contributes a positive pitch moment, as shown in \figref{fig:actuacion-movimiento}.
+
+The solution of the system is obtained by inverting the allocation matrix ($\bm{M}$) for the defined geometry. As illustrated in the schematic of Figure \figref{fig:flujo-mixer}, the mixer separates the contribution of the commanded collective thrust ($T$) from the part due to attitude moments ($\bm{\tau}_B$):
+\begin{align}
+ T_{\text{thrust\_part}} &= \bm{M}^{-1} [T, 0, 0, 0]^\mathsf{T}, \\
+ T_{\text{moment\_part}} &= \bm{M}^{-1} [0, \tau_x, \tau_y, \tau_z]^\mathsf{T}.
+\end{align}
+
+To prevent final thrusts from exceeding the individual physical limits of the actuators, set in the range $[T_{\min}, T_{\max}]$, the existence of a margin (slack) in the collective thrust is evaluated. The lower ($\delta_{\min}$) and upper ($\delta_{\max}$) bounds for the collective shift are calculated by determining the most restrictive value among the four rotors:
+\begin{align}
+ \delta_{\min} &= \max_i(T_{\min} - T_{\text{thrust\_part},i} - T_{\text{moment\_part},i}), \\
+ \delta_{\max} &= \min_i(T_{\max} - T_{\text{thrust\_part},i} - T_{\text{moment\_part},i}).
+\end{align}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{FIG-012}
+  \caption{Logical schematic and decision-making of the rotor mixer under nominal and saturated conditions. Attitude control is prioritized by proportional scaling of moments ($k$) over deviation of the requested collective thrust. Source: own elaboration.}
+  \label{fig:flujo-mixer}
+\end{figure}
+
+Based on these slack margins, the mixer algorithm branches into two possible paths:
+\begin{itemize}
+ \item \textbf{Nominal Path} ($\delta_{\max} \ge \delta_{\min}$): There is a range to adjust the collective without perturbing the moments. The shift is found via $\delta = \operatorname{clip}(0.0, \delta_{\min}, \delta_{\max})$, yielding the requested thrust per rotor:
+  \begin{equation}
+    T_{\text{req}, i} = T_{\text{thrust\_part}, i} + \delta + T_{\text{moment\_part}, i}.
+  \end{equation}
+  
+ \item \textbf{Saturation Path} ($\delta_{\max} < \delta_{\min}$): No feasible solution exists, and the motor limits prevent satisfying both collective thrust and attitude simultaneously. In this condition, the mixer prioritizes stability over collective thrust. A target average thrust is set to $T_{\text{target}} = (T_{\min} + T_{\max}) / 2.0$, and a proportional scaling factor $k \in [0, 1]$ is applied to the moment contribution to ensure no rotor saturates:
+  \begin{equation}
+    k = \min_i \left( \operatorname{recorte}(T_{\text{target}}, T_{\text{moment\_part}, i}) \right),
+  \end{equation}
+where the scaling function evaluates the available margin to the thrust limits based on rotor direction and actuation:
+  \begin{equation}
+    \operatorname{recorte}(T_{\text{target}}, T_{\text{moment\_part}, i}) = 
+    \begin{cases}
+      \dfrac{T_{\max} - T_{\text{target}}}{T_{\text{moment\_part}, i}} & \text{si } T_{\text{moment\_part}, i} > 0, \\[15pt]
+      \dfrac{T_{\min} - T_{\text{target}}}{T_{\text{moment\_part}, i}} & \text{si } T_{\text{moment\_part}, i} < 0.
+    \end{cases}
+  \end{equation}
+  The resulting thrust for each motor is:
+  \begin{equation}
+    T_{\text{req}, i} = T_{\text{target}} + k \, T_{\text{moment\_part}, i}.
+  \end{equation}
+\end{itemize}
+In either of the two cases where the original command must be modified to meet the physical limits of the actuators, the simulator records a command degradation. Finally, thrusts are strictly clipped using $T_{\text{req}, i} = \operatorname{clip}(T_{\text{req}, i}, T_{\min}, T_{\max})$ and transformed into commanded rotor angular velocities $\omega_i = \sqrt{T_{\text{req}, i}/k_f}$.
+
+The rotor dynamics combine a discretized pure delay and a first-order lag. The pure delay shifts the command by an integer number of physics loop steps, while the lag approximates that the rotor speed does not reach the command instantaneously but rather approaches it with a time constant $\tau$. In the runs, depending on the trajectory profile, values of $\tau=\SI{0.03}{s}$ with a delay of \SI{0.01}{s} and $\tau=\SI{0.05}{s}$ with a delay of \SI{0.02}{s} are used.
+
+\subsubsection*{Disturbances, Observation and Safety}
+\phantomsection
+\label{subsubsec:perturbaciones-observacion-seguridad}
+
+Linear drag is calculated in the FRD body reference frame from the relative velocity with respect to the wind:
+\begin{equation}
+ \bm{v}_{r,B}=\bm{R}_{WB}^{\mathsf{T}}(\velW-\bm{v}_{w,W}),
+\end{equation}
+and expressed back in the ENU world frame as
+\begin{equation}
+ \bm{F}_{d,W}=\bm{R}_{WB}\left(-\bm{D}_B\bm{v}_{r,B}\right).
+ \label{eq:drag-lineal}
+\end{equation}
+
+Two levels of trajectory dissipation have been implemented in the simulator. A constant wind defined by a fixed magnitude and direction throughout the execution can also be applied. The observation received by the controller can include a small Gaussian noise component, representing in a simplified manner that the observed signal is not perfect, while the core dynamics, integration, and evaluation continue to use the true state. The scenario seed determines the pseudo-random initialization, allowing the same YAML file to be reproduced identically.
+
+The simulation terminates if the vehicle crashes into the ground, if the roll/pitch inclination exceeds the configured limit, if a non-finite value appears, or if actuator saturation persists longer than the allowed duration. In the runs, a threshold of \SI{2}{s} for persistent saturation and an inclination limit of \SI{1.256}{rad} are used. The simulator execution also maintains internal position and velocity bounds to halt numerically divergent trajectories.
+
+\subsubsection*{Trajectories and Scenarios}
+
+The trajectory families were chosen to introduce sufficient variability without turning this module into an excessively complex problem. Figure \figref{fig:familias-trayectorias} shows a representative case of each family. \texttt{hold} requires maintaining a constant position and yaw. \texttt{circle} imposes a horizontal trajectory with centripetal acceleration and continuous advance, which introduces a non-periodic effect when combined with wind. \texttt{lissajous} introduces a coupled periodic motion across axes:
+
+\begin{align}
+ x(t) &= c_x + A_x\sin(\omega_x t),\\
+ y(t) &= c_y + A_y\sin(\omega_y t),\\
+ z(t) &= c_z + A_z\sin(\omega_z t).
+ \label{eq:lissajous}
+\end{align}
+
+By using different frequencies per axis, the reference covers a spatial region richer than a circle and forces the controller to follow simultaneous changes in position, velocity, and acceleration.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{FIG-009}
+  \caption{Analytical trajectory families of the simulator. Each geometry introduces different stimuli (stationary, variable speed, coupled acceleration in three axes, or discrete segments). Source: own elaboration.}
+  \label{fig:familias-trayectorias}
+\end{figure}
+
+The \texttt{waypoint} family defines a point-to-point trajectory. The vehicle must reach a series of positions, slow down, settle within a position and velocity tolerance, and remain there for a configurable settling time (defaulting to \SI{0.40}{s}) before advancing to the next point. For each segment, a scalar progress coordinate $s(t)$ is generated along the straight line connecting two waypoints. If the distance allows reaching the maximum velocity, the profile is trapezoidal, with constant acceleration, a constant velocity segment, and deceleration. If the segment is short, the profile is triangular and the maximum velocity is not reached. In both cases, position and velocity are continuous, avoiding step changes in the reference. Figure \figref{fig:perfiles-waypoint} shows the kinematic profiles of both cases.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{FIG-010}
+  \caption{Kinematic profiles generated during transitions between waypoints. On the left, the trapezoidal profile (for long segments) is illustrated, and on the right, the triangular profile (for short segments, where the commanded speed is not reached). All represented quantities are scalars along the progress axis of the segment. Source: own elaboration.}
+  \label{fig:perfiles-waypoint}
+\end{figure}
+
+\begin{lstlisting}[caption={Simplified structure of a YAML scenario.},label={lst:yaml-escenario}]
+name: "Waypoint Clean"
+seed: 42
+vehicle: {mass_kg: 1.0, rotors: [...]}
+initial_state: {position_W_m: [0, 0, 0], velocity_W_m_s: [0, 0, 0]}
+trajectory:
+  type: "waypoint"
+  waypoints: [[0, 0, 0], [0, 0, 2], [2, 0, 2]]
+  max_speed_m_s: 0.6
+  max_acceleration_m_s2: 0.5
+controller: {type: "classic"}
+perturbations: {constant_wind_W_m_s: [0, 0, 0], pos_std_m: 0.0}
+timing: {physics_dt_s: 0.01, control_dt_s: 0.02, telemetry_dt_s: 0.1}
+termination: {max_duration_s: 40.0, z_min_m: -0.1}
+\end{lstlisting}
+
+In each YAML file, as shown in Listing \ref{lst:yaml-escenario}, the vehicle, initial state, trajectory, controller, disturbances, seed, execution periods, and termination conditions are defined. By convention, the initial state is set equal to the trajectory reference at $t=0$, with a level attitude and initial thrust corresponding to hover. This evaluates trajectory tracking rather than recovery from an initial fall caused by starting with the rotors turned off.
+
+The specification of the quantity and characteristics of the trajectories for each family used for training, validation, and testing (train, validation, test) is developed in the \hyperref[subsubsec:diseno-dataset-clasico]{section on classic dataset design}. Additionally, the simulator allows sequential compositions of trajectories from the described families, as well as lemniscates. These variants are developed later within the context of OOD evaluation, distinguishing between \hyperref[subsubsec:variaciones-composiciones-ood]{variations and compositions of known families} and \hyperref[subsubsec:trayectorias-nuevas-ood]{completely new trajectories}.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{FIG-003}
+  \caption{Multirate time execution sequence and data dependencies. The three frequency bands associated with physics integration (100 Hz), the digital control cycle (50 Hz), and periodic variable logging (10 Hz) are distinguished. Source: own elaboration.}
+  \label{fig:arquitectura-multirate}
+\end{figure}
+
+\subsubsection*{Multirate Simulation Flow}
+
+The simulator operates with a multirate flow; that is, with multiple update periods within a single execution, as can be observed in \figref{fig:arquitectura-multirate}. Physics are integrated every \SI{0.01}{s}, the controller calculates a new command every \SI{0.02}{s}, and telemetry is saved every \SI{0.1}{s}. Notably, like all other parameters, these frequencies are configurable in the episode's YAML file. At each step, the reference is retrieved, the observation is formed, and, when applicable, a new command is calculated. The mixer and actuators produce the applied force and moment based on the last available command, RK4 advances the state, and telemetry records the variables.
+
+Between two control cycles, a zero-order hold (ZOH) is applied, meaning the last command requested by the controller remains constant until the next update. This attempts to approximate a real system, where physics are continuous and sensors, controllers, and actuators operate at finite frequencies.
+
+\subsubsection*{Telemetry}
+
+Each telemetry record contains the simulation time, the state, the observation received by the controller, the reference, the control command, the command for each rotor, and the applied actuation. For the rotors, both target and applied thrust and speed are recorded, as well as reaction torque and revolutions per minute. The reason for simulation termination is also included in the final record.
+
+This structure allows subsequent study of the tracking error, the difference between state and observation, mixer state, actuator saturation, and the effect of rotor lag and delay. Additionally, a summary of statistical values and the simulation configuration data are provided.
+
+\subsubsection*{Choice of Implementation Environment}
+
+The implementation has been carried out in Python, as it offers a suitable balance between capabilities, ease of use, and availability. It is an open-source programming language with no licensing costs, a large user base, and numerous scientific libraries. PyTorch is used, a highly capable and flexible library for training and working with neural networks. Likewise, Python allows seamless interaction with external files used in development, such as CSV, YAML, JSON, Markdown, and LaTeX.
+
+Environment management is performed with \texttt{uv}, so package dependencies and reproduction commands are defined clearly and simply for other users to use. The work as a whole has been developed openly in a GitHub repository, facilitating code inspection, change traceability, and reuse of the material. \footnote{\url{https://github.com/ChristianGonper/modelado-control-dron-v2}}
+\cite{pytorchDocs,uvDocs,githubDocs}.
+
+However, Python is not claimed to be the best choice for all phases of the work. An implementation in C or C++ would have lower performance overhead and would be ideal for an onboard platform or real-time execution, though it would increase development complexity, especially regarding neural networks. Since the central goal is to compare control strategies in an asynchronous simulation environment, Python is sufficient and appropriate for this development.

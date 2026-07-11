@@ -1,0 +1,30 @@
+# Generated LaTeX files
+*.aux
+*.log
+*.toc
+*.lof
+*.lot
+*.out
+*.bbl
+*.blg
+*.bcf
+*.run.xml
+*.fdb_latexmk
+*.fls
+*.xdv
+*.synctex*
+*.auxlock
+TikZ-Cache/
+
+# Generated document output: keep only committed figure PDFs
+*.pdf
+!Figuras/
+!Figuras/**/*.pdf
+
+# Raster assets are excluded except for the school logo required by the cover
+*.png
+firma.jpg
+!Figuras/escudo-ingenierias.png
+
+# Archived editorial material is not part of the report bundle
+verbalizaciones_archive/

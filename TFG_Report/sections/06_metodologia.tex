@@ -1,0 +1,101 @@
+% !TeX root = ../main_en.tex
+\subsection{Datasets and Evaluation Metrics}
+\label{subsec:datos-metricas}
+
+\subsubsection*{Comparison Criteria}
+
+The objective is not to demonstrate the superiority of an architecture in all cases, but to determine under what conditions a neural controller can replace several specialized outer-loop PDs, what is lost when transferring a PD outside its family, and what role temporal memory plays in GRU and LSTM networks.
+
+The first benchmark is the specialized PD of each family. Its role is to define the expected performance when the classic controller is tuned specifically for the type of trajectory being evaluated. The second benchmark is cross-transfer: applying those same PDs, with their parameters already fixed, to other families without retuning. In this way, the quality of the controller in its specialized conditions can be separated from the performance loss in other situations.
+
+On this basis, the imitation-trained neural networks are evaluated. First, supervised fidelity is measured using the desired force from the PDs, although this value does not replace closed-loop execution. The evaluation of MLP, GRU, and LSTM does not assume that recurrence must necessarily improve tracking. Temporal memory can be useful in the presence of delays or dependence on previous states, but it can also introduce a different sensitivity when the trajectory deviates from the training distribution.
+
+Results are judged using tracking error, actuation, saturation, and the use of limitations independently. Likewise, a distinction is made between known conditions, classic transfer, and OOD scenarios to identify at which stage of the procedure each difference appears and its source.
+
+\subsubsection*{Classic Dataset Design}
+\phantomsection
+\label{subsubsec:diseno-dataset-clasico}
+
+The dataset contains 150 episodes: 18 of \texttt{hold}, 48 of circle, 48 of Lissajous, and 36 of \texttt{waypoint}. Their splits by family are 12/3/3, 34/7/7, 34/7/7, and 25/5/6 for training, validation, and testing. In total, this results in 105 training episodes, 22 validation episodes, and 23 test episodes. The allocation of scenarios to each split is generated deterministically using seed 1042.
+
+The families are chosen to cover hover equilibrium, periodic planar tracking, periodic motion in multiple axes, and finite runs with acceleration, braking, and settling. Each combines geometries of varying difficulty with profiles of drag, wind, noise, and actuators. \texttt{hold} uses 18 combinations and fewer profiles because it does not introduce the geometric diversity of the other families, thereby avoiding an overrepresentation of samples in the training set.
+
+\subsubsection*{Metrics and Success Criteria}
+\phantomsection
+\label{subsubsec:metricas-criterios}
+
+For the samples $e_k=\|\bm{p}_{r,k}-\bm{p}_k\|_2$, the following are calculated for each scenario:
+\begin{equation}
+ e_{\mathrm{RMSE}}=\sqrt{\frac{1}{N}\sum_{k=1}^{N} e_k^2},\qquad
+ e_{\mathrm{MAE}}=\frac{1}{N}\sum_{k=1}^{N} e_k,\qquad
+ e_{\max}=\max e_k.
+\end{equation}
+RMSE penalizes large errors, MAE describes the average error, and maximum error detects localized extremes.
+
+Actuation is described separately using collective thrust in N, moments in N\,m, and rotor speed in rad/s. Saturation and degradation are percentages of samples, and the percentages of norm clipping and inclination clipping of the force predicted by the neural networks are also added.
+
+A trajectory is considered successful if the termination is of a temporal nature, or trajectory/composition completion. Infinite references must reach the time limit, while \texttt{waypoint} must complete its path.
+
+\subsection{Experimental Workflow and Reproducibility}
+\label{subsec:flujo-reproducibilidad}
+
+\subsubsection*{Global Procedure Design}
+
+The experimental procedure follows ten phases. First, initial checks of the simulator and representative scenarios are run. Then, the initial classic dataset is generated, the PDs are diagnosed per family, and, if necessary, a specialized PD is searched for each family. With these fixed-parameter controllers, the classic scenarios are regenerated and both nominal and cross-transfer simulations are executed.
+
+From that baseline, imitation data is generated. Subsequent phases train MLP, GRU, and LSTM, evaluate their supervised fidelity, execute the closed-loop comparison on the test set, evaluate performance on the OOD scenarios series, and finally compile the results into comparative tables. The detailed commands for these phases are deferred to \hyperref[anejo:comandos]{Appendix~\ref{anejo:comandos}}. Figure \figref{fig:procedimiento-experimental} synthesizes this sequence and separates distinct groups of steps.
+
+The training set is involved in tuning controllers, normalization, and weight optimization; validation is used to select the network checkpoints; and testing and OOD scenarios are employed for the final performance verification.
+
+\subsubsection*{Training Configuration and Comparison}
+
+The three architectures share the dataset, nine inputs, three targets, 64 hidden units, training normalization, MSE loss, Adam optimizer, a learning rate of $10^{-3}$, batch size of 64, a maximum of 100 epochs, a patience of 10, and seed 42. They also share the criterion of saving the lowest validation MSE.
+
+The comparison is performed on the common set of parameters to evaluate solely the effect of replacing the architecture. Additionally, a sensitivity study on the configuration parameters was conducted to verify its robustness.
+
+\subsubsection*{Evaluation on Known Families and Classic Transfer}
+
+The ID evaluation uses the 23 test episodes: 3 \texttt{hold}, 7 circle, 7 Lissajous, and 6 \texttt{waypoint}. In each scenario, the native PD and the three networks are run under identical physical configurations. Thus, a first comparison is made against the specialized PD of each family, which represents the most demanding reference.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{FIG-007}
+  \caption{General flow of the experimental procedure structured into 10 reproducible phases. The progressive generation of the training datasets, the classic optimization flow, neural training, and validation and OOD evaluation stages are illustrated. Source: own elaboration.}
+  \label{fig:procedimiento-experimental}
+\end{figure}
+
+Classic transfer applies the four fixed-parameter PDs to each of the 23 scenarios. This produces $23\times4=92$ runs and a controller--family matrix. Differences are attributed solely to the controller change, since the remaining parameters, including the seed, are kept fixed.
+
+\subsubsection*{Evaluation Out of the Training Distribution}
+\phantomsection
+\label{subsubsec:evaluacion-ood}
+
+OOD evaluation groups scenarios whose episodes are not involved in any other phase of the implementation. Its function is to check what happens when controllers are subjected to conditions never seen during tuning or network training. The OOD series is organized by level of novelty. In all cases, the networks and the transferred PDs are run under the same conditions, and the available PDs are used as references for comparison.
+
+Figure \figref{fig:niveles-evaluacion} summarizes the trajectories used at each evaluation level. It starts with variations on known families, then classic transfer is evaluated, and finally OOD scenarios are presented to study the recombination of known capabilities on new geometries. With this separation, OOD results can be interpreted according to the degree of novelty introduced.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{FIG-008}
+  \caption{Classification of the evaluation levels and experimental generalization. Four levels are structured with incremental novelty and difficulty: nominal ID interpolation, classic transfer, recombination of known capabilities, and OOD geometries. Source: own elaboration.}
+  \label{fig:niveles-evaluacion}
+\end{figure}
+
+\subsubsection*{Variations and Compositions of Known Families}
+\phantomsection
+\label{subsubsec:variaciones-composiciones-ood}
+
+The first OOD group preserves paths present in the training set but modifies their difficulty or combines them. It includes three-dimensional, faster, or high-noise Lissajous trajectories, sequential compositions of \texttt{hold}, \texttt{circle}, \texttt{waypoint}, and higher-aggressiveness segments, as well as helical trajectories approximated by waypoints.
+
+This separation allows evaluating two distinct questions. Variations of a known family measure whether the controller tolerates parameter changes in a structure already present. Compositions evaluate whether a single policy can navigate heterogeneous segments without explicitly switching controllers. A specialized PD may perform well on the part for which it was tuned and degrade when the geometry changes, whereas the MLP, GRU, and LSTM networks are evaluated as single controllers applied to the entire trajectory.
+
+\subsubsection*{Completely New Trajectories}
+\phantomsection
+\label{subsubsec:trayectorias-nuevas-ood}
+
+The second OOD group introduces a more intense geometric novelty. Lemniscates do not belong to the four training families and force the vehicle to follow a closed curve with curvature changes and vertical components. The implementation uses a Gerono lemniscate in the horizontal plane,
+\begin{equation}
+ x(t)=c_x+a\sin(\omega t),\qquad
+ y(t)=c_y+b\sin(2\omega t),
+\end{equation}
+with an optional vertical oscillation $z(t)=c_z+A_z\sin(\omega_z t)$. In the OOD series, three-dimensional variants at various speeds and with combined disturbances are used. This category is a more demanding test since it changes the entire structure of the reference and requires curvature changes. Keeping it separate from the other OOD trajectories allows studying its behavior independently.

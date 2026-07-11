@@ -1,0 +1,219 @@
+% !TeX root = ../main_en.tex
+The figures in this appendix aim to display the visual evidence following a simulation and provide context for the aggregated metrics shown in the results chapter. The telemetry files used in this appendix originate from the classic dataset at \path{data/classic_dataset/v1/results}. Therefore, they correspond to the specialized PDs with fixed parameters that feed the training, validation, and testing phases. Finally, an example from the transfer results folder is added to illustrate cross-transfer using those same PDs.
+
+\subsubsection*{Trajectory Atlas}
+
+Before discussing time signals, Figure~\ref{fig:atlas-trayectorias-id}, Figure~\ref{fig:atlas-trayectorias-ood}, and Figure~\ref{fig:atlas-trayectoria-helix-3d} visually outline the variety of reference trajectories. The first two figures summarize ID families and OOD trajectories, while the third singles out a helix to show its three-dimensional nature.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{atlas_trayectorias_id.pdf}
+\caption[Visual sample of known families.]{Visual sample of known families: \texttt{hold}, \texttt{circle}, \texttt{lissajous}, and \texttt{waypoint}. Source: own elaboration.}
+\label{fig:atlas-trayectorias-id}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{atlas_trayectorias_ood.pdf}
+\caption[Visual sample of out-of-distribution trajectories.]{Visual sample of out-of-distribution trajectories: \texttt{lemniscate}, \texttt{lissajous} 3D, composition, and helix. Source: own elaboration.}
+\label{fig:atlas-trayectorias-ood}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.78\textwidth]{atlas_trayectoria_helix_3d.pdf}
+\caption{Three-dimensional view of a representative OOD helix. Source: own elaboration.}
+\label{fig:atlas-trayectoria-helix-3d}
+\end{figure}
+
+\subsubsection*{Selected Episodes}
+
+Table~\ref{tab:casos-telemetria-anejo} summarizes the episodes included in the subsequent figures. Cases from the classic dataset's \texttt{test} split have been selected to cover different families, disturbances, and termination modes. The selection aims to show what is analyzed in a run beyond the position RMSE.
+
+\begin{table}[H]
+\caption{Cases from the classic dataset used for the telemetry plots.}
+\label{tab:casos-telemetria-anejo}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.21\textwidth} >{\raggedright\arraybackslash}p{0.19\textwidth} X}
+\toprule
+Case & Split & Reason for Inclusion \\
+\midrule
+\texttt{hold\_g05\_P5} & \texttt{test}, PD \texttt{hold} & Hover with combined disturbance; allows observing equilibrium, correction against wind and noise, and collective thrust close to weight. \\
+\texttt{circle\_g04\_P5} & \texttt{test}, PD \texttt{circle} & Curved tracking with combined disturbance and fixed-duration trajectory. \\
+\texttt{circle\_g07\_P2} & \texttt{test}, PD \texttt{circle} & Circle case with East wind, useful for observing transient error and sustained attitude. \\
+\texttt{lissajous\_g07\_P5} & \texttt{test}, PD \texttt{lissajous} & Multi-axis periodic trajectory with combined disturbance. \\
+\texttt{waypoint\_g03\_P5} & \texttt{test}, PD \texttt{waypoint} & Finite trajectory with segments, direction changes, and completed-trajectory termination. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsubsection*{Geometric Interpretation}
+
+Figure~\ref{fig:sim-telemetry-geometry-a} and Figure~\ref{fig:sim-telemetry-geometry-b} compare reference and state in the horizontal plane. The first shows the contrast between a hover reference and a periodic curve, while the second compares sustained circular tracking and a waypoint trajectory, which features straight segments and direction changes.
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{classic_hold_combined/trajectory_xy.pdf}
+\caption{\texttt{hold\_g05\_P5}.}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{classic_lissajous_combined/trajectory_xy.pdf}
+\caption{\texttt{lissajous\_g07\_P5}.}
+\end{subfigure}
+\caption{Geometric tracking of two specialized PDs from the classic dataset: perturbed hover case and multi-axis Lissajous trajectory. Source: own elaboration.}
+\label{fig:sim-telemetry-geometry-a}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{classic_circle_combined/trajectory_xy.pdf}
+\caption{\texttt{circle\_g04\_P5}.}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{classic_waypoint_combined/trajectory_xy.pdf}
+\caption{\texttt{waypoint\_g03\_P5}.}
+\end{subfigure}
+\caption{Geometric tracking in a perturbed circular reference and a waypoint trajectory from the test split. Source: own elaboration.}
+\label{fig:sim-telemetry-geometry-b}
+\end{figure}
+
+\subsubsection*{Error and Attitude}
+
+To interpret a simulation, viewing the trajectory is not enough. Figure~\ref{fig:sim-telemetry-error-attitude} combines tracking error and attitude in two episodes from the classic dataset: a circle with East wind and a Lissajous with combined disturbance. This relates transient errors to the inclination that the inner loop must stabilize.
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{classic_circle_wind/tracking_error.pdf}
+\caption{Error in \texttt{circle\_g07\_P2}.}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{classic_circle_wind/attitude_time.pdf}
+\caption{Attitude in \texttt{circle\_g07\_P2}.}
+\end{subfigure}
+
+\vspace{0.5em}
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{classic_lissajous_combined/tracking_error.pdf}
+\caption{Error in \texttt{lissajous\_g07\_P5}.}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{classic_lissajous_combined/attitude_time.pdf}
+\caption{Attitude in \texttt{lissajous\_g07\_P5}.}
+\end{subfigure}
+\caption{Visual relationship between tracking error and attitude in two classic dataset cases with disturbances. Source: own elaboration.}
+\label{fig:sim-telemetry-error-attitude}
+\end{figure}
+
+\subsubsection*{Time Series by Axis}
+
+Reading position axis-by-axis, as shown in Figure~\ref{fig:sim-telemetry-position-time}, is useful when the 2D plot does not reveal the full difficulty of the run. In the Lissajous trajectory, simultaneous altitude variation is visible, while in the waypoint trajectory, segments of forward motion and plateaus corresponding to arrival at each point can be distinguished.
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{classic_lissajous_combined/position_time.pdf}
+\caption{Position by axis in \texttt{lissajous\_g07\_P5}.}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{classic_waypoint_combined/position_time.pdf}
+\caption{Position by axis in \texttt{waypoint\_g03\_P5}.}
+\end{subfigure}
+\caption{Temporal evolution of position against reference in two families with different geometric behaviors. Source: own elaboration.}
+\label{fig:sim-telemetry-position-time}
+\end{figure}
+
+\subsubsection*{Actuation}
+
+Figure~\ref{fig:sim-telemetry-actuation} displays actuation telemetry in three cases from the classic dataset. The \texttt{hold} case shows the thrust level hovering around the vehicle weight, the circle with wind requires sustained corrections, and the combined Lissajous trajectory illustrates the distribution of thrust, moments, and rotor speeds in a multi-axis reference.
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{classic_hold_combined/control_effort.pdf}
+\caption{Control effort in \texttt{hold\_g05\_P5}.}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{classic_circle_wind/control_effort.pdf}
+\caption{Control effort in \texttt{circle\_g07\_P2}.}
+\end{subfigure}
+
+\vspace{0.5em}
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{classic_lissajous_combined/control_effort.pdf}
+\caption{Control effort in \texttt{lissajous\_g07\_P5}.}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{classic_lissajous_combined/rotor_speeds.pdf}
+\caption{Rotor speed in \texttt{lissajous\_g07\_P5}.}
+\end{subfigure}
+\caption{Actuation signals inspected after closed-loop simulation with native expert PD. Source: own elaboration.}
+\label{fig:sim-telemetry-actuation}
+\end{figure}
+
+Finally, Figure~\ref{fig:sim-telemetry-rates} completes the actuation interpretation with angular velocities in the FRD body frame. These data reveal whether an execution with acceptable position tracking relies on attitude oscillations or rapid demands from the inner loop.
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{classic_circle_wind/angular_velocity_time.pdf}
+\caption{Angular velocities in \texttt{circle\_g07\_P2}.}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{classic_waypoint_combined/angular_velocity_time.pdf}
+\caption{Angular velocities in \texttt{waypoint\_g03\_P5}.}
+\end{subfigure}
+\caption{Vehicle body angular velocities for two classic dataset tracking scenarios. Source: own elaboration.}
+\label{fig:sim-telemetry-rates}
+\end{figure}
+
+\subsubsection*{Cross-Transfer Example}
+
+The \texttt{results\_transfer} dataset allows running a single scenario with PDs from other families without retuning their gains. Figure~\ref{fig:sim-telemetry-transfer} shows the \texttt{circle\_g04\_P5} scenario with its native circle PD and with the Lissajous PD. The objective is to illustrate what happens, and how the Lissajous PD fails at the beginning.
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{transfer_circle_native/tracking_error.pdf}
+\caption{Error with native \texttt{circle} PD.}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{transfer_circle_lissajous/tracking_error.pdf}
+\caption{Error with transferred \texttt{lissajous} PD.}
+\end{subfigure}
+
+\vspace{0.5em}
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{transfer_circle_native/attitude_time.pdf}
+\caption{Attitude with native PD.}
+\end{subfigure}\hfill
+\begin{subfigure}[t]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{transfer_circle_lissajous/attitude_time.pdf}
+\caption{Attitude with transferred PD.}
+\end{subfigure}
+\caption[Visual inspection of a cross-transfer in the circular scenario.]{Visual inspection of a cross-transfer in scenario \path{circle_g04_P5}: comparison between the native PD and a PD from another family. Source: own elaboration.}
+\label{fig:sim-telemetry-transfer}
+\end{figure}
