@@ -1,0 +1,3 @@
+# Keep generated and academic LaTeX sources out of GitHub's language statistics.
+TFG_Memoria/** linguist-detectable=false
+TFG_Report/** linguist-detectable=false
