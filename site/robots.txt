@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://christiangonper.github.io/modelado-control-dron-v2/sitemap.xml

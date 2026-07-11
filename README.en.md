@@ -4,6 +4,8 @@
 
 A reproducible 6DOF dynamics simulator for studying quadcopter trajectory tracking and comparing classical PID control with neural control trained through imitation learning. The project brings together the physical model, controllers, scenarios, experimental campaigns, and analysis tools in a single Python package.
 
+Developed by Christian González Pérez as a Final Degree Project (TFG) at the University of León. [Visit the project website](https://christiangonper.github.io/modelado-control-dron-v2/en/).
+
 ## Features
 
 - 6DOF rigid-body dynamics using an ENU world frame, an FRD body frame, and quaternion attitude representation.

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://christiangonper.github.io/modelado-control-dron-v2/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://christiangonper.github.io/modelado-control-dron-v2/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://christiangonper.github.io/modelado-control-dron-v2/en/" />
+  </url>
+  <url>
+    <loc>https://christiangonper.github.io/modelado-control-dron-v2/en/</loc>
+    <xhtml:link rel="alternate" hreflang="es" href="https://christiangonper.github.io/modelado-control-dron-v2/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://christiangonper.github.io/modelado-control-dron-v2/en/" />
+  </url>
+</urlset>
