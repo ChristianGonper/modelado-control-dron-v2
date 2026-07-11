@@ -12,7 +12,7 @@ from simulador_quad.scenarios.loader import load_scenario, instantiate_scenario
 from simulador_quad.runner import SimulationRunner
 from simulador_quad.metrics.report import compute_metrics
 from simulador_quad.telemetry.export import export_telemetry_json, export_metrics_json
-from simulador_quad.visualization import plot_telemetry, plot_comparison
+from simulador_quad.visualization import plot_telemetry, plot_comparison, plot_telemetry_en, plot_comparison_en
 from simulador_quad.visualization.three_d import export_trajectory_viewer_html
 
 
@@ -236,6 +236,8 @@ def main():
                             help="Perfil de estilo visual a aplicar (diagnostic o report)")
     plot_parser.add_argument("--formats", nargs="+", choices=["png", "pdf", "svg"], default=None,
                             help="Formatos de imagen a generar (ej: png pdf svg)")
+    plot_parser.add_argument("--lang", choices=["es", "en"], default="es",
+                            help="Idioma de las etiquetas (es o en)")
 
     plot_comp_parser = subparsers.add_parser("plot-comparison", help="Generar figuras comparativas agregadas desde CSV")
     plot_comp_parser.add_argument("comparison_csv", help="Ruta al archivo CSV de comparación (comparison_all_runs.csv)")
@@ -248,6 +250,8 @@ def main():
         metavar="LABEL:PATH",
         help="Serie LABEL:PATH para res_trajectory_lemniscate_mlp_lstm (repetible, p. ej. MLP:telemetry.json)",
     )
+    plot_comp_parser.add_argument("--lang", choices=["es", "en"], default="es",
+                            help="Idioma de las etiquetas (es o en)")
 
     args = parser.parse_args()
 
@@ -264,7 +268,8 @@ def main():
         else:
             formats = args.formats
 
-        paths = plot_telemetry(
+        plot_fn = plot_telemetry_en if args.lang == "en" else plot_telemetry
+        paths = plot_fn(
             args.telemetry,
             args.out,
             args.metrics,
@@ -288,7 +293,8 @@ def main():
                     sys.exit(2)
                 trajectory_telemetry.append((label, path))
         try:
-            result = plot_comparison(
+            plot_comp_fn = plot_comparison_en if args.lang == "en" else plot_comparison
+            result = plot_comp_fn(
                 args.comparison_csv,
                 args.out,
                 formats=args.formats,
