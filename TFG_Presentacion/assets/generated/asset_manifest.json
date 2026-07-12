@@ -1,0 +1,108 @@
+{
+  "policy": "Assets generados desde datos/codigo o convertidos desde PDF vectorial de la memoria; no editar salidas a mano.",
+  "generated": [
+    {
+      "source": "TFG_Memoria\\Figuras\\diagramas\\FIG-001.pdf",
+      "output": "TFG_Presentacion\\assets\\generated\\svg\\FIG-001.svg",
+      "method": "pdftocairo -svg",
+      "embedded_raster_images": 0
+    },
+    {
+      "source": "TFG_Memoria\\Figuras\\diagramas\\FIG-003.pdf",
+      "output": "TFG_Presentacion\\assets\\generated\\svg\\FIG-003.svg",
+      "method": "pdftocairo -svg",
+      "embedded_raster_images": 0
+    },
+    {
+      "source": "TFG_Memoria\\Figuras\\diagramas\\FIG-004.pdf",
+      "output": "TFG_Presentacion\\assets\\generated\\svg\\FIG-004.svg",
+      "method": "pdftocairo -svg",
+      "embedded_raster_images": 0
+    },
+    {
+      "source": "TFG_Memoria\\Figuras\\diagramas\\FIG-005.pdf",
+      "output": "TFG_Presentacion\\assets\\generated\\svg\\FIG-005.svg",
+      "method": "pdftocairo -svg",
+      "embedded_raster_images": 0
+    },
+    {
+      "source": "TFG_Memoria\\Figuras\\diagramas\\FIG-006.pdf",
+      "output": "TFG_Presentacion\\assets\\generated\\svg\\FIG-006.svg",
+      "method": "pdftocairo -svg",
+      "embedded_raster_images": 0
+    },
+    {
+      "source": "TFG_Memoria\\Figuras\\diagramas\\FIG-008.pdf",
+      "output": "TFG_Presentacion\\assets\\generated\\svg\\FIG-008.svg",
+      "method": "pdftocairo -svg",
+      "embedded_raster_images": 0
+    },
+    {
+      "source": "TFG_Memoria\\Figuras\\diagramas\\FIG-013.pdf",
+      "output": "TFG_Presentacion\\assets\\generated\\svg\\FIG-013.svg",
+      "method": "pdftocairo -svg",
+      "embedded_raster_images": 0
+    },
+    {
+      "source": "TFG_Memoria\\Figuras\\diagramas\\FIG-015.pdf",
+      "output": "TFG_Presentacion\\assets\\generated\\svg\\FIG-015.svg",
+      "method": "pdftocairo -svg",
+      "embedded_raster_images": 0
+    },
+    {
+      "source": "TFG_Memoria\\Figuras\\diagramas\\FIG-002.py",
+      "output": "TFG_Presentacion\\assets\\generated\\svg\\FIG-002.svg",
+      "method": "matplotlib svg (FIG-002.py)"
+    },
+    {
+      "source": "results\\comparison_all_runs.csv",
+      "output": "TFG_Presentacion\\assets\\generated\\svg\\res_id_rmse_family.svg",
+      "method": "matplotlib svg"
+    },
+    {
+      "source": "results\\comparison_all_runs.csv",
+      "output": "TFG_Presentacion\\assets\\generated\\svg\\res_ood_rmse_family.svg",
+      "method": "matplotlib svg"
+    },
+    {
+      "source": "results\\comparison_all_runs.csv",
+      "output": "TFG_Presentacion\\assets\\generated\\svg\\res_pid_transfer_matrix.svg",
+      "method": "matplotlib svg"
+    },
+    {
+      "source": "results\\comparison_all_runs.csv",
+      "output": "TFG_Presentacion\\assets\\generated\\svg\\res_ood_scenario_matrix.svg",
+      "method": "matplotlib svg"
+    },
+    {
+      "source": "results\\comparison_all_runs.csv",
+      "output": "TFG_Presentacion\\assets\\generated\\svg\\res_ood_termination_summary.svg",
+      "method": "matplotlib svg"
+    },
+    {
+      "source": "results\\comparison_all_runs.csv",
+      "output": "TFG_Presentacion\\assets\\generated\\svg\\res_protections_ood.svg",
+      "method": "matplotlib svg"
+    },
+    {
+      "source": "results\\comparison_all_runs.csv",
+      "output": "TFG_Presentacion\\assets\\generated\\svg\\res_trajectory_lemniscate_mlp_lstm.svg",
+      "method": "matplotlib svg"
+    },
+    {
+      "source": "results\\comparison_all_runs.csv",
+      "output": "TFG_Presentacion\\assets\\generated\\svg\\atlas_trayectorias_id.svg",
+      "method": "matplotlib svg"
+    },
+    {
+      "source": "results\\comparison_all_runs.csv",
+      "output": "TFG_Presentacion\\assets\\generated\\svg\\atlas_trayectorias_ood.svg",
+      "method": "matplotlib svg"
+    },
+    {
+      "source": "results\\comparison_all_runs.csv",
+      "output": "TFG_Presentacion\\assets\\generated\\svg\\atlas_trayectoria_helix_3d.svg",
+      "method": "matplotlib svg"
+    }
+  ]
+}

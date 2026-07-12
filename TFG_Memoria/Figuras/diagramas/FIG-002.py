@@ -198,19 +198,26 @@ def main():
     ax.view_init(elev=20, azim=-55)
     
     plt.tight_layout()
-    
-    # Guardar
+
+    # Guardar (PDF/PNG para la memoria; SVG opcional para la presentación)
     out_pdf = "TFG_Memoria/Figuras/diagramas/FIG-002.pdf"
     out_png = "TFG_Memoria/Figuras/diagramas/FIG-002.png"
-    
+    out_svg = os.environ.get("FIG002_SVG_OUT", "").strip() or None
+
     os.makedirs(os.path.dirname(out_pdf), exist_ok=True)
-    plt.savefig(out_pdf, format='pdf', bbox_inches='tight', transparent=True)
-    plt.savefig(out_png, format='png', bbox_inches='tight', dpi=300)
+    plt.savefig(out_pdf, format="pdf", bbox_inches="tight", transparent=True)
+    plt.savefig(out_png, format="png", bbox_inches="tight", dpi=300)
+    if out_svg:
+        os.makedirs(os.path.dirname(out_svg) or ".", exist_ok=True)
+        plt.savefig(out_svg, format="svg", bbox_inches="tight", transparent=True)
     plt.close()
-    
-    print(f"Figura FIG-002 guardada exitosamente en PDF y PNG:")
+
+    print("Figura FIG-002 guardada exitosamente:")
     print(f"  - PDF: {out_pdf}")
     print(f"  - PNG: {out_png}")
+    if out_svg:
+        print(f"  - SVG: {out_svg}")
+
 
 if __name__ == "__main__":
     main()
