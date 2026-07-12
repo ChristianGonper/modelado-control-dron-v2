@@ -1,0 +1,34 @@
+project:
+  title: "Presentacion TFG"
+  type: default
+
+format:
+  revealjs:
+    theme:
+      - default
+      - theme.scss
+    lang: es
+    slide-number: c/t
+    show-slide-number: all
+    controls: true
+    progress: true
+    history: false
+    hash: true
+    center: false
+    auto-stretch: false
+    width: 1600
+    height: 900
+    margin: 0.06
+    embed-resources: true
+    html-math-method: katex
+    transition: fade
+    background-transition: fade
+    pdf-separate-fragments: false
+    show-notes: false
+    chalkboard: false
+    menu: false
+
+execute:
+  echo: false
+  warning: false
+  message: false

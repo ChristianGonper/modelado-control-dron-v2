@@ -35,12 +35,7 @@ contenido, figuras y resultados.
   con `scripts/build_assets.py`.
 
 ## Reglas narrativas
-
-- El foco de la defensa es la comparativa y sus matices: PD especializados frente
-  a MLP, GRU y LSTM.
-- Mantén pinceladas deliberadas sobre modelo físico para inducir preguntas:
-  ENU/FRD, 6DOF, cuaterniones, límites de actuación y transición a hardware.
 - No conviertas el deck en una versión comprimida de la memoria. Prioriza
   claridad oral, ritmo de 20 minutos y figuras legibles.
-- Antes de expandir el contenido definitivo, conserva el MVP como esqueleto
-  navegable y discute alcance, orden y peso de cada bloque.
+- Antes de expandir el contenido definitivo en el archivo quarto, conserva el MVP como esqueleto
+  navegable sobre el framework.
