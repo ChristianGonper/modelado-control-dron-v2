@@ -1,10 +1,12 @@
 <!doctype html>
 <html lang="es">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Simulador 6DOF de cuadricóptero | TFG de Christian González Pérez</title>
-  <meta name="description" content="Trabajo de Fin de Grado de Christian González Pérez: simulador 6DOF de cuadricóptero para comparar control PID y control neuronal por imitación.">
+  <title>Control híbrido en cascada de un cuadricóptero | TFG de Christian González Pérez</title>
+  <meta name="description"
+    content="Trabajo de Fin de Grado de Christian González Pérez sobre modelado, control híbrido y evaluación experimental de un cuadricóptero 6DOF.">
   <meta name="author" content="Christian González Pérez">
   <meta name="theme-color" content="#15251f">
   <link rel="canonical" href="https://christiangonper.github.io/modelado-control-dron-v2/">
@@ -14,15 +16,16 @@
   <link rel="stylesheet" href="./assets/styles.css">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="es_ES">
-  <meta property="og:title" content="Simulador 6DOF de cuadricóptero">
-  <meta property="og:description" content="TFG de Christian González Pérez sobre control clásico y neuronal por imitación.">
+  <meta property="og:title" content="Control híbrido en cascada de un cuadricóptero">
+  <meta property="og:description"
+    content="TFG de Christian González Pérez sobre modelado, control híbrido y evaluación experimental de un cuadricóptero.">
   <meta property="og:url" content="https://christiangonper.github.io/modelado-control-dron-v2/">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "SoftwareSourceCode",
-    "name": "Simulador 6DOF de cuadricóptero",
-    "description": "Simulador para comparar control PID clásico con control neuronal entrenado por imitación.",
+    "name": "Control híbrido en cascada de un cuadricóptero",
+    "description": "Trabajo de Fin de Grado sobre modelado, control híbrido y evaluación experimental de un cuadricóptero 6DOF.",
     "author": {"@type": "Person", "name": "Christian González Pérez"},
     "programmingLanguage": "Python",
     "codeRepository": "https://github.com/ChristianGonper/modelado-control-dron-v2",
@@ -30,11 +33,12 @@
   }
   </script>
 </head>
+
 <body>
   <header class="site-header">
     <a class="wordmark" href="./" aria-label="Inicio">
       <span>CGP</span>
-      <small>6DOF / 2026</small>
+      <small>TFG - 2026</small>
     </a>
     <nav class="language-nav" aria-label="Idioma">
       <a href="./" lang="es" aria-current="page">Español</a>
@@ -45,21 +49,36 @@
   <main>
     <section class="hero" aria-labelledby="project-title">
       <div class="hero-copy">
-        <p class="eyebrow">Trabajo de Fin de Grado · Universidad de León</p>
-        <h1 id="project-title">Simulación y control de un cuadricóptero en seis grados de libertad</h1>
-        <p class="lead">Un banco de ensayo reproducible para comparar un controlador PID en cascada con redes neuronales entrenadas por imitación.</p>
+        <p class="eyebrow">Trabajo de Fin de Grado - Universidad de León</p>
+        <h1 id="project-title">Control híbrido en cascada de un cuadricóptero: sustitución neuronal de controladores
+          especializados del lazo externo</h1>
+        <p class="lead">Un Trabajo de Fin de Grado que construye un banco de ensayo reproducible y lo utiliza para
+          estudiar cuándo un controlador neuronal es competitivo frente al control clásico.</p>
         <div class="actions">
           <a class="button button-primary" href="#informe">Leer el informe</a>
           <a class="button button-secondary" href="./presentacion/">Ver la presentación</a>
-          <a class="button button-secondary" href="https://github.com/ChristianGonper/modelado-control-dron-v2">Ver el código en GitHub</a>
+          <a class="button button-secondary" href="https://github.com/ChristianGonper/modelado-control-dron-v2">Ver el
+            código en GitHub</a>
         </div>
       </div>
       <aside class="project-card" aria-label="Ficha del proyecto">
         <dl>
-          <div><dt>Autor</dt><dd>Christian González Pérez</dd></div>
-          <div><dt>Área</dt><dd>Modelado y control</dd></div>
-          <div><dt>Implementación</dt><dd>Python · PyTorch</dd></div>
-          <div><dt>Curso</dt><dd>2025–2026</dd></div>
+          <div>
+            <dt>Autor</dt>
+            <dd>Christian González Pérez</dd>
+          </div>
+          <div>
+            <dt>Pregunta</dt>
+            <dd>¿Puede una red sustituir a los PD externos?</dd>
+          </div>
+          <div>
+            <dt>Método</dt>
+            <dd>Modelo 6DOF - datos expertos - bucle cerrado</dd>
+          </div>
+          <div>
+            <dt>Evidencia</dt>
+            <dd>Comparación ID/OOD y criterios de seguridad</dd>
+          </div>
         </dl>
       </aside>
     </section>
@@ -67,16 +86,19 @@
     <section class="summary" aria-labelledby="summary-title">
       <div>
         <p class="section-number">01 / Proyecto</p>
-        <h2 id="summary-title">Del modelo físico a la comparación experimental</h2>
+        <h2 id="summary-title">Un TFG de modelado, control y evaluación</h2>
       </div>
       <div class="summary-copy">
-        <p>El simulador integra dinámica de cuerpo rígido 6DOF, actuadores, perturbaciones y trayectorias reproducibles. Sobre esta base se evalúan dos estrategias: control clásico PID y control neuronal híbrido.</p>
-        <p>La red aprende a predecir la fuerza deseada del lazo externo a partir de demostraciones de expertos PID, mientras el lazo interno clásico conserva la estabilización de actitud.</p>
+        <p>El trabajo formula una pregunta de control y construye el entorno necesario para responderla: un modelo de
+          cuerpo rígido 6DOF con actuadores, perturbaciones, trayectorias reproducibles y telemetría auditable.</p>
+        <p>La metodología ajusta expertos PD, genera demostraciones, entrena modelos MLP, GRU y LSTM, y compara sus
+          decisiones en bucle cerrado. La red sustituye el lazo externo; el lazo interno clásico conserva la
+          estabilización de actitud.</p>
       </div>
       <ul class="pillars" aria-label="Áreas principales">
-        <li><strong>6DOF</strong><span>Dinámica y actuadores</span></li>
-        <li><strong>PID</strong><span>Control en cascada</span></li>
-        <li><strong>ML</strong><span>Imitación con MLP, GRU y LSTM</span></li>
+        <li><strong>MODELO</strong><span>Dinámica, actuadores y perturbaciones</span></li>
+        <li><strong>MÉTODO</strong><span>Expertos PD, imitación y tres arquitecturas</span></li>
+        <li><strong>EVIDENCIA</strong><span>Comparación ID/OOD, error y seguridad</span></li>
       </ul>
     </section>
 
@@ -84,7 +106,7 @@
       <div class="report-heading">
         <div>
           <p class="section-number">02 / Informe</p>
-          <h2 id="report-title">Memoria en español</h2>
+          <h2 id="report-title">Documentación del trabajo</h2>
         </div>
         <div class="report-actions">
           <a href="./assets/reports/TFG_Memoria_es.pdf" target="_blank" rel="noopener">Abrir en otra pestaña</a>
@@ -92,16 +114,19 @@
         </div>
       </div>
       <div class="pdf-shell">
-        <object data="./assets/reports/TFG_Memoria_es.pdf#view=FitH" type="application/pdf" aria-label="Memoria del TFG en español">
-          <p>Tu navegador no puede mostrar el PDF incrustado. <a href="./assets/reports/TFG_Memoria_es.pdf">Abre la memoria en una pestaña nueva</a>.</p>
+        <object data="./assets/reports/TFG_Memoria_es.pdf#view=FitH" type="application/pdf"
+          aria-label="Memoria del TFG en español">
+          <p>Tu navegador no puede mostrar el PDF incrustado. <a href="./assets/reports/TFG_Memoria_es.pdf">Abre la
+              memoria en una pestaña nueva</a>.</p>
         </object>
       </div>
     </section>
   </main>
 
   <footer>
-    <p>Christian González Pérez · Universidad de León · 2026</p>
+    <p>Christian González Pérez - Universidad de León - 2026</p>
     <a href="mailto:christian.gonzalez.perez@proton.me">Contacto</a>
   </footer>
 </body>
+
 </html>

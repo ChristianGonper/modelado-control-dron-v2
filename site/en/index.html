@@ -1,10 +1,12 @@
 <!doctype html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>6DOF Quadcopter Simulator | Christian González Pérez's Final Degree Project</title>
-  <meta name="description" content="Christian González Pérez's Final Degree Project: a 6DOF quadcopter simulator comparing PID control and neural imitation control.">
+  <title>Cascaded hybrid control of a quadcopter | Christian González Pérez's Final Degree Project</title>
+  <meta name="description"
+    content="Christian González Pérez's Final Degree Project on 6DOF quadcopter modelling, hybrid control, and experimental evaluation.">
   <meta name="author" content="Christian González Pérez">
   <meta name="theme-color" content="#15251f">
   <link rel="canonical" href="https://christiangonper.github.io/modelado-control-dron-v2/en/">
@@ -14,15 +16,16 @@
   <link rel="stylesheet" href="../assets/styles.css">
   <meta property="og:type" content="website">
   <meta property="og:locale" content="en_GB">
-  <meta property="og:title" content="6DOF Quadcopter Simulator">
-  <meta property="og:description" content="Christian González Pérez's Final Degree Project on classical and neural imitation control.">
+  <meta property="og:title" content="Cascaded hybrid control of a quadcopter">
+  <meta property="og:description"
+    content="Christian González Pérez's Final Degree Project on quadcopter modelling, hybrid control, and experimental evaluation.">
   <meta property="og:url" content="https://christiangonper.github.io/modelado-control-dron-v2/en/">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "SoftwareSourceCode",
-    "name": "6DOF Quadcopter Simulator",
-    "description": "A simulator for comparing classical PID control with neural control trained through imitation learning.",
+    "name": "Cascaded hybrid control of a quadcopter",
+    "description": "A Final Degree Project on 6DOF quadcopter modelling, hybrid control, and experimental evaluation.",
     "author": {"@type": "Person", "name": "Christian González Pérez"},
     "programmingLanguage": "Python",
     "codeRepository": "https://github.com/ChristianGonper/modelado-control-dron-v2",
@@ -30,11 +33,12 @@
   }
   </script>
 </head>
+
 <body>
   <header class="site-header">
     <a class="wordmark" href="../" aria-label="Home">
       <span>CGP</span>
-      <small>6DOF / 2026</small>
+      <small>TFG - 2026</small>
     </a>
     <nav class="language-nav" aria-label="Language">
       <a href="../" lang="es">Español</a>
@@ -45,21 +49,36 @@
   <main>
     <section class="hero" aria-labelledby="project-title">
       <div class="hero-copy">
-        <p class="eyebrow">Final Degree Project · University of León</p>
-        <h1 id="project-title">Six-degree-of-freedom quadcopter simulation and control</h1>
-        <p class="lead">A reproducible test bench for comparing a cascaded PID controller with neural networks trained through imitation learning.</p>
+        <p class="eyebrow">Final Degree Project - University of León</p>
+        <h1 id="project-title">Cascaded hybrid control of a quadcopter: neural replacement of specialized outer-loop
+          controllers</h1>
+        <p class="lead">A Final Degree Project that builds a reproducible test bench to study when neural substitution
+          is competitive with classical control.</p>
         <div class="actions">
           <a class="button button-primary" href="#report">Read the report</a>
           <a class="button button-secondary" href="../presentacion/">View the presentation</a>
-          <a class="button button-secondary" href="https://github.com/ChristianGonper/modelado-control-dron-v2">View the code on GitHub</a>
+          <a class="button button-secondary" href="https://github.com/ChristianGonper/modelado-control-dron-v2">View the
+            code on GitHub</a>
         </div>
       </div>
       <aside class="project-card" aria-label="Project details">
         <dl>
-          <div><dt>Author</dt><dd>Christian González Pérez</dd></div>
-          <div><dt>Field</dt><dd>Modelling and control</dd></div>
-          <div><dt>Implementation</dt><dd>Python · PyTorch</dd></div>
-          <div><dt>Academic year</dt><dd>2025–2026</dd></div>
+          <div>
+            <dt>Author</dt>
+            <dd>Christian González Pérez</dd>
+          </div>
+          <div>
+            <dt>Question</dt>
+            <dd>Can a network replace the outer-loop PDs?</dd>
+          </div>
+          <div>
+            <dt>Method</dt>
+            <dd>6DOF model - expert data - closed loop</dd>
+          </div>
+          <div>
+            <dt>Evidence</dt>
+            <dd>ID/OOD comparison and safety criteria</dd>
+          </div>
         </dl>
       </aside>
     </section>
@@ -67,16 +86,19 @@
     <section class="summary" aria-labelledby="summary-title">
       <div>
         <p class="section-number">01 / Project</p>
-        <h2 id="summary-title">From the physical model to experimental comparison</h2>
+        <h2 id="summary-title">A project in modelling, control, and evaluation</h2>
       </div>
       <div class="summary-copy">
-        <p>The simulator integrates 6DOF rigid-body dynamics, actuators, disturbances, and reproducible trajectories. Two strategies are evaluated on this common basis: classical PID control and hybrid neural control.</p>
-        <p>The network learns to predict the desired outer-loop force from PID expert demonstrations, while the classical inner loop retains attitude stabilization.</p>
+        <p>The project frames a control question and builds the environment needed to answer it: a 6DOF rigid-body model
+          with actuators, disturbances, reproducible trajectories, and auditable telemetry.</p>
+        <p>The methodology tunes PD experts, generates demonstrations, trains MLP, GRU, and LSTM models, and compares
+          their decisions in closed loop. The network replaces the outer loop while the classical inner loop retains
+          attitude stabilization.</p>
       </div>
       <ul class="pillars" aria-label="Core areas">
-        <li><strong>6DOF</strong><span>Dynamics and actuators</span></li>
-        <li><strong>PID</strong><span>Cascaded control</span></li>
-        <li><strong>ML</strong><span>Imitation with MLP, GRU, and LSTM</span></li>
+        <li><strong>MODEL</strong><span>Dynamics, actuators, and disturbances</span></li>
+        <li><strong>METHOD</strong><span>PD experts, imitation, and three architectures</span></li>
+        <li><strong>EVIDENCE</strong><span>ID/OOD comparison, error, and safety</span></li>
       </ul>
     </section>
 
@@ -84,7 +106,7 @@
       <div class="report-heading">
         <div>
           <p class="section-number">02 / Report</p>
-          <h2 id="report-title">English report</h2>
+          <h2 id="report-title">Project documentation</h2>
         </div>
         <div class="report-actions">
           <a href="../assets/reports/TFG_Report_en.pdf" target="_blank" rel="noopener">Open in a new tab</a>
@@ -92,16 +114,19 @@
         </div>
       </div>
       <div class="pdf-shell">
-        <object data="../assets/reports/TFG_Report_en.pdf#view=FitH" type="application/pdf" aria-label="Final Degree Project report in English">
-          <p>Your browser cannot display the embedded PDF. <a href="../assets/reports/TFG_Report_en.pdf">Open the report in a new tab</a>.</p>
+        <object data="../assets/reports/TFG_Report_en.pdf#view=FitH" type="application/pdf"
+          aria-label="Final Degree Project report in English">
+          <p>Your browser cannot display the embedded PDF. <a href="../assets/reports/TFG_Report_en.pdf">Open the report
+              in a new tab</a>.</p>
         </object>
       </div>
     </section>
   </main>
 
   <footer>
-    <p>Christian González Pérez · University of León · 2026</p>
+    <p>Christian González Pérez - University of León - 2026</p>
     <a href="mailto:christian.gonzalez.perez@proton.me">Contact</a>
   </footer>
 </body>
+
 </html>

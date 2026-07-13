@@ -120,8 +120,9 @@ h2 {
 
 h1 {
   max-width: 850px;
-  font-size: clamp(3rem, 6.5vw, 6.4rem);
-  letter-spacing: -0.055em;
+  font-size: clamp(2.55rem, 4.6vw, 4.8rem);
+  letter-spacing: -0.05em;
+  line-height: 0.96;
 }
 
 h2 {
@@ -317,7 +318,9 @@ footer p {
   }
 
   h1 {
-    font-size: clamp(2.7rem, 13vw, 4.5rem);
+    max-width: 18ch;
+    font-size: clamp(2.1rem, 9vw, 3.5rem);
+    line-height: 0.98;
   }
 
   .project-card {
