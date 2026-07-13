@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-SOURCE = REPO_ROOT / "TFG_Report" / "Figuras" / "diagramas" / "FIG-015.py"
+SOURCE = REPO_ROOT / "TFG_Memoria" / "Figuras" / "diagramas" / "FIG-015.py"
 
 
 def main() -> None:

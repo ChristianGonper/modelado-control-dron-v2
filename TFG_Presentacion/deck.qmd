@@ -41,7 +41,7 @@ format:
 0:40–1:10. Anticipar la lógica en una frase. Si se necesita recortar, resolver en 10 segundos.
 :::
 
-## De cuatro especialistas a un controlador común {.specialist-slide data-auto-fragments="0,20000,23000"}
+## De cuatro especialistas a un controlador común {.specialist-slide data-auto-fragments="0,20000"}
 
 <div class="specialists-vs-network">
 <div class="specialist-bank">
@@ -50,16 +50,16 @@ format:
   <div class="gain-card fragment" data-fragment-index="1"><strong>Lissajous</strong><span>K<sub>p</sub></span><code>5.65 · 5.65 · 14.11</code><span>K<sub>d</sub></span><code>3.80 · 3.80 · 7.60</code></div>
   <div class="gain-card fragment" data-fragment-index="1"><strong>Waypoint</strong><span>K<sub>p</sub></span><code>5.44 · 5.44 · 13.61</code><span>K<sub>d</sub></span><code>2.40 · 2.40 · 4.80</code></div>
 </div>
-<div class="versus-arrow fragment" data-fragment-index="2">→</div>
-<div class="network-one fragment" data-fragment-index="2">
-  <div class="network-orbit"></div>
-  <strong>Controlador único</strong>
-  <span>MLP · GRU · LSTM</span>
-  <small>observación + referencia → fuerza ENU</small>
+<div class="controller-convergence fragment" data-fragment-index="2" aria-hidden="true"><svg viewBox="0 0 1000 100" preserveAspectRatio="none"><path d="M125 0 L125 16 C125 58 360 55 440 100"/><path d="M375 0 L375 16 C375 58 440 60 480 100"/><path d="M625 0 L625 16 C625 58 560 60 520 100"/><path d="M875 0 L875 16 C875 58 640 55 560 100"/></svg></div>
+<div class="unified-controller fragment" data-fragment-index="2">
+<div class="controller-core" aria-hidden="true"><svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="35"/><path d="M15 50h70M50 15v70M28 28l44 44M72 28L28 72"/></svg></div>
+<div class="controller-content">
+<strong>Un controlador · tres memorias</strong>
+<div class="controller-models"><span><b>MLP</b><small>instante actual</small></span><span><b>GRU</b><small>ventana temporal</small></span><span><b>LSTM</b><small>ventana temporal</small></span></div>
+<div class="controller-flow">observación + referencia <b>→</b> fuerza deseada ENU</div>
 </div>
 </div>
-
-<div class="scope-line fragment" data-fragment-index="3"><span>PD especializado</span><span>PD transferido</span><span>control neuronal</span></div>
+</div>
 
 ::: notes
 1:10–2:20. Los valores ilustran que cada experto encapsula dos ternas de ganancias del lazo externo. La hipótesis es condensar el comportamiento del banco en un procedimiento común. Presentar las tres referencias. No prometer vuelo real ni robustez universal.
@@ -88,7 +88,7 @@ format:
 <div class="physical-board">
 <div class="figure-contain movement-figure">
 
-![](assets/generated/svg/FIG-015.svg)
+![](assets/generated/svg/FIG-015-lateral.svg)
 
 </div>
 <div class="frame-inset fragment">
@@ -97,9 +97,9 @@ format:
 
 </div>
 <div class="physical-sequence">
-<div class="fragment"><span>1</span><strong>Empuje</strong><small>−z<sub>B</sub></small></div>
-<div class="fragment"><span>2</span><strong>Inclinación</strong><small>orienta T</small></div>
-<div class="fragment"><span>3</span><strong>Aceleración</strong><small>en ENU</small></div>
+<div class="fragment"><span>1</span><strong>Empuje desigual</strong><small>genera alabeo</small></div>
+<div class="fragment"><span>2</span><strong>Empuje inclinado</strong><small>aparece una componente horizontal</small></div>
+<div class="fragment"><span>3</span><strong>Movimiento lateral</strong><small>la actitud dirige la posición</small></div>
 </div>
 </div>
 
@@ -109,16 +109,16 @@ format:
 3:30–4:45. Física mínima. No derivar 6DOF, cuaterniones ni mixer. Si se acumula retraso, comprimir a 45 s.
 :::
 
-## Dos lazos, una interfaz física {.architecture-slide data-auto-fragments="0,2000,5000"}
+## Dos lazos, una interfaz física {.architecture-slide data-auto-fragments="0,2000,4500,5500"}
 
 <div class="architecture-stage">
   <div class="arch-block outer fragment" data-fragment-index="1"><small>lazo externo</small><strong>error posición + velocidad</strong></div>
-  <div class="arch-arrow fragment" data-fragment-index="1">→</div>
-  <div class="arch-block force fragment" data-fragment-index="2"><small>interfaz</small><strong>fuerza deseada ENU</strong></div>
   <div class="arch-arrow fragment" data-fragment-index="2">→</div>
-  <div class="arch-block inner fragment" data-fragment-index="3"><small>lazo interno</small><strong>actitud + momentos</strong></div>
+  <div class="arch-block force fragment" data-fragment-index="2"><small>interfaz</small><strong>fuerza deseada ENU</strong></div>
   <div class="arch-arrow fragment" data-fragment-index="3">→</div>
-  <div class="arch-block rotors fragment" data-fragment-index="3"><small>actuación</small><strong>mixer + rotores</strong></div>
+  <div class="arch-block inner fragment" data-fragment-index="3"><small>lazo interno</small><strong>actitud + momentos</strong></div>
+  <div class="arch-arrow fragment" data-fragment-index="4">→</div>
+  <div class="arch-block rotors fragment" data-fragment-index="4"><small>actuación</small><strong>mixer + rotores</strong></div>
 </div>
 
 <div class="figure-strip fragment" data-fragment-index="2">
@@ -157,8 +157,6 @@ format:
   <div class="window-cells"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="current"></i></div>
   <span>20 muestras · 0,40 s</span>
 </div>
-
-<div class="bottom-statement compact-bottom fragment" data-fragment-index="5">La memoria temporal es una <strong>hipótesis</strong>, no una ventaja asumida.</div>
 
 ::: notes
 7:20–8:35. Mismas entradas, objetivo y procedimiento. El objetivo es la fuerza del PD experto. No enumerar capas ni hiperparámetros.
@@ -245,7 +243,7 @@ format:
 </div>
 </div>
 
-<div class="ood-reading"><span><strong>80</strong> ejecuciones</span><span><strong>66,3 %</strong> completadas</span><span>sin dominio global</span><span class="caution-inline">PD OOD elegido por similitud</span></div>
+<div class="ood-reading"><span>Sin red con dominio general</span><span class="caution-inline">PD OOD elegido por similitud</span></div>
 
 <div class="bottom-statement">Arquitectura × geometría × exigencia dinámica.</div>
 
@@ -300,7 +298,7 @@ format:
   <div class="fragment"><span>04</span><strong>Generalización condicionada</strong><small>cobertura, geometría y límites</small></div>
 </div>
 
-<div class="conclusion-answer fragment">Un procedimiento común puede sustituir a los expertos, pero no transfiere mejor de forma universal.</div>
+<div class="conclusion-answer fragment"><span>Un controlador neuronal puede sustituir a los PD especializados.</span><strong>No iguala o mejora su comportamiento en condiciones completamente desconocidas.</strong></div>
 
 ::: notes
 16:50–18:20. Responder explícitamente a la pregunta. Valor: comparación trazable para medir cuándo funciona y por qué se degrada. Futuro en una frase: ampliar cobertura e identificar un vehículo real. CONTROL: 18:20.
@@ -314,10 +312,8 @@ format:
 
 <div class="closing-thanks">Gracias</div>
 
-<div class="closing-meta">Preguntas</div>
-
 ::: notes
-18:20–19:00. Frase final, agradecimiento y preguntas. Terminar cerca de 19:00.
+18:20–19:00. Frase final y agradecimiento. Terminar cerca de 19:00.
 :::
 
 ## Respaldo · Marcos ENU y FRD {.backup-slide}

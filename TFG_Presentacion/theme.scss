@@ -346,12 +346,23 @@ $code-color: #173b63;
 }
 
 .specialist-slide .specialists-vs-network {
-  min-height: 525px;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto 100px auto;
+  gap: 0;
+  align-items: start;
+  margin-top: -.25rem;
+}
+
+.specialist-slide .specialist-bank {
+  grid-template-columns: repeat(4, 1fr);
+  gap: .48rem;
 }
 
 .specialist-slide .gain-card {
-  min-height: 120px;
-  padding: .7rem .8rem;
+  min-height: 104px;
+  padding: .48rem .62rem;
   align-content: center;
 }
 
@@ -363,17 +374,105 @@ $code-color: #173b63;
   font-size: .43em;
 }
 
-.specialist-slide .network-one {
-  min-height: 420px;
+.specialist-slide .controller-convergence {
+  width: 100%;
+  height: 100px;
 }
 
-.specialist-slide .network-one strong {
-  font-size: .95em;
+.specialist-slide .controller-convergence svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
 }
 
-.specialist-slide .scope-line {
+.specialist-slide .controller-convergence path {
+  fill: none;
+  stroke: var(--orange);
+  stroke-width: 3;
+  stroke-linecap: round;
+  opacity: .68;
+}
+
+.specialist-slide .controller-convergence polygon {
+  fill: var(--orange);
+  stroke: none;
+  opacity: 1;
+}
+
+.specialist-slide .unified-controller {
+  width: 89%;
+  min-height: 320px;
+  margin: .22rem auto 0;
+  display: grid;
+  grid-template-columns: 170px 1fr;
+  overflow: hidden;
+  color: var(--cream);
+  background: var(--forest);
+  border-radius: 26px 7px 26px 7px;
+  box-shadow: 0 20px 42px rgba(23, 59, 63, .2);
+}
+
+.specialist-slide .controller-core {
+  display: grid;
+  place-items: center;
+  padding: .75rem;
+  background: #214f53;
+}
+
+.specialist-slide .controller-core svg {
+  width: 105px;
+  stroke: var(--orange-soft);
+  stroke-width: 5;
+}
+
+.specialist-slide .controller-content {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  align-items: center;
+  row-gap: .55rem;
+  padding: .82rem 1.15rem .78rem;
+}
+
+.specialist-slide .controller-content > strong {
+  display: block;
+  text-align: center;
+  font-size: .82em;
+  line-height: 1.1;
+}
+
+.specialist-slide .controller-models {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: .58rem;
+  width: 100%;
+  align-self: center;
+}
+
+.specialist-slide .controller-models span {
+  display: flex;
+  min-height: 92px;
+  padding: .27rem .35rem;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  color: var(--forest);
+  background: var(--cream);
+  border-top: 6px solid var(--orange);
+}
+
+.specialist-slide .controller-models b { font-size: .68em; }
+.specialist-slide .controller-models small { font-size: .42em; }
+
+.specialist-slide .controller-flow {
+  text-align: center;
+  color: var(--orange-soft);
   font-size: .53em;
-  margin-top: .25rem;
+  line-height: 1.2;
+}
+
+.specialist-slide .controller-flow b {
+  color: var(--orange);
 }
 
 .expert-tuning {
@@ -1587,3 +1686,437 @@ $code-color: #173b63;
   from { opacity: 0; transform: translateX(-28px) scaleX(.35); }
   to { opacity: 1; transform: translateX(0) scaleX(1); }
 }
+
+/* Ajustes finales para defensa */
+.title-mark i {
+  height: 1px;
+  transform: translateY(.1em);
+}
+
+.route-slide .route-map {
+  gap: .35rem;
+}
+
+.route-slide .route-map > div {
+  min-height: 300px;
+  padding: 1.05rem .9rem .9rem;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  border: 1px solid rgba(23, 59, 63, .22);
+  border-radius: 24px 6px 24px 6px;
+  box-shadow: 0 18px 38px rgba(23, 59, 63, .11);
+  position: relative;
+  overflow: hidden;
+  transform: rotate(-1deg);
+}
+
+.route-slide .route-map > div:nth-of-type(even) {
+  transform: rotate(1deg) translateY(18px);
+}
+
+.route-slide .route-map > div::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 9px;
+  background: var(--forest);
+}
+
+.route-slide .route-map > div:nth-of-type(2)::before { background: var(--blue); }
+.route-slide .route-map > div:nth-of-type(3)::before { background: var(--orange); }
+.route-slide .route-map > div:nth-of-type(4)::before { background: var(--red); }
+
+.route-slide .route-map .card-icon {
+  width: 64px;
+  height: 64px;
+  padding: .35rem;
+  margin: .05rem 0 .35rem;
+  color: var(--cream);
+  background: var(--forest);
+  border-radius: 50%;
+  box-shadow: 0 8px 18px rgba(23, 59, 63, .18);
+}
+
+.route-slide .route-map > div:nth-of-type(2) .card-icon { background: var(--blue); }
+.route-slide .route-map > div:nth-of-type(3) .card-icon { background: var(--orange); }
+.route-slide .route-map > div:nth-of-type(4) .card-icon { background: var(--red); }
+
+.route-slide .route-map .route-num {
+  position: absolute;
+  top: .38rem;
+  right: .55rem;
+  color: rgba(23, 59, 63, .12);
+  font-size: 1.25em;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.route-slide .route-map > div strong { font-size: .95em; }
+.route-slide .route-map > div small { font-size: .55em; line-height: 1.25; }
+
+.route-slide .route-map > i {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  color: var(--cream);
+  background: var(--orange);
+  border-radius: 50%;
+  font-size: .72em;
+  box-shadow: 0 5px 14px rgba(167, 93, 37, .22);
+  z-index: 2;
+  line-height: 1;
+  padding-bottom: 4px;
+  box-sizing: border-box;
+}
+
+.specialist-slide .network-one span {
+  display: block;
+  width: 100%;
+  margin-top: .4rem;
+  font-size: .72em;
+  font-weight: 700;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+
+.specialist-slide .network-one small {
+  margin-top: .65rem;
+  font-size: .52em;
+  line-height: 1.3;
+}
+
+.physical-board .physical-sequence sub {
+  position: relative;
+  bottom: -.18em;
+  font-size: .72em;
+  vertical-align: baseline;
+}
+
+.data-slide .recurrent-window {
+  width: min(1050px, 76%);
+  margin: 1.15rem auto 0;
+  padding: .45rem .7rem .5rem;
+  box-sizing: border-box;
+  text-align: center;
+  background: rgba(255, 255, 255, .42);
+  border: 1px solid rgba(23, 59, 63, .14);
+  border-radius: 16px 4px 16px 4px;
+}
+
+.data-slide .recurrent-window strong,
+.data-slide .recurrent-window > span {
+  display: block;
+}
+
+.data-slide .recurrent-window strong {
+  font-size: .65em;
+}
+
+.data-slide .recurrent-window > span {
+  margin-top: .25rem;
+  color: var(--muted);
+  font-size: .43em;
+}
+
+.data-slide .window-cells {
+  display: grid;
+  grid-template-columns: repeat(20, 1fr);
+  gap: 6px;
+  width: 88%;
+  margin: .4rem auto 0;
+}
+
+.data-slide .window-cells i {
+  display: block;
+  height: 18px;
+  background: rgba(23, 59, 63, .2);
+  border-radius: 3px;
+}
+
+.data-slide .window-cells i.current {
+  background: var(--orange);
+  box-shadow: 0 0 0 3px rgba(167, 93, 37, .14);
+}
+
+.fidelity-figure-footer {
+  justify-content: flex-start;
+  padding-left: 14%;
+  font-size: .56em;
+}
+
+.conclusion-slide .conclusion-answer {
+  margin-top: .25rem;
+  padding: .65rem 1rem;
+  font-size: .58em;
+  line-height: 1.3;
+  color: var(--orange);
+  background: rgba(167, 93, 37, .07);
+  border: 2px solid rgba(167, 93, 37, .58);
+  border-radius: 18px 5px 18px 5px;
+  box-shadow: 0 10px 24px rgba(167, 93, 37, .12);
+}
+
+/* Navegación inferior: contador legible + progreso con la paleta del relato */
+.reveal .slide-number {
+  right: 22px;
+  bottom: 18px;
+  min-width: 70px;
+  padding: 7px 13px 8px;
+  color: var(--cream);
+  background: var(--forest);
+  border: 1px solid rgba(255, 255, 255, .16);
+  border-radius: 999px;
+  box-shadow: 0 6px 16px rgba(23, 59, 63, .2);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: .04em;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.reveal .progress {
+  height: 7px;
+  color: var(--orange);
+  background: rgba(23, 59, 63, .12);
+}
+
+.reveal .progress span {
+  background: linear-gradient(90deg, var(--forest) 0%, var(--blue) 42%, var(--orange) 72%, var(--red) 100%);
+  box-shadow: 0 0 12px rgba(167, 93, 37, .28);
+}
+
+@media print {
+  .reveal .slide-number {
+    color: var(--muted);
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    padding: 0;
+    min-width: 0;
+  }
+}
+
+/* El contador de Reveal contiene un enlace y algunas versiones atenúan el
+   contenedor hasta hover: fijamos ambos estados explícitamente. */
+html:not(.print-pdf) .reveal .slide-number {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  color: var(--cream) !important;
+  background-color: var(--forest) !important;
+}
+
+html:not(.print-pdf) .reveal .slide-number a,
+html:not(.print-pdf) .reveal .slide-number-delimiter {
+  color: var(--cream) !important;
+  opacity: 1 !important;
+  text-decoration: none !important;
+}
+
+html:not(.print-pdf) .reveal .slide-number a {
+  display: inline-flex !important;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+/* Diapo 3 · cuatro expertos convergen visualmente en una interfaz común. */
+.convergence-arrow {
+  width: 72px;
+  height: 310px;
+  display: grid;
+  place-items: center;
+}
+
+.convergence-arrow svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.convergence-arrow path {
+  fill: none;
+  stroke: var(--orange);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+/* Diapo 4 · cinta legible como segundo nivel de navegación. */
+.strategy-slide .focus-ribbon {
+  gap: .7rem;
+  margin-top: .15rem;
+}
+
+.strategy-slide .focus-ribbon span {
+  min-width: 250px;
+  padding: .48rem .75rem;
+  border-bottom-width: 6px;
+  border-radius: 10px 3px 10px 3px;
+  box-shadow: 0 8px 18px rgba(23, 59, 63, .08);
+  font-size: .54em;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* Diapo 5 · el caso lateral y los marcos ocupan el espacio útil. */
+.physics-slide .physical-board {
+  grid-template-columns: minmax(0, 1.15fr) minmax(560px, .85fr);
+  column-gap: .15rem;
+  margin-left: -.7rem;
+  margin-right: -.45rem;
+}
+
+.physics-slide .movement-figure {
+  margin-left: -.7rem;
+}
+
+.physics-slide .movement-figure img,
+.physics-slide .frame-inset img {
+  max-height: 600px;
+}
+
+.physics-slide .frame-inset img {
+  width: 115%;
+  max-width: 115%;
+}
+
+.physics-slide .physical-sequence div {
+  min-height: 82px;
+  padding: .35rem .6rem;
+  align-content: center;
+}
+
+.physics-slide .physical-sequence strong { font-size: .56em; }
+.physics-slide .physical-sequence small { font-size: .39em; line-height: 1.2; }
+
+/* Diapo 6 · énfasis breve sincronizado con cada fragmento automático. */
+.architecture-slide .arch-block {
+  min-height: 145px;
+  transition: transform .25s ease, box-shadow .25s ease, filter .25s ease;
+}
+
+.architecture-slide .arch-block.current-fragment {
+  animation: architecture-emphasis 1.15s ease both;
+}
+
+@keyframes architecture-emphasis {
+  0% { transform: translateY(0); box-shadow: none; }
+  22% { transform: translateY(-10px) scale(1.025); box-shadow: 0 14px 28px rgba(23, 59, 63, .2); }
+  100% { transform: translateY(0); box-shadow: 0 5px 12px rgba(23, 59, 63, .08); }
+}
+
+.architecture-slide .figure-strip {
+  height: 440px;
+  margin-top: .15rem;
+}
+
+.architecture-slide .figure-strip img {
+  width: 98%;
+  max-height: 455px;
+}
+
+/* Diapo 7 · aprovechar el margen sin alterar la fuente TikZ cerrada. */
+.neural-slide h2 { margin-left: 25px; }
+.neural-slide .neural-boundary img {
+  width: 96%;
+  max-height: 650px;
+}
+.neural-slide .shared-chain {
+  width: 90%;
+  margin: -.05rem auto 0;
+  font-size: .57em;
+}
+
+/* Diapo 9 · ascenso conceptual de fidelidad a generalización. */
+.evidence-slide .evidence-ladder {
+  position: relative;
+  isolation: isolate;
+}
+
+.evidence-slide .evidence-ladder::before {
+  content: "";
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 57%;
+  height: 4px;
+  z-index: -1;
+  background: linear-gradient(90deg, var(--forest), var(--blue), var(--red));
+  transform: rotate(-9deg);
+  transform-origin: center;
+  opacity: .28;
+}
+
+/* Diapo 13 · ambas vistas usan prácticamente todo el lienzo. */
+.diagnostic-slide .diagnostic-stack {
+  height: 680px;
+  margin-top: -.25rem;
+}
+
+.diagnostic-slide .diagnostic-stack img {
+  width: 92%;
+  max-width: 1420px;
+  max-height: 670px;
+}
+
+/* Diapo 14 · cadena legible y cromáticamente vinculada a las protecciones. */
+.protections-slide .result-layout {
+  grid-template-columns: 1.02fr .98fr;
+  gap: .65rem;
+}
+
+.protections-slide .protection-chain {
+  gap: .18rem;
+}
+
+.protections-slide .protection-chain div {
+  min-height: 160px;
+  padding: .45rem .25rem;
+  border-top-width: 7px;
+  border-radius: 10px 3px 10px 3px;
+  box-shadow: 0 9px 18px rgba(23, 59, 63, .08);
+}
+
+.protections-slide .protection-chain div:nth-of-type(1) { border-color: #0072b2; }
+.protections-slide .protection-chain div:nth-of-type(2) { border-color: #009e73; }
+.protections-slide .protection-chain div:nth-of-type(3) { border-color: #6b7280; }
+.protections-slide .protection-chain div:nth-of-type(4) { border-color: #d55e00; }
+.protections-slide .protection-chain div strong { font-size: .7em; }
+.protections-slide .protection-chain div span { font-size: .47em; line-height: 1.2; }
+.protections-slide .protection-chain > i { font-size: .8em; }
+
+/* Diapo 15 · tesis y límite en dos niveles inequívocos. */
+.conclusion-slide .conclusion-answer span,
+.conclusion-slide .conclusion-answer strong {
+  display: block;
+}
+
+.conclusion-slide .conclusion-answer span {
+  color: var(--forest);
+  margin-bottom: .2rem;
+}
+
+.conclusion-slide .conclusion-answer strong {
+  color: var(--orange);
+  font-size: 1.08em;
+}
+
+/* Diapo 16 · ruptura cromática deliberada para cerrar la defensa. */
+.reveal .slides section.closing-slide {
+  background: var(--forest);
+  color: var(--cream);
+  padding: 1.25rem 1.4rem !important;
+  box-shadow: 0 0 0 100vmax var(--forest);
+  clip-path: inset(-100vmax);
+}
+
+.closing-slide .closing-kicker { color: var(--orange-soft); }
+.closing-slide .closing-quote { color: var(--cream); }
+.closing-slide .closing-quote strong { color: #f0a765; }
+.closing-slide .closing-thanks { color: var(--orange-soft); }
+.closing-slide ~ .footer,
+.reveal:has(.closing-slide.present) .footer { color: rgba(244, 236, 221, .65); }
