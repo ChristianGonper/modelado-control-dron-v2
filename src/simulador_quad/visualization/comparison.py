@@ -272,11 +272,18 @@ def _plot_res_id_rmse_family(df: pd.DataFrame, output_dir: Path, formats: list[s
     if not families or not controllers:
         return []
 
-    fig, ax = plt.subplots(figsize=(6.3, 3.5))
+    fig, ax = plt.subplots(figsize=(5.35, 3.65))
     _grouped_rmse_bars(ax, frame, category_col="family", categories=families, controllers=controllers)
+    for container, controller in zip(ax.containers, controllers):
+        for category, bar in zip(families, container.patches):
+            highlighted = controller == "neural_outer_force_mlp" and category in {"circle", "lissajous"}
+            bar.set_alpha(1.0 if highlighted else 0.24)
+            if highlighted:
+                bar.set_edgecolor("#173B63")
+                bar.set_linewidth(1.2)
     ax.set_xlabel("Familia evaluada en test")
     ax.set_ylim(bottom=0)
-    _legend_outside(ax, ncol=2)
+    ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.18), ncol=2, frameon=False)
     return save_figure(fig, output_dir, "res_id_rmse_family", formats)
 
 
@@ -485,7 +492,7 @@ def _plot_res_trajectory_lemniscate(
         "LSTM": COLORS["lstm"],
         "GRU": COLORS["gru"],
     }
-    fig, axes = plt.subplots(2, 1, figsize=(6.2, 5.0))
+    fig, axes = plt.subplots(2, 1, figsize=(7.4, 5.4))
     ref = series[0][3]
     axes[0].plot(ref[:, 0], ref[:, 1], "--", color=COLORS["reference"], linewidth=1.1, label="Referencia")
     for label, _, position_W_m, _ in series:
@@ -494,6 +501,18 @@ def _plot_res_trajectory_lemniscate(
     axes[0].set_xlabel("Este [m]")
     axes[0].set_ylabel("Norte [m]")
     axes[0].legend(loc="upper right", fontsize=7)
+    axes[0].annotate(
+        "MLP · seguimiento estable",
+        xy=(0.2, 0.0), xycoords="data", xytext=(0.04, 0.9), textcoords="axes fraction",
+        color=label_colors.get("MLP", COLORS["mlp"]), fontsize=9, fontweight="bold",
+        arrowprops={"arrowstyle": "->", "color": label_colors.get("MLP", COLORS["mlp"]), "lw": 1.0},
+    )
+    axes[0].annotate(
+        "LSTM · desviación acumulada",
+        xy=(-2.4, 3.5), xycoords="data", xytext=(0.56, 0.9), textcoords="axes fraction",
+        color=label_colors.get("LSTM", COLORS["lstm"]), fontsize=9, fontweight="bold",
+        arrowprops={"arrowstyle": "->", "color": label_colors.get("LSTM", COLORS["lstm"]), "lw": 1.0},
+    )
     for label, time_s, position_W_m, reference_W_m in series:
         error = np.linalg.norm(reference_W_m - position_W_m, axis=1)
         axes[1].plot(time_s, error, color=label_colors.get(label, COLORS["secondary"]), label=label, linewidth=1.2)

@@ -30,6 +30,7 @@ PDF_ASSETS = {
 
 # FIG-002 se genera con Matplotlib (no con el .tex de la memoria).
 FIG002_PY = REPO_ROOT / "TFG_Memoria" / "Figuras" / "diagramas" / "FIG-002.py"
+FIG015_LATERAL_PY = PRESENTATION_DIR / "scripts" / "fig015_lateral.py"
 
 COMPARISON_CSV = REPO_ROOT / "results" / "comparison_all_runs.csv"
 
@@ -101,6 +102,28 @@ def _build_fig002_svg() -> dict[str, object] | None:
     }
 
 
+def _build_fig015_lateral_svg() -> dict[str, object] | None:
+    """Genera el recorte didáctico de alabeo para la diapositiva de física."""
+    if not FIG015_LATERAL_PY.exists():
+        return None
+    output_svg = SVG_DIR / "FIG-015-lateral.svg"
+    env = os.environ.copy()
+    env["FIG015_LATERAL_SVG_OUT"] = str(output_svg)
+    subprocess.run(
+        ["uv", "run", "python", str(FIG015_LATERAL_PY)],
+        cwd=REPO_ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    return {
+        "source": str(FIG015_LATERAL_PY.relative_to(REPO_ROOT)),
+        "output": str(output_svg.relative_to(REPO_ROOT)),
+        "method": "matplotlib svg (recorte lateral de FIG-015.py)",
+    }
+
+
 def _build_comparison_svgs() -> list[dict[str, object]]:
     if not COMPARISON_CSV.exists():
         return []
@@ -149,6 +172,11 @@ def build_assets() -> dict[str, object]:
     if fig002 is not None:
         generated.append(fig002)
         _postprocess_svg_transparency(REPO_ROOT / fig002["output"])
+
+    fig015_lateral = _build_fig015_lateral_svg()
+    if fig015_lateral is not None:
+        generated.append(fig015_lateral)
+        _postprocess_svg_transparency(REPO_ROOT / fig015_lateral["output"])
 
     generated.extend(_build_comparison_svgs())
     for item in generated:

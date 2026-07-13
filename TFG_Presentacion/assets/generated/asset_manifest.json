@@ -55,6 +55,11 @@
       "method": "matplotlib svg (FIG-002.py)"
     },
     {
+      "source": "TFG_Presentacion\\scripts\\fig015_lateral.py",
+      "output": "TFG_Presentacion\\assets\\generated\\svg\\FIG-015-lateral.svg",
+      "method": "matplotlib svg (recorte lateral de FIG-015.py)"
+    },
+    {
       "source": "results\\comparison_all_runs.csv",
       "output": "TFG_Presentacion\\assets\\generated\\svg\\res_id_rmse_family.svg",
       "method": "matplotlib svg"
