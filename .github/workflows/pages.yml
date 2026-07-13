@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "site/**"
+      - "TFG_Presentacion/deck.html"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -39,6 +40,12 @@ jobs:
             https://github.com/ChristianGonper/modelado-control-dron-v2/releases/download/v1.0.0/TFG_Report_en.pdf
           echo "6570db8adb5f811c86abb3ebc399f3f76adb90ddc8ceda080c0e0eebaed9d36b  site/assets/reports/TFG_Memoria_es.pdf" | sha256sum --check
           echo "d1edb77a2530f91d7e1c968ed343a191e1b491dbefcb491464d72f955b3b39e0  site/assets/reports/TFG_Report_en.pdf" | sha256sum --check
+
+      - name: Add presentation
+        shell: bash
+        run: |
+          mkdir -p site/presentacion
+          cp TFG_Presentacion/deck.html site/presentacion/index.html
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
