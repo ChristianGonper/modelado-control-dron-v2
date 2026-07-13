@@ -1578,3 +1578,12 @@ $code-color: #173b63;
     visibility: visible !important;
   }
 }
+
+.reveal .data-arrow.timed-arrow.fragment.visible {
+  animation: timed-arrow-in .45s cubic-bezier(.2, .8, .2, 1) both;
+}
+
+@keyframes timed-arrow-in {
+  from { opacity: 0; transform: translateX(-28px) scaleX(.35); }
+  to { opacity: 1; transform: translateX(0) scaleX(1); }
+}

@@ -1,0 +1,29 @@
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const timers = new Set();
+
+  function clearTimers() {
+    timers.forEach(window.clearTimeout);
+    timers.clear();
+  }
+
+  function scheduleFragments(event) {
+    clearTimers();
+    const slide = event?.currentSlide ?? Reveal.getCurrentSlide();
+    const schedule = slide?.dataset.autoFragments;
+    if (!schedule || Reveal.isOverview() || Reveal.isPaused()) return;
+
+    schedule.split(",").map(Number).forEach((delay) => {
+      const timer = window.setTimeout(() => {
+        timers.delete(timer);
+        if (Reveal.getCurrentSlide() === slide) Reveal.nextFragment();
+      }, delay);
+      timers.add(timer);
+    });
+  }
+
+  Reveal.on("ready", scheduleFragments);
+  Reveal.on("slidetransitionend", scheduleFragments);
+  Reveal.on("slidechanged", clearTimers);
+});
+</script>

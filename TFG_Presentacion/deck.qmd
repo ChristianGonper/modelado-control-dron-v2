@@ -23,25 +23,25 @@ format:
 0:00–0:40. Saludo, nombre y foco. No es un controlador neuronal completo: se sustituye una decisión concreta dentro de una arquitectura en cascada.
 :::
 
-## Una pregunta, cuatro pasos {.section-map .route-slide}
+## Una pregunta, cuatro pasos {.section-map .route-slide data-auto-fragments="10000"}
 
 <div class="route-map">
-<div><span class="route-num">01</span><svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg><div class="card-text"><strong>Problema</strong><small>varios especialistas</small></div></div>
+<div><span class="route-num">01</span><svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg><div class="card-text"><strong>Problema</strong><small>múltiples controladores</small></div></div>
 <i>→</i>
-<div><span class="route-num">02</span><svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="15" x2="23" y2="15"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="15" x2="4" y2="15"/></svg><div class="card-text"><strong>Sustitución</strong><small>una interfaz física</small></div></div>
+<div><span class="route-num">02</span><svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="15" x2="23" y2="15"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="15" x2="4" y2="15"/></svg><div class="card-text"><strong>Sustitución</strong><small>una interfaz interpretable</small></div></div>
 <i>→</i>
 <div><span class="route-num">03</span><svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg><div class="card-text"><strong>Experimento</strong><small>mismas condiciones</small></div></div>
 <i>→</i>
 <div><span class="route-num">04</span><svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><div class="card-text"><strong>Resultado</strong><small>ID y OOD</small></div></div>
 </div>
 
-<div class="bottom-statement fragment">La comparación decisiva ocurre en <strong>bucle cerrado</strong>.</div>
+<div class="bottom-statement fragment">La comparación ocurre en <strong>bucle cerrado</strong>.</div>
 
 ::: notes
 0:40–1:10. Anticipar la lógica en una frase. Si se necesita recortar, resolver en 10 segundos.
 :::
 
-## De cuatro especialistas a un procedimiento común {.specialist-slide}
+## De cuatro especialistas a un controlador común {.specialist-slide data-auto-fragments="0,20000,23000"}
 
 <div class="specialists-vs-network">
 <div class="specialist-bank">
@@ -65,7 +65,7 @@ format:
 1:10–2:20. Los valores ilustran que cada experto encapsula dos ternas de ganancias del lazo externo. La hipótesis es condensar el comportamiento del banco en un procedimiento común. Presentar las tres referencias. No prometer vuelo real ni robustez universal.
 :::
 
-## La estrategia experimental {.strategy-slide}
+## La estrategia experimental {.strategy-slide data-auto-fragments="2000,2500,3000"}
 
 <div class="full-figure strategy-figure">
 ![](assets/generated/svg/FIG-001.svg)
@@ -73,17 +73,17 @@ format:
 
 <div class="focus-ribbon">
   <span class="fragment highlight-current" data-fragment-index="1">1 · ajustar expertos</span>
-  <span class="fragment highlight-current" data-fragment-index="2">2 · generar demostraciones</span>
+  <span class="fragment highlight-current" data-fragment-index="2">2 · generar datos de fuerza</span>
   <span class="fragment highlight-current" data-fragment-index="3">3 · comparar ID / OOD</span>
 </div>
 
-<div class="expert-tuning fragment" data-fragment-index="2"><span>búsqueda global</span><i>→</i><span>filtro de seguridad</span><i>→</i><span>refinamiento local</span><i>→</i><strong>PD congelado</strong></div>
+<div class="expert-tuning fragment" data-fragment-index="2"><span>búsqueda global</span><i>→</i><span>filtro de seguridad</span><i>→</i><span>refinamiento local</span><i>→</i><strong>PD con parámetros fijados</strong></div>
 
 ::: notes
 2:20–3:30. Recorrer de izquierda a derecha. Vehículo, referencias, perturbaciones, límites y métricas son comunes. No explicar herramientas ni carpetas. CONTROL: 3:30.
 :::
 
-## Para avanzar, el dron debe inclinarse {.physics-slide}
+## Para avanzar, el dron debe inclinarse {.physics-slide data-auto-fragments="2000,2500,3000,3500"}
 
 <div class="physical-board">
 <div class="figure-contain movement-figure">
@@ -109,7 +109,7 @@ format:
 3:30–4:45. Física mínima. No derivar 6DOF, cuaterniones ni mixer. Si se acumula retraso, comprimir a 45 s.
 :::
 
-## Dos lazos, una interfaz física {.architecture-slide}
+## Dos lazos, una interfaz física {.architecture-slide data-auto-fragments="0,2000,5000"}
 
 <div class="architecture-stage">
   <div class="arch-block outer fragment" data-fragment-index="1"><small>lazo externo</small><strong>error posición + velocidad</strong></div>
@@ -121,23 +121,21 @@ format:
   <div class="arch-block rotors fragment" data-fragment-index="3"><small>actuación</small><strong>mixer + rotores</strong></div>
 </div>
 
-<div class="figure-strip fragment" data-fragment-index="4">
+<div class="figure-strip fragment" data-fragment-index="2">
 ![](assets/generated/svg/FIG-004.svg)
 </div>
 
-<div class="multirate-band fragment" data-fragment-index="4"><span><strong>100 Hz</strong> física</span><span><strong>50 Hz</strong> control · ZOH</span><span><strong>10 Hz</strong> telemetría</span></div>
+<div class="multirate-band fragment" data-fragment-index="2"><span><strong>100 Hz</strong> física</span><span><strong>50 Hz</strong> control · ZOH</span><span><strong>10 Hz</strong> telemetría</span></div>
 
 ::: notes
 4:45–6:10. Primero construir la lógica con cuatro bloques; después mostrar la arquitectura documentada completa. La fuerza es la frontera interpretable entre seguimiento y estabilización.
 :::
 
-## La red sustituye exactamente esto {.neural-slide}
+## La red sustituye el lazo externo {.neural-slide data-auto-fragments="3000"}
 
 <div class="figure-contain neural-boundary">
 ![](assets/generated/svg/FIG-006.svg)
 </div>
-
-<div class="boundary-label fragment"><strong>Única sustitución</strong><span>decisión de fuerza del lazo externo</span></div>
 
 <div class="shared-chain fragment">protecciones · fuerza–actitud · lazo interno · mixer · rotores</div>
 
@@ -145,43 +143,43 @@ format:
 6:10–7:20. La red entrega F_d,W. No manda rotores. Un fallo pertenece al sistema cerrado completo, no automáticamente solo a la red. CONTROL: 7:20.
 :::
 
-## De demostraciones a tres controladores {.data-slide}
+## De datos de fuerza a tres arquitecturas {.data-slide data-auto-fragments="2000,2500,3000,3500,4000"}
 
 <div class="data-flow">
   <div class="data-source"><strong>150</strong><span>episodios ID</span></div>
   <div class="split-stack"><span class="split-train">105 · entrenamiento</span><span class="split-small">22 · validación</span><span class="split-small">23 · prueba</span></div>
-  <div class="data-arrow">→</div>
-  <div class="models-row"><div class="fragment"><strong>MLP</strong><span>instante actual</span></div><div class="fragment"><strong>GRU</strong><span>20 muestras</span></div><div class="fragment"><strong>LSTM</strong><span>20 muestras</span></div></div>
+  <div class="data-arrow fragment timed-arrow" data-fragment-index="1">→</div>
+  <div class="models-row"><div class="fragment" data-fragment-index="2"><strong>MLP</strong><span>instante actual</span></div><div class="fragment" data-fragment-index="3"><strong>GRU</strong><span>20 muestras</span></div><div class="fragment" data-fragment-index="4"><strong>LSTM</strong><span>20 muestras</span></div></div>
 </div>
 
-<div class="recurrent-window fragment">
+<div class="recurrent-window fragment" data-fragment-index="5">
   <strong>Ventana recurrente</strong>
   <div class="window-cells"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="current"></i></div>
   <span>20 muestras · 0,40 s</span>
 </div>
 
-<div class="bottom-statement compact-bottom fragment">La memoria temporal es una <strong>hipótesis</strong>, no una ventaja asumida.</div>
+<div class="bottom-statement compact-bottom fragment" data-fragment-index="5">La memoria temporal es una <strong>hipótesis</strong>, no una ventaja asumida.</div>
 
 ::: notes
 7:20–8:35. Mismas entradas, objetivo y procedimiento. El objetivo es la fuerza del PD experto. No enumerar capas ni hiperparámetros.
 :::
 
-## «Funciona» tiene tres significados {.evidence-slide}
+## Éxito tiene tres significados {.evidence-slide}
 
 <div class="evidence-ladder">
-<div class="fragment evidence-card">
+<div class="fragment evidence-card" data-fragment-index="1">
 <span class="evidence-num">01</span>
 <svg class="evidence-icon" viewBox="0 0 120 88" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M18 72H108" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M22 12V72" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M22 58C34 58 38 28 50 28C62 28 66 52 78 48C90 44 96 24 108 22" stroke="#173b3f" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 62C34 60 40 34 50 34C62 34 66 54 78 52C90 50 98 30 108 28" stroke="#a75d25" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3.2 2.4"/><text x="28" y="12" fill="#173b3f" font-size="9" font-family="Segoe UI, Arial, sans-serif" font-weight="700">fuerza</text></svg>
 <strong>Fidelidad</strong>
 <small>¿imita la fuerza del experto?</small>
 </div>
-<div class="fragment evidence-card">
+<div class="fragment evidence-card" data-fragment-index="2">
 <span class="evidence-num">02</span>
 <svg class="evidence-icon" viewBox="0 0 120 88" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="38" cy="40" r="20" stroke="#173b63" stroke-width="2.2"/><circle cx="38" cy="20" r="3" fill="#173b63"/><circle cx="58" cy="40" r="3" fill="#173b63"/><circle cx="38" cy="60" r="3" fill="#173b63"/><circle cx="18" cy="40" r="3" fill="#173b63"/><path d="M78 24L96 30L100 48L86 62L72 50Z" stroke="#173b63" stroke-width="1.8" stroke-linejoin="round"/><circle cx="78" cy="24" r="2.8" fill="#a75d25"/><circle cx="96" cy="30" r="2.8" fill="#a75d25"/><circle cx="100" cy="48" r="2.8" fill="#a75d25"/><circle cx="86" cy="62" r="2.8" fill="#a75d25"/><circle cx="72" cy="50" r="2.8" fill="#a75d25"/><text x="8" y="82" fill="#173b63" font-size="8.5" font-family="Segoe UI, Arial, sans-serif" font-weight="600">familias vistas</text></svg>
 <strong>Bucle cerrado · ID</strong>
 <small>¿sigue familias conocidas?</small>
 </div>
-<div class="fragment evidence-card">
+<div class="fragment evidence-card" data-fragment-index="3">
 <span class="evidence-num">03</span>
 <svg class="evidence-icon" viewBox="0 0 120 88" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M22 16H72V64H22Z" fill="#ead5bd" fill-opacity=".4" stroke="#a33b4b" stroke-width="2"/><path d="M30 26H54M30 34H60M30 42H48M30 50H56M30 58H44" stroke="#173b3f" stroke-width="1.45" stroke-linecap="round" opacity=".72"/><path d="M72 20L78 18L82 28L76 34L80 42L74 48L84 54L76 62L88 68" stroke="#a33b4b" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/><path d="M78 24L86 22M80 36L90 32M78 50L92 48M82 60L94 66" stroke="#a33b4b" stroke-width="1.2" stroke-linecap="round" opacity=".55"/><circle cx="96" cy="28" r="1.4" fill="#a33b4b" opacity=".7"/><circle cx="102" cy="42" r="1.6" fill="#a33b4b" opacity=".55"/><circle cx="94" cy="54" r="1.3" fill="#a33b4b" opacity=".65"/><circle cx="106" cy="58" r="1.5" fill="#a33b4b" opacity=".5"/><path d="M88 36L92 40M98 50L102 46" stroke="#a33b4b" stroke-width="1.1" stroke-linecap="round" opacity=".45"/><text x="60" y="82" text-anchor="middle" fill="#a33b4b" font-size="8.5" font-family="Segoe UI, Arial, sans-serif" font-weight="600">generalización</text></svg>
 <strong>Bucle cerrado · OOD</strong>
@@ -189,13 +187,13 @@ format:
 </div>
 </div>
 
-<div class="metric-trio fragment"><span>error de fuerza</span><span>error de posición</span><span>RMSE · finalización · protecciones</span></div>
+<div class="metric-trio fragment" data-fragment-index="3"><span>error de fuerza</span><span>error de posición</span><span>RMSE · finalización · protecciones</span></div>
 
 ::: notes
 8:35–9:30. Test sigue perteneciendo a familias conocidas. Generalización fuerte solo en OOD. Error de fuerza (fidelidad), error de posición (ID) y en OOD se leen juntos RMSE, finalización y protecciones. CONTROL: 9:30.
 :::
 
-## La referencia clásica no es trivial {.baseline-slide}
+## La referencia clásica sorprende {.baseline-slide}
 
 <div class="result-layout">
 <div class="figure-contain">
@@ -216,20 +214,20 @@ format:
 
 <div class="fidelity-closed-loop">
 <div class="eyebrow fidelity-title-left">Test supervisado · RMSE de fuerza</div>
-<div class="eyebrow fidelity-title-right">Bucle cerrado · RMSE de posición</div>
+<div class="eyebrow fidelity-title-right fragment" data-fragment-index="1">Bucle cerrado · RMSE de posición</div>
 <div class="fidelity-left-body">
 <div class="fidelity-bars">
 <div class="fidelity-row mlp"><strong>MLP</strong><i style="--v:100%"></i><span>0,083 N</span></div>
 <div class="fidelity-row gru"><strong>GRU</strong><i style="--v:64%"></i><span>0,053 N</span></div>
 <div class="fidelity-row lstm"><strong>LSTM</strong><i style="--v:66%"></i><span>0,055 N</span></div>
-<p class="fidelity-caption">GRU y LSTM reproducen mejor<br>la fuerza del experto.</p>
+<p class="fidelity-caption">GRU y LSTM reproducen mejor<br>la fuerza del PD.</p>
 </div>
 </div>
-<div class="closed-loop-panel">
+<div class="closed-loop-panel fragment" data-fragment-index="1">
 <img src="assets/generated/svg/res_id_rmse_family.svg" alt="RMSE de posición por familia en condiciones conocidas">
 </div>
-<div class="causal-gap fragment"><span>predicción</span><i>→</i><span>dinámica</span><i>→</i><span>nuevo estado</span><i>→</i><span>nueva predicción</span></div>
-<div class="result-footer fidelity-figure-footer"><span>184 ejecuciones</span><span>99,5 % completadas</span><strong>MLP compite en circle y lissajous</strong></div>
+<div class="causal-gap"><span>predicción</span><i>→</i><span>dinámica</span><i>→</i><span>nuevo estado</span><i>→</i><span>nueva predicción</span></div>
+<div class="result-footer fidelity-figure-footer fragment" data-fragment-index="1"><strong>MLP vence en circle y lissajous</strong></div>
 </div>
 
 ::: notes
@@ -255,13 +253,13 @@ format:
 12:20–14:00. GRU mejora frente a MLP en lemniscate y composite; MLP compite en variantes próximas a familias conocidas; LSTM se degrada en casos exigentes.
 :::
 
-## Las medias esconden dónde falla {.diagnostic-slide}
+## Los agregados esconden dónde falla {.diagnostic-slide}
 
 <div class="diagnostic-stack">
 <div class="diagnostic-matrix fragment fade-out" data-fragment-index="1">
 ![](assets/generated/svg/res_ood_scenario_matrix.svg)
 </div>
-<div class="diagnostic-case fragment" data-fragment-index="2">
+<div class="diagnostic-case fragment" data-fragment-index="1">
 ![](assets/generated/svg/res_trajectory_lemniscate_mlp_lstm.svg)
 </div>
 </div>
@@ -270,7 +268,7 @@ format:
 14:00–15:40. Primero matriz: no leer todas las celdas. Después caso lemniscata: misma interfaz, estados visitados distintos; memoria temporal no aporta mejora automática. Recorte seguro: omitir el caso, ahorro 45 s.
 :::
 
-## El resultado pertenece al sistema completo {.protections-slide}
+## El resultado pertenece al sistema completo {.protections-slide data-auto-fragments="1000,1500,2000,2500"}
 
 <div class="result-layout">
 <div class="figure-contain">
@@ -293,7 +291,7 @@ format:
 15:40–16:50. RMSE y seguridad se interpretan juntos. Emergencia: una sola conclusión en 25 s, ahorro 45 s. CONTROL: 16:50.
 :::
 
-## La hipótesis se cumple con matices {.conclusion-slide}
+## La hipótesis se cumple con matices {.conclusion-slide data-auto-fragments="500,1000,1500,2000,2500"}
 
 <div class="conclusion-grid">
   <div class="fragment"><span>01</span><strong>Sustitución viable</strong><small>en condiciones conocidas</small></div>
