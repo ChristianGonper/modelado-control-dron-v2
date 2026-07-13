@@ -26,12 +26,12 @@ def main() -> None:
     draw_plant_view(axes[0], xc=0.0, yc=0.0, thrust_states=["-", "+", "-", "+"], yaw_net_moment=0.0)
     axes[0].set_xlim(-2.0, 2.0)
     axes[0].set_ylim(-1.35, 1.35)
-    axes[0].set_title("1 · Diferencia de empuje", fontsize=15, fontweight="bold", pad=16, color="#173b3f")
+    axes[0].set_title("1 Diferencia de empuje", fontsize=15, fontweight="bold", pad=16, color="#173b3f")
 
     draw_lateral_view(axes[1], xc=0.0, yc=0.1, mode="alabeo")
     axes[1].set_xlim(-1.55, 1.55)
     axes[1].set_ylim(-1.35, 1.55)
-    axes[1].set_title("2 · Inclinación y componente lateral", fontsize=15, fontweight="bold", pad=16, color="#173b3f")
+    axes[1].set_title("2 Inclinación y componente lateral", fontsize=15, fontweight="bold", pad=16, color="#173b3f")
 
     fig.text(0.5, 0.015, "El empuje inclinado genera aceleración horizontal", ha="center", fontsize=14, color="#a75d25", weight="bold")
     fig.subplots_adjust(left=0.02, right=0.98, top=0.84, bottom=0.12, wspace=0.02)

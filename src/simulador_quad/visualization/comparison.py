@@ -502,13 +502,13 @@ def _plot_res_trajectory_lemniscate(
     axes[0].set_ylabel("Norte [m]")
     axes[0].legend(loc="upper right", fontsize=7)
     axes[0].annotate(
-        "MLP · seguimiento estable",
+        "MLP - seguimiento estable",
         xy=(0.2, 0.0), xycoords="data", xytext=(0.04, 0.9), textcoords="axes fraction",
         color=label_colors.get("MLP", COLORS["mlp"]), fontsize=9, fontweight="bold",
         arrowprops={"arrowstyle": "->", "color": label_colors.get("MLP", COLORS["mlp"]), "lw": 1.0},
     )
     axes[0].annotate(
-        "LSTM · desviación acumulada",
+        "LSTM - desviación acumulada",
         xy=(-2.4, 3.5), xycoords="data", xytext=(0.56, 0.9), textcoords="axes fraction",
         color=label_colors.get("LSTM", COLORS["lstm"]), fontsize=9, fontweight="bold",
         arrowprops={"arrowstyle": "->", "color": label_colors.get("LSTM", COLORS["lstm"]), "lw": 1.0},

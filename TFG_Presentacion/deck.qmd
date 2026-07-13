@@ -1,12 +1,12 @@
 ---
 format:
   revealjs:
-    footer: "TFG · Christian González Pérez"
+    footer: "TFG - Christian González Pérez"
 ---
 
 ## {.title-slide .clean-title}
 
-<div class="title-kicker">Trabajo de Fin de Grado · Ingeniería Aeroespacial</div>
+<div class="title-kicker">Trabajo de Fin de Grado - Ingeniería Aeroespacial</div>
 
 <div class="title-main">Control híbrido en cascada de un cuadricóptero</div>
 
@@ -16,7 +16,7 @@ format:
 
 <div class="title-meta">
 <div><strong>Autor</strong><br>Christian González Pérez</div>
-<div><strong>Tutores</strong><br>José Ramón Rodríguez Ossorio · Guzmán González Mateos</div>
+<div><strong>Tutores</strong><br>José Ramón Rodríguez Ossorio - Guzmán González Mateos</div>
 </div>
 
 ::: notes
@@ -54,7 +54,7 @@ format:
 <div class="unified-controller fragment" data-fragment-index="2">
 <div class="controller-core" aria-hidden="true"><svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="35"/><path d="M15 50h70M50 15v70M28 28l44 44M72 28L28 72"/></svg></div>
 <div class="controller-content">
-<strong>Un controlador · tres memorias</strong>
+<strong>Un controlador - tres memorias</strong>
 <div class="controller-models"><span><b>MLP</b><small>instante actual</small></span><span><b>GRU</b><small>ventana temporal</small></span><span><b>LSTM</b><small>ventana temporal</small></span></div>
 <div class="controller-flow">observación + referencia <b>→</b> fuerza deseada ENU</div>
 </div>
@@ -72,9 +72,9 @@ format:
 </div>
 
 <div class="focus-ribbon">
-  <span class="fragment highlight-current" data-fragment-index="1">1 · ajustar expertos</span>
-  <span class="fragment highlight-current" data-fragment-index="2">2 · generar datos de fuerza</span>
-  <span class="fragment highlight-current" data-fragment-index="3">3 · comparar ID / OOD</span>
+  <span class="fragment highlight-current" data-fragment-index="1">1 Ajustar expertos</span>
+  <span class="fragment highlight-current" data-fragment-index="2">2 Generar datos de fuerza</span>
+  <span class="fragment highlight-current" data-fragment-index="3">3 Comparar ID / OOD</span>
 </div>
 
 <div class="expert-tuning fragment" data-fragment-index="2"><span>búsqueda global</span><i>→</i><span>filtro de seguridad</span><i>→</i><span>refinamiento local</span><i>→</i><strong>PD con parámetros fijados</strong></div>
@@ -125,7 +125,7 @@ format:
 ![](assets/generated/svg/FIG-004.svg)
 </div>
 
-<div class="multirate-band fragment" data-fragment-index="2"><span><strong>100 Hz</strong> física</span><span><strong>50 Hz</strong> control · ZOH</span><span><strong>10 Hz</strong> telemetría</span></div>
+<div class="multirate-band fragment" data-fragment-index="2"><span><strong>100 Hz</strong> física</span><span><strong>50 Hz</strong> control ZOH</span><span><strong>10 Hz</strong> telemetría</span></div>
 
 ::: notes
 4:45–6:10. Primero construir la lógica con cuatro bloques; después mostrar la arquitectura documentada completa. La fuerza es la frontera interpretable entre seguimiento y estabilización.
@@ -137,7 +137,7 @@ format:
 ![](assets/generated/svg/FIG-006.svg)
 </div>
 
-<div class="shared-chain fragment">protecciones · fuerza–actitud · lazo interno · mixer · rotores</div>
+<div class="shared-chain fragment">protecciones - fuerza–actitud - lazo interno - mixer - rotores</div>
 
 ::: notes
 6:10–7:20. La red entrega F_d,W. No manda rotores. Un fallo pertenece al sistema cerrado completo, no automáticamente solo a la red. CONTROL: 7:20.
@@ -147,7 +147,7 @@ format:
 
 <div class="data-flow">
   <div class="data-source"><strong>150</strong><span>episodios ID</span></div>
-  <div class="split-stack"><span class="split-train">105 · entrenamiento</span><span class="split-small">22 · validación</span><span class="split-small">23 · prueba</span></div>
+  <div class="split-stack"><span class="split-train">105 entrenamiento</span><span class="split-small">22 validación</span><span class="split-small">23 prueba</span></div>
   <div class="data-arrow fragment timed-arrow" data-fragment-index="1">→</div>
   <div class="models-row"><div class="fragment" data-fragment-index="2"><strong>MLP</strong><span>instante actual</span></div><div class="fragment" data-fragment-index="3"><strong>GRU</strong><span>20 muestras</span></div><div class="fragment" data-fragment-index="4"><strong>LSTM</strong><span>20 muestras</span></div></div>
 </div>
@@ -155,7 +155,7 @@ format:
 <div class="recurrent-window fragment" data-fragment-index="5">
   <strong>Ventana recurrente</strong>
   <div class="window-cells"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="current"></i></div>
-  <span>20 muestras · 0,40 s</span>
+  <span>20 muestras - 0,40 s</span>
 </div>
 
 ::: notes
@@ -174,18 +174,18 @@ format:
 <div class="fragment evidence-card" data-fragment-index="2">
 <span class="evidence-num">02</span>
 <svg class="evidence-icon" viewBox="0 0 120 88" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="38" cy="40" r="20" stroke="#173b63" stroke-width="2.2"/><circle cx="38" cy="20" r="3" fill="#173b63"/><circle cx="58" cy="40" r="3" fill="#173b63"/><circle cx="38" cy="60" r="3" fill="#173b63"/><circle cx="18" cy="40" r="3" fill="#173b63"/><path d="M78 24L96 30L100 48L86 62L72 50Z" stroke="#173b63" stroke-width="1.8" stroke-linejoin="round"/><circle cx="78" cy="24" r="2.8" fill="#a75d25"/><circle cx="96" cy="30" r="2.8" fill="#a75d25"/><circle cx="100" cy="48" r="2.8" fill="#a75d25"/><circle cx="86" cy="62" r="2.8" fill="#a75d25"/><circle cx="72" cy="50" r="2.8" fill="#a75d25"/><text x="8" y="82" fill="#173b63" font-size="8.5" font-family="Segoe UI, Arial, sans-serif" font-weight="600">familias vistas</text></svg>
-<strong>Bucle cerrado · ID</strong>
+<strong>Bucle cerrado - ID</strong>
 <small>¿sigue familias conocidas?</small>
 </div>
 <div class="fragment evidence-card" data-fragment-index="3">
 <span class="evidence-num">03</span>
 <svg class="evidence-icon" viewBox="0 0 120 88" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M22 16H72V64H22Z" fill="#ead5bd" fill-opacity=".4" stroke="#a33b4b" stroke-width="2"/><path d="M30 26H54M30 34H60M30 42H48M30 50H56M30 58H44" stroke="#173b3f" stroke-width="1.45" stroke-linecap="round" opacity=".72"/><path d="M72 20L78 18L82 28L76 34L80 42L74 48L84 54L76 62L88 68" stroke="#a33b4b" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/><path d="M78 24L86 22M80 36L90 32M78 50L92 48M82 60L94 66" stroke="#a33b4b" stroke-width="1.2" stroke-linecap="round" opacity=".55"/><circle cx="96" cy="28" r="1.4" fill="#a33b4b" opacity=".7"/><circle cx="102" cy="42" r="1.6" fill="#a33b4b" opacity=".55"/><circle cx="94" cy="54" r="1.3" fill="#a33b4b" opacity=".65"/><circle cx="106" cy="58" r="1.5" fill="#a33b4b" opacity=".5"/><path d="M88 36L92 40M98 50L102 46" stroke="#a33b4b" stroke-width="1.1" stroke-linecap="round" opacity=".45"/><text x="60" y="82" text-anchor="middle" fill="#a33b4b" font-size="8.5" font-family="Segoe UI, Arial, sans-serif" font-weight="600">generalización</text></svg>
-<strong>Bucle cerrado · OOD</strong>
+<strong>Bucle cerrado - OOD</strong>
 <small>¿qué ocurre fuera de cobertura?</small>
 </div>
 </div>
 
-<div class="metric-trio fragment" data-fragment-index="3"><span>error de fuerza</span><span>error de posición</span><span>RMSE · finalización · protecciones</span></div>
+<div class="metric-trio fragment" data-fragment-index="3"><span>error de fuerza</span><span>error de posición</span><span>RMSE - finalización - protecciones</span></div>
 
 ::: notes
 8:35–9:30. Test sigue perteneciendo a familias conocidas. Generalización fuerte solo en OOD. Error de fuerza (fidelidad), error de posición (ID) y en OOD se leen juntos RMSE, finalización y protecciones. CONTROL: 9:30.
@@ -211,8 +211,8 @@ format:
 ## Imitar mejor no implica controlar mejor {.fidelity-slide}
 
 <div class="fidelity-closed-loop">
-<div class="eyebrow fidelity-title-left">Test supervisado · RMSE de fuerza</div>
-<div class="eyebrow fidelity-title-right fragment" data-fragment-index="1">Bucle cerrado · RMSE de posición</div>
+<div class="eyebrow fidelity-title-left">Test supervisado - RMSE de fuerza</div>
+<div class="eyebrow fidelity-title-right fragment" data-fragment-index="1">Bucle cerrado - RMSE de posición</div>
 <div class="fidelity-left-body">
 <div class="fidelity-bars">
 <div class="fidelity-row mlp"><strong>MLP</strong><i style="--v:100%"></i><span>0,083 N</span></div>
@@ -316,22 +316,22 @@ format:
 18:20–19:00. Frase final y agradecimiento. Terminar cerca de 19:00.
 :::
 
-## Respaldo · Marcos ENU y FRD {.backup-slide}
+## Respaldo - Marcos ENU y FRD {.backup-slide}
 
 ![](assets/generated/svg/FIG-002.svg)
 
-## Respaldo · Ejecución multirrate {.backup-slide .backup-wide-title}
+## Respaldo - Ejecución multirrate {.backup-slide .backup-wide-title}
 
 ![](assets/generated/svg/FIG-003.svg)
 
-## Respaldo · Ajuste de expertos {.backup-slide}
+## Respaldo - Ajuste de expertos {.backup-slide}
 
 ![](assets/generated/svg/FIG-005.svg)
 
-## Respaldo · Ventana recurrente {.backup-slide .backup-wide-title}
+## Respaldo - Ventana recurrente {.backup-slide .backup-wide-title}
 
 ![](assets/generated/svg/FIG-013.svg)
 
-## Respaldo · Terminaciones OOD {.backup-slide}
+## Respaldo - Terminaciones OOD {.backup-slide}
 
 ![](assets/generated/svg/res_ood_termination_summary.svg)
