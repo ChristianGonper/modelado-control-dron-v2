@@ -3,3 +3,9 @@ TFG_Memoria/** linguist-detectable=false
 TFG_Report/** linguist-detectable=false
 site/** linguist-detectable=false
 TFG_Presentacion/** linguist-detectable=false
+
+# Generated HTML is excluded explicitly from GitHub's language statistics.
+TFG_Presentacion/deck.html linguist-generated=true
+TFG_Presentacion/scripts/timed-fragments.html linguist-generated=true
+site/index.html linguist-generated=true
+site/en/index.html linguist-generated=true

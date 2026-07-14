@@ -1031,6 +1031,10 @@ $code-color: #173b63;
   align-items: stretch;
 }
 
+.metric-trio > p {
+  display: contents;
+}
+
 .metric-trio span {
   background: var(--paper);
   border-bottom: 3px solid var(--line);
@@ -1198,14 +1202,14 @@ $code-color: #173b63;
 
 .ood-evidence {
   display: grid;
-  grid-template-columns: 1.1fr .9fr;
-  gap: .75rem;
+  grid-template-columns: 1.18fr .82fr;
+  gap: .55rem;
   align-items: center;
-  height: 500px;
+  height: 555px;
 }
 
 .ood-evidence .figure-contain {
-  height: 490px;
+  height: 545px;
 }
 
 .ood-evidence .figure-contain p {
@@ -1216,13 +1220,13 @@ $code-color: #173b63;
 
 .ood-evidence .ood-rmse img {
   width: 100%;
-  height: 485px;
+  height: 540px;
   object-fit: contain;
 }
 
 .ood-evidence .ood-terminations img {
   width: 100%;
-  height: 420px;
+  height: 500px;
   object-fit: contain;
 }
 

@@ -287,7 +287,13 @@ def _plot_res_id_rmse_family(df: pd.DataFrame, output_dir: Path, formats: list[s
     return save_figure(fig, output_dir, "res_id_rmse_family", formats)
 
 
-def _plot_res_ood_rmse_family(df: pd.DataFrame, output_dir: Path, formats: list[str] | None) -> list[str]:
+def _plot_res_ood_rmse_family(
+    df: pd.DataFrame,
+    output_dir: Path,
+    formats: list[str] | None,
+    *,
+    presentation_layout: bool = False,
+) -> list[str]:
     frame = df[(df["split"] == "ood") & df["controller"].isin(MEMORY_PRIMARY_CONTROLLERS)].copy()
     if frame.empty or "family" not in frame.columns or "position_rmse_m" not in frame.columns:
         return []
@@ -300,7 +306,15 @@ def _plot_res_ood_rmse_family(df: pd.DataFrame, output_dir: Path, formats: list[
     _grouped_rmse_bars(ax, frame, category_col="family", categories=families, controllers=controllers)
     ax.set_xlabel("Familia fuera de distribución")
     ax.set_ylim(bottom=0)
-    _legend_outside(ax, ncol=2)
+    if presentation_layout:
+        ax.legend(
+            loc="upper center",
+            bbox_to_anchor=(0.5, 1.18),
+            ncol=2,
+            frameon=False,
+        )
+    else:
+        _legend_outside(ax, ncol=2)
     return save_figure(fig, output_dir, "res_ood_rmse_family", formats)
 
 
@@ -448,7 +462,13 @@ def _plot_res_ood_termination_summary(df: pd.DataFrame, output_dir: Path, format
     return save_figure(fig, output_dir, "res_ood_termination_summary", formats)
 
 
-def _plot_res_protections_ood(df: pd.DataFrame, output_dir: Path, formats: list[str] | None) -> list[str]:
+def _plot_res_protections_ood(
+    df: pd.DataFrame,
+    output_dir: Path,
+    formats: list[str] | None,
+    *,
+    presentation_layout: bool = False,
+) -> list[str]:
     frame = df[(df["split"] == "ood") & df["controller"].isin(MEMORY_PRIMARY_CONTROLLERS)].copy()
     metrics = [
         ("degradation_percentage", "Degradación mixer"),
@@ -471,7 +491,15 @@ def _plot_res_protections_ood(df: pd.DataFrame, output_dir: Path, formats: list[
     ax.set_yticks(y)
     ax.set_yticklabels(_controller_labels(controllers))
     ax.set_xlabel("Porcentaje medio en OOD [%]")
-    _legend_outside(ax, ncol=1)
+    if presentation_layout:
+        ax.legend(
+            loc="upper center",
+            bbox_to_anchor=(0.5, 1.18),
+            ncol=2,
+            frameon=False,
+        )
+    else:
+        _legend_outside(ax, ncol=1)
     return save_figure(fig, output_dir, "res_protections_ood", formats)
 
 
@@ -596,6 +624,7 @@ def plot_comparison(
     formats: list[str] | None = None,
     trajectory_telemetry: Sequence[tuple[str, str | os.PathLike[str]]] | None = None,
     trajectory_label_colors: dict[str, str] | None = None,
+    presentation_layout: bool = False,
 ) -> ComparisonPlotResult:
     """
     Generate comparison plots C1 to C7 from aggregated campaign runs.
@@ -636,7 +665,15 @@ def plot_comparison(
     with use_style("report"):
         plotters = (
             ("res_id_rmse_family", _plot_res_id_rmse_family(df, out, formats)),
-            ("res_ood_rmse_family", _plot_res_ood_rmse_family(df, out, formats)),
+            (
+                "res_ood_rmse_family",
+                _plot_res_ood_rmse_family(
+                    df,
+                    out,
+                    formats,
+                    presentation_layout=presentation_layout,
+                ),
+            ),
             (
                 "res_pid_transfer_matrix",
                 _plot_res_pid_transfer_matrix(
@@ -647,7 +684,15 @@ def plot_comparison(
             ),
             ("res_ood_scenario_matrix", _plot_res_ood_scenario_matrix(df, out, formats)),
             ("res_ood_termination_summary", _plot_res_ood_termination_summary(df, out, formats)),
-            ("res_protections_ood", _plot_res_protections_ood(df, out, formats)),
+            (
+                "res_protections_ood",
+                _plot_res_protections_ood(
+                    df,
+                    out,
+                    formats,
+                    presentation_layout=presentation_layout,
+                ),
+            ),
         )
         for figure_id, paths in plotters:
             if paths:

@@ -12,7 +12,7 @@ format:
 
 <div class="title-subtitle">Sustitución neuronal de controladores especializados del lazo externo</div>
 
-<div class="title-mark" aria-hidden="true"><span>PD especializados</span><i></i><span>procedimiento común</span></div>
+<div class="title-mark" aria-hidden="true"><span>PD especializados</span><i></i><span>controlador único</span></div>
 
 <div class="title-meta">
 <div><strong>Autor</strong><br>Christian González Pérez</div>
@@ -185,7 +185,11 @@ format:
 </div>
 </div>
 
-<div class="metric-trio fragment" data-fragment-index="3"><span>error de fuerza</span><span>error de posición</span><span>RMSE - finalización - protecciones</span></div>
+<div class="metric-trio">
+  <span class="fragment" data-fragment-index="1">error de fuerza</span>
+  <span class="fragment" data-fragment-index="2">error de posición</span>
+  <span class="fragment" data-fragment-index="3">RMSE - finalización - protecciones</span>
+</div>
 
 ::: notes
 8:35–9:30. Test sigue perteneciendo a familias conocidas. Generalización fuerte solo en OOD. Error de fuerza (fidelidad), error de posición (ID) y en OOD se leen juntos RMSE, finalización y protecciones. CONTROL: 9:30.
@@ -316,7 +320,7 @@ format:
 18:20–19:00. Frase final y agradecimiento. Terminar cerca de 19:00.
 :::
 
-## Respaldo - Marcos ENU y FRD {.backup-slide}
+## Respaldo - Sistemas de referencia ENU y FRD {.backup-slide}
 
 ![](assets/generated/svg/FIG-002.svg)
 

@@ -133,6 +133,7 @@ def _build_comparison_svgs() -> list[dict[str, object]]:
             SVG_DIR,
             formats=["svg"],
             trajectory_label_colors={"MLP": "#173B63", "LSTM": "#A33B4B"},
+            presentation_layout=True,
         )
     return [
         {
