@@ -2124,3 +2124,26 @@ html:not(.print-pdf) .reveal .slide-number a {
 .closing-slide .closing-thanks { color: var(--orange-soft); }
 .closing-slide ~ .footer,
 .reveal:has(.closing-slide.present) .footer { color: rgba(244, 236, 221, .65); }
+
+/* Identidad institucional común a todas las diapositivas. */
+.reveal .slides > section::after {
+  content: "";
+  position: absolute;
+  top: -.8rem;
+  right: .2rem;
+  z-index: 20;
+  width: 235px;
+  height: 82px;
+  background-image:
+    url("../../../../../assets/branding/ule-transparent.png"),
+    url("../../../../../assets/branding/escudo-ingenierias.png");
+  background-position: left center, right center;
+  background-repeat: no-repeat;
+  background-size: 168px auto, 55px auto;
+  pointer-events: none;
+}
+
+/* Diapo 5 · separa el cierre del borde inferior y del pie. */
+.physics-slide .bottom-statement {
+  margin-bottom: 3.4rem;
+}
