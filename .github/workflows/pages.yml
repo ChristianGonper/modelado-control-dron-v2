@@ -28,19 +28,6 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Download reports from release
-        shell: bash
-        run: |
-          mkdir -p site/assets/reports
-          curl --fail --location --retry 3 \
-            --output site/assets/reports/TFG_Memoria_es.pdf \
-            https://github.com/ChristianGonper/modelado-control-dron-v2/releases/download/v1.0.0/TFG_Memoria_es.pdf
-          curl --fail --location --retry 3 \
-            --output site/assets/reports/TFG_Report_en.pdf \
-            https://github.com/ChristianGonper/modelado-control-dron-v2/releases/download/v1.0.0/TFG_Report_en.pdf
-          echo "6570db8adb5f811c86abb3ebc399f3f76adb90ddc8ceda080c0e0eebaed9d36b  site/assets/reports/TFG_Memoria_es.pdf" | sha256sum --check
-          echo "d1edb77a2530f91d7e1c968ed343a191e1b491dbefcb491464d72f955b3b39e0  site/assets/reports/TFG_Report_en.pdf" | sha256sum --check
-
       - name: Add presentation
         shell: bash
         run: |
