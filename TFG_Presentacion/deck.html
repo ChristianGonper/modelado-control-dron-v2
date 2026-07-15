@@ -2768,6 +2768,31 @@ window.QuartoSupport = function () {
       Reveal.on("slidechanged", clearTimers);
     });
     </script>
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const slides = document.querySelector(".reveal .slides");
+      if (!slides) return;
+
+      slides.addEventListener("click", (event) => {
+        if (
+          event.defaultPrevented ||
+          event.button !== 0 ||
+          event.ctrlKey ||
+          event.metaKey ||
+          event.shiftKey ||
+          event.altKey ||
+          event.target.closest(
+            "a, button, input, textarea, select, video, audio, " +
+            "[contenteditable], [role='button']"
+          ) ||
+          Reveal.isOverview() ||
+          Reveal.isPaused()
+        ) return;
+
+        Reveal.next();
+      });
+    });
+    </script>
     <script id="quarto-html-after-body" type="application/javascript">
       window.document.addEventListener("DOMContentLoaded", function (event) {
         const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")

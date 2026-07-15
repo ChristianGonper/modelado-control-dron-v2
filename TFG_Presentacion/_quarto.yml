@@ -27,7 +27,9 @@ format:
     show-notes: false
     chalkboard: false
     menu: false
-    include-after-body: scripts/timed-fragments.html
+    include-after-body:
+      - scripts/timed-fragments.html
+      - scripts/click-navigation.html
 
 execute:
   echo: false
