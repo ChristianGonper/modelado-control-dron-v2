@@ -3,7 +3,7 @@
 ## Proposito
 
 Esta carpeta contiene la presentación programable de la defensa del TFG. La
-memoria en `../TFG_Memoria/` se considera cerrada y se usa solo como fuente de
+memoria en [../TFG_Memoria/](../TFG_Memoria/) se considera cerrada y se usa solo como fuente de
 contenido, figuras y resultados.
 
 ## Stack
@@ -19,10 +19,10 @@ contenido, figuras y resultados.
 
 ## Fuentes de verdad
 
-- `../TFG_Memoria/main.tex` y `../TFG_Memoria/sections/`: narrativa final cerrada.
-- `../TFG_Memoria/Figuras/`: figuras finales de la memoria.
-- `../results/`: CSV agregados versionados usados para resultados.
-- `../docs/simulador/`: documentación viva del simulador y la ejecución.
+- [../TFG_Memoria/main.tex](../TFG_Memoria/main.tex) y [../TFG_Memoria/sections/](../TFG_Memoria/sections/): narrativa final cerrada.
+- [../TFG_Memoria/Figuras/](../TFG_Memoria/Figuras/): figuras finales de la memoria.
+- [../results/](../results/): CSV agregados versionados usados para resultados.
+- [../docs/simulador/](../docs/simulador/): documentación viva del simulador y la ejecución.
 
 ## Reglas de assets
 
@@ -39,3 +39,8 @@ contenido, figuras y resultados.
   claridad oral, ritmo de 20 minutos y figuras legibles.
 - Antes de expandir el contenido definitivo en el archivo quarto, conserva el MVP como esqueleto
   navegable sobre el framework.
+
+## Reglas operativas
+
+- Las referencias a archivos, rutas o documentos deben escribirse siempre como enlaces markdown funcionales (`[../TFG_Memoria/](../TFG_Memoria/)`), no como texto plano entre comillas ni comillas invertidas.
+- Si entre dos turnos de trabajo aparecen modificaciones manuales realizadas por el usuario en el repositorio, nunca deben revertirse de forma automática. Si alguna modificación es crítica, altera sustancialmente la funcionalidad o entra en contradicción directa con los criterios gobernantes del proyecto, se debe consultar primero al usuario antes de actuar sobre ella.
