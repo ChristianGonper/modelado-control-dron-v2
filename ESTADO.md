@@ -8,9 +8,8 @@ resultados, sin alterar el trabajo científico validado.
 
 ## Situación actual
 
-- Fase: definición de producto y gobernanza.
-- Visión: borrador inicial para revisión.
-- Storytelling: borrador inicial para revisión.
+- Fase: definición de producto aprobada.
+- Constitución, visión y storytelling: revisados y aceptados.
 - Spec activa: ninguna.
 - Plan activo: ninguno.
 - Implementación autorizada: no.
@@ -18,9 +17,7 @@ resultados, sin alterar el trabajo científico validado.
 
 ## Foco siguiente
 
-Revisar y aprobar [docs/producto/constitucion.md](docs/producto/constitucion.md), [docs/producto/vision.md](docs/producto/vision.md) y
-[docs/producto/storytelling.md](docs/producto/storytelling.md). Después se decidirá qué primera spec abrir; esa
-decisión no queda tomada en este tablero.
+Elegir la primera capacidad que se desarrollará y abrir su spec.
 
 ## Referencias compartidas
 
