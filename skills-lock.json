@@ -1,6 +1,16 @@
 {
   "version": 1,
   "skills": {
+    "design-md": {
+      "source": "../../Shoes-moda-zapatos/.agents/skills",
+      "sourceType": "local",
+      "computedHash": "44af3e6e89a42a765d9cebf943f1e2ff3cdf43d1958341eb43fb7b74116f6691"
+    },
+    "enhance-prompt": {
+      "source": "../../Shoes-moda-zapatos/.agents/skills",
+      "sourceType": "local",
+      "computedHash": "28c47bcbc0e8d81f48fbbbe41d227efe4018a32c5d4674b0d052a70d215072d3"
+    },
     "grill-me": {
       "source": "mattpocock/skills",
       "sourceType": "github",
@@ -13,10 +23,80 @@
       "skillPath": "skills/productivity/grilling/SKILL.md",
       "computedHash": "32f747941943e607b2dfc86a46b2284dd3e101332eafafd7569389efbe848f81"
     },
+    "react-vite-dashboard": {
+      "source": "../../Shoes-moda-zapatos/.agents/skills",
+      "sourceType": "local",
+      "computedHash": "b6f866588eb36baf119a57c529bff89bdce9d1b8d3b608f0e4f8c39e09af5195"
+    },
+    "remotion": {
+      "source": "../../Shoes-moda-zapatos/.agents/skills",
+      "sourceType": "local",
+      "computedHash": "86c72dff442c4f725107924f48298391e33eaf9788f0faefe360f3061b25fcec"
+    },
+    "shadcn-ui": {
+      "source": "../../Shoes-moda-zapatos/.agents/skills",
+      "sourceType": "local",
+      "computedHash": "57e2cc881eb395418d28f1529e2d453b85f1d77a8de000c8af59512fab7b318d"
+    },
+    "site-md": {
+      "source": "../../Shoes-moda-zapatos/.agents/skills",
+      "sourceType": "local",
+      "computedHash": "8661ca3a2a43795296cc66091a2ed16a087521e47ca9b8aa6a2f5e10e609d586"
+    },
     "spec-driven-development": {
-      "source": "c:\\Users\\chris\\Documents\\.ai-skills",
+      "source": "../../../.ai-skills",
       "sourceType": "local",
       "computedHash": "3c8b17fc81da72fd7809b5edb5c501151bb28a0829a2fc63d61633863d6f3e4c"
+    },
+    "stitch-loop": {
+      "source": "../../Shoes-moda-zapatos/.agents/skills",
+      "sourceType": "local",
+      "computedHash": "cf47da05045ce0c11f1a8b21dc4ef9bbfed0122d68548a48786cb1608257d574"
+    },
+    "stitch::code-to-design": {
+      "source": "../../Shoes-moda-zapatos/.agents/skills",
+      "sourceType": "local",
+      "computedHash": "fc0343ee91bb255ad29b6a02155c1eb77dce58002273f9308bb2ea43be0ffbc3"
+    },
+    "stitch::extract-design-md": {
+      "source": "../../Shoes-moda-zapatos/.agents/skills",
+      "sourceType": "local",
+      "computedHash": "73cddd92063421923afbe00b423b0027aecd251a2c84bfda9c31bf992baf006b"
+    },
+    "stitch::extract-static-html": {
+      "source": "../../Shoes-moda-zapatos/.agents/skills",
+      "sourceType": "local",
+      "computedHash": "94aa19fa4f7554351bbeef9ef237bd21c982bd9541b6ebd0e7751ab3b9a9d6b5"
+    },
+    "stitch::generate-design": {
+      "source": "../../Shoes-moda-zapatos/.agents/skills",
+      "sourceType": "local",
+      "computedHash": "b854eb1747fbd02220bb7323590030fa644b8de126f8f6311749905ea09d7ae9"
+    },
+    "stitch::manage-design-system": {
+      "source": "../../Shoes-moda-zapatos/.agents/skills",
+      "sourceType": "local",
+      "computedHash": "46947382ea45e0e675629f90de627f88cd6aa9997f70f2b61249edace5f54829"
+    },
+    "stitch::react-components": {
+      "source": "../../Shoes-moda-zapatos/.agents/skills",
+      "sourceType": "local",
+      "computedHash": "a0dbfa0ed6c0425a175ec25460625f7cdabfdb034b09f523f4d06d8cdb09f5b7"
+    },
+    "stitch::react-native": {
+      "source": "../../Shoes-moda-zapatos/.agents/skills",
+      "sourceType": "local",
+      "computedHash": "8fb779a0449a4dd0e9fe4b8b78973033f5977716903c2e291f896bf43c392411"
+    },
+    "stitch::upload-to-stitch": {
+      "source": "../../Shoes-moda-zapatos/.agents/skills",
+      "sourceType": "local",
+      "computedHash": "956ce2eff922fb56eb4fa04393c4508bd7e393fe368833b3a97b7083887ae975"
+    },
+    "taste-design": {
+      "source": "../../Shoes-moda-zapatos/.agents/skills",
+      "sourceType": "local",
+      "computedHash": "3772ea408777070865890e10d693118baa1e1de14ee5bacdf6ab46fdea7359bb"
     }
   }
 }
