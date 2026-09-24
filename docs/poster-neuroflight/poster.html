@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NeuroFlight · Póster EIIIA 2026</title>
+  <style>
+    @page {
+      size: 750mm 1050mm;
+      margin: 0;
+    }
+
+    :root {
+      --sky: #dbeef4;
+      --ink: #10284e;
+      --teal: #007f7a;
+      --body: #263b56;
+      --line: #9eb4c9;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: var(--sky);
+    }
+
+    body {
+      font-family: Calibri, Arial, sans-serif;
+      color: var(--body);
+    }
+
+    .poster {
+      position: relative;
+      width: 750mm;
+      height: 1050mm;
+      overflow: hidden;
+      background: var(--sky);
+    }
+
+    .header {
+      position: absolute;
+      inset: 0 0 auto;
+      height: 130mm;
+    }
+
+    .header-original {
+      display: block;
+      width: 750mm;
+      height: 130mm;
+    }
+
+    .header-mask {
+      position: absolute;
+      left: 85mm;
+      top: 73mm;
+      width: 502mm;
+      height: 57mm;
+      background: var(--sky);
+    }
+
+    .header-fields {
+      position: absolute;
+      left: 72.9mm;
+      top: 79mm;
+      width: 538.1mm;
+      color: #000;
+      text-align: center;
+    }
+
+    .header-title {
+      margin: 0;
+      font-size: 19.05mm;
+      line-height: 1.02;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .header-title .course {
+      font-size: 15.87mm;
+    }
+
+    .header-author {
+      margin: 2.2mm 0 0;
+      font-size: 14.11mm;
+      line-height: 1.04;
+      font-weight: 700;
+    }
+
+    .header-degree {
+      margin: 1mm 0 0;
+      font-size: 8.47mm;
+      line-height: 1.1;
+    }
+
+    .panel {
+      position: absolute;
+      width: 340mm;
+      box-sizing: border-box;
+      padding: 9mm 10mm 8mm;
+      background: #fff;
+      border: .5mm solid var(--line);
+    }
+
+    .panel h2 {
+      margin: -9mm -10mm 8mm;
+      padding: 5.4mm 9mm 5.8mm;
+      background: var(--ink);
+      color: #fff;
+      font-size: 11.2mm;
+      line-height: 1.1;
+      letter-spacing: .01em;
+      font-weight: 700;
+    }
+
+    .panel p {
+      margin: 0 0 5mm;
+      font-size: 9mm;
+      line-height: 1.22;
+      text-wrap: pretty;
+    }
+
+    .panel p:last-child {
+      margin-bottom: 0;
+    }
+
+    .panel strong {
+      color: var(--ink);
+    }
+
+    .panel figure {
+      margin: 4mm 0 0;
+    }
+
+    .panel figure img {
+      display: block;
+      width: 319mm;
+      object-fit: contain;
+    }
+
+    .panel figcaption {
+      margin-top: 2.5mm;
+      font-size: 6.4mm;
+      line-height: 1.2;
+      color: #4f6178;
+    }
+
+    .intro {
+      left: 25mm;
+      top: 151mm;
+      height: 141mm;
+    }
+
+    .objective {
+      left: 385mm;
+      top: 151mm;
+      height: 141mm;
+    }
+
+    .context {
+      left: 25mm;
+      top: 305mm;
+      height: 231mm;
+    }
+
+    .context figure img {
+      height: 116mm;
+    }
+
+    .design {
+      left: 385mm;
+      top: 305mm;
+      height: 184mm;
+    }
+
+    .app {
+      left: 385mm;
+      top: 502mm;
+      height: 291mm;
+    }
+
+    .app figure img {
+      height: auto;
+      border: .4mm solid var(--line);
+      box-sizing: border-box;
+    }
+
+    .evaluation {
+      left: 25mm;
+      top: 549mm;
+      height: 260mm;
+    }
+
+    .evaluation figure img {
+      height: 163mm;
+    }
+
+    .limits {
+      left: 25mm;
+      top: 822mm;
+      height: 144mm;
+    }
+
+    .conclusions {
+      left: 385mm;
+      top: 806mm;
+      height: 160mm;
+    }
+
+    .footer {
+      position: absolute;
+      left: 25mm;
+      top: 979mm;
+      width: 700mm;
+      height: 55mm;
+      display: flex;
+      align-items: center;
+      box-sizing: border-box;
+      padding: 3mm 8mm;
+      background: #fff;
+      border-top: 2mm solid var(--teal);
+    }
+
+    .footer .qr {
+      width: 43mm;
+      height: 43mm;
+      flex: none;
+    }
+
+    .footer .contact {
+      margin-left: 9mm;
+      width: 342mm;
+    }
+
+    .footer .contact strong {
+      display: block;
+      font-size: 7.3mm;
+      line-height: 1.1;
+      color: var(--ink);
+    }
+
+    .footer .contact span {
+      display: block;
+      margin-top: 1mm;
+      font-size: 6.4mm;
+      line-height: 1.15;
+    }
+
+    .footer .sources {
+      margin-left: auto;
+      width: 258mm;
+      font-size: 5.1mm;
+      line-height: 1.15;
+    }
+
+    .footer .sources strong {
+      color: var(--ink);
+    }
+
+    @media screen {
+      .poster {
+        margin: 18px auto;
+        box-shadow: 0 10px 35px #10284e33;
+      }
+    }
+
+    @media print {
+
+      html,
+      body {
+        width: 750mm;
+        height: 1050mm;
+      }
+
+      .poster {
+        margin: 0;
+        box-shadow: none;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="poster">
+    <header class="header">
+      <img class="header-original" src="assets/header-template.png"
+        alt="Cabecera original de la VI Exposición-Concurso de Prototipos, con los logos de la Universidad de León y de la Escuela">
+      <div class="header-mask" aria-hidden="true"></div>
+      <div class="header-fields">
+        <h1 class="header-title">NEUROFLIGHT. <span class="course">Curso 2026/2027</span></h1>
+        <p class="header-author">Christian González Pérez</p>
+        <p class="header-degree">Grado en Ingeniería Aeroespacial</p>
+      </div>
+    </header>
+    <section class="panel intro" aria-labelledby="intro-title">
+      <h2 id="intro-title">INTRODUCCIÓN</h2>
+      <p>El control de un cuadricóptero exige seguir una referencia de posición mientras cambian la actitud, el empuje y
+        las perturbaciones. En mi Trabajo de Fin de Grado construí un simulador dinámico de seis grados de libertad para
+        estudiar el seguimiento de manera reproducible.</p>
+      <p>El trabajo compara un controlador clásico PD con tres alternativas neuronales, MLP, GRU y LSTM, entrenadas para
+        imitar la fuerza calculada por el lazo externo.</p>
+    </section>
+    <section class="panel objective" aria-labelledby="objective-title">
+      <h2 id="objective-title">OBJETIVO</h2>
+      <p>La pregunta central es qué ocurre cuando una red sustituye el lazo externo y se cierra el control sobre la
+        dinámica del vehículo. La fidelidad a las órdenes del controlador clásico, medida en la evaluación supervisada,
+        no responde por sí sola a esa pregunta.</p>
+      <p>NeuroFlight convierte el estudio en una prueba. Eliges una trayectoria, ajustas los parámetros y perturbaciones
+        y observas la respuesta de los controladores ante una misma misión.</p>
+    </section>
+    <section class="panel context" aria-labelledby="context-title">
+      <h2 id="context-title">CONTEXTO Y ARQUITECTURA</h2>
+      <p>El modelo incluye dinámica rígida 6DOF, actuadores y perturbaciones. En la arquitectura híbrida, la red predice
+        una <strong>fuerza deseada</strong>; los filtros, la conversión fuerza-actitud y la estabilización interna
+        siguen en el módulo clásico.</p>
+      <figure>
+        <img src="assets/tfg-control-hibrido.svg"
+          alt="Diagrama original del TFG: la red predice fuerza, mientras el módulo clásico mantiene filtros de seguridad y control de actitud">
+        <figcaption>Arquitectura híbrida. Fuente: diagrama original de la memoria del TFG.</figcaption>
+      </figure>
+    </section>
+    <section class="panel design" aria-labelledby="design-title">
+      <h2 id="design-title">DISEÑO Y DESARROLLO</h2>
+      <p>La aplicación parte del simulador y de los modelos existentes entrenados para el TFG. Antes de ejecutar la
+        simulación, se puede observar la geometría del escenario. Posteriormente, la comparación 3D reproduce de manera
+        sincronizada las trayectorias simuladas.</p>
+      <p>Para cada controlador se muestran el estado de la ejecución y los errores de posición. La vista de Análisis
+        permite examinar señales temporales, parámetros y protecciones.</p>
+    </section>
+    <section class="panel app" aria-labelledby="app-title">
+      <h2 id="app-title">LA APLICACIÓN</h2>
+      <p>La captura muestra una misión nueva de Lissajous. Se representa la referencia de la ruta y las trayectorias
+        recorridas por el controlador PD y MLP.</p>
+      <figure>
+        <img src="assets/app-comparison.png"
+          alt="Captura real de NeuroFlight con la referencia y las trayectorias PD y MLP en una misión Lissajous">
+        <figcaption>Simulación nueva de NeuroFlight. Es una prueba puntual, separada de los resultados agregados del
+          TFG.</figcaption>
+      </figure>
+    </section>
+    <section class="panel evaluation" aria-labelledby="evaluation-title">
+      <h2 id="evaluation-title">EVALUACIÓN</h2>
+      <figure>
+        <img src="assets/tfg-rmse-test.svg"
+          alt="Gráfico de RMSE medio de posición en test para PD, MLP, GRU y LSTM por familia de trayectoria">
+        <figcaption>RMSE medio de posición en el test con trayectorias conocidas. Fuente: memoria del TFG, capítulo de
+          resultados.</figcaption>
+      </figure>
+      <p>MLP obtuvo menor error en círculo y Lissajous. En waypoint ninguna red superó claramente al PD representativo.
+        <strong>Imitar mejor la fuerza no garantizó seguir mejor la trayectoria</strong> en bucle cerrado.
+      </p>
+    </section>
+    <section class="panel limits" aria-labelledby="limits-title">
+      <h2 id="limits-title">LIMITACIONES Y TRABAJO FUTURO</h2>
+      <p>Las pruebas se realizan en simulación que no equivale a un vuelo real. Las misiones en NeuroFlight usan los
+        pesos congelados del TFG y no sustituyen a la memoria. La respuesta varía con la geometría, perturbaciones y
+        límites de actuación.</p>
+      <p>Una ampliación sería estudiar otras perturbaciones y definir una validación específica con datos de vuelo antes
+        de extrapolar conclusiones al mundo físico.</p>
+    </section>
+    <section class="panel conclusions" aria-labelledby="conclusions-title">
+      <h2 id="conclusions-title">CONCLUSIONES</h2>
+      <p>El trabajo muestra que reproducir con precisión una orden de control no basta para asegurar mejor seguimiento
+        en
+        bucle cerrado. La arquitectura mantiene una parte clásica para la estabilización y las protecciones.
+      </p>
+      <p>En el TFG se estudió un conjunto cerrado y equilibrado de trayectorias, demostrando que la arqitectura híbrida
+        se comportaba mejor que un PD para trayectorias compuestas. Esto demuestra que las redes aprendieron una
+        adaptabilidad a partir de los PD especilizados para trayectorias concretas. La aplicación hace observable esa
+        diferencia en una misión elegida. Las rutas, tiempos y
+        métricas describen <strong>cada ejecución</strong>, mientras la gráfica del TFG resume una evaluación
+        experimental más amplia. Esta separación permite explorar el sistema más allá de la conclusión general.</p>
+    </section>
+    <footer class="footer">
+      <img class="qr" src="assets/qr-repositorio.svg" alt="Código QR al repositorio público del proyecto">
+      <div class="contact">
+        <strong>Christian González Pérez</strong>
+        <span>christian.gonzalez.perez@proton.me</span>
+        <span>github.com/ChristianGonper/modelado-control-dron-v2</span>
+      </div>
+      <div class="sources"><strong>FUENTES</strong><br>González Pérez, C. <em>Control híbrido en cascada de un
+          cuadricóptero: sustitución neuronal de controladores especializados del lazo externo</em>, TFG, Universidad de
+        León. Figuras originales y código del proyecto accesibles en el repositorio.</div>
+    </footer>
+  </main>
+</body>
+
+</html>
