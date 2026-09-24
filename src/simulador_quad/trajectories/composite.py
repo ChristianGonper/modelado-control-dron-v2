@@ -162,11 +162,12 @@ class CompositeTrajectory(Trajectory):
                 
                 self.transition_trajectory = LineTrajectory(
                     waypoints=wps,
-                    yaw_rad=ref_next_start.yaw_rad,
+                    yaw_rad=ref_last.yaw_rad,
+                    yaw_end_rad=ref_next_start.yaw_rad,
                     max_speed_m_s=self.transition_speed,
                     max_acceleration_m_s2=0.5,
-                    waypoint_tolerance_m=0.05,
-                    waypoint_speed_tolerance_m_s=0.10,
+                    waypoint_tolerance_m=0.08,
+                    waypoint_speed_tolerance_m_s=0.15,
                     dwell_time_s=0.0
                 )
                 self.in_transition = True

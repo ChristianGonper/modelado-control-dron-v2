@@ -19,34 +19,78 @@ class HoldTrajectory(Trajectory):
 
 class CircleTrajectory(Trajectory):
     """
-    Círculo en el plano XY (ENU) centrado en 'center_W_m'.
-    x(t) = cx + R * cos(omega * t)
-    y(t) = cy + R * sin(omega * t)
-    z(t) = cz
+    Círculo en el plano (ENU) centrado en 'center_W_m'.
+    Por defecto plano XY horizontal (tilt_rad=0.0).
+    Admite inclinación del plano (tilt_rad) y orientación horizontal del plano (plane_yaw_rad).
+    Para tilt_rad=0.0, reproduce exactamente la referencia original.
     """
-    def __init__(self, center_W_m: np.ndarray, radius_m: float, omega_rad_s: float, yaw_mode: str = "forward"):
-        self.center = center_W_m.copy()
-        self.R = radius_m
-        self.w = omega_rad_s
+    def __init__(
+        self,
+        center_W_m: np.ndarray,
+        radius_m: float,
+        omega_rad_s: float,
+        yaw_mode: str = "forward",
+        tilt_rad: float = 0.0,
+        plane_yaw_rad: float = 0.0
+    ):
+        self.center = np.asarray(center_W_m, dtype=float).copy()
+        self.R = float(radius_m)
+        self.w = float(omega_rad_s)
         self.yaw_mode = yaw_mode # "forward" o "center"
+        self.tilt_rad = float(tilt_rad)
+        self.plane_yaw_rad = float(plane_yaw_rad)
+
+        # Matriz de rotación del plano: Rz(plane_yaw) * Ry(tilt)
+        # Para tilt=0 y plane_yaw=0, R_plane es la identidad exacta.
+        if abs(self.tilt_rad) < 1e-12 and abs(self.plane_yaw_rad) < 1e-12:
+            self._R_plane = np.eye(3, dtype=float)
+            self._is_horizontal = True
+        else:
+            cy = np.cos(self.plane_yaw_rad)
+            sy = np.sin(self.plane_yaw_rad)
+            ct = np.cos(self.tilt_rad)
+            st = np.sin(self.tilt_rad)
+            Rz = np.array([
+                [cy, -sy, 0.0],
+                [sy,  cy, 0.0],
+                [0.0, 0.0, 1.0]
+            ], dtype=float)
+            Ry = np.array([
+                [ct,  0.0, st],
+                [0.0, 1.0, 0.0],
+                [-st, 0.0, ct]
+            ], dtype=float)
+            self._R_plane = Rz @ Ry
+            self._is_horizontal = False
         
     def get_reference(self, time_s: float) -> TrajectoryReference:
         t = time_s
-        
-        pos = self.center.copy()
-        pos[0] += self.R * np.cos(self.w * t)
-        pos[1] += self.R * np.sin(self.w * t)
-        
-        vel = np.zeros(3)
-        vel[0] = -self.R * self.w * np.sin(self.w * t)
-        vel[1] = self.R * self.w * np.cos(self.w * t)
-        
-        acc = np.zeros(3)
-        acc[0] = -self.R * self.w**2 * np.cos(self.w * t)
-        acc[1] = -self.R * self.w**2 * np.sin(self.w * t)
+        cos_wt = np.cos(self.w * t)
+        sin_wt = np.sin(self.w * t)
+
+        if self._is_horizontal:
+            pos = self.center.copy()
+            pos[0] += self.R * cos_wt
+            pos[1] += self.R * sin_wt
+
+            vel = np.zeros(3, dtype=float)
+            vel[0] = -self.R * self.w * sin_wt
+            vel[1] = self.R * self.w * cos_wt
+
+            acc = np.zeros(3, dtype=float)
+            acc[0] = -self.R * self.w**2 * cos_wt
+            acc[1] = -self.R * self.w**2 * sin_wt
+        else:
+            p_plane = np.array([self.R * cos_wt, self.R * sin_wt, 0.0], dtype=float)
+            v_plane = np.array([-self.R * self.w * sin_wt, self.R * self.w * cos_wt, 0.0], dtype=float)
+            a_plane = np.array([-self.R * self.w**2 * cos_wt, -self.R * self.w**2 * sin_wt, 0.0], dtype=float)
+
+            pos = self.center + self._R_plane @ p_plane
+            vel = self._R_plane @ v_plane
+            acc = self._R_plane @ a_plane
         
         if self.yaw_mode == "forward":
-            yaw = np.arctan2(-vel[0], vel[1])
+            yaw = float(np.arctan2(-vel[0], vel[1]))
         else:
             yaw = 0.0
             
@@ -137,6 +181,7 @@ class LineTrajectory(Trajectory):
         waypoints: np.ndarray, 
         times: Optional[np.ndarray] = None, 
         yaw_rad: float = 0.0,
+        yaw_end_rad: Optional[float] = None,
         max_speed_m_s: float = 0.6,
         max_acceleration_m_s2: float = 0.5,
         waypoint_tolerance_m: float = 0.20,
@@ -146,6 +191,7 @@ class LineTrajectory(Trajectory):
         self.waypoints = np.array(waypoints).astype(float)
         self.times = times # Deprecated, kept for compatibility
         self.yaw = yaw_rad
+        self.yaw_end = yaw_end_rad
         
         self.max_speed = max_speed_m_s
         self.max_acc = max_acceleration_m_s2
@@ -225,16 +271,23 @@ class LineTrajectory(Trajectory):
                 t_total = 2 * t_acc + (L - 2 * d_acc) / self.max_speed
             else:
                 t_total = 2 * np.sqrt(L / self.max_acc)
-            
+
             if self.phase_time_s >= t_total:
                 self.phase = WaypointPhase.HOLD_AT_WAYPOINT
                 self.phase_time_s = 0.0
+
+            current_yaw = self.yaw
+            if self.yaw_end is not None and L > 1e-6:
+                frac = np.clip(s / L, 0.0, 1.0)
+                diff = (self.yaw_end - self.yaw + np.pi) % (2 * np.pi) - np.pi
+                current_yaw = self.yaw + frac * diff
                 
-            return TrajectoryReference(pos, vel, acc, self.yaw)
+            return TrajectoryReference(pos, vel, acc, current_yaw)
             
         else: # HOLD_AT_WAYPOINT
             p_target = self.waypoints[self.active_target_index]
-            return TrajectoryReference(p_target.copy(), np.zeros(3), np.zeros(3), self.yaw)
+            final_yaw = self.yaw_end if self.yaw_end is not None else self.yaw
+            return TrajectoryReference(p_target.copy(), np.zeros(3), np.zeros(3), final_yaw)
 
     def get_reference(self, time_s: float) -> TrajectoryReference:
         """Fallback legacy que no usa el estado. Solo para compatibilidad."""

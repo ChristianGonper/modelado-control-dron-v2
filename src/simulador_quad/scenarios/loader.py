@@ -22,8 +22,19 @@ def instantiate_trajectory(t_cfg: Dict[str, Any]) -> Any:
     if t_type == 'hold':
         return HoldTrajectory(np.array(t_cfg['position_W_m']).astype(float), float(t_cfg.get('yaw_rad', 0.0)))
     elif t_type == 'circle':
+        tilt_rad = float(t_cfg.get('tilt_rad', 0.0))
+        if 'tilt_deg' in t_cfg:
+            tilt_rad = float(np.deg2rad(float(t_cfg['tilt_deg'])))
+        plane_yaw_rad = float(t_cfg.get('plane_yaw_rad', 0.0))
+        if 'plane_yaw_deg' in t_cfg:
+            plane_yaw_rad = float(np.deg2rad(float(t_cfg['plane_yaw_deg'])))
         return CircleTrajectory(
-            np.array(t_cfg['center_W_m']).astype(float), float(t_cfg['radius_m']), float(t_cfg['omega_rad_s']), t_cfg.get('yaw_mode', 'forward')
+            np.array(t_cfg['center_W_m']).astype(float),
+            float(t_cfg['radius_m']),
+            float(t_cfg['omega_rad_s']),
+            t_cfg.get('yaw_mode', 'forward'),
+            tilt_rad=tilt_rad,
+            plane_yaw_rad=plane_yaw_rad
         )
     elif t_type == 'lissajous':
         return LissajousTrajectory(

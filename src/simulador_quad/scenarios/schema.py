@@ -271,6 +271,20 @@ def _validate_single_trajectory(traj: Mapping[str, Any], prefix: str, is_inside_
         if "yaw_mode" in traj:
             if not isinstance(traj.get("yaw_mode"), str):
                 raise _invalid(f"{prefix}.yaw_mode", "string", traj.get("yaw_mode"))
+        if "tilt_deg" in traj:
+            _non_negative(f"{prefix}.tilt_deg", traj.get("tilt_deg"))
+        if "tilt_rad" in traj:
+            _non_negative(f"{prefix}.tilt_rad", traj.get("tilt_rad"))
+        if "plane_yaw_deg" in traj:
+            try:
+                float(traj.get("plane_yaw_deg"))
+            except (TypeError, ValueError) as exc:
+                raise _invalid(f"{prefix}.plane_yaw_deg", "float", traj.get("plane_yaw_deg")) from exc
+        if "plane_yaw_rad" in traj:
+            try:
+                float(traj.get("plane_yaw_rad"))
+            except (TypeError, ValueError) as exc:
+                raise _invalid(f"{prefix}.plane_yaw_rad", "float", traj.get("plane_yaw_rad")) from exc
 
     elif t_type == "lissajous":
         _as_array(f"{prefix}.center_W_m", traj.get("center_W_m"), (3,))
