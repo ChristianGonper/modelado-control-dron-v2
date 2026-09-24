@@ -10,4 +10,4 @@ Antes de reutilizar cualquier criterio de esta carpeta, debe contrastarse con:
 - `docs/02_requisitos_ingenieria_simulador.md`
 - `docs/03_criterios_ingenieria_software.md`
 - `docs/simulador/`
-- `docs/reviews/auditoria_sintesis_multivista.md`
+- `docs/reviews/archived/annexes/auditoria_sintesis_multivista.md`

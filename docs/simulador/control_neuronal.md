@@ -97,7 +97,7 @@ uv run python tools\summarize_neural_sensitivity.py
 ```
 
 El resumen queda en `results/neural_sensitivity/`. El informe tecnico
-`docs/reviews/estudio_sensibilidad_neuronal_outer_force_2026-06-25.md` documenta
+`docs/reviews/archived/annexes/estudio_sensibilidad_neuronal_outer_force_2026-06-25.md` documenta
 la campana ejecutada para `hidden_dim=128`, ventanas `L=10/40` y semillas
 adicionales.
 
