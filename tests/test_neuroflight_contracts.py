@@ -63,7 +63,7 @@ def test_dataset_geometries_are_detected():
 
 
 def test_envelope_altitude_bounds():
-    """La altura debe estar estrictamente entre 0.5 m y 6.0 m."""
+    """La altura debe respetar el despeje al suelo (>= 0.3 m) y no estar encorsetada a 6 m absolutos."""
     # Válido: 2.0 m
     m_valid = MissionConfigRequest(
         mode="simple",
@@ -77,7 +77,20 @@ def test_envelope_altitude_bounds():
     assert valid is True
     assert len(errors) == 0
 
-    # Inválido: z = 0.2 m (< 0.5 m)
+    # Válido: z = 7.0 m (antiguamente bloqueado por techo rígido de 6.0 m)
+    m_high_valid = MissionConfigRequest(
+        mode="simple",
+        family=TrajectoryFamily.HOLD,
+        params={"position_W_m": [0.0, 0.0, 7.0]},
+        transition_speed=0.8,
+        wind=WindConfig(magnitude_m_s=0.0, direction_deg=0.0),
+        seed=42,
+    )
+    valid_high_valid, errors_high_valid, _, _ = validate_mission_envelope(m_high_valid)
+    assert valid_high_valid is True
+    assert len(errors_high_valid) == 0
+
+    # Inválido: z = 0.2 m (< 0.3 m despeje de suelo)
     m_low = MissionConfigRequest(
         mode="simple",
         family=TrajectoryFamily.HOLD,
@@ -88,20 +101,20 @@ def test_envelope_altitude_bounds():
     )
     valid_low, errors_low, _, _ = validate_mission_envelope(m_low)
     assert valid_low is False
-    assert any("0.5 a 6.0" in e for e in errors_low)
+    assert any("despeje" in e.lower() or "0.3" in e for e in errors_low)
 
-    # Inválido: z = 7.0 m (> 6.0 m)
-    m_high = MissionConfigRequest(
+    # Inválido: z = 60.0 m (> 50.0 m techo operacional)
+    m_extreme = MissionConfigRequest(
         mode="simple",
         family=TrajectoryFamily.HOLD,
-        params={"position_W_m": [0.0, 0.0, 7.0]},
+        params={"position_W_m": [0.0, 0.0, 60.0]},
         transition_speed=0.8,
         wind=WindConfig(magnitude_m_s=0.0, direction_deg=0.0),
         seed=42,
     )
-    valid_high, errors_high, _, _ = validate_mission_envelope(m_high)
-    assert valid_high is False
-    assert any("0.5 a 6.0" in e for e in errors_high)
+    valid_ext, errors_ext, _, _ = validate_mission_envelope(m_extreme)
+    assert valid_ext is False
+    assert any("techo" in e.lower() for e in errors_ext)
 
 
 def test_envelope_wind_bounds():

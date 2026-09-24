@@ -10,6 +10,7 @@ import yaml
 
 from simulador_quad.api.bundle_verifier import BundleVerifier
 from simulador_quad.api.envelope import (
+    COMPOSITE_DURATION_MAX_S,
     SIMPLE_DURATION_MAX_S,
     planned_duration_s,
     simulation_duration_s,
@@ -104,7 +105,8 @@ def compute_preview(mission: MissionConfigRequest) -> PreviewResponse:
     planned = planned_duration_s(mission)
     if not np.isfinite(planned) or planned <= 0.0:
         planned = dt
-    dur = float(min(max(planned + _preview_sampling_slack_s(mission, dt), dt), SIMPLE_DURATION_MAX_S))
+    max_allowed = COMPOSITE_DURATION_MAX_S if mission.mode == "composite" else SIMPLE_DURATION_MAX_S
+    dur = float(min(max(planned + _preview_sampling_slack_s(mission, dt), dt), max_allowed))
     times = np.arange(0.0, dur + (0.5 * dt), dt)
     if len(times) < 2:
         times = np.array([0.0, dt])

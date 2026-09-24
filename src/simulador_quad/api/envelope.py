@@ -15,24 +15,25 @@ from simulador_quad.api.models import (
 # Límites efectivos de la demostración. Quedan por debajo de las protecciones
 # internas del simulador y cubren los presets de la aplicación.
 WIND_MAX_M_S = 1.4
-SIMPLE_DURATION_MAX_S = 60.0
-SEGMENT_DURATION_MAX_S = 30.0
-COMPOSITE_DURATION_MAX_S = 60.0
+SIMPLE_DURATION_MAX_S = 180.0
+SEGMENT_DURATION_MAX_S = 90.0
+COMPOSITE_DURATION_MAX_S = 180.0
 SIM_LATE_MARGIN_S = 10.0
 WAYPOINT_SPEED_MIN_M_S = 0.2
 WAYPOINT_SPEED_MAX_M_S = 1.0
 WAYPOINT_ACC_MIN_M_S2 = 0.2
 WAYPOINT_ACC_MAX_M_S2 = 0.8
-WAYPOINT_PATH_MAX_M = 40.0
+WAYPOINT_PATH_MAX_M = 60.0
 WAYPOINT_POINTS_MAX = 16
-LISSAJOUS_AMP_MAX_M = 3.5
+LISSAJOUS_AMP_MAX_M = 4.0
 LISSAJOUS_OMEGA_MIN = 0.1
 LISSAJOUS_OMEGA_MAX = 1.2
 LISSAJOUS_SPEED_MAX_M_S = 1.5
 LISSAJOUS_ACC_MAX_M_S2 = 1.1
-HORIZONTAL_EXTENT_MAX_M = 12.0
-ALTITUDE_MIN_M = 0.5
-ALTITUDE_MAX_M = 6.0
+HORIZONTAL_EXTENT_MAX_M = 50.0
+ALTITUDE_MIN_M = 0.3
+ALTITUDE_MAX_M = 50.0
+VERTICAL_SPAN_MAX_M = 20.0
 TRANSITION_ACC_M_S2 = 0.5
 TRANSITION_GAP_M = 0.05
 
@@ -250,10 +251,12 @@ def validate_single_segment(
             errors.append(f"{p}Posición 'position_W_m' debe ser un vector [x, y, z] de 3 elementos.")
         else:
             z = float(pos[2])
-            if z < 0.5 or z > 6.0:
-                errors.append(f"{p}Altura {z:.2f} m fuera de la envolvente de vuelo (0.5 a 6.0 m).")
-            if abs(float(pos[0])) > 10.0 or abs(float(pos[1])) > 10.0:
-                errors.append(f"{p}Posición horizontal [{pos[0]}, {pos[1]}] excede el radio de vuelo (10 m).")
+            if z < ALTITUDE_MIN_M:
+                errors.append(f"{p}Altura {z:.2f} m inferior al despeje mínimo al suelo ({ALTITUDE_MIN_M} m).")
+            elif z > ALTITUDE_MAX_M:
+                errors.append(f"{p}Altura {z:.2f} m excede el techo operacional ({ALTITUDE_MAX_M:.0f} m).")
+            if abs(float(pos[0])) > HORIZONTAL_EXTENT_MAX_M or abs(float(pos[1])) > HORIZONTAL_EXTENT_MAX_M:
+                errors.append(f"{p}Posición horizontal [{pos[0]:.1f}, {pos[1]:.1f}] fuera del área de vuelo ({HORIZONTAL_EXTENT_MAX_M:.0f} m).")
 
     elif fam == "circle":
         c = params.get("center_W_m", [0.0, 0.0, 2.0])
@@ -261,8 +264,8 @@ def validate_single_segment(
         w = float(params.get("omega_rad_s", 0.6))
         tilt_deg = float(params.get("tilt_deg", 0.0))
 
-        if r < 0.75 or r > 3.5:
-            errors.append(f"{p}Radio del círculo ({r:.2f} m) fuera del rango admitido (0.75 a 3.5 m).")
+        if r < 0.5 or r > 4.0:
+            errors.append(f"{p}Radio del círculo ({r:.2f} m) fuera del rango admitido (0.5 a 4.0 m).")
         if w <= 0.0:
             errors.append(f"{p}Velocidad angular omega ({w:.2f} rad/s) debe ser positiva.")
         
@@ -279,22 +282,21 @@ def validate_single_segment(
 
         cx = float(c[0]) if len(c) > 0 else 0.0
         cy = float(c[1]) if len(c) > 1 else 0.0
-        if abs(cx) + r > HORIZONTAL_EXTENT_MAX_M or abs(cy) + r > HORIZONTAL_EXTENT_MAX_M:
+        if abs(cx) > HORIZONTAL_EXTENT_MAX_M or abs(cy) > HORIZONTAL_EXTENT_MAX_M:
             errors.append(
-                f"{p}La extensión horizontal del círculo supera {HORIZONTAL_EXTENT_MAX_M:.0f} m "
-                "desde el origen. Acerque el centro o reduzca el radio."
+                f"{p}El centro del círculo [{cx:.1f}, {cy:.1f}] supera el área de vuelo ({HORIZONTAL_EXTENT_MAX_M:.0f} m)."
             )
 
-        # Cota de altura del círculo inclinado
+        # Cota de altura del círculo inclinado relativa al suelo y al techo operacional
         tilt_rad = np.deg2rad(tilt_deg)
         delta_z = r * np.sin(tilt_rad)
-        cz = float(c[2])
+        cz = float(c[2]) if len(c) > 2 else 2.0
         min_z = cz - delta_z
         max_z = cz + delta_z
-        if min_z < 0.5:
-            errors.append(f"{p}La altura mínima del círculo inclinado ({min_z:.2f} m) cae por debajo de 0.5 m.")
-        if max_z > 6.0:
-            errors.append(f"{p}La altura máxima del círculo inclinado ({max_z:.2f} m) supera el límite de 6.0 m.")
+        if min_z < ALTITUDE_MIN_M:
+            errors.append(f"{p}La altura mínima del círculo inclinado ({min_z:.2f} m) cae por debajo del despeje al suelo ({ALTITUDE_MIN_M} m).")
+        if max_z > ALTITUDE_MAX_M:
+            errors.append(f"{p}La altura máxima del círculo inclinado ({max_z:.2f} m) supera el techo operacional ({ALTITUDE_MAX_M:.0f} m).")
 
     elif fam == "lissajous":
         c = params.get("center_W_m", [0.0, 0.0, 2.5])
@@ -304,13 +306,22 @@ def validate_single_segment(
         if len(amps) != 3 or len(omegas) != 3:
             errors.append(f"{p}Lissajous requiere amplitudes y omegas de 3 componentes [x, y, z].")
         else:
-            cz = float(c[2])
+            cz = float(c[2]) if len(c) > 2 else 2.5
             az = float(amps[2])
-            if (cz - az) < 0.5 or (cz + az) > 6.0:
-                errors.append(f"{p}El rango vertical de Lissajous [{cz-az:.2f}, {cz+az:.2f}] m sale de [0.5, 6.0] m.")
+            min_z = cz - az
+            max_z = cz + az
+            if min_z < ALTITUDE_MIN_M:
+                errors.append(f"{p}La oscilación inferior de Lissajous ({min_z:.2f} m) cae por debajo del despeje al suelo ({ALTITUDE_MIN_M} m).")
+            if max_z > ALTITUDE_MAX_M:
+                errors.append(f"{p}La altura máxima de Lissajous ({max_z:.2f} m) supera el techo operacional ({ALTITUDE_MAX_M:.0f} m).")
             
             cx = float(c[0]) if len(c) > 0 else 0.0
             cy = float(c[1]) if len(c) > 1 else 0.0
+            if abs(cx) > HORIZONTAL_EXTENT_MAX_M or abs(cy) > HORIZONTAL_EXTENT_MAX_M:
+                errors.append(
+                    f"{p}El centro de Lissajous [{cx:.1f}, {cy:.1f}] supera el área de vuelo ({HORIZONTAL_EXTENT_MAX_M:.0f} m)."
+                )
+
             for ax, a_val, w_val in zip(["X", "Y", "Z"], amps, omegas):
                 amp = float(a_val)
                 omega = float(w_val)
@@ -335,11 +346,6 @@ def validate_single_segment(
                         f"{p}Aceleración de Lissajous en {ax} (A·ω² = {peak_acc:.2f} m/s²) "
                         f"excede {LISSAJOUS_ACC_MAX_M_S2:.1f} m/s². Baje amplitud o frecuencia."
                     )
-            if abs(cx) + abs(float(amps[0])) > HORIZONTAL_EXTENT_MAX_M or abs(cy) + abs(float(amps[1])) > HORIZONTAL_EXTENT_MAX_M:
-                errors.append(
-                    f"{p}La extensión horizontal de Lissajous supera {HORIZONTAL_EXTENT_MAX_M:.0f} m "
-                    "desde el origen. Acerque el centro o reduzca las amplitudes."
-                )
 
             # Comprobar degeneración exacta en el plano horizontal
             if abs(float(omegas[0]) - float(omegas[1])) < 1e-4:
@@ -350,15 +356,24 @@ def validate_single_segment(
         if not wps or len(wps) < 2:
             errors.append(f"{p}Ruta por puntos requiere al menos 2 waypoints.")
         else:
+            z_vals = []
             for idx, wp in enumerate(wps):
                 if len(wp) != 3:
                     errors.append(f"{p}Waypoint #{idx+1} debe tener coordenadas [X, Y, Z].")
                     continue
                 z = float(wp[2])
-                if z < 0.0 or z > 6.0:
-                    errors.append(f"{p}Waypoint #{idx+1} altura {z:.2f} m fuera de límites [0.0, 6.0] m.")
-                if abs(float(wp[0])) > 12.0 or abs(float(wp[1])) > 12.0:
-                    errors.append(f"{p}Waypoint #{idx+1} distancia horizontal excede el límite de 12 m.")
+                z_vals.append(z)
+                if z < ALTITUDE_MIN_M:
+                    errors.append(f"{p}Waypoint #{idx+1} altura {z:.2f} m inferior al despeje al suelo ({ALTITUDE_MIN_M} m).")
+                elif z > ALTITUDE_MAX_M:
+                    errors.append(f"{p}Waypoint #{idx+1} altura {z:.2f} m excede el techo operacional ({ALTITUDE_MAX_M:.0f} m).")
+                if abs(float(wp[0])) > HORIZONTAL_EXTENT_MAX_M or abs(float(wp[1])) > HORIZONTAL_EXTENT_MAX_M:
+                    errors.append(f"{p}Waypoint #{idx+1} fuera del área de vuelo ({HORIZONTAL_EXTENT_MAX_M:.0f} m).")
+
+            if z_vals:
+                v_span = max(z_vals) - min(z_vals)
+                if v_span > VERTICAL_SPAN_MAX_M:
+                    errors.append(f"{p}El rango vertical relativo de la ruta ({v_span:.1f} m) excede el máximo permitido ({VERTICAL_SPAN_MAX_M:.1f} m).")
 
             # Comprobar paso mínimo entre consecutivos
             for idx in range(len(wps) - 1):
@@ -412,16 +427,27 @@ def validate_single_segment(
         w = float(params.get("omega_rad_s", 0.35))
         z_amp = float(params.get("z_amp", 0.0))
 
-        if a < 1.0 or a > 3.0:
-            errors.append(f"{p}Semieje 'a' de lemniscata ({a:.2f} m) fuera de rango (1.0 a 3.0 m).")
-        if b < 0.5 or b > 1.8:
-            errors.append(f"{p}Semieje 'b' de lemniscata ({b:.2f} m) fuera de rango (0.5 a 1.8 m).")
+        if a < 0.5 or a > 4.0:
+            errors.append(f"{p}Semieje 'a' de lemniscata ({a:.2f} m) fuera de rango (0.5 a 4.0 m).")
+        if b < 0.3 or b > 2.5:
+            errors.append(f"{p}Semieje 'b' de lemniscata ({b:.2f} m) fuera de rango (0.3 a 2.5 m).")
         if w < 0.15 or w > 0.6:
             errors.append(f"{p}Velocidad angular ({w:.2f} rad/s) fuera de rango (0.15 a 0.6 rad/s).")
         
-        cz = float(c[2])
-        if (cz - z_amp) < 0.5 or (cz + z_amp) > 6.0:
-            errors.append(f"{p}Altura de lemniscata oscila fuera de la envolvente [0.5, 6.0] m.")
+        cx = float(c[0]) if len(c) > 0 else 0.0
+        cy = float(c[1]) if len(c) > 1 else 0.0
+        cz = float(c[2]) if len(c) > 2 else 2.0
+        if abs(cx) > HORIZONTAL_EXTENT_MAX_M or abs(cy) > HORIZONTAL_EXTENT_MAX_M:
+            errors.append(
+                f"{p}El centro de lemniscata [{cx:.1f}, {cy:.1f}] supera el área de vuelo ({HORIZONTAL_EXTENT_MAX_M:.0f} m)."
+            )
+
+        min_z = cz - z_amp
+        max_z = cz + z_amp
+        if min_z < ALTITUDE_MIN_M:
+            errors.append(f"{p}La altura mínima de lemniscata ({min_z:.2f} m) cae por debajo del despeje al suelo ({ALTITUDE_MIN_M} m).")
+        if max_z > ALTITUDE_MAX_M:
+            errors.append(f"{p}La altura máxima de lemniscata ({max_z:.2f} m) supera el techo operacional ({ALTITUDE_MAX_M:.0f} m).")
 
     return errors, warnings
 
