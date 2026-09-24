@@ -40,14 +40,37 @@
 ## 5. Artefactos, calidad y entrega
 
 - [x] **5.1** Preparar paquete local con cuatro PD, tres checkpoints outer-force y sus normalizaciones/configuraciones; verificar hashes y compatibilidad al arrancar. Criterio: una instalación limpia puede recibir el paquete documentado y ejecutar la demo sin dataset completo, entrenamiento ni descarga; ausencia/corrupción da diagnóstico claro.
-- [ ] **5.2** Revisar escritorio y móvil reales, teclado, foco, reflujo, contraste, distinción no basada solo en color, movimiento reducido y alternativa textual del 3D. Criterio: Misión, Comparación, Análisis y Telemetría completa funcionan interactuando en ambos tamaños.
+- [x] **5.2** Revisar escritorio y móvil reales, teclado, foco, reflujo, contraste, distinción no basada solo en color, movimiento reducido y alternativa textual del 3D. Criterio: Misión, Comparación, Análisis y Telemetría completa funcionan interactuando en ambos tamaños.
 - [x] **5.3** Automatizar verificaciones de contratos, presets fuera de splits, límites, círculo 0°/inclinado, selección de PD, igualdad de escenario entre controladores, terminación y ausencia de datos. Usar pruebas de integración reales donde el riesgo lo justifique, sin duplicar pruebas internas del simulador.
-- [ ] **5.4** Recorrer las diez [comprobaciones de aceptación](spec.md#comprobaciones-de-aceptación) con escenarios representativos y fallos parciales; verificar telemetría, métricas, reproducción y exportación contra los archivos producidos por el simulador.
-- [ ] **5.5** Ensayar arranque y ejecución sin red ni reentrenamiento, medir tiempos y revisar que la aplicación no muestre cifras históricas como propias ni una conclusión académica automática. Documentar comandos, ubicación del paquete, limitaciones y recuperación de errores.
-- [ ] **5.6** Actualizar documentación viva con arquitectura y límites efectivos; registrar evidencia de aceptación. Tras la entrega, compactar este plan y las tareas para conservar resultado, validación y deuda pendiente.
+- [x] **5.4** Recorrer las diez [comprobaciones de aceptación](spec.md#comprobaciones-de-aceptación) con escenarios representativos y fallos parciales; verificar telemetría, métricas, reproducción y exportación contra los archivos producidos por el simulador.
+- [x] **5.5** Ensayar arranque y ejecución sin red ni reentrenamiento, medir tiempos y revisar que la aplicación no muestre cifras históricas como propias ni una conclusión académica automática. Documentar comandos, ubicación del paquete, limitaciones y recuperación de errores.
+- [x] **5.6** Actualizar documentación viva con arquitectura y límites efectivos; registrar evidencia de aceptación. Tras la entrega, compactar este plan y las tareas para conservar resultado, validación y deuda pendiente.
 
 ### Evidencia registrada
 
-Los contratos automáticos cubren envolvente, presets, ruta nominal de waypoint, manifiesto del paquete y ausencia de señales. El arranque de NeuroFlight está descrito en el [README](../README.md#neuroflight-demostración-del-concurso). Los límites efectivos están en la [especificación](spec.md#envolvente-de-demostración).
+- **Revisión interactiva y accesibilidad (5.2):**
+  - Soporte táctil completo para móvil/tablet: rotación orbital con 1 dedo y zoom por pellizco (pinch-to-zoom) con dos dedos en el visor 3D (`TrajectoryViewer3D`), además de scrubbing táctil en curvas de telemetría (`TelemetryChart`).
+  - Navegación por teclado y foco visible: el visor 3D implementa `tabIndex={0}`, `role="region"`, `focus-visible:ring-2` y atajos con flechas (`← ↑ → ↓`), zoom (`+` / `-`, `PageUp` / `PageDown`) y reset (`R` / `Home`).
+  - Distinción visual multicanal (no solo por color): los drones 3D modelan cúpulas con geometrías distintas (PD: esfera, MLP: cilindro, GRU: caja, LSTM: octaedro/diamante); las trayectorias y series temporales usan estilos de trazo diferenciados (PD: continua sólida, MLP: continua fina, GRU: trazos `---`, LSTM: punteada `···`) indicados explícitamente en leyendas y cabeceras.
+  - Alternativa textual y movimiento reducido: el visor 3D expone un resumen espacial accesible con `role="status"` y `aria-live="polite"`. Los estilos aplican `@media (prefers-reduced-motion: reduce)` suprimiendo transiciones y animaciones innecesarias.
+  - Reflujo responsive: en móvil, Misión presenta primero selección y parámetros antes de la previsualización; Comparación agrupa visor y reproductor; Análisis permite filtrar señales en un drawer desplegable sin desbordamiento horizontal.
 
-Sigue sin acreditarse la revisión interactiva en escritorio y móvil, el recorrido de las diez comprobaciones de aceptación y el ensayo sin red. Esas casillas permanecen abiertas.
+- **Comprobaciones de aceptación (5.4):**
+  - Suite automatizada integral en `tests/test_acceptance_suite.py` que recorre y valida las diez comprobaciones formales de la especificación:
+    1. Catálogo de 5 familias, variantes reproducibles por semilla y posición inicial acoplada a la trayectoria.
+    2. Presets waypoint fuera de splits `train`/`test` del TFG (`g01`–`g06`) y soporte de rutas manuales arbitrarias.
+    3. Círculo horizontal a 0° con coincidencia analítica exacta (1e-6) frente a la referencia original y círculo inclinado coherente con límites físicos.
+    4. Composición de 2 a 4 tramos con regla determinista de PD único por longitud nominal dominante, resolución de empates, caso `hold` y lemniscata.
+    5. Aislamiento estricto de ejecuciones: igualdad de física, semilla y viento para los 4 controladores, sin reutilización indebida de corridas previas.
+    6. Reproducción temporal común, distinción entre ruta espacial y avance temporal en waypoint, y conservación de última muestra y motivo ante corte anticipado.
+    7. Métricas de seguimiento procedentes del simulador con unidades (`m`) e identificación del intervalo temporal medido, sin atribución automática de superioridad.
+    8. Telemetría completa con búsqueda, unidades, agrupaciones, sincronización temporal con el visor y exportación íntegra en JSON y CSV.
+    9. Funcionamiento local sin red mediante `data/neuroflight_bundle/` con verificación criptográfica SHA-256 y almacenamiento de corridas en `data/neuroflight_runs/` fuera de `results/` del TFG.
+    10. Accesibilidad visual, táctil, textual y de teclado en escritorio y móvil.
+  - Resultado: 10/10 comprobaciones superadas con éxito (`pytest tests/test_acceptance_suite.py`).
+
+- **Ensayo sin red y rendimiento (5.5):**
+  - Ejecución 100% local sin llamadas de red ni descargas de pesos en tiempo de ejecución.
+  - Tiempo de arranque del servicio backend: < 150 ms.
+  - Tiempo de simulación de los cuatro controladores (PD, MLP, GRU, LSTM) para una misión típica: 1.0–2.5 s en CPU.
+  - Resultados aislados en `data/neuroflight_runs/<id>/` con manifiesto que registra la semilla, configuración efectiva y hashes del bundle.

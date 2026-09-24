@@ -125,9 +125,13 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
   });
 
   // Duration and sample index closest to currentTime
-  const primaryTimeList = sampleTelem?.time_s || [];
-  const maxDuration = primaryTimeList.length > 0 ? primaryTimeList[primaryTimeList.length - 1] : 10;
+  const maxDuration = Math.max(
+    ...Object.values(results?.summaries || {}).map((s) => s.duration_s || 0),
+    ...Object.values(telemetryData).map((t) => (t?.time_s?.length ? t.time_s[t.time_s.length - 1] : 0)),
+    1.0
+  );
 
+  const primaryTimeList = sampleTelem?.time_s || [];
   let currentSampleIdx = 0;
   for (let i = 0; i < primaryTimeList.length; i++) {
     if (primaryTimeList[i] <= currentTime) {
@@ -151,10 +155,6 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
                 <ArrowLeft className="w-3.5 h-3.5" />
                 <span>Volver a Comparación</span>
               </button>
-              <span className="text-aerolab-secondary">•</span>
-              <span className="text-xs font-mono text-aerolab-secondary">
-                Instante actual: t = {currentTime.toFixed(2)} s
-              </span>
             </div>
             <h2 className="text-lg font-bold text-aerolab-text flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-aerolab-action" />
@@ -191,7 +191,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
         {/* Controller Visibility Pills */}
         <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-aerolab-border/60">
           <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="text-aerolab-secondary font-medium mr-1">Controladores visibles:</span>
+            <span className="text-aerolab-secondary font-medium mr-1">Controladores:</span>
             {Object.entries(CONTROLLER_CONFIG).map(([cid, cfg]) => {
               const summary = results.summaries[cid];
               const isAvailable = !!summary && summary.status === "completed";
@@ -200,11 +200,10 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
               return (
                 <label
                   key={cid}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border cursor-pointer select-none transition-all ${
-                    isChecked
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border cursor-pointer select-none transition-all ${isChecked
                       ? "bg-white border-aerolab-border shadow-2xs font-semibold text-aerolab-text"
                       : "bg-aerolab-canvas/50 border-transparent text-aerolab-secondary opacity-60 hover:opacity-90"
-                  }`}
+                    }`}
                 >
                   <input
                     type="checkbox"
@@ -401,11 +400,10 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
                   <button
                     key={g}
                     onClick={() => setSelectedGroup(g)}
-                    className={`text-xs px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
-                      selectedGroup === g
+                    className={`text-xs px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${selectedGroup === g
                         ? "bg-aerolab-action text-white font-semibold border-aerolab-action shadow-xs"
                         : "bg-white text-aerolab-secondary border-aerolab-border hover:bg-aerolab-canvas"
-                    }`}
+                      }`}
                   >
                     {g}
                   </button>
@@ -421,11 +419,10 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
                     return (
                       <label
                         key={sigKey}
-                        className={`flex items-center gap-2 p-1.5 rounded cursor-pointer select-none transition-all ${
-                          isChecked
+                        className={`flex items-center gap-2 p-1.5 rounded cursor-pointer select-none transition-all ${isChecked
                             ? "bg-aerolab-canvas text-aerolab-action font-semibold border border-aerolab-action/30"
                             : "text-aerolab-secondary hover:bg-aerolab-canvas/50"
-                        }`}
+                          }`}
                       >
                         <input
                           type="checkbox"

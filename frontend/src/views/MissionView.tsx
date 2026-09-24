@@ -10,6 +10,7 @@ import {
   Layers,
   ChevronDown,
   ChevronUp,
+  GripVertical,
 } from "lucide-react";
 import {
   MissionConfigRequest,
@@ -74,6 +75,64 @@ export const MissionView: React.FC<MissionViewProps> = ({
   }, [missionConfig]);
 
   const [expandedSegments, setExpandedSegments] = useState<Record<number, boolean>>({ 0: true, 1: true });
+  const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+
+  const handleSwapSegments = (fromIdx: number, toIdx: number) => {
+    if (fromIdx === toIdx) return;
+    const newSegs = [...(missionConfig.segments || [])];
+    const temp = newSegs[fromIdx];
+    newSegs[fromIdx] = newSegs[toIdx];
+    newSegs[toIdx] = temp;
+    setMissionConfig({ ...missionConfig, segments: newSegs });
+
+    // Also swap expanded state
+    setExpandedSegments((prev) => {
+      const fromExp = prev[fromIdx] ?? false;
+      const toExp = prev[toIdx] ?? false;
+      return {
+        ...prev,
+        [fromIdx]: toExp,
+        [toIdx]: fromExp,
+      };
+    });
+  };
+
+  const handleDragStart = (e: React.DragEvent, idx: number) => {
+    setDraggedIdx(idx);
+    e.dataTransfer.setData("text/plain", String(idx));
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (dragOverIdx !== idx) {
+      setDragOverIdx(idx);
+    }
+  };
+
+  const handleDragLeave = (_e: React.DragEvent, idx: number) => {
+    if (dragOverIdx === idx) {
+      setDragOverIdx(null);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent, toIdx: number) => {
+    e.preventDefault();
+    const dataIdx = e.dataTransfer.getData("text/plain");
+    const fromIdx = draggedIdx ?? (dataIdx ? parseInt(dataIdx, 10) : null);
+    if (fromIdx !== null && !isNaN(fromIdx) && fromIdx !== toIdx) {
+      handleSwapSegments(fromIdx, toIdx);
+    }
+    setDraggedIdx(null);
+    setDragOverIdx(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIdx(null);
+    setDragOverIdx(null);
+  };
 
   const updateSegmentParam = (segIdx: number, key: string, value: any) => {
     const newSegs = [...(missionConfig.segments || [])];
@@ -95,21 +154,21 @@ export const MissionView: React.FC<MissionViewProps> = ({
       const p = presets?.waypoint_presets?.waypoint_clean;
       defaultParams = p
         ? {
-            waypoints: p.waypoints.map((wp: any) => [...wp]),
-            max_speed_m_s: p.max_speed_m_s,
-            max_acceleration_m_s2: p.max_acceleration_m_s2,
-            waypoint_tolerance_m: p.waypoint_tolerance_m,
-            waypoint_speed_tolerance_m_s: p.waypoint_speed_tolerance_m_s,
-            dwell_time_s: p.dwell_time_s,
-          }
+          waypoints: p.waypoints.map((wp: any) => [...wp]),
+          max_speed_m_s: p.max_speed_m_s,
+          max_acceleration_m_s2: p.max_acceleration_m_s2,
+          waypoint_tolerance_m: p.waypoint_tolerance_m,
+          waypoint_speed_tolerance_m_s: p.waypoint_speed_tolerance_m_s,
+          dwell_time_s: p.dwell_time_s,
+        }
         : {
-            waypoints: [[0, 0, 2], [1.5, 1.5, 2], [0, 2, 2]],
-            max_speed_m_s: 0.6,
-            max_acceleration_m_s2: 0.5,
-            waypoint_tolerance_m: 0.2,
-            waypoint_speed_tolerance_m_s: 0.2,
-            dwell_time_s: 0.4,
-          };
+          waypoints: [[0, 0, 2], [1.5, 1.5, 2], [0, 2, 2]],
+          max_speed_m_s: 0.6,
+          max_acceleration_m_s2: 0.5,
+          waypoint_tolerance_m: 0.2,
+          waypoint_speed_tolerance_m_s: 0.2,
+          dwell_time_s: 0.4,
+        };
     } else if (newType === "circle") {
       defaultParams = {
         center_W_m: [0, 0, 2.0],
@@ -266,22 +325,20 @@ export const MissionView: React.FC<MissionViewProps> = ({
               <button
                 type="button"
                 onClick={handleEnableSimple}
-                className={`px-2.5 py-1 rounded font-medium ${
-                  missionConfig.mode === "simple"
+                className={`px-2.5 py-1 rounded font-medium ${missionConfig.mode === "simple"
                     ? "bg-white text-aerolab-action shadow-xs font-semibold"
                     : "text-aerolab-secondary hover:text-aerolab-text"
-                }`}
+                  }`}
               >
                 Misión Simple
               </button>
               <button
                 type="button"
                 onClick={handleEnableComposite}
-                className={`px-2.5 py-1 rounded font-medium ${
-                  missionConfig.mode === "composite"
+                className={`px-2.5 py-1 rounded font-medium ${missionConfig.mode === "composite"
                     ? "bg-white text-aerolab-action shadow-xs font-semibold"
                     : "text-aerolab-secondary hover:text-aerolab-text"
-                }`}
+                  }`}
               >
                 Composición por Tramos
               </button>
@@ -301,11 +358,10 @@ export const MissionView: React.FC<MissionViewProps> = ({
                 <button
                   key={item.id}
                   onClick={() => handleFamilyChange(item.id)}
-                  className={`px-3 py-2 rounded-lg text-xs font-medium border text-center transition-all ${
-                    missionConfig.family === item.id
+                  className={`px-3 py-2 rounded-lg text-xs font-medium border text-center transition-all ${missionConfig.family === item.id
                       ? "border-aerolab-action bg-aerolab-action/5 text-aerolab-action font-semibold shadow-xs"
                       : "border-aerolab-border bg-white text-aerolab-secondary hover:bg-aerolab-canvas"
-                  }`}
+                    }`}
                 >
                   {item.label}
                 </button>
@@ -321,14 +377,40 @@ export const MissionView: React.FC<MissionViewProps> = ({
               {missionConfig.mode === "composite" ? "Tramos de la Composición" : `Parámetros: ${missionConfig.family}`}
             </span>
 
-            <button
-              onClick={handleGenerateVariant}
-              className="flex items-center gap-1.5 text-xs text-aerolab-action hover:text-aerolab-action/80 font-medium px-2 py-1 rounded bg-aerolab-canvas border border-aerolab-border"
-              title="Genera otra variante inicial con diferente semilla"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Siguiente variante</span>
-            </button>
+            <div className="flex items-center gap-3">
+              {missionConfig.mode === "simple" && missionConfig.family !== TrajectoryFamily.WAYPOINT && (
+                <div className="flex items-center gap-1.5 text-xs">
+                  <label className="text-aerolab-secondary font-medium whitespace-nowrap">Duración (s):</label>
+                  <input
+                    type="number"
+                    step="1"
+                    min="1"
+                    max="180"
+                    value={missionConfig.params.duration ?? (missionConfig.family === "hold" ? 10 : missionConfig.family === "circle" ? 15 : missionConfig.family === "lissajous" ? 20 : 18)}
+                    onChange={(e) => {
+                      const d = parseFloat(e.target.value);
+                      setMissionConfig({
+                        ...missionConfig,
+                        params: {
+                          ...missionConfig.params,
+                          duration: Number.isFinite(d) ? d : 15,
+                        },
+                      });
+                    }}
+                    className="w-16 border border-aerolab-border rounded px-2 py-1 font-mono text-center text-xs font-semibold bg-white"
+                  />
+                </div>
+              )}
+
+              <button
+                onClick={handleGenerateVariant}
+                className="flex items-center gap-1.5 text-xs text-aerolab-action hover:text-aerolab-action/80 font-medium px-2 py-1 rounded bg-aerolab-canvas border border-aerolab-border"
+                title="Genera otra variante inicial con diferente semilla"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Siguiente variante</span>
+              </button>
+            </div>
           </div>
 
           {/* 1. HOLD FORM */}
@@ -365,12 +447,11 @@ export const MissionView: React.FC<MissionViewProps> = ({
                 />
               </div>
               <div>
-                <label className="text-xs text-aerolab-secondary mb-1 block">Altura Z (m, 0.5 a 6.0)</label>
+                <label className="text-xs text-aerolab-secondary mb-1 block">Altura Z (m)</label>
                 <input
                   type="number"
                   step="0.1"
-                  min="0.5"
-                  max="6.0"
+                  min="0.3"
                   value={missionConfig.params.position_W_m?.[2] ?? 1.5}
                   onChange={(e) => {
                     const z = parseFloat(e.target.value) || 1.5;
@@ -394,12 +475,12 @@ export const MissionView: React.FC<MissionViewProps> = ({
               <div className="flex flex-col gap-4">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
-                    <label className="text-xs text-aerolab-secondary mb-1 block">Radio R (m, 0.75 a 3.5)</label>
+                    <label className="text-xs text-aerolab-secondary mb-1 block">Radio R (m, 0.5 a 4.0)</label>
                     <input
                       type="number"
                       step="0.1"
-                      min="0.75"
-                      max="3.5"
+                      min="0.5"
+                      max="4.0"
                       value={currentR}
                       onChange={(e) => {
                         const r = parseFloat(e.target.value) || 1.5;
@@ -439,21 +520,26 @@ export const MissionView: React.FC<MissionViewProps> = ({
                   </div>
 
                   <div>
-                    <label className="text-xs text-aerolab-secondary mb-1 block">Altura centro Z (m, 0.5 a 6.0)</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      min="0.5"
-                      max="6.0"
-                      value={missionConfig.params.center_W_m?.[2] ?? 2.0}
-                      onChange={(e) => {
-                        const cz = parseFloat(e.target.value) || 2.0;
-                        const c = [...(missionConfig.params.center_W_m || [0, 0, 2.0])];
-                        c[2] = cz;
-                        setMissionConfig({ ...missionConfig, params: { ...missionConfig.params, center_W_m: c } });
-                      }}
-                      className="w-full text-sm border border-aerolab-border rounded-lg px-3 py-1.5 font-mono"
-                    />
+                    <label className="text-xs text-aerolab-secondary mb-1 block">Centro [X, Y, Z] (m)</label>
+                    <div className="grid grid-cols-3 gap-1">
+                      {[0, 1, 2].map((axisIdx) => (
+                        <input
+                          key={axisIdx}
+                          type="number"
+                          step="0.1"
+                          value={missionConfig.params.center_W_m?.[axisIdx] ?? (axisIdx === 2 ? 2.0 : 0.0)}
+                          onChange={(e) => {
+                            const val = parseFloat(e.target.value) || 0.0;
+                            const c = [...(missionConfig.params.center_W_m || [0, 0, 2.0])];
+                            c[axisIdx] = val;
+                            setMissionConfig({ ...missionConfig, params: { ...missionConfig.params, center_W_m: c } });
+                          }}
+                          placeholder={["X", "Y", "Z"][axisIdx]}
+                          title={["Centro X (m)", "Centro Y (m)", "Centro Z (m)"][axisIdx]}
+                          className="w-full text-xs border border-aerolab-border rounded px-1.5 py-1.5 font-mono text-center"
+                        />
+                      ))}
+                    </div>
                   </div>
                 </div>
 
@@ -532,19 +618,26 @@ export const MissionView: React.FC<MissionViewProps> = ({
               </div>
 
               <div>
-                <label className="text-xs text-aerolab-secondary mb-1 block">Altura centro Z (m)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  value={missionConfig.params.center_W_m?.[2] ?? 2.5}
-                  onChange={(e) => {
-                    const cz = parseFloat(e.target.value) || 2.5;
-                    const c = [...(missionConfig.params.center_W_m || [0, 0, 2.5])];
-                    c[2] = cz;
-                    setMissionConfig({ ...missionConfig, params: { ...missionConfig.params, center_W_m: c } });
-                  }}
-                  className="w-full text-sm border border-aerolab-border rounded-lg px-3 py-1.5 font-mono"
-                />
+                <label className="text-xs text-aerolab-secondary mb-1 block">Centro [X, Y, Z] (m)</label>
+                <div className="grid grid-cols-3 gap-1">
+                  {[0, 1, 2].map((axisIdx) => (
+                    <input
+                      key={axisIdx}
+                      type="number"
+                      step="0.1"
+                      value={missionConfig.params.center_W_m?.[axisIdx] ?? (axisIdx === 2 ? 2.5 : 0.0)}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value) || 0.0;
+                        const c = [...(missionConfig.params.center_W_m || [0, 0, 2.5])];
+                        c[axisIdx] = val;
+                        setMissionConfig({ ...missionConfig, params: { ...missionConfig.params, center_W_m: c } });
+                      }}
+                      placeholder={["X", "Y", "Z"][axisIdx]}
+                      title={["Centro X (m)", "Centro Y (m)", "Centro Z (m)"][axisIdx]}
+                      className="w-full text-xs border border-aerolab-border rounded px-1.5 py-1.5 font-mono text-center"
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -661,12 +754,14 @@ export const MissionView: React.FC<MissionViewProps> = ({
 
           {/* 5. LEMNISCATE FORM */}
           {missionConfig.mode === "simple" && missionConfig.family === TrajectoryFamily.LEMNISCATE && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
               <div>
-                <label className="text-xs text-aerolab-secondary mb-1 block">Semieje a (m, 1.0 a 3.0)</label>
+                <label className="text-xs text-aerolab-secondary mb-1 block">Semieje a (m, 0.5 a 4.0)</label>
                 <input
                   type="number"
                   step="0.1"
+                  min="0.5"
+                  max="4.0"
                   value={missionConfig.params.a ?? 2.0}
                   onChange={(e) => {
                     const a = parseFloat(e.target.value) || 2.0;
@@ -676,10 +771,12 @@ export const MissionView: React.FC<MissionViewProps> = ({
                 />
               </div>
               <div>
-                <label className="text-xs text-aerolab-secondary mb-1 block">Semieje b (m, 0.5 a 1.8)</label>
+                <label className="text-xs text-aerolab-secondary mb-1 block">Semieje b (m, 0.3 a 2.5)</label>
                 <input
                   type="number"
                   step="0.1"
+                  min="0.3"
+                  max="2.5"
                   value={missionConfig.params.b ?? 1.0}
                   onChange={(e) => {
                     const b = parseFloat(e.target.value) || 1.0;
@@ -701,6 +798,28 @@ export const MissionView: React.FC<MissionViewProps> = ({
                   className="w-full text-sm border border-aerolab-border rounded-lg px-3 py-1.5 font-mono"
                 />
               </div>
+              <div>
+                <label className="text-xs text-aerolab-secondary mb-1 block">Centro [X, Y, Z] (m)</label>
+                <div className="grid grid-cols-3 gap-1">
+                  {[0, 1, 2].map((axisIdx) => (
+                    <input
+                      key={axisIdx}
+                      type="number"
+                      step="0.1"
+                      value={missionConfig.params.center_W_m?.[axisIdx] ?? (axisIdx === 2 ? 2.0 : 0.0)}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value) || 0.0;
+                        const c = [...(missionConfig.params.center_W_m || [0, 0, 2.0])];
+                        c[axisIdx] = val;
+                        setMissionConfig({ ...missionConfig, params: { ...missionConfig.params, center_W_m: c } });
+                      }}
+                      placeholder={["X", "Y", "Z"][axisIdx]}
+                      title={["Centro X (m)", "Centro Y (m)", "Centro Z (m)"][axisIdx]}
+                      className="w-full text-xs border border-aerolab-border rounded px-1.5 py-1.5 font-mono text-center"
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
           )}
 
@@ -708,25 +827,46 @@ export const MissionView: React.FC<MissionViewProps> = ({
           {missionConfig.mode === "composite" && (
             <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between text-xs text-aerolab-secondary">
-                <span>Define entre 2 y 4 tramos encadenados:</span>
+                <span>Define entre 2 y 4 tramos encadenados (arrastra el selector para intercambiar orden):</span>
                 <span>PD seleccionado por longitud nominal dominante</span>
               </div>
 
               {(missionConfig.segments || []).map((seg, idx) => {
                 const isExpanded = !!expandedSegments[idx];
+                const isDragging = draggedIdx === idx;
+                const isOver = dragOverIdx === idx;
 
                 return (
-                  <div key={idx} className="bg-aerolab-canvas p-3 rounded-lg border border-aerolab-border flex flex-col gap-2.5 transition-all">
+                  <div
+                    key={idx}
+                    onDragOver={(e) => handleDragOver(e, idx)}
+                    onDragLeave={(e) => handleDragLeave(e, idx)}
+                    onDrop={(e) => handleDrop(e, idx)}
+                    className={`p-3 rounded-lg border flex flex-col gap-2.5 transition-all ${
+                      isDragging
+                        ? "opacity-40 border-dashed border-aerolab-action bg-aerolab-action/5 scale-[0.99]"
+                        : isOver
+                        ? "border-aerolab-action ring-2 ring-aerolab-action/40 bg-sky-50/50 shadow-sm"
+                        : "bg-aerolab-canvas border-aerolab-border"
+                    }`}
+                  >
                     {/* Segment Header */}
                     <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-aerolab-action text-white text-[10px] font-bold flex items-center justify-center">
+                      <div
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, idx)}
+                        onDragEnd={handleDragEnd}
+                        className="flex items-center gap-1.5 cursor-grab active:cursor-grabbing select-none group"
+                        title="Arrastra para intercambiar el orden de este tramo"
+                      >
+                        <GripVertical className="w-4 h-4 text-aerolab-secondary/60 group-hover:text-aerolab-action transition-colors shrink-0" />
+                        <span className="w-5 h-5 rounded-full bg-aerolab-action text-white text-[10px] font-bold flex items-center justify-center shrink-0">
                           {idx + 1}
                         </span>
                         <select
                           value={seg.type}
                           onChange={(e) => handleSegmentTypeChange(idx, e.target.value)}
-                          className="text-xs font-semibold border border-aerolab-border rounded px-2 py-1 bg-white capitalize cursor-pointer"
+                          className="text-xs font-semibold border border-aerolab-border rounded px-2 py-1 bg-white capitalize cursor-pointer focus:ring-1 focus:ring-aerolab-action"
                         >
                           <option value="hold">Mantener posición</option>
                           <option value="circle">Círculo</option>
@@ -748,7 +888,7 @@ export const MissionView: React.FC<MissionViewProps> = ({
                               type="number"
                               step="1"
                               min="1"
-                              max="30"
+                              max="90"
                               value={seg.duration ?? 5.0}
                               onChange={(e) => {
                                 const dur = parseFloat(e.target.value);
@@ -788,14 +928,14 @@ export const MissionView: React.FC<MissionViewProps> = ({
                     {isExpanded && (
                       <div className="pt-2 border-t border-aerolab-border/60 flex flex-col gap-2">
                         {seg.type === "circle" && (
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
                             <div>
                               <label className="text-[11px] text-aerolab-secondary block mb-0.5">Radio R (m)</label>
                               <input
                                 type="number"
                                 step="0.1"
                                 min="0.5"
-                                max="3.0"
+                                max="4.0"
                                 value={seg.params?.radius_m ?? 1.5}
                                 onChange={(e) => updateSegmentParam(idx, "radius_m", parseFloat(e.target.value) || 1.5)}
                                 className="w-full border border-aerolab-border rounded px-2 py-1 font-mono text-center bg-white"
@@ -813,22 +953,27 @@ export const MissionView: React.FC<MissionViewProps> = ({
                                 className="w-full border border-aerolab-border rounded px-2 py-1 font-mono text-center bg-white"
                               />
                             </div>
-                            <div>
-                              <label className="text-[11px] text-aerolab-secondary block mb-0.5">Altura Z (m)</label>
-                              <input
-                                type="number"
-                                step="0.1"
-                                min="0.5"
-                                max="5.5"
-                                value={seg.params?.center_W_m?.[2] ?? 2.0}
-                                onChange={(e) => {
-                                  const cz = parseFloat(e.target.value) || 2.0;
-                                  const c = [...(seg.params?.center_W_m || [0, 0, 2.0])];
-                                  c[2] = cz;
-                                  updateSegmentParam(idx, "center_W_m", c);
-                                }}
-                                className="w-full border border-aerolab-border rounded px-2 py-1 font-mono text-center bg-white"
-                              />
+                            <div className="col-span-2">
+                              <label className="text-[11px] text-aerolab-secondary block mb-0.5">Centro [X, Y, Z] (m)</label>
+                              <div className="grid grid-cols-3 gap-1">
+                                {[0, 1, 2].map((axisIdx) => (
+                                  <input
+                                    key={axisIdx}
+                                    type="number"
+                                    step="0.1"
+                                    value={seg.params?.center_W_m?.[axisIdx] ?? (axisIdx === 2 ? 2.0 : 0.0)}
+                                    onChange={(e) => {
+                                      const val = parseFloat(e.target.value) || 0.0;
+                                      const c = [...(seg.params?.center_W_m || [0, 0, 2.0])];
+                                      c[axisIdx] = val;
+                                      updateSegmentParam(idx, "center_W_m", c);
+                                    }}
+                                    placeholder={["X", "Y", "Z"][axisIdx]}
+                                    title={["Centro X (m)", "Centro Y (m)", "Centro Z (m)"][axisIdx]}
+                                    className="w-full border border-aerolab-border rounded px-1 py-1 font-mono text-center bg-white text-xs"
+                                  />
+                                ))}
+                              </div>
                             </div>
                             <div>
                               <label className="text-[11px] text-aerolab-secondary block mb-0.5">Inclinación (°)</label>
@@ -1007,7 +1152,7 @@ export const MissionView: React.FC<MissionViewProps> = ({
                         )}
 
                         {seg.type === "lissajous" && (
-                          <div className="grid grid-cols-3 gap-2 text-xs">
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
                             <div>
                               <label className="text-[11px] text-aerolab-secondary block mb-0.5">Amplitudes [Ax, Ay, Az]</label>
                               <input
@@ -1035,23 +1180,32 @@ export const MissionView: React.FC<MissionViewProps> = ({
                               />
                             </div>
                             <div>
-                              <label className="text-[11px] text-aerolab-secondary block mb-0.5">Altura Z (m)</label>
-                              <input
-                                type="number"
-                                step="0.1"
-                                value={seg.params?.center_W_m?.[2] ?? 2.5}
-                                onChange={(e) => {
-                                  const cz = parseFloat(e.target.value) || 2.5;
-                                  updateSegmentParam(idx, "center_W_m", [0, 0, cz]);
-                                }}
-                                className="w-full border border-aerolab-border rounded px-2 py-1 font-mono text-center bg-white"
-                              />
+                              <label className="text-[11px] text-aerolab-secondary block mb-0.5">Centro [X, Y, Z] (m)</label>
+                              <div className="grid grid-cols-3 gap-1">
+                                {[0, 1, 2].map((axisIdx) => (
+                                  <input
+                                    key={axisIdx}
+                                    type="number"
+                                    step="0.1"
+                                    value={seg.params?.center_W_m?.[axisIdx] ?? (axisIdx === 2 ? 2.5 : 0.0)}
+                                    onChange={(e) => {
+                                      const val = parseFloat(e.target.value) || 0.0;
+                                      const c = [...(seg.params?.center_W_m || [0, 0, 2.5])];
+                                      c[axisIdx] = val;
+                                      updateSegmentParam(idx, "center_W_m", c);
+                                    }}
+                                    placeholder={["X", "Y", "Z"][axisIdx]}
+                                    title={["Centro X (m)", "Centro Y (m)", "Centro Z (m)"][axisIdx]}
+                                    className="w-full border border-aerolab-border rounded px-1 py-1 font-mono text-center bg-white text-xs"
+                                  />
+                                ))}
+                              </div>
                             </div>
                           </div>
                         )}
 
                         {seg.type === "lemniscate" && (
-                          <div className="grid grid-cols-3 gap-2 text-xs">
+                          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
                             <div>
                               <label className="text-[11px] text-aerolab-secondary block mb-0.5">Semieje a (m)</label>
                               <input
@@ -1081,6 +1235,28 @@ export const MissionView: React.FC<MissionViewProps> = ({
                                 onChange={(e) => updateSegmentParam(idx, "omega_rad_s", parseFloat(e.target.value) || 0.35)}
                                 className="w-full border border-aerolab-border rounded px-2 py-1 font-mono text-center bg-white"
                               />
+                            </div>
+                            <div className="col-span-2">
+                              <label className="text-[11px] text-aerolab-secondary block mb-0.5">Centro [X, Y, Z] (m)</label>
+                              <div className="grid grid-cols-3 gap-1">
+                                {[0, 1, 2].map((axisIdx) => (
+                                  <input
+                                    key={axisIdx}
+                                    type="number"
+                                    step="0.1"
+                                    value={seg.params?.center_W_m?.[axisIdx] ?? (axisIdx === 2 ? 2.0 : 0.0)}
+                                    onChange={(e) => {
+                                      const val = parseFloat(e.target.value) || 0.0;
+                                      const c = [...(seg.params?.center_W_m || [0, 0, 2.0])];
+                                      c[axisIdx] = val;
+                                      updateSegmentParam(idx, "center_W_m", c);
+                                    }}
+                                    placeholder={["X", "Y", "Z"][axisIdx]}
+                                    title={["Centro X (m)", "Centro Y (m)", "Centro Z (m)"][axisIdx]}
+                                    className="w-full border border-aerolab-border rounded px-1 py-1 font-mono text-center bg-white text-xs"
+                                  />
+                                ))}
+                              </div>
                             </div>
                           </div>
                         )}
@@ -1193,11 +1369,10 @@ export const MissionView: React.FC<MissionViewProps> = ({
           <button
             onClick={handleExecute}
             disabled={!validation?.valid || isSimulating}
-            className={`w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-semibold text-sm shadow-xs transition-all ${
-              validation?.valid && !isSimulating
+            className={`w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-semibold text-sm shadow-xs transition-all ${validation?.valid && !isSimulating
                 ? "bg-aerolab-action text-white hover:bg-aerolab-action/90 cursor-pointer"
                 : "bg-aerolab-border text-aerolab-secondary cursor-not-allowed"
-            }`}
+              }`}
           >
             <Play className="w-4 h-4 fill-current" />
             <span>{isSimulating ? "Iniciando corrida..." : "Ejecutar Misión"}</span>
@@ -1247,7 +1422,7 @@ export const MissionView: React.FC<MissionViewProps> = ({
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-aerolab-text" />
-              <span>Punto de inicio (fijo)</span>
+              <span>Punto de inicio</span>
             </div>
           </div>
         </div>

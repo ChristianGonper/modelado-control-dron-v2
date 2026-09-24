@@ -11,12 +11,12 @@ export interface TelemetryChartProps {
 
 const CONTROLLER_STYLE: Record<
   string,
-  { name: string; color: string; dashArray?: string }
+  { name: string; color: string; dashArray?: string; styleLabel: string }
 > = {
-  classic: { name: "PD", color: "#0284C7" },
-  mlp: { name: "MLP", color: "#10B981" },
-  gru: { name: "GRU", color: "#F59E0B", dashArray: "4 2" },
-  lstm: { name: "LSTM", color: "#8B5CF6", dashArray: "2 2" },
+  classic: { name: "PD", color: "#0284C7", styleLabel: "continua" },
+  mlp: { name: "MLP", color: "#10B981", styleLabel: "continua" },
+  gru: { name: "GRU", color: "#F59E0B", dashArray: "5 3", styleLabel: "trazos" },
+  lstm: { name: "LSTM", color: "#8B5CF6", dashArray: "2 2", styleLabel: "puntos" },
 };
 
 export const TelemetryChart: React.FC<TelemetryChartProps> = ({
@@ -40,33 +40,19 @@ export const TelemetryChart: React.FC<TelemetryChartProps> = ({
   const plotW = svgW - padL - padR;
   const plotH = svgH - padT - padB;
 
-  // Determine time baseline from the first available series
-  const firstTelem = Object.values(telemetryData)[0];
-  const timeArray = firstTelem?.time_s || [];
-  const maxTime = timeArray.length > 0 ? timeArray[timeArray.length - 1] : 10;
+  // Determine maximum time across ALL loaded controller series
+  let maxTime = 0;
+  Object.values(telemetryData).forEach((data) => {
+    if (data?.time_s && data.time_s.length > 0) {
+      const last = data.time_s[data.time_s.length - 1];
+      if (last > maxTime) maxTime = last;
+    }
+  });
+  if (maxTime <= 0) maxTime = 10;
 
   // Display time: hover takes precedence if hovering
   const activeDisplayTime = hoverTime !== null ? hoverTime : currentTime;
-
-  // Find index closest to activeDisplayTime
-  let activeIdx = 0;
-  for (let i = 0; i < timeArray.length; i++) {
-    if (timeArray[i] <= activeDisplayTime) {
-      activeIdx = i;
-    } else {
-      break;
-    }
-  }
-
-  // Find index closest to fixed currentTime (for permanent dots)
-  let currentIdx = 0;
-  for (let i = 0; i < timeArray.length; i++) {
-    if (timeArray[i] <= currentTime) {
-      currentIdx = i;
-    } else {
-      break;
-    }
-  }
+  const firstTelem = Object.values(telemetryData)[0];
 
   // Accurately convert screen client coordinates to SVG plot time
   const getTimeFromEvent = (e: React.MouseEvent<SVGSVGElement>): number | null => {
@@ -76,6 +62,17 @@ export const TelemetryChart: React.FC<TelemetryChartProps> = ({
 
     // Convert screen pixel X to SVG viewBox X coordinate (0 to 800)
     const svgX = ((e.clientX - rect.left) / rect.width) * svgW;
+    const clampedX = Math.max(padL, Math.min(svgW - padR, svgX));
+    const targetT = ((clampedX - padL) / plotW) * maxTime;
+    return Math.max(0, Math.min(maxTime, targetT));
+  };
+
+  const getTimeFromTouch = (e: React.TouchEvent<SVGSVGElement>): number | null => {
+    if (maxTime <= 0 || e.touches.length === 0) return null;
+    const rect = e.currentTarget.getBoundingClientRect();
+    if (rect.width <= 0) return null;
+
+    const svgX = ((e.touches[0].clientX - rect.left) / rect.width) * svgW;
     const clampedX = Math.max(padL, Math.min(svgW - padR, svgX));
     const targetT = ((clampedX - padL) / plotW) * maxTime;
     return Math.max(0, Math.min(maxTime, targetT));
@@ -111,6 +108,20 @@ export const TelemetryChart: React.FC<TelemetryChartProps> = ({
 
   const handleMouseUp = () => {
     setIsMouseDown(false);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<SVGSVGElement>) => {
+    const t = getTimeFromTouch(e);
+    if (t !== null && onTimeChange) {
+      onTimeChange(t);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<SVGSVGElement>) => {
+    const t = getTimeFromTouch(e);
+    if (t !== null && onTimeChange) {
+      onTimeChange(t);
+    }
   };
 
   if (!firstTelem || selectedSignals.length === 0) {
@@ -174,10 +185,29 @@ export const TelemetryChart: React.FC<TelemetryChartProps> = ({
           if (!visibleControllers[cid]) return;
           const series = data.signals[sigKey];
           const tList = data.time_s;
-          if (!series || series.length < 2) return;
+          if (!series || !tList || series.length < 2) return;
 
-          displayedVals[cid] = series[activeIdx] ?? null;
-          fixedVals[cid] = series[currentIdx] ?? null;
+          // Find sample closest to activeDisplayTime for this controller
+          let cActiveIdx = 0;
+          for (let i = 0; i < tList.length; i++) {
+            if (tList[i] <= activeDisplayTime) {
+              cActiveIdx = i;
+            } else {
+              break;
+            }
+          }
+          displayedVals[cid] = series[cActiveIdx] ?? null;
+
+          // Find sample closest to fixed currentTime for this controller
+          let cFixedIdx = 0;
+          for (let i = 0; i < tList.length; i++) {
+            if (tList[i] <= currentTime) {
+              cFixedIdx = i;
+            } else {
+              break;
+            }
+          }
+          fixedVals[cid] = series[cFixedIdx] ?? null;
 
           // Downsample for crisp SVG rendering if high density (> 400 pts)
           const step = Math.max(1, Math.floor(series.length / 400));
@@ -206,32 +236,33 @@ export const TelemetryChart: React.FC<TelemetryChartProps> = ({
             className="bg-white p-4 rounded-xl border border-aerolab-border shadow-xs flex flex-col gap-2 transition-all hover:border-aerolab-border/80"
           >
             {/* Header: Signal Name, Unit, and Instant Values */}
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-aerolab-border/60 pb-2">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-aerolab-border/60 pb-2">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-aerolab-text font-mono">{sigKey}</span>
+                <span className="text-sm font-bold text-aerolab-text font-mono">{sigKey}</span>
                 {unit && (
-                  <span className="text-[11px] bg-aerolab-canvas text-aerolab-secondary px-2 py-0.5 rounded font-mono border border-aerolab-border">
+                  <span className="text-xs bg-aerolab-canvas text-aerolab-secondary px-2 py-0.5 rounded font-mono border border-aerolab-border">
                     {unit}
                   </span>
                 )}
                 <span className="text-xs text-aerolab-secondary">({group})</span>
-                {hoverTime !== null && (
-                  <span className="text-[10px] bg-blue-50 text-aerolab-action font-mono px-1.5 py-0.5 rounded border border-blue-200 animate-fadeIn">
-                    hover t={hoverTime.toFixed(2)}s
-                  </span>
-                )}
+                <span className="text-xs bg-sky-50 text-aerolab-action font-mono px-2 py-0.5 rounded font-semibold border border-sky-200">
+                  t = {activeDisplayTime.toFixed(2)} s
+                </span>
               </div>
 
-              {/* Instant values badge for each visible controller */}
-              <div className="flex flex-wrap items-center gap-3 text-xs font-mono">
+              {/* Instant values badge for each visible controller - larger & clearer */}
+              <div className="flex flex-wrap items-center gap-2">
                 {Object.entries(CONTROLLER_STYLE).map(([cid, meta]) => {
                   if (!visibleControllers[cid]) return null;
                   const v = displayedVals[cid];
                   return (
-                    <div key={cid} className="flex items-center gap-1.5">
-                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: meta.color }} />
-                      <span className="font-sans text-aerolab-secondary">{meta.name}:</span>
-                      <span className="font-semibold tabular-nums text-aerolab-text">
+                    <div
+                      key={cid}
+                      className="flex items-center gap-1.5 bg-aerolab-canvas px-2.5 py-1 rounded-lg border border-aerolab-border/80 shadow-2xs"
+                    >
+                      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: meta.color }} />
+                      <span className="font-sans text-xs text-aerolab-secondary font-medium">{meta.name}:</span>
+                      <span className="text-sm font-mono font-bold tabular-nums text-aerolab-text">
                         {v !== null && v !== undefined ? v.toFixed(3) : "—"}
                       </span>
                     </div>
@@ -244,11 +275,15 @@ export const TelemetryChart: React.FC<TelemetryChartProps> = ({
             <div className="w-full overflow-hidden" ref={containerRef}>
               <svg
                 viewBox={`0 0 ${svgW} ${svgH}`}
-                className="w-full h-auto cursor-crosshair select-none"
+                role="img"
+                aria-label={`Gráfica temporal de la señal ${sigKey} (${unit || "adimensional"})`}
+                className="w-full h-auto cursor-crosshair select-none touch-none"
                 onClick={handleChartClick}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseLeave={handleMouseLeave}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
               >
                 {/* Horizontal Gridlines & Y-labels */}
                 {yTicks.map((yVal, i) => {
@@ -352,7 +387,7 @@ export const TelemetryChart: React.FC<TelemetryChartProps> = ({
                   );
                 })}
 
-                {/* Hover Guide Line and Readout Pill */}
+                {/* Hover Guide Line, Data Value Badges & X-Axis Timestamp */}
                 {hoverX !== null && hoverTime !== null && (
                   <g className="pointer-events-none">
                     <line
@@ -365,37 +400,60 @@ export const TelemetryChart: React.FC<TelemetryChartProps> = ({
                       strokeDasharray="3 3"
                     />
 
-                    {/* Hover points on curves */}
+                    {/* Data values displayed near the point on each curve */}
                     {Object.entries(displayedVals).map(([cid, val]) => {
                       if (val === null || val === undefined || !visibleControllers[cid]) return null;
                       const cy = scaleY(val);
-                      const color = CONTROLLER_STYLE[cid]?.color || "#0284C7";
+                      const meta = CONTROLLER_STYLE[cid];
+                      const color = meta?.color || "#0284C7";
+                      const valStr = Number(val).toFixed(2);
+                      const pillW = valStr.length * 6.5 + 12;
+                      const pillX = hoverX + 8 + pillW > svgW - padR ? hoverX - 8 - pillW : hoverX + 8;
+                      const pillY = Math.max(padT, Math.min(svgH - padB - 16, cy - 8));
+
                       return (
-                        <circle
-                          key={`hover-${cid}`}
-                          cx={hoverX}
-                          cy={cy}
-                          r="3.5"
-                          fill="#FFFFFF"
-                          stroke={color}
-                          strokeWidth="2"
-                        />
+                        <g key={`hover-val-${cid}`}>
+                          <circle
+                            cx={hoverX}
+                            cy={cy}
+                            r="4"
+                            fill="#FFFFFF"
+                            stroke={color}
+                            strokeWidth="2.5"
+                          />
+                          <rect
+                            x={pillX}
+                            y={pillY}
+                            width={pillW}
+                            height={16}
+                            rx={3}
+                            fill={color}
+                            opacity={0.92}
+                          />
+                          <text
+                            x={pillX + pillW / 2}
+                            y={pillY + 11}
+                            textAnchor="middle"
+                            className="text-[9px] fill-white font-mono font-bold"
+                          >
+                            {valStr}
+                          </text>
+                        </g>
                       );
                     })}
 
-                    {/* Floating timestamp tag badge */}
+                    {/* Timestamp badge positioned on the X-axis */}
                     <rect
-                      x={Math.max(padL, Math.min(svgW - padR - 50, hoverX - 25))}
-                      y={4}
-                      width={50}
-                      height={14}
-                      rx={3}
+                      x={Math.max(padL, Math.min(svgW - padR - 48, hoverX - 24))}
+                      y={svgH - padB + 2}
+                      width={48}
+                      height={16}
+                      rx={4}
                       fill="#0F172A"
-                      opacity={0.9}
                     />
                     <text
-                      x={Math.max(padL + 25, Math.min(svgW - padR - 25, hoverX))}
-                      y={14}
+                      x={Math.max(padL + 24, Math.min(svgW - padR - 24, hoverX))}
+                      y={svgH - padB + 13}
                       textAnchor="middle"
                       className="text-[9px] fill-white font-mono font-bold"
                     >

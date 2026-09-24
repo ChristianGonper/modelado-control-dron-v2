@@ -1,5 +1,6 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
+import { Maximize2, Minimize2 } from "lucide-react";
 import { TrajectorySample } from "../types";
 
 export interface TrajectoryViewer3DProps {
@@ -13,6 +14,7 @@ export interface TrajectoryViewer3DProps {
   className?: string;
   showSpatialSummary?: boolean;
   showLegend?: boolean;
+  children?: React.ReactNode;
 }
 
 const CONTROLLER_COLORS: Record<string, number> = {
@@ -25,8 +27,13 @@ const CONTROLLER_COLORS: Record<string, number> = {
 /**
  * Creates a procedural 3D Quadcopter model with carbon frame, central avionics hub,
  * 4 motors, spinning rotor discs and a forward heading indicator.
+ * Distinguishes controllers geometrically in addition to color:
+ * - classic (PD): Spherical dome
+ * - mlp: Flat cylinder cap
+ * - gru: Angular box canopy
+ * - lstm: Diamond / Octahedron canopy
  */
-const createDroneGroup = (color: number, isStopped: boolean = false) => {
+const createDroneGroup = (cid: string, color: number, isStopped: boolean = false) => {
   const drone = new THREE.Group();
 
   // 1. Carbon fiber central hub (fuselage)
@@ -40,8 +47,22 @@ const createDroneGroup = (color: number, isStopped: boolean = false) => {
   hubMesh.rotation.x = Math.PI / 2;
   drone.add(hubMesh);
 
-  // 2. Controller accent dome / canopy
-  const domeGeo = new THREE.SphereGeometry(0.042, 12, 12, 0, Math.PI * 2, 0, Math.PI / 2);
+  // 2. Controller accent dome / canopy with distinctive geometry per controller
+  let domeGeo: THREE.BufferGeometry;
+  if (cid === "mlp") {
+    // Flat cylinder cap
+    domeGeo = new THREE.CylinderGeometry(0.04, 0.045, 0.025, 12);
+  } else if (cid === "gru") {
+    // Angular box canopy
+    domeGeo = new THREE.BoxGeometry(0.065, 0.065, 0.03);
+  } else if (cid === "lstm") {
+    // Diamond / Octahedron canopy
+    domeGeo = new THREE.OctahedronGeometry(0.045, 0);
+  } else {
+    // Default classic (PD): Spherical dome
+    domeGeo = new THREE.SphereGeometry(0.042, 12, 12, 0, Math.PI * 2, 0, Math.PI / 2);
+  }
+
   const domeMat = new THREE.MeshStandardMaterial({
     color: color,
     roughness: 0.2,
@@ -135,33 +156,112 @@ export const TrajectoryViewer3D: React.FC<TrajectoryViewer3DProps> = ({
   className = "w-full h-[420px]",
   showSpatialSummary = true,
   showLegend = false,
+  children,
 }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const animationFrameId = useRef<number | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Dynamic objects container
   const trailsGroupRef = useRef<THREE.Group>(new THREE.Group());
   const markersGroupRef = useRef<THREE.Group>(new THREE.Group());
 
-  // Mouse orbit control state
+  // Mouse & Touch orbit and pan control state
   const isDragging = useRef(false);
+  const dragMode = useRef<"orbit" | "pan">("orbit");
   const previousMousePosition = useRef({ x: 0, y: 0 });
+  const touchStartDist = useRef<number | null>(null);
+  const touchStartCenter = useRef<{ x: number; y: number } | null>(null);
   const cameraDistance = useRef(9.0);
   const cameraAngle = useRef({ theta: Math.PI / 4, phi: Math.PI / 3 });
+  const cameraTarget = useRef({ x: 0, y: 0, z: 1.5 });
 
   // Camera update function
   const updateCameraPosition = () => {
     if (!cameraRef.current) return;
     const r = cameraDistance.current;
     const { theta, phi } = cameraAngle.current;
-    cameraRef.current.position.x = r * Math.sin(phi) * Math.sin(theta);
-    cameraRef.current.position.y = r * Math.sin(phi) * Math.cos(theta);
-    cameraRef.current.position.z = r * Math.cos(phi) + 1.5;
-    cameraRef.current.lookAt(0, 0, 1.5);
+    const target = cameraTarget.current;
+    cameraRef.current.position.x = target.x + r * Math.sin(phi) * Math.sin(theta);
+    cameraRef.current.position.y = target.y + r * Math.sin(phi) * Math.cos(theta);
+    cameraRef.current.position.z = target.z + r * Math.cos(phi);
+    cameraRef.current.lookAt(target.x, target.y, target.z);
   };
+
+  // Pan camera across the camera viewing plane
+  const panCamera = (deltaX: number, deltaY: number) => {
+    if (!cameraRef.current) return;
+    const factor = cameraDistance.current * 0.0016;
+
+    const camera = cameraRef.current;
+    const right = new THREE.Vector3();
+    const up = new THREE.Vector3();
+    camera.matrixWorld.extractBasis(right, up, new THREE.Vector3());
+
+    // deltaX: positive means drag to right -> scene moves right (target shifts in -right direction)
+    // deltaY: positive means drag downwards -> scene moves down (target shifts in +up direction)
+    const panOffset = new THREE.Vector3()
+      .addScaledVector(right, -deltaX * factor)
+      .addScaledVector(up, deltaY * factor);
+
+    cameraTarget.current.x += panOffset.x;
+    cameraTarget.current.y += panOffset.y;
+    cameraTarget.current.z += panOffset.z;
+
+    updateCameraPosition();
+  };
+
+  const toggleFullscreen = async () => {
+    if (!containerRef.current) return;
+    try {
+      if (!document.fullscreenElement && !isFullscreen) {
+        if (containerRef.current.requestFullscreen) {
+          await containerRef.current.requestFullscreen();
+        }
+        setIsFullscreen(true);
+      } else {
+        if (document.fullscreenElement && document.exitFullscreen) {
+          await document.exitFullscreen();
+        }
+        setIsFullscreen(false);
+      }
+    } catch {
+      setIsFullscreen((prev) => !prev);
+    }
+  };
+
+  // Fullscreen change listener
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+      setTimeout(() => {
+        if (!mountRef.current || !rendererRef.current || !cameraRef.current) return;
+        const w = mountRef.current.clientWidth;
+        const h = mountRef.current.clientHeight;
+        if (w === 0 || h === 0) return;
+        cameraRef.current.aspect = w / h;
+        cameraRef.current.updateProjectionMatrix();
+        rendererRef.current.setSize(w, h);
+      }, 50);
+    };
+    document.addEventListener("fullscreenchange", handleFsChange);
+    return () => document.removeEventListener("fullscreenchange", handleFsChange);
+  }, []);
+
+  // Esc key fallback for CSS fullscreen
+  useEffect(() => {
+    const handleKeyDownEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDownEsc);
+    return () => window.removeEventListener("keydown", handleKeyDownEsc);
+  }, [isFullscreen]);
 
   // 1. Initial Scene Setup
   useEffect(() => {
@@ -216,14 +316,26 @@ export const TrajectoryViewer3D: React.FC<TrajectoryViewer3DProps> = ({
       if (!mountRef.current || !renderer || !camera) return;
       const w = mountRef.current.clientWidth;
       const h = mountRef.current.clientHeight;
+      if (w === 0 || h === 0) return;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h);
     };
     window.addEventListener("resize", handleResize);
 
+    // Active wheel listener with passive: false to prevent whole-page scrolling on 3D zoom
+    const dom = mountRef.current;
+    const onWheelNative = (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      cameraDistance.current = Math.max(3.0, Math.min(25.0, cameraDistance.current + e.deltaY * 0.008));
+      updateCameraPosition();
+    };
+    dom?.addEventListener("wheel", onWheelNative, { passive: false });
+
     return () => {
       window.removeEventListener("resize", handleResize);
+      dom?.removeEventListener("wheel", onWheelNative);
       if (animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
       if (renderer.domElement && mountRef.current) {
         mountRef.current.removeChild(renderer.domElement);
@@ -232,10 +344,16 @@ export const TrajectoryViewer3D: React.FC<TrajectoryViewer3DProps> = ({
     };
   }, []);
 
-  // 2. Smooth Mouse Orbit Navigation (Reduced sensitivity to 0.0035)
+  // 2. Smooth Orbit, Pan & Zoom Navigation (Mouse, Touch, and Keyboard)
   const handleMouseDown = (e: React.MouseEvent) => {
     isDragging.current = true;
     previousMousePosition.current = { x: e.clientX, y: e.clientY };
+    // Right click (button === 2), Middle click (button === 1), or Shift + Click activates Pan
+    if (e.button === 2 || e.button === 1 || e.shiftKey) {
+      dragMode.current = "pan";
+    } else {
+      dragMode.current = "orbit";
+    }
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -243,21 +361,130 @@ export const TrajectoryViewer3D: React.FC<TrajectoryViewer3DProps> = ({
     const deltaX = e.clientX - previousMousePosition.current.x;
     const deltaY = e.clientY - previousMousePosition.current.y;
 
-    cameraAngle.current.theta -= deltaX * 0.0035;
-    cameraAngle.current.phi = Math.max(0.1, Math.min(Math.PI / 2 - 0.05, cameraAngle.current.phi - deltaY * 0.0035));
+    if (dragMode.current === "pan" || e.buttons === 2 || e.buttons === 4 || e.shiftKey) {
+      panCamera(deltaX, deltaY);
+    } else {
+      cameraAngle.current.theta -= deltaX * 0.0035;
+      cameraAngle.current.phi = Math.max(0.1, Math.min(Math.PI / 2 - 0.05, cameraAngle.current.phi - deltaY * 0.0035));
+      updateCameraPosition();
+    }
 
-    updateCameraPosition();
     previousMousePosition.current = { x: e.clientX, y: e.clientY };
   };
 
   const handleMouseUp = () => {
     isDragging.current = false;
+    dragMode.current = "orbit";
   };
 
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    cameraDistance.current = Math.max(3.0, Math.min(25.0, cameraDistance.current + e.deltaY * 0.008));
-    updateCameraPosition();
+  // Touch handlers for mobile / tablet devices (1-finger drag orbit, 2-finger pan & pinch zoom)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      isDragging.current = true;
+      dragMode.current = "orbit";
+      previousMousePosition.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      touchStartDist.current = null;
+      touchStartCenter.current = null;
+    } else if (e.touches.length === 2) {
+      isDragging.current = false;
+      touchStartDist.current = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      touchStartCenter.current = {
+        x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+        y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+      };
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 1 && isDragging.current) {
+      const deltaX = e.touches[0].clientX - previousMousePosition.current.x;
+      const deltaY = e.touches[0].clientY - previousMousePosition.current.y;
+
+      cameraAngle.current.theta -= deltaX * 0.005;
+      cameraAngle.current.phi = Math.max(0.1, Math.min(Math.PI / 2 - 0.05, cameraAngle.current.phi - deltaY * 0.005));
+
+      updateCameraPosition();
+      previousMousePosition.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    } else if (e.touches.length === 2) {
+      // 2-finger pinch zoom
+      const currentDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      if (touchStartDist.current !== null) {
+        const delta = touchStartDist.current - currentDist;
+        cameraDistance.current = Math.max(3.0, Math.min(25.0, cameraDistance.current + delta * 0.02));
+      }
+      touchStartDist.current = currentDist;
+
+      // 2-finger pan
+      const currentCenter = {
+        x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+        y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+      };
+      if (touchStartCenter.current !== null) {
+        const deltaX = currentCenter.x - touchStartCenter.current.x;
+        const deltaY = currentCenter.y - touchStartCenter.current.y;
+        panCamera(deltaX, deltaY);
+      }
+      touchStartCenter.current = currentCenter;
+    }
+  };
+
+  const handleTouchEnd = () => {
+    isDragging.current = false;
+    touchStartDist.current = null;
+    touchStartCenter.current = null;
+    dragMode.current = "orbit";
+  };
+
+  // Keyboard navigation for accessible camera control (including Shift+Arrow Pan)
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    let handled = true;
+    switch (e.key) {
+      case "ArrowLeft":
+        if (e.shiftKey) panCamera(-30, 0);
+        else cameraAngle.current.theta += 0.08;
+        break;
+      case "ArrowRight":
+        if (e.shiftKey) panCamera(30, 0);
+        else cameraAngle.current.theta -= 0.08;
+        break;
+      case "ArrowUp":
+        if (e.shiftKey) panCamera(0, -30);
+        else cameraAngle.current.phi = Math.max(0.1, cameraAngle.current.phi - 0.06);
+        break;
+      case "ArrowDown":
+        if (e.shiftKey) panCamera(0, 30);
+        else cameraAngle.current.phi = Math.min(Math.PI / 2 - 0.05, cameraAngle.current.phi + 0.06);
+        break;
+      case "+":
+      case "=":
+      case "PageUp":
+        cameraDistance.current = Math.max(3.0, cameraDistance.current - 0.8);
+        break;
+      case "-":
+      case "_":
+      case "PageDown":
+        cameraDistance.current = Math.min(25.0, cameraDistance.current + 0.8);
+        break;
+      case "r":
+      case "R":
+      case "Home":
+        cameraAngle.current = { theta: Math.PI / 4, phi: Math.PI / 3 };
+        cameraDistance.current = 9.0;
+        cameraTarget.current = { x: 0, y: 0, z: 1.5 };
+        break;
+      default:
+        handled = false;
+    }
+    if (handled) {
+      e.preventDefault();
+      updateCameraPosition();
+    }
   };
 
   // 3. Update Trajectory Paths & Nominal Reference
@@ -293,11 +520,19 @@ export const TrajectoryViewer3D: React.FC<TrajectoryViewer3DProps> = ({
       stemLine.computeLineDistances();
       group.add(stemLine);
 
-      const beaconGeo = new THREE.OctahedronGeometry(0.08, 0);
-      const beaconMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.8, roughness: 0.2 });
-      const beaconMesh = new THREE.Mesh(beaconGeo, beaconMat);
-      beaconMesh.position.set(initialPosition[0], initialPosition[1], initialPosition[2]);
-      group.add(beaconMesh);
+      // Replace static cube/octahedron with the 3D Quadcopter Drone model
+      if (Object.keys(runsTrajectory).length === 0) {
+        const drone = createDroneGroup("classic", 0x0284c7, false);
+        drone.position.set(initialPosition[0], initialPosition[1], initialPosition[2]);
+        if (nominalPath.length >= 2) {
+          const dx = nominalPath[1][0] - nominalPath[0][0];
+          const dy = nominalPath[1][1] - nominalPath[0][1];
+          if (Math.hypot(dx, dy) > 0.01) {
+            drone.rotation.z = Math.atan2(dy, dx);
+          }
+        }
+        group.add(drone);
+      }
     }
 
     // B. Draw Nominal Trajectory (Slate solid path or dashed transitions)
@@ -397,8 +632,8 @@ export const TrajectoryViewer3D: React.FC<TrajectoryViewer3DProps> = ({
 
       const color = CONTROLLER_COLORS[cid] || 0x0284c7;
 
-      // 3D Procedural Quadcopter Model
-      const droneGroup = createDroneGroup(color, isStopped);
+      // 3D Procedural Quadcopter Model with distinct geometry per controller
+      const droneGroup = createDroneGroup(cid, color, isStopped);
       droneGroup.position.set(effectiveSample.pos[0], effectiveSample.pos[1], effectiveSample.pos[2]);
 
       // Height projection stalk to ground
@@ -421,50 +656,107 @@ export const TrajectoryViewer3D: React.FC<TrajectoryViewer3DProps> = ({
   }, [runsTrajectory, visibleControllers, currentTime]);
 
   return (
-    <div className="flex flex-col gap-2">
+    <div
+      ref={containerRef}
+      className={
+        isFullscreen
+          ? "fixed inset-0 z-50 bg-[#F5F8FC] w-screen h-screen flex flex-col p-4 box-border"
+          : "flex flex-col gap-2"
+      }
+    >
       <div
         ref={mountRef}
-        className={`${className} relative rounded-xl border border-aerolab-border bg-aerolab-canvas overflow-hidden cursor-grab active:cursor-grabbing select-none`}
+        tabIndex={0}
+        role="region"
+        aria-label="Visualizador 3D de trayectoria de vuelo. Usa click izquierdo para rotar, click derecho o Shift para desplazar (pan), rueda para zoom y R para reiniciar cámara."
+        className={`${
+          isFullscreen ? "flex-1 w-full h-full min-h-0" : className
+        } relative rounded-xl border border-aerolab-border bg-aerolab-canvas overflow-hidden cursor-grab active:cursor-grabbing select-none touch-none focus-visible:ring-2 focus-visible:ring-aerolab-action`}
+        onContextMenu={(e) => e.preventDefault()}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
-        onWheel={handleWheel}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
+        onKeyDown={handleKeyDown}
       >
-        {/* Minimal Interactive Mode Indicator */}
-        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-md border border-aerolab-border shadow-xs text-[11px] font-mono text-aerolab-secondary flex items-center gap-1.5">
+        {/* Minimal Interactive Mode Indicator with keyboard hint */}
+        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-md border border-aerolab-border shadow-xs text-[11px] font-mono text-aerolab-secondary flex items-center gap-1.5 z-10">
           <span className="w-1.5 h-1.5 rounded-full bg-aerolab-action animate-pulse" />
           <span>Vista 3D interactiva</span>
+          <span className="hidden sm:inline text-[10px] text-slate-400 border-l border-slate-200 pl-1.5 ml-0.5">
+            Click izq: rotar • Click dcho / Shift: pan • scroll zoom • R reset
+          </span>
         </div>
 
-        {/* Floating In-Canvas Legend */}
-        {showLegend && (
-          <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-sm px-3 py-2 rounded-lg border border-aerolab-border shadow-xs flex flex-col gap-1 text-[11px]">
-            <div className="flex items-center gap-2">
-              <span className="w-3.5 h-1 bg-[#334155] rounded-full" />
-              <span className="font-semibold text-aerolab-text">Baseline</span>
+        {/* Top-right controls: Fullscreen button & Floating Legend */}
+        <div className="absolute top-3 right-3 flex flex-col items-end gap-2 z-10">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleFullscreen();
+            }}
+            className="bg-white/95 hover:bg-white backdrop-blur-sm p-1.5 rounded-lg border border-aerolab-border shadow-xs text-aerolab-secondary hover:text-aerolab-action transition-all cursor-pointer flex items-center gap-1.5 text-xs font-medium"
+            title={isFullscreen ? "Salir de pantalla completa (Esc)" : "Ver a pantalla completa"}
+            aria-label={isFullscreen ? "Salir de pantalla completa" : "Ver a pantalla completa"}
+          >
+            {isFullscreen ? (
+              <>
+                <Minimize2 className="w-4 h-4" />
+                <span className="text-[11px] hidden sm:inline">Salir</span>
+              </>
+            ) : (
+              <>
+                <Maximize2 className="w-4 h-4" />
+                <span className="text-[11px] hidden sm:inline">Pantalla completa</span>
+              </>
+            )}
+          </button>
+
+          {showLegend && (
+            <div className="bg-white/95 backdrop-blur-sm px-3 py-2 rounded-lg border border-aerolab-border shadow-xs flex flex-col gap-1 text-[11px]">
+              <div className="flex items-center gap-2">
+                <span className="w-3.5 h-0.5 bg-[#334155] rounded-full" />
+                <span className="font-semibold text-aerolab-text">Nominal</span>
+              </div>
+              {Object.entries({
+                classic: { name: "PD", color: "#0284C7", style: "—" },
+                mlp: { name: "MLP", color: "#10B981", style: "—" },
+                gru: { name: "GRU", color: "#F59E0B", style: "- -" },
+                lstm: { name: "LSTM", color: "#8B5CF6", style: "···" },
+              }).map(([cid, meta]) => {
+                if (!visibleControllers[cid]) return null;
+                return (
+                  <div key={cid} className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: meta.color }} />
+                    <span className="font-mono text-aerolab-text font-medium">{meta.name}</span>
+                    <span className="text-[9px] font-mono text-slate-400 font-bold">({meta.style})</span>
+                  </div>
+                );
+              })}
             </div>
-            {Object.entries({
-              classic: { name: "PD", color: "#0284C7" },
-              mlp: { name: "MLP", color: "#10B981" },
-              gru: { name: "GRU", color: "#F59E0B" },
-              lstm: { name: "LSTM", color: "#8B5CF6" },
-            }).map(([cid, meta]) => {
-              if (!visibleControllers[cid]) return null;
-              return (
-                <div key={cid} className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full" style={{ backgroundColor: meta.color }} />
-                  <span className="font-mono text-aerolab-text font-medium">{meta.name}</span>
-                </div>
-              );
-            })}
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
+      {/* Children passed into viewer (e.g. playback bar in fullscreen or normal) */}
+      {children && (
+        <div className={isFullscreen ? "mt-3 shrink-0" : ""}>
+          {children}
+        </div>
+      )}
+
       {/* Accessible Text Alternative & Essential Spatial Summary */}
-      {showSpatialSummary && accessibilitySummary && (
-        <div className="text-xs text-aerolab-secondary bg-white px-3 py-2 rounded-lg border border-aerolab-border flex flex-wrap items-center justify-between gap-2">
+      {!isFullscreen && showSpatialSummary && accessibilitySummary && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="text-xs text-aerolab-secondary bg-white px-3 py-2 rounded-lg border border-aerolab-border flex flex-wrap items-center justify-between gap-2"
+        >
           <div className="font-mono text-[11px] text-aerolab-secondary">
             {accessibilitySummary}
           </div>

@@ -5,7 +5,6 @@ import {
   RotateCcw,
   Layers,
   ArrowRight,
-  Info,
   CheckCircle2,
   XCircle,
 } from "lucide-react";
@@ -123,7 +122,7 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
           </button>
         </div>
 
-        {/* 3D View Canvas with In-Canvas Legend */}
+        {/* 3D View Canvas with In-Canvas Legend & Fullscreen-enabled Controls */}
         <TrajectoryViewer3D
           nominalPath={results.nominal_path}
           runsTrajectory={results.runs_trajectory}
@@ -132,83 +131,81 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
           showLegend={true}
           showSpatialSummary={false}
           className="w-full h-[460px]"
-        />
+        >
+          {/* Playback Controls Bar */}
+          <div className="bg-aerolab-canvas/95 backdrop-blur-sm p-3.5 rounded-xl border border-aerolab-border flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+            {/* Controls: Play/Pause, Reset, Speed */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  if (currentTime >= maxDuration) setCurrentTime(0);
+                  setIsPlaying(!isPlaying);
+                }}
+                className="w-9 h-9 flex items-center justify-center rounded-lg bg-aerolab-action text-white hover:bg-aerolab-action/90 shadow-xs cursor-pointer"
+                title={isPlaying ? "Pausar (Espacio)" : "Reproducir (Espacio)"}
+              >
+                {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
+              </button>
 
-        {/* Playback Controls Bar */}
-        <div className="bg-aerolab-canvas p-3.5 rounded-xl border border-aerolab-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          {/* Controls: Play/Pause, Reset, Speed */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                if (currentTime >= maxDuration) setCurrentTime(0);
-                setIsPlaying(!isPlaying);
-              }}
-              className="w-9 h-9 flex items-center justify-center rounded-lg bg-aerolab-action text-white hover:bg-aerolab-action/90 shadow-xs cursor-pointer"
-              title={isPlaying ? "Pausar (Espacio)" : "Reproducir (Espacio)"}
-            >
-              {isPlaying ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
-            </button>
+              <button
+                onClick={() => {
+                  setIsPlaying(false);
+                  setCurrentTime(0);
+                }}
+                className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-aerolab-border text-aerolab-secondary hover:text-aerolab-text cursor-pointer"
+                title="Reiniciar reproducción"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+              </button>
 
-            <button
-              onClick={() => {
-                setIsPlaying(false);
-                setCurrentTime(0);
-              }}
-              className="w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-aerolab-border text-aerolab-secondary hover:text-aerolab-text cursor-pointer"
-              title="Reiniciar reproducción"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-            </button>
+              {/* Speed Pills */}
+              <div className="flex items-center gap-1 bg-white p-0.5 rounded-lg border border-aerolab-border ml-2 text-xs font-mono">
+                {[0.25, 0.5, 1.0, 2.0].map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setPlaybackSpeed(s)}
+                    className={`px-2 py-1 rounded font-medium cursor-pointer ${playbackSpeed === s ? "bg-aerolab-action text-white font-bold" : "text-aerolab-secondary hover:text-aerolab-text"
+                      }`}
+                  >
+                    {s}x
+                  </button>
+                ))}
+              </div>
+            </div>
 
-            {/* Speed Pills */}
-            <div className="flex items-center gap-1 bg-white p-0.5 rounded-lg border border-aerolab-border ml-2 text-xs font-mono">
-              {[0.25, 0.5, 1.0, 2.0].map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setPlaybackSpeed(s)}
-                  className={`px-2 py-1 rounded font-medium cursor-pointer ${
-                    playbackSpeed === s ? "bg-aerolab-action text-white font-bold" : "text-aerolab-secondary hover:text-aerolab-text"
-                  }`}
-                >
-                  {s}x
-                </button>
-              ))}
+            {/* Scrubber Timeline */}
+            <div className="flex-1 flex items-center gap-3">
+              <input
+                type="range"
+                min="0"
+                max={maxDuration}
+                step="0.05"
+                value={currentTime}
+                onChange={(e) => {
+                  setCurrentTime(parseFloat(e.target.value));
+                }}
+                className="w-full cursor-pointer accent-aerolab-action"
+              />
+              <div className="text-xs font-mono text-aerolab-secondary whitespace-nowrap min-w-[90px] text-right">
+                <span className="font-semibold text-aerolab-text">{currentTime.toFixed(2)}</span> / {maxDuration.toFixed(2)} s
+              </div>
             </div>
           </div>
-
-          {/* Scrubber Timeline */}
-          <div className="flex-1 flex items-center gap-3">
-            <input
-              type="range"
-              min="0"
-              max={maxDuration}
-              step="0.05"
-              value={currentTime}
-              onChange={(e) => {
-                setCurrentTime(parseFloat(e.target.value));
-              }}
-              className="w-full cursor-pointer accent-aerolab-action"
-            />
-            <div className="text-xs font-mono text-aerolab-secondary whitespace-nowrap min-w-[90px] text-right">
-              <span className="font-semibold text-aerolab-text">{currentTime.toFixed(2)}</span> / {maxDuration.toFixed(2)} s
-            </div>
-          </div>
-        </div>
+        </TrajectoryViewer3D>
 
         {/* Controller Visibility Toggles */}
         <div className="flex flex-wrap items-center gap-3 text-xs pt-1">
-          <span className="text-aerolab-secondary font-medium">Controladores visibles:</span>
+          <span className="text-aerolab-secondary font-medium">Controladores:</span>
           {Object.entries(CONTROLLER_CONFIG).map(([cid, cfg]) => {
             const summary = results.summaries[cid];
             const isAvailable = !!summary && summary.status === "completed";
             return (
               <label
                 key={cid}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border cursor-pointer select-none transition-all ${
-                  visibleControllers[cid]
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border cursor-pointer select-none transition-all ${visibleControllers[cid]
                     ? "bg-white border-aerolab-border shadow-2xs font-semibold text-aerolab-text"
                     : "bg-aerolab-canvas/50 border-transparent text-aerolab-secondary opacity-60"
-                }`}
+                  }`}
               >
                 <input
                   type="checkbox"
@@ -251,9 +248,8 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
             return (
               <div
                 key={cid}
-                className={`bg-white p-4 rounded-xl border flex flex-col gap-3 shadow-xs ${
-                  visibleControllers[cid] ? "border-aerolab-border" : "border-aerolab-border/40 opacity-75"
-                }`}
+                className={`bg-white p-4 rounded-xl border flex flex-col gap-3 shadow-xs ${visibleControllers[cid] ? "border-aerolab-border" : "border-aerolab-border/40 opacity-75"
+                  }`}
               >
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-aerolab-border pb-2">
@@ -262,11 +258,10 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
                     <span className="text-xs font-bold text-aerolab-text font-mono">{cfg.name}</span>
                   </div>
                   <span
-                    className={`text-[10px] px-2 py-0.5 rounded font-medium flex items-center gap-1 ${
-                      isCompleted && !isInterrupted
+                    className={`text-[10px] px-2 py-0.5 rounded font-medium flex items-center gap-1 ${isCompleted && !isInterrupted
                         ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
                         : "bg-red-50 text-red-800 border border-red-200"
-                    }`}
+                      }`}
                   >
                     {isCompleted && !isInterrupted ? (
                       <CheckCircle2 className="w-3 h-3 text-emerald-600" />
@@ -309,16 +304,6 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
             );
           })}
         </div>
-
-        {/* Waypoint caveat note if waypoint */}
-        {results.mission_family === "waypoint" && (
-          <div className="mt-4 p-3 bg-aerolab-canvas rounded-lg border border-aerolab-border text-xs text-aerolab-secondary flex items-start gap-2">
-            <Info className="w-4 h-4 text-aerolab-action shrink-0 mt-0.5" />
-            <div>
-              <span className="font-semibold text-aerolab-text">Nota sobre rutas por puntos:</span> En waypoint, la ruta geométrica espacial es común, pero el simulador avanza su referencia temporal de forma individual cuando cada vehículo cumple las tolerancias de llegada y asentamiento. El visor muestra la ruta espacial común y la sincronía temporal observada para cada uno.
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
