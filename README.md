@@ -103,6 +103,34 @@ uv run python tools\run_experimental_campaign.py --rerun --workers 8 --device cu
 
 El modo `--dry-run` permite inspeccionar las fases y comandos antes de iniciar una campaña costosa.
 
+## NeuroFlight, demostración del concurso
+
+NeuroFlight es la aplicación que configura una misión, la previsualiza y la simula con el PD congelado y tres redes outer-force. No reentrena ni usa el dataset completo. El paquete local vive en `data/neuroflight_bundle/` y **no está en Git** (`data/` está ignorado). Un checkout limpio necesita ese paquete antes de comparar controladores.
+
+Si ya existe la regeneración local `data/regenerated_2026-09-23/` (cuatro PD en `classic_dataset/v1/pids/` y tres modelos `neural_control/outer_force_*_min_v1/`), se empaqueta así:
+
+```powershell
+uv run python tools\package_demo_artifacts.py
+```
+
+El script copia solo los cuatro PD, los tres checkpoints, sus `config.yaml` y `normalization.json`, y escribe `data/neuroflight_bundle/bundle_manifest.json` con el SHA-256 de cada archivo. En otra máquina se copia esa carpeta ya generada al mismo camino relativo. La aplicación no descarga pesos ni acepta la carpeta regenerada como sustituto: si el manifiesto falta, está vacío o un hash no coincide, `/api/health` lo indica y la simulación no arranca.
+
+Con el paquete en su sitio:
+
+```powershell
+uv run neuroflight
+```
+
+El servicio queda en `http://127.0.0.1:8000`. Si `frontend/dist/` existe, también sirve la interfaz. Para desarrollar el cliente:
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+Vite usa `http://127.0.0.1:5173` y proxifica `/api` al servicio. Las corridas nuevas se guardan en `data/neuroflight_runs/<id>/`, separadas de `results/`. Cada `run_manifest.json` incluye la configuración, la semilla y los hashes del paquete usado.
+
 ## Estructura del proyecto
 
 ```text

@@ -22,3 +22,7 @@ Thumbs.db
 # Editors
 .vscode/
 .idea/
+
+# Cliente NeuroFlight
+frontend/node_modules/
+frontend/dist/

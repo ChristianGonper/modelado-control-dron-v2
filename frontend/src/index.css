@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-aerolab-canvas text-aerolab-text font-sans;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Tabular numbers for comparisons and tables */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Accessible focus indicators */
+  :focus-visible {
+    @apply outline-none ring-2 ring-aerolab-action ring-offset-2 ring-offset-white;
+  }
+}
+
+/* Custom range input styling */
+input[type="range"] {
+  @apply accent-aerolab-action h-2 bg-aerolab-border rounded-lg cursor-pointer;
+}
+
+/* Scrollbar refinement */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-aerolab-border rounded;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-aerolab-secondary;
+}
