@@ -8,18 +8,22 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = [
+    "fastapi>=0.115.0",
     "matplotlib>=3.10.0",
     "numpy>=2.2.3",
     "pandas>=3.0.2",
     "plotly>=6.7.0",
+    "pydantic>=2.10.0",
     "pytest>=8.3.4",
     "pyyaml>=6.0.2",
     "scipy>=1.15.2",
     "torch>=2.11.0",
+    "uvicorn[standard]>=0.34.0",
 ]
 
 [project.scripts]
 simulador-quad = "simulador_quad.app:main"
+neuroflight = "simulador_quad.api.server:main"
 
 [tool.uv.sources]
 torch = { index = "pytorch-cu128" }
@@ -35,3 +39,8 @@ testpaths = ["tests"]
 [build-system]
 requires = ["uv_build>=0.9.20,<0.10.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+]
