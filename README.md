@@ -36,7 +36,7 @@ NeuroFlight lleva el simulador a una interfaz local para explorar cómo responde
 2. **Comparar controladores**: ejecutar la misma misión con un PD y las redes MLP, GRU y LSTM, y reproducir sus trayectorias. La aplicación elige el PD de referencia según la misión.
 3. **Examinar los resultados**: consultar errores, protecciones y telemetría para entender qué ocurrió durante el vuelo simulado.
 
-![Comparación de una misión Lissajous en NeuroFlight](docs/neuroflight-assets/comparacion.png)
+![Comparación de una misión Lissajous en NeuroFlight](docs/neuroflight-assets/comparacion-lissajous.png)
 
 *Una misión nueva: reproducción y métricas de seguimiento. Los resultados corresponden únicamente a este ejemplo.*
 

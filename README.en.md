@@ -36,7 +36,7 @@ NeuroFlight is a local interactive application built around the simulator. It le
 2. **Compare controllers**: simulate the same mission with a PD and the MLP, GRU and LSTM networks, then replay their trajectories. The application selects the reference PD according to the mission.
 3. **Inspect the outcome**: use tracking errors, safety information and telemetry to understand what happened during the simulated flight.
 
-![Lissajous mission comparison in NeuroFlight](docs/neuroflight-assets/comparacion.png)
+![Lissajous mission comparison in NeuroFlight](docs/neuroflight-assets/comparacion-lissajous.png)
 
 *A new demonstration mission: playback and tracking metrics for this example only.*
 

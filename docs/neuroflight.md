@@ -46,7 +46,7 @@ Abre <http://127.0.0.1:8000>. Mantén la terminal abierta mientras uses la aplic
 
 En **Misión**, selecciona «Mantener pos.» para una primera prueba y revisa la posición y la duración. La vista 3D muestra la trayectoria prevista antes de ejecutar. También puedes elegir un círculo, Lissajous, una ruta por puntos o una lemniscata, ajustar sus parámetros y añadir viento horizontal.
 
-![Configuración de una misión y vista previa de la trayectoria](neuroflight-assets/mision.png)
+![Configuración de una misión Lissajous y vista previa de la trayectoria](neuroflight-assets/mision-lissajous.png)
 
 Para un recorrido más variado, elige **Composición por tramos**. Puedes encadenar entre dos y cuatro segmentos, cambiar su orden y modificar sus parámetros. La vista previa muestra tanto la ruta nominal como las transiciones automáticas. El PD de referencia se selecciona según la longitud nominal dominante.
 
@@ -56,13 +56,17 @@ Para un recorrido más variado, elige **Composición por tramos**. Puedes encade
 
 Pulsa **Ejecutar Misión** y espera a que termine el cálculo. En **Comparación** revisa el estado de cada método antes de interpretar el vuelo: el PD, MLP, GRU y LSTM pueden no completar la misión en las mismas condiciones. Usa los controles del reproductor y selecciona las trayectorias que quieras observar. Una ejecución interrumpida solo aporta información hasta el instante de parada.
 
-![Reproducción y métricas de una misión Lissajous en NeuroFlight](neuroflight-assets/comparacion.png)
+![Reproducción y métricas de una misión Lissajous en NeuroFlight](neuroflight-assets/comparacion-lissajous.png)
 
-*Captura de una ejecución de demostración: se muestran la referencia y las trayectorias PD y MLP. Las métricas corresponden a esa misión, no al conjunto del TFG.*
+*Captura de una ejecución de demostración: se muestran la referencia y las trayectorias de los cuatro controladores. Las métricas corresponden a esa misión, no al conjunto del TFG.*
 
 ### Analizar
 
 En **Análisis** examina los errores de seguimiento, las protecciones y la telemetría disponible. Al comparar cifras, comprueba qué controladores completaron la trayectoria y durante cuánto tiempo se midió cada uno. Una diferencia en una misión concreta no demuestra que una arquitectura sea mejor en general: para eso consulta el conjunto de experimentos de la memoria.
+
+![Selección de señales y error de posición para los cuatro controladores](neuroflight-assets/analisis-telemetria.png)
+
+*Selección de señales y evolución del error de posición en la misma misión de demostración.*
 
 Las ejecuciones nuevas se guardan en `data/neuroflight_runs/`, junto con su configuración y los hashes del paquete. No modifican los resultados históricos del TFG.
 
@@ -102,7 +106,7 @@ Estas fases usan principalmente CPU. `--workers 4` limita los procesos paralelos
 
 ### 3. Entrenar MLP, GRU y LSTM en GPU
 
-El siguiente bucle sigue el comando del anejo para cada arquitectura y guarda cada modelo en una carpeta propia:
+El siguiente bucle sigue el comando del anejo para cada arquitectura y guarda cada modelo en una carpeta propia. El entrenamiento usa por defecto la semilla `42`, registrada en su configuración; mantenerla facilita repetir el experimento, aunque las diferencias de entorno o hardware pueden producir variaciones:
 
 ```powershell
 foreach ($arquitectura in @('mlp', 'gru', 'lstm')) {
