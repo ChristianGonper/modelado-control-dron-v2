@@ -47,9 +47,9 @@ La salida objetivo, `desired_force_W_v1`, se obtiene con el método `compute_des
 El conjunto de datos clásico aporta escenarios, divisiones y condiciones; para entrenar la red se prepara después un conjunto específico de fuerza exterior. El proceso selecciona un experto PD para cada escenario:
 
 1. Para cada fila del `manifest.csv` clásico, se ejecutan variantes del controlador externo con `tools\generate_outer_force_pid_bank.py`.
-2. Se mantienen sin cambios el PID interno (`Kp_att`, `Kd_att`), los limites, la trayectoria, las perturbaciones, la semilla y los parametros del vehiculo del YAML fuente.
+2. Se mantienen sin cambios el PD interno (`Kp_att`, `Kd_att`), los limites, la trayectoria, las perturbaciones, la semilla y los parametros del vehiculo del YAML fuente.
 3. Se excluyen las variantes que no superan `passes_hard_filters`.
-4. Se elige un experto por escenario: se busca el menor `position_rmse_m`; entre candidatos a menos del 5 % del mejor error se prefiere el de menor esfuerzo y, en caso de empate, la variante más conservadora.
+4. Se elige un experto por escenario: se busca el menor `position_rmse_m`; entre candidatos cuyo error sea como máximo un 5 % superior al mejor se prefiere el de menor esfuerzo y, en caso de empate, se aplica el orden `conservative`, `base`, `aggressive`; las demás variantes quedan después en el orden existente.
 5. Se copia la telemetría del experto elegido y se escriben sus ganancias `Kp_pos` y `Kd_pos` en el YAML de salida.
 
 Si ningún candidato supera los filtros de seguridad, la generación falla: no se crea una demostración válida para ese escenario.
@@ -77,7 +77,7 @@ uv run python tools\run_neural_scenario.py --scenario scenarios\neural_ood_lemni
 uv run python tools\run_neural_outer_force_dataset.py --dataset data\outer_force_dataset\v1 --split test --checkpoint data\neural_control\outer_force_mlp_min_v1\checkpoints\mlp_best.pt --normalization data\neural_control\outer_force_mlp_min_v1\normalization.json --device auto --no-visualization --limit 2
 ```
 
-Para probar el seguimiento fuera de distribución, puedes generar una batería de escenarios y ejecutarla en bucle cerrado. `data/neural_ood/battery_v1` es un directorio local con escenarios YAML; no contiene telemetría de expertos:
+Para probar el seguimiento fuera de distribución, puedes generar una batería de escenarios y ejecutarla en bucle cerrado. Necesitas haber generado antes los controladores clásicos en `data/classic_dataset/v1/pids/`. `data/neural_ood/battery_v1` es un directorio local con escenarios YAML; no contiene telemetría de expertos:
 
 ```powershell
 uv run python tools\generate_ood_battery.py --out data\neural_ood\battery_v1 --overwrite
@@ -130,7 +130,7 @@ controller:
   device: "auto"
 ```
 
-Con `clip_to_classic_limits: true`, el controlador limita la norma de la fuerza a `mass_kg * gravity_m_s2 * 2.5`, restringe la inclinación solicitada a `max_desired_tilt_rad` y mantiene una componente ascendente mínima antes del PID interno. El script `run_neural_scenario.py` usa `0.52 rad` si ese límite no figura en la configuración del entrenamiento.
+Con `clip_to_classic_limits: true`, el controlador limita la norma de la fuerza a `mass_kg * gravity_m_s2 * 2.5`, restringe la inclinación solicitada a `max_desired_tilt_rad` y mantiene una componente ascendente mínima antes del PD interno. El script `run_neural_scenario.py` usa `0.52 rad` si ese límite no figura en la configuración del entrenamiento.
 
 Los checkpoints incompatibles con la arquitectura y las entradas de fuerza exterior se rechazan al cargarse. Por tanto, los modelos anteriores no deben reutilizarse como outer-force sin regenerar dataset y entrenar de nuevo.
 

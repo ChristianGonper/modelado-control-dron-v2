@@ -76,7 +76,7 @@ Para utilizar una ejecución como evidencia del control clásico, comprueba lo s
 - Las saturaciones y degradaciones se reportan, no se ocultan.
 - Las figuras se generan desde la telemetria exportada, no desde datos editados manualmente.
 
-Los umbrales de RMSE y error máximo de la tabla son criterios iniciales. Hay que revisarlos si cambian el modelo físico, el controlador o los escenarios de referencia.
+Los umbrales de RMSE de la tabla son criterios iniciales; los límites de error máximo por familia se describen en [datos clásicos](dataset_clasico.md). Hay que revisarlos si cambian el modelo físico, el controlador o los escenarios de referencia.
 
 ## Escenarios oficiales
 
@@ -92,9 +92,9 @@ Los umbrales de RMSE y error máximo de la tabla son criterios iniciales. Hay qu
 
 ## Resultados y evidencia versionada
 
-Los subdirectorios generados localmente bajo `results/` son utiles para inspeccion durante desarrollo, pero no deben tratarse como evidencia final sin comprobar su trazabilidad. La excepcion actual son los cuatro CSV admitidos por `results/.gitignore`: `evidence_manifest.csv`, `comparison_all_runs.csv`, `comparison_all_runs_full.csv` y `comparison_summary.csv`.
+Los subdirectorios generados localmente bajo `results/` son utiles para inspeccion durante desarrollo, pero no deben tratarse como evidencia final sin comprobar su trazabilidad. Entre la evidencia versionada se encuentran estos cuatro CSV: `evidence_manifest.csv`, `comparison_all_runs.csv`, `comparison_all_runs_full.csv` y `comparison_summary.csv`.
 
-Ese snapshot fue incorporado en el commit `fe2e075` el 2026-06-10. El manifiesto declara la procedencia y los comandos manuales; los agregados contienen 264 corridas comparables (184 `test`, 80 `ood`) y 518 filas en el registro completo. Estos conteos estan fechados y no deben presentarse como invariantes del pipeline.
+Estos CSV están presentes en el historial desde el commit `b2ae1fa` del 2026-07-15. El manifiesto declara la procedencia y los comandos manuales; los agregados contienen 264 corridas comparables (184 `test`, 80 `ood`) y 518 filas en el registro completo. Estos conteos estan fechados y no deben presentarse como invariantes del pipeline.
 
 Motivos:
 
@@ -135,7 +135,7 @@ Cada escenario usado en la memoria debe conservar:
   - Atlas de trayectorias: `atlas_trayectorias_id`,
     `atlas_trayectorias_ood`, `atlas_trayectoria_helix_3d`.
   - La CLI lista también las figuras omitidas cuando faltan datos necesarios.
-  - Las filas `classic_family_pid` ambiguas se omiten con advertencia; no se infiere el PID desde la familia de trayectoria.
+  - Las filas `classic_family_pid` ambiguas se omiten con advertencia; no se infiere el PD desde la familia de trayectoria.
 - Conclusion tecnica breve:
   - causa de terminacion;
   - error de seguimiento;
@@ -165,13 +165,13 @@ La version `v1` contiene 150 episodios:
 - `lissajous`: 48.
 - `waypoint`: 36.
 
-Cada episodio queda identificado por familia, geometria, perturbacion, PID, semilla y split. Los resultados se consideran trazables si existen:
+Cada episodio queda identificado por familia, geometria, perturbacion, PD, semilla y split. Los resultados se consideran trazables si existen:
 
 - fila correspondiente en `manifest.csv`;
 - YAML generado en `scenarios/<family>/`;
 - `metrics.json` y `telemetry.json` en el `result_dir`;
 - `summary.csv` generado por `tools/summarize_classic_dataset.py`;
-- PID YAML correspondiente en `pids/`.
+- PD YAML correspondiente en `pids/`.
 
 Los escenarios de dataset `v1` empiezan en la referencia de la trayectoria en `t = 0`. Por tanto, sus metricas de error se interpretan como seguimiento desde condicion inicial consistente. No deben usarse para justificar capacidad de captura desde una posicion inicial lejana.
 
@@ -181,9 +181,9 @@ Los filtros duros de validez del dataset estan implementados en `passes_hard_fil
 
 La validacion neuronal tiene tres evidencias distintas:
 
-1. Oraculo outer-force: `tools\generate_outer_force_pid_bank.py` ejecuta variantes del PID externo por escenario manteniendo PID interno, limites y condiciones fuente; `tools\generate_outer_force_dataset.py` excluye candidatos inseguros y selecciona el experto por RMSE, esfuerzo dentro del 5% y conservadurismo en empate.
+1. Oraculo outer-force: `tools\generate_outer_force_pid_bank.py` ejecuta variantes del PD externo por escenario manteniendo PD interno, limites y condiciones fuente; `tools\generate_outer_force_dataset.py` excluye candidatos inseguros y selecciona el experto por RMSE, esfuerzo dentro del 5% y conservadurismo en empate.
 2. Entrenamiento y evaluacion supervisada: `tools\train_neural_controller.py` genera `config.yaml`, `normalization.json` y checkpoint; `tools\evaluate_neural_controller.py` escribe `metrics/*_force_metrics.json` para comparar `desired_force_W_N`.
-3. Bucle cerrado: `tools\run_neural_scenario.py` ejecuta un escenario YAML existente sustituyendo el controlador por un checkpoint que decide fuerza externa y mantiene PID interno clasico.
+3. Bucle cerrado: `tools\run_neural_scenario.py` ejecuta un escenario YAML existente sustituyendo el controlador por un checkpoint que decide fuerza externa y mantiene PD interno clasico.
 
 El split `test` heredado por el dataset `outer_force` mide desempeno in-distribution. No debe presentarse como prueba fuerte de generalizacion, porque procede de las familias y condiciones del dataset clasico. La generalizacion debe apoyarse en OOD separado, por ejemplo la lemniscata.
 
@@ -204,14 +204,14 @@ La suite actual ya incluye validaciones automaticas del modelo clasico:
 - `tests/test_classic_controller_config.py`: ganancias explicitas del controlador desde YAML y validacion de vectores no negativos.
 - `tests/test_classic_dataset_generation.py`: manifiesto `v1`, conteos por familia, determinismo y YAML generados validos.
 - `tests/test_classic_dataset_scripts.py`: flujo CLI generacion, ejecucion limitada y resumen en directorio temporal.
-- `tests/test_classic_pid_selection.py`: filtros duros, finitud y score de seleccion PID.
+- `tests/test_classic_pid_selection.py`: filtros duros, finitud y score de seleccion PD.
 - `tests/test_neural_dataset.py`: carga de telemetria, features, normalizacion y ventanas recurrentes.
 - `tests/test_neural_models.py`: forward de MLP, GRU y LSTM.
 - `tests/test_neural_training.py`: entrenamiento corto por CLI y dimensiones recurrentes.
 - `tests/test_neural_evaluation.py`: evaluacion supervisada por CLI y escritura de metricas.
 - `tests/test_neural_controller.py`: carga de checkpoint dummy e inferencia en bucle cerrado.
 - `tests/test_neural_outer_force.py`: fuerza deseada, clipping de inclinacion/componente vertical y rechazo de checkpoints incompatibles.
-- `tests/test_outer_force_generation_integration.py`: banco real por escenario, preservacion del PID interno/limites y seleccion de experto.
+- `tests/test_outer_force_generation_integration.py`: banco real por escenario, preservacion del PD interno/limites y seleccion de experto.
 
 Las regresiones automaticas no sustituyen a las ejecuciones oficiales completas para la memoria. Su papel es detectar roturas rapidas de contrato y evitar que `results/` historico actue como unico oraculo.
 

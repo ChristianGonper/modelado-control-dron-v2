@@ -112,7 +112,7 @@ trajectory:
 
 ### Circle
 
-Circulo horizontal en el plano `X_W-Y_W`.
+Trayectoria circular centrada en el mundo ENU. Por defecto, el círculo está en el plano horizontal `X_W-Y_W`; también puede inclinarse.
 
 ```yaml
 trajectory:
@@ -126,9 +126,11 @@ trajectory:
 - `center_W_m`: centro del circulo.
 - `radius_m`: radio.
 - `omega_rad_s`: velocidad angular de la referencia.
-- `yaw_mode`: si es `"forward"`, la guiñada sigue la direccion de avance; cualquier otro valor deja yaw en `0.0`.
+- `yaw_mode`: si es `"forward"`, la guiñada sigue la dirección de avance; cualquier otro valor deja yaw en `0.0`. El valor por defecto es `"forward"`.
+- `tilt_rad` o `tilt_deg`: inclinación no negativa del plano, en radianes o grados. Si se proporciona `tilt_deg`, tiene prioridad sobre `tilt_rad`. Por defecto es cero.
+- `plane_yaw_rad` o `plane_yaw_deg`: orientación horizontal del plano inclinado, en radianes o grados. Si se proporciona `plane_yaw_deg`, tiene prioridad sobre `plane_yaw_rad`. Por defecto es cero.
 
-La referencia implementada es:
+Sin inclinación, la referencia implementada es:
 
 ```text
 x = cx + R cos(omega t)
@@ -176,7 +178,7 @@ trajectory:
 - `omega_rad_s`: velocidad angular de avance de la referencia.
 - `z_amp`: amplitud de la oscilación vertical en metros. Si se omite, es `0.0`.
 - `z_omega_rad_s`: frecuencia angular de la oscilación vertical en `rad/s`. Si se omite, es `0.0`.
-- `yaw_mode`: si es `"forward"`, la guiñada sigue la dirección de avance (tangente a la trayectoria); cualquier otro valor la mantiene en `0.0`.
+- `yaw_mode`: si es `"forward"`, la guiñada sigue la dirección de avance (tangente a la trayectoria); cualquier otro valor la mantiene en `0.0`. El valor por defecto es `"forward"`.
 - `warmup_s`: duración en segundos de la fase de calentamiento/suavizado (default: `3.0`). Durante esta fase, la referencia se interpola suavemente usando un polinomio cúbico de Hermite desde el estado estacionario inicial hasta la trayectoria nominal.
 
 ### Line / Waypoint
@@ -276,7 +278,7 @@ controller:
 - `Kd_att`: ganancias derivativas de actitud por eje de cuerpo FRD. Si falta, se usa `[1.5, 1.5, 0.5]`.
 - `max_body_moments_Nm`: limites de momentos `[tau_x, tau_y, tau_z]` en FRD. Si falta, el controlador usa `[10.0, 10.0, 2.0]`.
 
-El controlador clasico usa un bucle externo de posicion y un bucle interno de actitud. Las ganancias declaradas en YAML permiten fijar PIDs por familia de trayectoria para datasets clasicos; si se omiten, se conservan los defaults del controlador.
+El controlador clasico usa un bucle externo de posicion y un bucle interno de actitud. Las ganancias declaradas en YAML permiten fijar PD por familia de trayectoria para datasets clasicos; si se omiten, se conservan los defaults del controlador.
 
 ### Controlador neuronal
 
@@ -303,7 +305,7 @@ controller:
 - `sequence_length`: longitud de ventana para GRU/LSTM. Si falta, se usa `20`. Para MLP se ignora.
 - `clip_to_classic_limits`: si es `true`, limita la fuerza predicha antes del lazo interno. Si falta, se usa `true`.
 - `max_desired_tilt_rad`: limite positivo y menor que `pi/2` para la inclinacion solicitada por la fuerza; es obligatorio en un YAML `neural`.
-- `Kp_att` y `Kd_att`: ganancias del PID interno clasico que estabiliza actitud.
+- `Kp_att` y `Kd_att`: ganancias del PD interno clasico que estabiliza actitud.
 - `max_body_moments_Nm`: limites de momentos `[tau_x, tau_y, tau_z]` en FRD. Si falta, se usa `[10.0, 10.0, 2.0]`.
 - `device`: `"auto"`, `"cpu"` o `"cuda"`. Si falta, `auto` usa CUDA cuando PyTorch la detecta.
 
@@ -396,7 +398,7 @@ output:
 
 Para probar los distintos tipos de trayectorias, se proporcionan los siguientes archivos listos para usar en `scenarios/`:
 
-- `hover_clean.yaml`: Vuelo estacionario (`hold`) a 2m, sin perturbaciones.
+- `hover_clean.yaml`: ascenso desde 1 m hacia una referencia estacionaria (`hold`) a 2 m, sin perturbaciones.
 - `circle_drag.yaml`: Trayectoria circular (`circle`) con rozamiento lineal activo.
 - `circle_noisy_wind.yaml`: Círculo con viento constante y ruido en sensores.
 - `lissajous_clean.yaml`: Trayectoria en curva de Lissajous (`lissajous`) 3D.

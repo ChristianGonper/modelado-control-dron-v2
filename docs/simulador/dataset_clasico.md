@@ -8,16 +8,16 @@ Generar este conjunto no entrena ni ejecuta redes. Para la variante de fuerza ex
 
 La versión `v1` contiene 150 episodios, distribuidos en cuatro familias de trayectorias:
 
-| Familia | Episodios | PID |
+| Familia | Episodios | PD |
 | --- | ---: | --- |
 | `hold` | 18 | `pid_hold_v1` |
 | `circle` | 48 | `pid_circle_v1` |
 | `lissajous` | 48 | `pid_lissajous_v1` |
 | `waypoint` | 36 | `pid_waypoint_v1` |
 
-Cada familia tiene un PID propio. El diagnóstico y ajuste utilizan escenarios de entrenamiento con los perfiles P0 nominal, P2 de viento este y P5 combinado; después se conservan las ganancias seleccionadas para evaluar las variantes de esa familia.
+Cada familia tiene un PD propio. El diagnóstico y ajuste utilizan dos geometrías de entrenamiento por familia, cada una con los perfiles P0 nominal, P2 de viento este y P5 combinado; después se conservan las ganancias seleccionadas para evaluar las variantes de esa familia.
 
-En este proyecto, «nominal» describe las siguientes condiciones:
+En el conjunto de datos clásico, el perfil `P0_nominal` reúne estas condiciones (los escenarios «limpios» de `scenarios/` pueden usar otras):
 
 - resistencia aerodinámica lineal nominal activa;
 - dinámica de actuadores activa;
@@ -48,7 +48,7 @@ A partir de la versión `v1`, todos los escenarios se inicializan de forma coher
 - `initial_state.velocity_W_m_s = [0.0, 0.0, 0.0]`
 - El dron comienza nivelado (`orientation_WB = null` en el YAML).
 
-Esto asegura que el ajuste PID y las métricas del dataset midan el seguimiento de la trayectoria sin verse penalizados por un error de posición inicial artificial.
+Esto asegura que el ajuste PD y las métricas del dataset midan el seguimiento de la trayectoria sin verse penalizados por un error de posición inicial artificial.
 
 ## Artefactos
 
@@ -100,15 +100,15 @@ Si el directorio ya existe, el comando falla para evitar sobrescribirlo. Para re
 uv run python tools\generate_classic_dataset.py --version v1 --out data\classic_dataset\v1 --overwrite
 ```
 
-Tuneo reproducible de PID base (recomendado; diagnostica cada familia sobre escenarios de entrenamiento con los perfiles P0 nominal, P2 de viento este y P5 combinado; vuelve a ajustar solo las que no cumplen los criterios; usa busqueda progresiva determinista con semilla 1042):
+Ajuste reproducible de los PD base: se diagnostican dos geometrías de entrenamiento de cada familia con los perfiles P0, P2 y P5, y se reajustan solo las familias que no cumplen los criterios. Los umbrales de RMSE por defecto son 0,25 m para `hold`, 0,35 m para `circle`, 0,45 m para `lissajous` y 0,40 m para `waypoint`. La búsqueda utiliza por defecto la semilla 1042:
 
 ```powershell
 uv run python tools\tune_classic_pid.py --dataset data\classic_dataset\v1 --out data\classic_dataset\v1\pids --workers 8
-# Forzar todas + umbrales custom (produce campana distinta)
+# Ejemplo alternativo: forzar el ajuste y cambiar el umbral de hold a 0,20 m (experimento distinto)
 uv run python tools\tune_classic_pid.py --dataset data\classic_dataset\v1 --out data\classic_dataset\v1\pids --force --rmse-hold 0.20 --workers 8
 ```
 
-`--workers` reparte candidatos PID independientes entre procesos CPU; cada candidato conserva sus casos diagnosticos en serie y los resultados se agregan en orden determinista. Los PIDs resultantes (frozen) se guardan en `pids/pid_<f>_v1.yaml` con `source`, configuracion de busqueda, diagnostico usado y motivo. Regenerar escenarios clasicos (fase 4 de campana o generacion con `--overwrite`) reutiliza los congelados en lugar de defaults. El banco `outer_force` parte de esos PID base y solo varía las ganancias externas. Los valores por defecto vigentes estan en las ayudas CLI y en `tools/run_experimental_campaign.py`; `docs/plans/archived/` es solo historico.
+`--workers` reparte candidatos PD independientes entre procesos CPU; cada candidato conserva sus casos diagnosticos en serie y los resultados se agregan en orden determinista. Los PD resultantes (frozen) se guardan en `pids/pid_<f>_v1.yaml` con `source`, configuracion de busqueda, diagnostico usado y motivo. Regenerar escenarios clasicos (fase 4 de campana o generacion con `--overwrite`) reutiliza los congelados en lugar de defaults. El banco `outer_force` parte de esos PD base y solo varía las ganancias externas. Los valores por defecto vigentes están en la ayuda de `tools/tune_classic_pid.py`; `docs/plans/archived/` es solo historico.
 
 El runner ejecuta el controlador embebido en cada YAML, no carga ganancias dinamicamente desde `pids/`. Antes de ejecutar comprueba que ambos coincidan y falla con una instruccion de regeneracion si los escenarios quedaron desactualizados tras un tuneo.
 
@@ -144,7 +144,7 @@ uv run python tools\train_neural_controller.py --dataset data\outer_force_datase
 uv run python tools\evaluate_neural_controller.py --dataset data\outer_force_dataset\v1 --run data\neural_control\outer_force_mlp_min_v1 --device auto
 ```
 
-El banco conserva por escenario el PID interno, limites, vehiculo, semilla y perturbaciones originales, y varia solo `Kp_pos` y `Kd_pos`. El generador `outer_force` excluye candidatos inseguros y conserva el split del escenario fuente. La normalizacion neuronal se calcula solo con muestras `train`. Para evaluar OOD supervisado, usar un directorio con `manifest.csv` donde todas las filas tengan `split=ood` y telemetria compatible de fuerza bajo cada `result_dir` (p. ej. `data/neural_ood/outer_force_v1` tras `generate_outer_force_dataset` sobre escenarios OOD). `data/neural_ood/battery_v1` (`generate_ood_battery.py`) es un artefacto local ignorado por git y solo contiene escenarios para bucle cerrado hasta generar esa telemetria. El evaluador filtra `split=ood` y **no** remapea a `train`. No mezclar filas OOD en el manifest in-distribution.
+El banco conserva por escenario el PD interno, limites, vehiculo, semilla y perturbaciones originales, y varia solo `Kp_pos` y `Kd_pos`. El generador `outer_force` excluye candidatos inseguros y conserva el split del escenario fuente. La normalizacion neuronal se calcula solo con muestras `train`. Para evaluar OOD supervisado, usar un directorio con `manifest.csv` donde todas las filas tengan `split=ood` y telemetria compatible de fuerza bajo cada `result_dir` (p. ej. `data/neural_ood/outer_force_v1` tras `generate_outer_force_dataset` sobre escenarios OOD). `data/neural_ood/battery_v1` (`generate_ood_battery.py`) es un artefacto local ignorado por git y solo contiene escenarios para bucle cerrado hasta generar esa telemetria. El evaluador filtra `split=ood` y **no** remapea a `train`. No mezclar filas OOD en el manifest in-distribution.
 
 Bucle cerrado OOD por lotes:
 
@@ -167,7 +167,7 @@ El consolidador `summarize_comparison.py` lee los reportes de simulación clási
 Los informes de transferencia se pueden refrescar sin re-simular con:
 `uv run python tools/run_classic_transfer_dataset.py --dataset data/classic_dataset/v1 --refresh-report-only`
 
-Para comparar el controlador clásico y el neuronal, no basta con las métricas supervisadas de fuerza. Estas comparan la fuerza de la red con `desired_force_W_N` del experto PID seleccionado. La comparación experimental principal se realiza con ejecuciones en bucle cerrado y métricas comunes de simulación (incluyendo las matrices cruzadas completas en test e OOD y el baseline representativo), usando `position_rmse_m` como métrica principal y reportando también error máximo, terminación, saturación y clipping de fuerza.
+Para comparar el controlador clásico y el neuronal, no basta con las métricas supervisadas de fuerza. Estas comparan la fuerza de la red con `desired_force_W_N` del experto PD seleccionado. La comparación experimental principal se realiza con ejecuciones en bucle cerrado y métricas comunes de simulación (incluyendo las matrices cruzadas completas en test e OOD y el baseline representativo), usando `position_rmse_m` como métrica principal y reportando también error máximo, terminación, saturación y clipping de fuerza.
 
 ## Criterios de validez
 
@@ -185,7 +185,7 @@ Un episodio se considera valido por los filtros duros del dataset si:
 
 Para la familia `waypoint`, el dataset mide la capacidad de alcanzar secuencialmente una lista de puntos, frenar y asentarse en cada uno antes de avanzar al siguiente. La causa de terminación normal es `"Trajectory completed"`. Los escenarios generados ya no emiten el campo legacy `times`; el avance depende de tolerancia de posición, tolerancia de velocidad y dwell de la trayectoria `waypoint_stop`. Los YAML antiguos con `times` siguen siendo aceptados por compatibilidad, pero ese campo no gobierna el avance entre waypoints.
 
-El score de ajuste PID combina error de posicion, actitud RMS, esfuerzo de control normalizado, saturacion y degradacion. El empuje se normaliza por el peso `m*g` y los momentos por `0.1 Nm`, para no mezclar unidades directamente.
+El score de ajuste PD combina error de posicion, actitud RMS, esfuerzo de control normalizado, saturacion y degradacion. El empuje se normaliza por el peso `m*g` y los momentos por `0.1 Nm`, para no mezclar unidades directamente.
 
 ## Pruebas automaticas
 
@@ -197,4 +197,4 @@ La cobertura especifica de este flujo esta en:
 - `tests/test_classic_pid_selection.py`
 - `tests/test_outer_force_generation_integration.py`
 
-Estas pruebas verifican ganancias explicitas del controlador, generacion determinista, PIDs versionados, manifiesto, scripts CLI, filtros de finitud y, para outer-force, preservacion del lazo interno y seleccion coherente del experto por escenario.
+Estas pruebas verifican ganancias explicitas del controlador, generacion determinista, PD versionados, manifiesto, scripts CLI, filtros de finitud y, para outer-force, preservacion del lazo interno y seleccion coherente del experto por escenario.

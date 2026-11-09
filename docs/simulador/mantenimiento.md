@@ -25,7 +25,7 @@ Comprueba los campos en `src/simulador_quad/scenarios/loader.py` y, cuando afect
 Revisar:
 
 - seccion `trajectory` en `docs/simulador/escenarios_yaml.md`;
-- figuras de trayectoria en `docs/simulador/guia_uso.md`;
+- ejemplos de ejecución en `docs/simulador/guia_uso.md`;
 - pruebas en `tests/test_trajectories.py`.
 
 Explica qué posición, velocidad, aceleración y orientación devuelve cada trayectoria, junto con sus unidades y marco de referencia.
@@ -52,7 +52,7 @@ Revisar:
 - `docs/simulador/trazabilidad.md`
 - `README.md`
 
-Actualiza las familias, perfiles, recuentos, divisiones, nombres de PID, campos del manifiesto, comandos y criterios que se vean afectados. Si cambia el YAML generado, revisa también la referencia de escenarios.
+Actualiza las familias, perfiles, recuentos, divisiones, nombres de PD, campos del manifiesto, comandos y criterios que se vean afectados. Si cambia el YAML generado, revisa también la referencia de escenarios.
 
 Ejecutar al menos:
 

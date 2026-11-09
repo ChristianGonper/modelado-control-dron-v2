@@ -30,25 +30,25 @@ Los intervalos de física, control y telemetría pueden ser distintos. Por eso, 
 - `control/classic.py`: controlador clasico en cascada; expone el calculo de fuerza externa y la conversion fuerza ENU a mando con lazo interno clasico.
 - `control/neural.py`: `NeuralOuterForceController` para `type: neural`, que predice fuerza externa.
 - `ml/`: carga de telemetria, normalizacion train-only, modelos MLP/GRU/LSTM, entrenamiento y evaluacion supervisada.
-- `datasets/classic.py`: definicion reproducible del dataset clasico, familias, perfiles, YAML generados, PID iniciales, manifiesto y filtros de aceptacion.
+- `datasets/classic.py`: definicion reproducible del dataset clasico, familias, perfiles, YAML generados, PD iniciales, manifiesto y filtros de aceptacion.
 - `runner.py`: orquestacion multi-rate, ZOH, telemetria y terminacion.
 - `telemetry/export.py`: exportacion JSON.
 - `metrics/report.py`: metricas agregadas con magnitudes fisicas separadas por unidades.
 - `visualization/plots.py`: figuras por episodio a partir de `telemetry.json`.
-- `visualization/comparison.py`: figuras comparativas C1–C7 desde `comparison_all_runs.csv`.
+- `visualization/comparison.py`: figuras comparativas y atlas de trayectorias a partir de los resultados de la campaña.
 - `visualization/style.py`: paleta, estilos por controlador y perfiles `diagnostic`/`report`.
 - `visualization/export.py`: exportación PNG/PDF a 300 dpi.
 - `visualization/three_d.py`: visor interactivo HTML 3D basado en Plotly.
 - `tools/generate_classic_dataset.py`: genera estructura `data/classic_dataset/<version>/` con `manifest.csv`, `pids/` y escenarios YAML.
-- `tools/tune_classic_pid.py`: diagnostica y, si es necesario, ajusta un PID por familia con escenarios de entrenamiento y los perfiles P0, P2 y P5.
+- `tools/tune_classic_pid.py`: diagnostica y, si es necesario, ajusta un PD por familia con dos geometrías de entrenamiento y los perfiles P0, P2 y P5.
 - `tools/run_classic_dataset.py`: ejecuta episodios del manifiesto, opcionalmente en varios procesos, y escribe `run_report.csv`.
 - `tools/summarize_classic_dataset.py`: resume resultados del dataset en `summary.csv`.
-- `tools/generate_outer_force_pid_bank.py`: ejecuta variantes del PID externo por escenario fuente conservando la configuracion interna y los limites originales.
+- `tools/generate_outer_force_pid_bank.py`: ejecuta variantes del PD externo por escenario fuente conservando la configuracion interna y los limites originales.
 - `tools/generate_outer_force_dataset.py`: selecciona un experto seguro por escenario y produce telemetria/YAML coherentes para targets de fuerza.
 - `tools/train_neural_controller.py`: entrena MLP, GRU o LSTM por imitacion de `desired_force_W_N` desde el dataset `outer_force`.
 - `tools/evaluate_neural_controller.py`: evalua modelos entrenados sobre `train`/`val`/`test` y, opcionalmente, un dataset OOD.
 - `tools/run_neural_scenario.py`: ejecuta un escenario existente sustituyendo el controlador por un checkpoint neuronal sin modificar el YAML base.
-- `tools/generate_pid_bank.py`: crea un banco inicial de PIDs por familia a partir de los PIDs actuales.
+- `tools/generate_pid_bank.py`: crea un banco inicial de PD por familia a partir de los PD actuales.
 
 ## Datos intercambiados entre módulos
 
@@ -93,7 +93,7 @@ Para `trajectory.type: "composite"`, la validación comprueba de forma recursiva
 
 Para `controller.type: "classic"`, el YAML puede declarar `Kp_pos`, `Kd_pos`, `Kp_att`, `Kd_att` y `max_body_moments_Nm` como vectores de tres componentes no negativas. Si faltan ganancias, el controlador conserva sus defaults.
 
-Para `controller.type: "neural"`, el YAML debe declarar `architecture`, `checkpoint_path`, `normalization_path`, una `feature_version` `outer_force_*` y `max_desired_tilt_rad`. La red predice `desired_force_W_N[3]` en mundo ENU; un controlador clasico interno la convierte en empuje colectivo y momentos FRD. Las arquitecturas soportadas son `mlp`, `gru` y `lstm`; GRU/LSTM mantienen ventana interna y el runner llama a `reset()` al inicio. Con `clip_to_classic_limits: true`, la fuerza se limita por norma a `mass_kg*gravity_m_s2*2.5`, por inclinacion deseada y por una componente vertical ascendente minima; despues el PID interno aplica `max_body_moments_Nm`. Se rechazan los checkpoints incompatibles con esta arquitectura.
+Para `controller.type: "neural"`, el YAML debe declarar `architecture`, `checkpoint_path`, `normalization_path`, una `feature_version` `outer_force_*` y `max_desired_tilt_rad`. La red predice `desired_force_W_N[3]` en mundo ENU; un controlador clasico interno la convierte en empuje colectivo y momentos FRD. Las arquitecturas soportadas son `mlp`, `gru` y `lstm`; GRU/LSTM mantienen ventana interna y el runner llama a `reset()` al inicio. Con `clip_to_classic_limits: true`, la fuerza se limita por norma a `mass_kg*gravity_m_s2*2.5`, por inclinacion deseada y por una componente vertical ascendente minima; despues el PD interno aplica `max_body_moments_Nm`. Se rechazan los checkpoints incompatibles con esta arquitectura.
 
 
 La evaluacion supervisada de `neural` se hace sobre telemetria del dataset `outer_force`: `train` calcula normalizacion, `val` selecciona checkpoint y `test` mide imitacion in-distribution en unidades de fuerza. OOD se evalua aparte con `--ood-dataset`, que debe contener `manifest.csv` y telemetria previamente generada; el evaluador no ejecuta escenarios por si mismo.
@@ -109,13 +109,13 @@ La version `v1` contiene 150 episodios:
 - `lissajous`: 48 episodios.
 - `waypoint`: 36 episodios.
 
-Cada familia usa un PID identificado como `pid_<family>_<version>`. El diagnóstico y ajuste se apoyan en escenarios de entrenamiento con los perfiles P0 nominal, P2 de viento este y P5 combinado. Las ganancias elegidas se fijan antes de evaluar las demás variantes de geometría y perturbaciones.
+Cada familia usa un PD identificado como `pid_<family>_<version>`. El diagnóstico y ajuste se apoyan en dos geometrías de entrenamiento por familia y los perfiles P0 nominal, P2 de viento este y P5 combinado. Las ganancias elegidas se fijan antes de evaluar las demás variantes de geometría y perturbaciones.
 
 Los escenarios generados inicializan el estado desde la referencia de la trayectoria en `t = 0`: posicion y yaw coinciden con la referencia inicial, velocidad lineal y angular empiezan a cero y `orientation_WB` queda como `null` para que el cargador genere una actitud nivelada ENU/FRD. Asi el dataset mide seguimiento de trayectoria, no captura desde una posicion arbitrariamente alejada.
 
 Artefactos generados:
 
-- `manifest.csv`: indice de escenarios, familia, geometria, perturbacion, PID, semilla, split, YAML y directorio de resultado.
+- `manifest.csv`: indice de escenarios, familia, geometria, perturbacion, PD, semilla, split, YAML y directorio de resultado.
 - `pids/*.yaml`: ganancias por familia. Si no existen, la generacion crea YAML iniciales con `source: default_initial`.
 - `scenarios/<family>/*.yaml`: escenarios ejecutables por el runner normal.
 - `results/<family>/<scenario_id>/`: salidas de simulacion.
@@ -124,7 +124,7 @@ Artefactos generados:
 
 ## Dataset de fuerza externa
 
-El dataset `outer_force` deriva del manifiesto clasico, pero no reutiliza sus comandos como targets. Para cada escenario fuente, `generate_outer_force_pid_bank.py` ejecuta variantes de `Kp_pos` y `Kd_pos` bajo exactamente la trayectoria, perturbaciones, semilla, vehiculo, PID interno y limites del escenario. `generate_outer_force_dataset.py` descarta candidatos que no pasan filtros duros, elige el menor RMSE y, entre candidatos dentro del 5% del mejor, el de menor esfuerzo; un empate real se resuelve conservadoramente. La telemetria copiada y las ganancias del YAML final pertenecen al experto seleccionado para ese escenario.
+El dataset `outer_force` deriva del manifiesto clasico, pero no reutiliza sus comandos como targets. Para cada escenario fuente, `generate_outer_force_pid_bank.py` ejecuta variantes de `Kp_pos` y `Kd_pos` bajo exactamente la trayectoria, perturbaciones, semilla, vehiculo, PD interno y limites del escenario. `generate_outer_force_dataset.py` descarta candidatos que no pasan filtros duros, elige el menor RMSE y, entre candidatos dentro del 5% del mejor, el de menor esfuerzo; un empate real se resuelve conservadoramente. La telemetria copiada y las ganancias del YAML final pertenecen al experto seleccionado para ese escenario.
 
 ## Metricas
 
@@ -146,7 +146,7 @@ Las metricas no sustituyen a la inspeccion de telemetria. Para explicar un resul
 
 - El viento es constante.
 - El ruido de observacion afecta solo a posicion y velocidad.
-- La visualización es postproceso y automática tras cada ejecución exitosa.
-- El controlador `neural` aprende por imitacion supervisada de fuerza externa solicitada por un PID experto seleccionado; no optimiza directamente una funcion de coste en bucle cerrado.
+- La visualización se genera tras cada ejecución exitosa, salvo que se haya indicado `--no-visualization`.
+- El controlador `neural` aprende por imitacion supervisada de fuerza externa solicitada por un PD experto seleccionado; no optimiza directamente una funcion de coste en bucle cerrado.
 - La evaluacion `train`/`val`/`test` del dataset clasico mide desempeno in-distribution. La generalizacion debe evaluarse con datasets o escenarios OOD separados.
 - Las metricas supervisadas de `neural` miden error de fuerza; los porcentajes de clipping y las metricas fisicas de trayectoria deben verificarse en ejecucion cerrada.
