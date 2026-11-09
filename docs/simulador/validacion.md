@@ -53,7 +53,7 @@ uv run simulador-quad run scenarios\composite_ood.yaml --no-visualization
 
 El manifiesto de la batería debe identificar sus escenarios con `split=ood`; no deben mezclarse con el conjunto de prueba `test`. La evaluación supervisada necesita, además, telemetría de expertos compatible: la batería de escenarios por sí sola no la contiene. En cambio, `run_neural_outer_force_dataset.py` ejecuta esos escenarios en bucle cerrado. `composite_ood` comienza en `[0, 0, 1]`, alineado con su primer tramo. Para reproducir una evidencia, conserva la versión del código, la configuración y los artefactos de cada ejecución.
 
-Para consultar el protocolo de comparación y los comandos con los que se generó la evidencia del TFG, revisa el [anejo de la memoria](../../TFG_Memoria/appendices/a_comandos.tex). Las salidas consolidadas distinguen la comparación principal del conjunto completo:
+La guía de [evaluación experimental](evaluacion-experimental.md) reúne los comandos para ejecutar y consolidar estas comparaciones. Las salidas consolidadas distinguen la comparación principal del conjunto completo:
 
 Archivos de resultados:
 - `results/comparison_all_runs.csv`: registro canónico comparable (`split=test` y `split=ood` únicamente), con `trajectory_type`, `termination_reason`, `mission_success`, `safety_success` y `coverage_group=comparable`.

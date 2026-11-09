@@ -8,8 +8,8 @@ Esta página explica cómo se organiza el código y qué ocurre desde que se car
 
 1. La interfaz de comandos recibe `simulador-quad run <escenario.yaml>`.
 2. El cargador lee y valida el YAML y construye el vehículo, el estado inicial, la trayectoria, el controlador y las perturbaciones.
-3. `SimulationRunner` prepara los ritmos de física, control y telemetría. Inicializa los actuadores con un comando de vuelo estacionario para evitar que un episodio nivelado comience con los rotores a cero.
-4. Durante la ejecución obtiene la referencia, genera la observación —con ruido cuando corresponde— y llama al controlador en cada instante de control. El mezclador convierte el empuje y los momentos en órdenes para los rotores; los actuadores aplican retardo, dinámica y saturación. El integrador RK4 avanza el estado y se guardan muestras de telemetría con su propio intervalo.
+3. `SimulationRunner` prepara la frecuencia de física, control y telemetría. Inicializa los actuadores con un comando de vuelo estacionario para evitar que un episodio nivelado comience con los rotores a cero y pierda altitud.
+4. Durante la ejecución obtiene la referencia, genera la observación, con ruido cuando corresponde, y llama al controlador en cada instante de control. El mezclador convierte el empuje y los momentos en órdenes para los rotores; los actuadores aplican retardo, dinámica y saturación. El integrador RK4 avanza el estado y se guardan muestras de telemetría con su propio intervalo.
 5. El episodio termina al alcanzar su límite de tiempo, completar una trayectoria finita o activar una condición de seguridad. Se guardan `telemetry.json` y `metrics.json`.
 6. Si la visualización está activada, se generan figuras PNG y el visor `visualization_3d.html`. La opción `--no-visualization` omite este paso.
 
@@ -94,7 +94,6 @@ Para `trajectory.type: "composite"`, la validación comprueba de forma recursiva
 Para `controller.type: "classic"`, el YAML puede declarar `Kp_pos`, `Kd_pos`, `Kp_att`, `Kd_att` y `max_body_moments_Nm` como vectores de tres componentes no negativas. Si faltan ganancias, el controlador conserva sus defaults.
 
 Para `controller.type: "neural"`, el YAML debe declarar `architecture`, `checkpoint_path`, `normalization_path`, una `feature_version` `outer_force_*` y `max_desired_tilt_rad`. La red predice `desired_force_W_N[3]` en mundo ENU; un controlador clasico interno la convierte en empuje colectivo y momentos FRD. Las arquitecturas soportadas son `mlp`, `gru` y `lstm`; GRU/LSTM mantienen ventana interna y el runner llama a `reset()` al inicio. Con `clip_to_classic_limits: true`, la fuerza se limita por norma a `mass_kg*gravity_m_s2*2.5`, por inclinacion deseada y por una componente vertical ascendente minima; despues el PD interno aplica `max_body_moments_Nm`. Se rechazan los checkpoints incompatibles con esta arquitectura.
-
 
 La evaluacion supervisada de `neural` se hace sobre telemetria del dataset `outer_force`: `train` calcula normalizacion, `val` selecciona checkpoint y `test` mide imitacion in-distribution en unidades de fuerza. OOD se evalua aparte con `--ood-dataset`, que debe contener `manifest.csv` y telemetria previamente generada; el evaluador no ejecuta escenarios por si mismo.
 

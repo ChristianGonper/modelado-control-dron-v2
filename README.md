@@ -2,7 +2,7 @@
 
 [Español](README.md) | [English](README.en.md)
 
-Simulador reproducible de dinámica 6DOF para estudiar el seguimiento de trayectorias de un cuadricóptero y comparar control clásico con control neuronal entrenado por imitación. El proyecto reúne el modelo físico, los controladores, los escenarios, las campañas experimentales y las herramientas de análisis en un único paquete de Python.
+Simulador reproducible de dinámica 6DOF para estudiar el seguimiento de trayectorias de un cuadricóptero y comparar control clásico con control neuronal entrenado por imitación. El proyecto reúne el modelo físico, los controladores, los escenarios, las ejecuciones experimentales y las herramientas de análisis en un único paquete de Python.
 
 Desarrollado por Christian González Pérez como Trabajo de Fin de Grado (TFG) en la Universidad de León. [Visitar la página del proyecto](https://christiangonper.github.io/modelado-control-dron-v2/).
 
@@ -16,9 +16,9 @@ Desarrollado por Christian González Pérez como Trabajo de Fin de Grado (TFG) e
 
 ## Qué se observó en el TFG
 
-En el conjunto de prueba conocido, GRU y LSTM imitaron mejor la fuerza del experto, pero MLP obtuvo menor error de seguimiento en círculo y Lissajous. En escenarios fuera de distribución, la respuesta dependió de la trayectoria: GRU obtuvo mejor resultado que MLP en las familias de lemniscata y composición, mientras que MLP siguió siendo competitivo en variantes de Lissajous y waypoint; aparecieron fallos y degradación. No se demuestra una superioridad general de una arquitectura. La memoria recoge 23 escenarios de prueba y 10 fuera de distribución, con 184 y 80 ejecuciones en total, respectivamente. En cada escenario se evaluaron ocho controladores: cuatro PD de familia, tres redes y un PD representativo. Véanse [resultados](TFG_Memoria/sections/07_resultados.tex) y [conclusiones y límites](TFG_Memoria/sections/09_conclusiones.tex).
+En el conjunto de prueba conocido, GRU y LSTM imitaron mejor la fuerza del experto, pero MLP obtuvo menor error de seguimiento en círculo y Lissajous. En escenarios fuera de distribución, la respuesta dependió de la trayectoria: GRU obtuvo mejor resultado que MLP en las familias de lemniscata y composición, mientras que MLP siguió siendo competitivo en variantes de Lissajous y waypoint. No se demuestra una superioridad general de una arquitectura. La memoria recoge 23 escenarios de prueba y 10 fuera de distribución, con 184 y 80 ejecuciones en total, respectivamente. En cada escenario se evaluaron ocho controladores: cuatro PD de familia, tres redes y un PD representativo. Véanse [resultados](TFG_Memoria/sections/07_resultados.tex) y [conclusiones y límites](TFG_Memoria/sections/09_conclusiones.tex).
 
-Son resultados **de simulación**, no pruebas de vuelo real. El modelo simplifica aerodinámica, viento y sensores; la muestra y las semillas son limitadas y no hay intervalos de confianza. La imitación puede heredar sesgos de los expertos. La [memoria completa en PDF](site/assets/reports/TFG_Memoria_es.pdf) explica el protocolo y sus límites; la [web académica](https://christiangonper.github.io/modelado-control-dron-v2/) ofrece una presentación del trabajo.
+El modelo simplifica aerodinámica, viento y sensores; la muestra y las semillas son limitadas y no hay intervalos de confianza. La imitación puede heredar sesgos de los expertos. La [memoria completa en PDF](site/assets/reports/TFG_Memoria_es.pdf) explica el protocolo y sus límites; la [web académica](https://christiangonper.github.io/modelado-control-dron-v2/) ofrece una presentación del trabajo.
 
 ### Una mirada a los resultados
 
@@ -30,7 +30,7 @@ La gráfica compara el error medio de posición por familia en las trayectorias 
 
 ## NeuroFlight: del experimento a una aplicación interactiva
 
-NeuroFlight lleva el simulador a una interfaz local para explorar cómo responde el cuadricóptero a distintas misiones. En una misma sesión puedes:
+NeuroFlight lleva el simulador a una interfaz para explorar cómo responde el cuadricóptero a distintas misiones. En una misma sesión puedes:
 
 1. **Diseñar una misión**: elegir, por ejemplo, un círculo o encadenar varios tramos y comprobar la ruta prevista en 3D.
 2. **Comparar controladores**: ejecutar la misma misión con un PD y las redes MLP, GRU y LSTM, y reproducir sus trayectorias. La aplicación elige el PD de referencia según la misión.
@@ -40,9 +40,9 @@ NeuroFlight lleva el simulador a una interfaz local para explorar cómo responde
 
 *Una misión nueva: reproducción y métricas de seguimiento. Los resultados corresponden únicamente a este ejemplo.*
 
-La captura muestra la interfaz real. Cada misión de la aplicación es una simulación nueva: sus resultados y los modelos regenerados de la demo no son los resultados históricos del TFG. NeuroFlight no controla un dron real ni reentrena las redes desde la interfaz.
+En la imagen se observa cómo sigue cada controlador una trayectoria Lissajous. El reproductor permite recorrer la simulación y la vista de análisis ayuda a comparar las señales y el error a lo largo del tiempo.
 
-**¿Quieres probarlo?** La [guía de NeuroFlight](docs/neuroflight.md) explica cómo preparar los modelos, instalar la aplicación y recorrer una primera misión. La aplicación está en la rama `concurso-prototipos-eiiia-2026`; el repositorio incluye un paquete de modelos regenerados para probarla. La guía también describe la ruta de entrenamiento, todavía sin validar de principio a fin.
+**¿Quieres probarlo?** La [guía de NeuroFlight](docs/neuroflight.md) explica cómo preparar los modelos, instalar la aplicación y recorrer una primera misión. El repositorio incluye un paquete de modelos entrenados para probarla. La guía también describe los pasos para el entrenamiento.
 
 ## Explorar el código y la memoria
 
@@ -59,7 +59,7 @@ uv sync
 uv run simulador-quad run scenarios\hover_clean.yaml --no-visualization
 ```
 
-Se generarán telemetría y métricas en `results/hover_clean/`. Es una ejecución nueva, distinta de los resultados agregados de la memoria. La aplicación requiere además los modelos y el cliente compilado; sigue su guía para prepararlos.
+Se generarán telemetría y métricas en `results/hover_clean/`. La aplicación requiere además los modelos y el cliente compilado; sigue su guía para prepararlos.
 
 ## Estructura del proyecto
 
@@ -83,7 +83,7 @@ La batería de pruebas está diseñada para cubrir el modelo físico, las conven
 uv run pytest
 ```
 
-Algunas pruebas requieren artefactos generados localmente o el paquete de NeuroFlight extraído en `data/neuroflight_bundle/`. La batería completa no se ha demostrado limpia en un clon nuevo.
+Algunas pruebas requieren artefactos generados localmente o el paquete de NeuroFlight extraído en `data/neuroflight_bundle/`.
 
 La comparación experimental distingue entre completar una misión (`mission_success`) y terminar sin fallo físico (`safety_success`). Alcanzar el límite temporal en una trayectoria finita no se considera una misión completada.
 

@@ -88,7 +88,7 @@
       </div>
       <div class="summary-copy">
         <p>To explore that question, I built a six-degree-of-freedom quadcopter simulator with actuators, disturbances and repeatable trajectories.</p>
-        <p>I tuned classical PD controllers and generated examples of their behaviour. I then trained three kinds of networks — MLP, GRU and LSTM — to imitate the force requested by those experts. The networks control position; a classical controller still stabilises attitude.</p>
+        <p>I tuned classical PD controllers and generated examples of their behaviour. I then trained three kinds of networks — MLP, GRU and LSTM — to imitate the force requested by those experts. The networks replace the outer position-control loop, while the classical inner loop continues to stabilise attitude.</p>
       </div>
       <ul class="pillars" aria-label="Core areas">
         <li><strong>MODEL</strong><span>Dynamics, actuators, and disturbances</span></li>
@@ -99,7 +99,7 @@
 
     <section class="summary" aria-labelledby="findings-title">
       <div><p class="section-number">02 / Findings</p><h2 id="findings-title">Results and limits</h2></div>
-      <div class="summary-copy"><p>GRU and LSTM imitated expert force more closely, but MLP tracked circles and Lissajous trajectories better in the known test set. Performance outside the training distribution depended on the scenario and included failures; no architecture was universally superior.</p><p>The study uses simulation, with simplified aerodynamics, wind and sensors. It does not validate real flight. The report describes 184 test and 80 out-of-distribution runs with eight controllers per scenario: four family PDs, three networks and a representative PD. The report details the criteria and limits.</p><p><a href="https://github.com/ChristianGonper/modelado-control-dron-v2/blob/concurso-prototipos-eiiia-2026/docs/neuroflight.md">NeuroFlight local guide (Spanish)</a>: its regenerated models and new simulations are separate from the TFG results.</p></div>
+      <div class="summary-copy"><p>GRU and LSTM imitated expert force more closely, but MLP tracked circles and Lissajous trajectories better in the known test set. Performance outside the training distribution depended on the scenario and included failures; no architecture was universally superior.</p><p>The study uses simulation, with simplified aerodynamics, wind and sensors. It does not validate real flight. The report describes 184 test and 80 out-of-distribution runs with eight controllers per scenario: four family PDs, three networks and a representative PD. The report details the criteria and limits.</p><p><a href="https://github.com/ChristianGonper/modelado-control-dron-v2/blob/main/docs/neuroflight.md">NeuroFlight local guide (Spanish)</a>: its regenerated models and new simulations are separate from the TFG results.</p></div>
     </section>
     <section class="report" id="report" aria-labelledby="report-title">
       <div class="report-heading">

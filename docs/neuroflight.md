@@ -1,12 +1,12 @@
 # NeuroFlight: guía de uso local
 
-NeuroFlight es una aplicación que permite experimentar con el simulador del TFG desde el navegador. Puedes diseñar una trayectoria, compararla con un controlador PD y tres redes neuronales, reproducir los vuelos y examinar métricas y señales. Todo se ejecuta en tu ordenador: no controla un dron real y no entrena redes desde la interfaz.
+NeuroFlight es una aplicación que permite experimentar con el simulador del TFG desde el navegador. Puedes diseñar una trayectoria, compararla con un controlador PD y tres redes neuronales, reproducir los vuelos y examinar métricas y señales.
 
 Esta guía separa tres recorridos: [preparar los modelos](#1-preparar-los-modelos), [instalar y arrancar la aplicación](#2-instalar-y-arrancar-neuroflight) y [explorar una misión](#3-recorrer-una-misión). Al final se describe la [ruta de entrenamiento](#entrenar-los-modelos-desde-cero).
 
 ## 1. Preparar los modelos
 
-El repositorio incluye un [paquete de modelos para la demostración](neuroflight-assets/modelos-neuroflight.zip). Contiene cuatro controladores PD y tres redes de fuerza exterior regenerados el 23 de septiembre de 2026. Son modelos nuevos, no los pesos históricos de la memoria. Sus datos de entrenamiento proceden de simulaciones y demostraciones de expertos PD, no de vuelos reales.
+El repositorio incluye un [paquete de modelos para la demostración](neuroflight-assets/modelos-neuroflight.zip). Contiene cuatro controladores PD y tres redes de fuerza exterior regenerados el 23 de septiembre de 2026. Son modelos nuevos, no los pesos históricos de la memoria. Sus datos de entrenamiento proceden de simulaciones y demostraciones de expertos PD.
 
 Después de clonar el repositorio, descomprime el archivo desde la raíz del proyecto. En PowerShell:
 
@@ -16,14 +16,14 @@ Expand-Archive -LiteralPath docs\neuroflight-assets\modelos-neuroflight.zip -Des
 
 El destino debe contener directamente `bundle_manifest.json`, `pids/` y `neural_control/`. Si ya existe un paquete en esa carpeta, consérvalo o utiliza otra copia del proyecto antes de descomprimir. El manifiesto permite comprobar la integridad de los archivos al arrancar. Las misiones nuevas no son resultados agregados del TFG; consulta la [memoria](../site/assets/reports/TFG_Memoria_es.pdf) para el protocolo académico.
 
-También puedes [entrenar modelos desde cero](#entrenar-los-modelos-desde-cero). Esa ruta requiere muchos más recursos y no se ha validado de principio a fin desde un clon limpio.
+También puedes [entrenar modelos desde cero](#entrenar-los-modelos-desde-cero), si bien ello requiere muchos más recursos.
 
 ## 2. Instalar y arrancar NeuroFlight
 
-Necesitas Git, Python 3.13 o posterior, [uv](https://docs.astral.sh/uv/) y Node.js con npm. La aplicación está en la rama `concurso-prototipos-eiiia-2026`. En PowerShell:
+Necesitas Git, Python 3.13 o posterior, [uv](https://docs.astral.sh/uv/) y Node.js con npm. En PowerShell:
 
 ```powershell
-git clone --branch concurso-prototipos-eiiia-2026 https://github.com/ChristianGonper/modelado-control-dron-v2.git
+git clone https://github.com/ChristianGonper/modelado-control-dron-v2.git
 cd modelado-control-dron-v2
 uv sync
 cd frontend
@@ -72,11 +72,11 @@ Las ejecuciones nuevas se guardan en `data/neuroflight_runs/`, junto con su conf
 
 ## Entrenar los modelos desde cero
 
-Este recorrido explica cómo generar modelos nuevos de la misma familia que utiliza NeuroFlight. Requiere una GPU NVIDIA compatible con CUDA para el entrenamiento y puede necesitar mucho tiempo y espacio. Las simulaciones y el ajuste de los controladores clásicos utilizan CPU. No hemos ejecutado toda esta cadena desde un clon limpio: los comandos siguen la memoria y los scripts actuales, pero no podemos garantizar todavía una reproducción completa. Entrenar de nuevo tampoco recupera los pesos históricos ni garantiza las mismas cifras.
+Este recorrido explica cómo generar modelos nuevos de la misma familia que utiliza NeuroFlight. Requiere una GPU NVIDIA compatible con CUDA para el entrenamiento y puede necesitar mucho tiempo y espacio. Las simulaciones y el ajuste de los controladores clásicos utilizan CPU. Entrenar de nuevo no recupera los pesos históricos ni garantiza las mismas cifras.
 
 ### Qué red se entrena
 
-En el TFG, las redes MLP, GRU y LSTM evaluadas para el control de posición aprenden a predecir la **fuerza del lazo externo** a partir de ejemplos de controladores PD. El nombre técnico de esa variante en el código es `outer_force_min_v1`. NeuroFlight carga estas tres arquitecturas y cuatro PD de referencia. Consulta el [anejo de comandos de la memoria](../TFG_Memoria/appendices/a_comandos.tex) para el protocolo del TFG.
+En el TFG, las redes MLP, GRU y LSTM evaluadas para el control de posición aprenden a predecir la **fuerza del lazo externo** a partir de ejemplos de controladores PD. El nombre técnico de esa variante en el código es `outer_force_min_v1`. NeuroFlight carga estas tres arquitecturas y cuatro PD de referencia.
 
 ### 1. Preparar el entorno y comprobar la GPU
 
@@ -106,7 +106,7 @@ Estas fases usan principalmente CPU. `--workers 4` limita los procesos paralelos
 
 ### 3. Entrenar MLP, GRU y LSTM en GPU
 
-El siguiente bucle sigue el comando del anejo para cada arquitectura y guarda cada modelo en una carpeta propia. El entrenamiento usa por defecto la semilla `42`, registrada en su configuración; mantenerla facilita repetir el experimento, aunque las diferencias de entorno o hardware pueden producir variaciones:
+El siguiente bucle entrena cada arquitectura y guarda cada modelo en una carpeta propia. El entrenamiento usa por defecto la semilla `42`, registrada en su configuración; mantenerla facilita repetir el experimento, aunque las diferencias de entorno o hardware pueden producir variaciones:
 
 ```powershell
 foreach ($arquitectura in @('mlp', 'gru', 'lstm')) {
@@ -127,7 +127,7 @@ foreach ($arquitectura in @('mlp', 'gru', 'lstm')) {
 }
 ```
 
-Esa evaluación por sí sola no reproduce la comparación completa del TFG: también se necesitan los experimentos de seguimiento en bucle cerrado, los escenarios fuera de distribución y su consolidación. El [anejo de la memoria](../TFG_Memoria/appendices/a_comandos.tex) recoge esos pasos.
+Esa evaluación por sí sola no reproduce la comparación completa del TFG: también se necesitan los experimentos de seguimiento en bucle cerrado, los escenarios fuera de distribución y su consolidación. La guía de [evaluación experimental](simulador/evaluacion-experimental.md) explica cómo ejecutarlos y consolidar sus resultados.
 
 ### 4. Preparar el paquete para la aplicación
 

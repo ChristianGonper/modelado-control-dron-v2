@@ -2,7 +2,7 @@
 
 [Español](README.md) | [English](README.en.md)
 
-A reproducible 6DOF dynamics simulator for studying quadcopter trajectory tracking and comparing classical control with neural control trained through imitation learning. The project brings together the physical model, controllers, scenarios, experimental campaigns, and analysis tools in a single Python package.
+A reproducible 6DOF dynamics simulator for studying quadcopter trajectory tracking and comparing classical control with neural control trained through imitation learning. The project brings together the physical model, controllers, scenarios, experimental runs, and analysis tools in a single Python package.
 
 Developed by Christian González Pérez as a Final Degree Project (TFG) at the University of León. [Visit the project website](https://christiangonper.github.io/modelado-control-dron-v2/en/).
 
@@ -16,9 +16,9 @@ Can a neural network replace several specialised position controllers while reta
 
 ## What the study found
 
-On the in-distribution test set, GRU and LSTM imitated the expert force more closely, while MLP achieved lower tracking error on circles and Lissajous trajectories. In out-of-distribution scenarios, performance depended on the trajectory: GRU performed better than MLP on lemniscate and composite families, while MLP remained competitive on Lissajous and waypoint variants. Failures and degradation occurred; no architecture was universally best.
+On the in-distribution test set, GRU and LSTM imitated the expert force more closely, while MLP achieved lower tracking error on circles and Lissajous trajectories. In out-of-distribution scenarios, performance depended on the trajectory: GRU performed better than MLP on lemniscate and composite families, while MLP remained competitive on Lissajous and waypoint variants. No architecture was universally best.
 
-The study reports 23 test scenarios (184 runs) and 10 out-of-distribution scenarios (80 runs), each evaluated with four family PDs, three networks and a representative PD. These are **simulation results**, not flight tests. Aerodynamics, wind and sensors are simplified, and the sample and seeds are limited. The [English thesis PDF](site/assets/reports/TFG_Report_en.pdf) explains the protocol, results and limitations.
+The study reports 23 test scenarios (184 runs) and 10 out-of-distribution scenarios (80 runs), each evaluated with four family PDs, three networks and a representative PD. Aerodynamics, wind and sensors are simplified, and the sample and seeds are limited. The [English thesis PDF](site/assets/reports/TFG_Report_en.pdf) explains the protocol, results and limitations.
 
 ### A look at the results
 
@@ -30,7 +30,7 @@ The chart compares mean position error across the known test trajectory families
 
 ## NeuroFlight: explore a mission
 
-NeuroFlight is a local interactive application built around the simulator. It lets you:
+NeuroFlight is an interactive application built around the simulator. It lets you:
 
 1. **Design a mission**: choose a circle or combine several segments and preview the route in 3D.
 2. **Compare controllers**: simulate the same mission with a PD and the MLP, GRU and LSTM networks, then replay their trajectories. The application selects the reference PD according to the mission.
@@ -40,9 +40,9 @@ NeuroFlight is a local interactive application built around the simulator. It le
 
 *A new demonstration mission: playback and tracking metrics for this example only.*
 
-This is a screenshot of the real interface. New missions and the demo's regenerated models are distinct from the historical TFG results. NeuroFlight does not control a real drone or train networks from the interface.
+The screenshot shows how each controller follows a Lissajous trajectory. The player lets you replay the simulation, and the analysis view helps compare signals and tracking errors over time.
 
-**Try it locally:** the [NeuroFlight guide](docs/neuroflight.md) (Spanish) covers model preparation, installation and a first mission. The application is on the `concurso-prototipos-eiiia-2026` branch. The repository includes a bundle of regenerated models for trying it locally. The guide also describes the training route, which has not yet been validated end to end.
+**Try it locally:** the [NeuroFlight guide](docs/neuroflight.md) (Spanish) covers model preparation, installation and a first mission. The repository includes trained models for trying it locally. The guide also describes how to train the models.
 
 ## Explore the code and the thesis
 

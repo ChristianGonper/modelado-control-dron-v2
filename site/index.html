@@ -88,7 +88,7 @@
       </div>
       <div class="summary-copy">
         <p>Para responder a esa pregunta construí un simulador de un cuadricóptero con seis grados de libertad. El modelo incluye actuadores, perturbaciones y trayectorias que pueden repetirse para comparar los resultados.</p>
-        <p>Primero ajusté controladores clásicos PD y generé ejemplos de su comportamiento. Después entrené tres tipos de redes —MLP, GRU y LSTM— para imitar la fuerza que esos expertos piden al dron. Las redes controlan la posición; un controlador clásico sigue estabilizando la actitud.</p>
+        <p>Primero ajusté controladores clásicos PD y generé ejemplos de su comportamiento. Después entrené tres tipos de redes —MLP, GRU y LSTM— para imitar la fuerza que esos expertos piden al dron. Las redes sustituyen el lazo externo de control de posición, mientras que el lazo interno clásico sigue estabilizando la actitud.</p>
       </div>
       <ul class="pillars" aria-label="Áreas principales">
         <li><strong>MODELO</strong><span>Dinámica, actuadores y perturbaciones</span></li>
@@ -102,7 +102,7 @@
       <div class="summary-copy">
         <p>GRU y LSTM imitaron mejor la fuerza del experto, pero MLP siguió mejor las trayectorias de círculo y Lissajous en las trayectorias conocidas. En trayectorias diferentes de las usadas durante el entrenamiento, el comportamiento cambió según el caso y aparecieron fallos. Ninguna arquitectura fue superior en todos los casos.</p>
         <p>El estudio es simulado: simplifica aerodinámica, viento y sensores, y no demuestra comportamiento en un dron real. La memoria describe las 184 ejecuciones de prueba y 80 fuera de distribución, con ocho controladores por escenario: cuatro PD de familia, tres redes y un PD representativo. La memoria detalla los criterios y limitaciones.</p>
-        <p><a href="https://github.com/ChristianGonper/modelado-control-dron-v2/blob/concurso-prototipos-eiiia-2026/docs/neuroflight.md">Conocer NeuroFlight y su guía local</a>. Sus simulaciones nuevas y modelos regenerados no son los resultados históricos del TFG.</p>
+        <p><a href="https://github.com/ChristianGonper/modelado-control-dron-v2/blob/main/docs/neuroflight.md">Conocer NeuroFlight y su guía local</a>. Sus simulaciones nuevas y modelos regenerados no son los resultados históricos del TFG.</p>
       </div>
     </section>
 
