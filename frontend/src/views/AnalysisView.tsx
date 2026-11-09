@@ -270,7 +270,7 @@ export const AnalysisView: React.FC<AnalysisViewProps> = ({
             <span>Estructura Híbrida NeuroFlight</span>
           </div>
           <p className="text-xs text-aerolab-secondary leading-relaxed">
-            Las redes neuronales (MLP, GRU, LSTM) sustituyen el control externo de posición estimando la fuerza deseada en el eje corporal. El lazo interno mantiene la estabilización de actitud con cuaterniones y las protecciones físicas.
+            Las redes neuronales (MLP, GRU, LSTM) sustituyen el control externo de posición estimando la fuerza deseada en el sistema de referencia del mundo (ENU). El lazo interno mantiene la estabilización de actitud con cuaterniones y las protecciones físicas.
           </p>
           <div className="mt-auto pt-2 border-t border-aerolab-border/50 text-[11px] font-mono text-aerolab-secondary">
             Vector de entrada: outer_force_min_v1 (9 canales)

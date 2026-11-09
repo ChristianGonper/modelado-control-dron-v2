@@ -20,27 +20,27 @@ En el conjunto de prueba conocido, GRU y LSTM imitaron mejor la fuerza del exper
 
 Son resultados **de simulación**, no pruebas de vuelo real. El modelo simplifica aerodinámica, viento y sensores; la muestra y las semillas son limitadas y no hay intervalos de confianza. La imitación puede heredar sesgos de los expertos. La [memoria completa en PDF](site/assets/reports/TFG_Memoria_es.pdf) explica el protocolo y sus límites; la [web académica](https://christiangonper.github.io/modelado-control-dron-v2/) ofrece una presentación del trabajo.
 
-### Un ejemplo de las figuras de la memoria
+### Una mirada a los resultados
 
-En el escenario de lemniscata rápida fuera de distribución, esta figura compara las trayectorias de MLP y LSTM con la referencia y muestra cómo evoluciona el error de posición. Ilustra un caso concreto: no basta por sí sola para ordenar las arquitecturas en todos los escenarios.
+La gráfica compara el error medio de posición por familia en las trayectorias conocidas de prueba. Muestra que el comportamiento cambia según la trayectoria; la [memoria](site/assets/reports/TFG_Memoria_es.pdf) detalla también la evaluación fuera de distribución y los criterios de seguridad.
 
-![Trayectorias y error de posición en una lemniscata rápida](docs/neuroflight-assets/resultado-lemniscata.png)
+![Error medio de posición en las familias de prueba del TFG](docs/poster-neuroflight/assets/tfg-rmse-test.svg)
 
-*Figura de la [memoria](TFG_Memoria/sections/07_resultados.tex), escenario `lemniscate_fast_center_yaw`; resultados históricos del TFG.*
+*Resultados agregados del TFG: PD representativo y redes MLP, GRU y LSTM. Un error menor indica mejor seguimiento en las condiciones evaluadas.*
 
 ## NeuroFlight: del experimento a una aplicación interactiva
 
 NeuroFlight lleva el simulador a una interfaz local para explorar cómo responde el cuadricóptero a distintas misiones. En una misma sesión puedes:
 
 1. **Diseñar una misión**: elegir, por ejemplo, un círculo o encadenar varios tramos y comprobar la ruta prevista en 3D.
-2. **Comparar controladores**: ejecutar la misma misión con un PD y las redes MLP, GRU y LSTM, y reproducir sus trayectorias.
+2. **Comparar controladores**: ejecutar la misma misión con un PD y las redes MLP, GRU y LSTM, y reproducir sus trayectorias. La aplicación elige el PD de referencia según la misión.
 3. **Examinar los resultados**: consultar errores, protecciones y telemetría para entender qué ocurrió durante el vuelo simulado.
 
-![Una misión configurada y su trayectoria prevista en NeuroFlight](docs/neuroflight-assets/mision.png)
+![Comparación de una misión Lissajous en NeuroFlight](docs/neuroflight-assets/comparacion.png)
 
-![Ejemplo de composición de varios tramos en NeuroFlight](docs/neuroflight-assets/composicion.png)
+*Una misión nueva: reproducción y métricas de seguimiento. Los resultados corresponden únicamente a este ejemplo.*
 
-Las capturas muestran la interfaz real. Cada misión de la aplicación es una simulación nueva: sus resultados y los modelos regenerados de la demo no son los resultados históricos del TFG. NeuroFlight no controla un dron real ni reentrena las redes desde la interfaz.
+La captura muestra la interfaz real. Cada misión de la aplicación es una simulación nueva: sus resultados y los modelos regenerados de la demo no son los resultados históricos del TFG. NeuroFlight no controla un dron real ni reentrena las redes desde la interfaz.
 
 **¿Quieres probarlo?** La [guía de NeuroFlight](docs/neuroflight.md) explica cómo preparar los modelos, instalar la aplicación y recorrer una primera misión. La aplicación está en la rama `concurso-prototipos-eiiia-2026`; el repositorio incluye un paquete de modelos regenerados para probarla. La guía también describe la ruta de entrenamiento, todavía sin validar de principio a fin.
 
@@ -48,6 +48,7 @@ Las capturas muestran la interfaz real. Cada misión de la aplicación es una si
 
 - [Memoria del TFG en PDF](site/assets/reports/TFG_Memoria_es.pdf): metodología, experimentos, resultados y límites.
 - [Web del proyecto](https://christiangonper.github.io/modelado-control-dron-v2/): presentación del trabajo académico.
+- [Presentación del TFG](https://christiangonper.github.io/modelado-control-dron-v2/presentacion/): diapositivas interactivas de la defensa.
 - [Documentación del simulador](docs/simulador/README.md): instalación, escenarios, controladores y herramientas técnicas.
 - [Guía de NeuroFlight](docs/neuroflight.md): modelos, ejecución local y uso de la aplicación.
 

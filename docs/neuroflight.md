@@ -56,6 +56,10 @@ Para un recorrido más variado, elige **Composición por tramos**. Puedes encade
 
 Pulsa **Ejecutar Misión** y espera a que termine el cálculo. En **Comparación** revisa el estado de cada método antes de interpretar el vuelo: el PD, MLP, GRU y LSTM pueden no completar la misión en las mismas condiciones. Usa los controles del reproductor y selecciona las trayectorias que quieras observar. Una ejecución interrumpida solo aporta información hasta el instante de parada.
 
+![Reproducción y métricas de una misión Lissajous en NeuroFlight](neuroflight-assets/comparacion.png)
+
+*Captura de una ejecución de demostración: se muestran la referencia y las trayectorias PD y MLP. Las métricas corresponden a esa misión, no al conjunto del TFG.*
+
 ### Analizar
 
 En **Análisis** examina los errores de seguimiento, las protecciones y la telemetría disponible. Al comparar cifras, comprueba qué controladores completaron la trayectoria y durante cuánto tiempo se midió cada uno. Una diferencia en una misión concreta no demuestra que una arquitectura sea mejor en general: para eso consulta el conjunto de experimentos de la memoria.

@@ -20,27 +20,27 @@ On the in-distribution test set, GRU and LSTM imitated the expert force more clo
 
 The study reports 23 test scenarios (184 runs) and 10 out-of-distribution scenarios (80 runs), each evaluated with four family PDs, three networks and a representative PD. These are **simulation results**, not flight tests. Aerodynamics, wind and sensors are simplified, and the sample and seeds are limited. The [English thesis PDF](site/assets/reports/TFG_Report_en.pdf) explains the protocol, results and limitations.
 
-### An example from the thesis
+### A look at the results
 
-In this fast out-of-distribution lemniscate scenario, the figure compares MLP and LSTM trajectories with the reference and shows position error over time. It illustrates one case, not an overall ranking of the architectures.
+The chart compares mean position error across the known test trajectory families. Performance changes with the trajectory; the [thesis](site/assets/reports/TFG_Report_en.pdf) also details the out-of-distribution evaluation and safety criteria.
 
-![Trajectories and position error in a fast lemniscate](docs/neuroflight-assets/resultado-lemniscata.png)
+![Mean position error across the thesis test families](docs/poster-neuroflight/assets/tfg-rmse-test.svg)
 
-*Figure from the [thesis](TFG_Memoria/sections/07_resultados.tex), scenario `lemniscate_fast_center_yaw`; historical TFG results. Labels are in Spanish.*
+*Aggregated TFG results: representative PD and MLP, GRU and LSTM networks. Lower error indicates better tracking under the evaluated conditions. Chart labels are in Spanish.*
 
 ## NeuroFlight: explore a mission
 
 NeuroFlight is a local interactive application built around the simulator. It lets you:
 
 1. **Design a mission**: choose a circle or combine several segments and preview the route in 3D.
-2. **Compare controllers**: simulate the same mission with a PD and the MLP, GRU and LSTM networks, then replay their trajectories.
+2. **Compare controllers**: simulate the same mission with a PD and the MLP, GRU and LSTM networks, then replay their trajectories. The application selects the reference PD according to the mission.
 3. **Inspect the outcome**: use tracking errors, safety information and telemetry to understand what happened during the simulated flight.
 
-![Mission configuration and trajectory preview in NeuroFlight](docs/neuroflight-assets/mision.png)
+![Lissajous mission comparison in NeuroFlight](docs/neuroflight-assets/comparacion.png)
 
-![An example of a multi-segment mission](docs/neuroflight-assets/composicion.png)
+*A new demonstration mission: playback and tracking metrics for this example only.*
 
-These are screenshots of the real interface. New missions and the demo's regenerated models are distinct from the historical TFG results. NeuroFlight does not control a real drone or train networks from the interface.
+This is a screenshot of the real interface. New missions and the demo's regenerated models are distinct from the historical TFG results. NeuroFlight does not control a real drone or train networks from the interface.
 
 **Try it locally:** the [NeuroFlight guide](docs/neuroflight.md) (Spanish) covers model preparation, installation and a first mission. The application is on the `concurso-prototipos-eiiia-2026` branch. The repository includes a bundle of regenerated models for trying it locally. The guide also describes the training route, which has not yet been validated end to end.
 
@@ -48,6 +48,7 @@ These are screenshots of the real interface. New missions and the demo's regener
 
 - [English thesis PDF](site/assets/reports/TFG_Report_en.pdf): methodology, experiments, findings and limitations.
 - [Project website](https://christiangonper.github.io/modelado-control-dron-v2/en/): an introduction to the academic work.
+- [TFG presentation](https://christiangonper.github.io/modelado-control-dron-v2/presentacion/): interactive defence slides in Spanish.
 - [Simulator documentation](docs/simulador/README.md) (Spanish): installation, scenarios and technical tools.
 - [NeuroFlight guide](docs/neuroflight.md) (Spanish): models, local setup and application walkthrough.
 
