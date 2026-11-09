@@ -268,7 +268,7 @@ def validate_single_segment(
             errors.append(f"{p}Radio del círculo ({r:.2f} m) fuera del rango admitido (0.5 a 4.0 m).")
         if w <= 0.0:
             errors.append(f"{p}Velocidad angular omega ({w:.2f} rad/s) debe ser positiva.")
-        
+
         v_tang = r * w
         if v_tang > 1.5001:
             errors.append(f"{p}Velocidad tangencial (R × ω = {v_tang:.2f} m/s) excede el límite de 1.5 m/s.")
@@ -314,7 +314,7 @@ def validate_single_segment(
                 errors.append(f"{p}La oscilación inferior de Lissajous ({min_z:.2f} m) cae por debajo del despeje al suelo ({ALTITUDE_MIN_M} m).")
             if max_z > ALTITUDE_MAX_M:
                 errors.append(f"{p}La altura máxima de Lissajous ({max_z:.2f} m) supera el techo operacional ({ALTITUDE_MAX_M:.0f} m).")
-            
+
             cx = float(c[0]) if len(c) > 0 else 0.0
             cy = float(c[1]) if len(c) > 1 else 0.0
             if abs(cx) > HORIZONTAL_EXTENT_MAX_M or abs(cy) > HORIZONTAL_EXTENT_MAX_M:
@@ -433,7 +433,7 @@ def validate_single_segment(
             errors.append(f"{p}Semieje 'b' de lemniscata ({b:.2f} m) fuera de rango (0.3 a 2.5 m).")
         if w < 0.15 or w > 0.6:
             errors.append(f"{p}Velocidad angular ({w:.2f} rad/s) fuera de rango (0.15 a 0.6 rad/s).")
-        
+
         cx = float(c[0]) if len(c) > 0 else 0.0
         cy = float(c[1]) if len(c) > 1 else 0.0
         cz = float(c[2]) if len(c) > 2 else 2.0
