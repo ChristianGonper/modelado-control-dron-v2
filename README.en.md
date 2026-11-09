@@ -2,106 +2,51 @@
 
 [Español](README.md) | [English](README.en.md)
 
-A reproducible 6DOF dynamics simulator for studying quadcopter trajectory tracking and comparing classical PID control with neural control trained through imitation learning. The project brings together the physical model, controllers, scenarios, experimental campaigns, and analysis tools in a single Python package.
+A reproducible 6DOF dynamics simulator for studying quadcopter trajectory tracking and comparing classical control with neural control trained through imitation learning. The project brings together the physical model, controllers, scenarios, experimental campaigns, and analysis tools in a single Python package.
 
 Developed by Christian González Pérez as a Final Degree Project (TFG) at the University of León. [Visit the project website](https://christiangonper.github.io/modelado-control-dron-v2/en/).
 
-## Features
+## The question and the approach
 
-- 6DOF rigid-body dynamics using an ENU world frame, an FRD body frame, and quaternion attitude representation.
-- RK4 integration with independent physics, control, and telemetry rates.
-- Quadcopter mixer and actuators with saturation, optional pure delay, and first-order dynamics.
-- Configurable disturbances: linear drag, constant wind, and observation noise.
-- Cascaded classical PID control for position and attitude.
-- Hybrid neural control: a network predicts the desired outer-loop force while the classical controller retains attitude stabilization.
-- MLP, GRU, and LSTM models implemented with PyTorch.
-- `hold`, `circle`, `lissajous`, `lemniscate`, `waypoint`, and `composite` trajectories.
-- YAML scenarios, JSON telemetry and metrics, static plots, and interactive 3D visualization.
-- Reproducible tooling for dataset generation, controller tuning, neural-network training, and comparative campaigns.
+Can a neural network replace several specialised position controllers while retaining trajectory-tracking performance? This final degree project builds a six-degree-of-freedom quadcopter simulator and compares controllers on reproducible trajectories and disturbances. A PD controller computes the desired force for position tracking; MLP, GRU and LSTM networks learn to imitate that force from simulated demonstrations. Attitude control and safety protections remain classical.
 
-## Requirements
+## What the study found
 
-- Python 3.13 or later.
-- [`uv`](https://docs.astral.sh/uv/) for environment and dependency management.
-- A CUDA-compatible GPU is optional; simulations and training can also run on CPU.
+On the in-distribution test set, GRU and LSTM imitated the expert force more closely, while MLP achieved lower tracking error on circles and Lissajous trajectories. In out-of-distribution scenarios, performance depended on the trajectory: GRU performed better than MLP on lemniscate and composite families, while MLP remained competitive on Lissajous and waypoint variants. Failures and degradation occurred; no architecture was universally best.
 
-## Quick start
+The study reports 23 test scenarios (184 runs) and 10 out-of-distribution scenarios (80 runs), each evaluated with four family PDs, three networks and a representative PD. These are **simulation results**, not flight tests. Aerodynamics, wind and sensors are simplified, and the sample and seeds are limited. The [English thesis PDF](site/assets/reports/TFG_Report_en.pdf) explains the protocol, results and limitations.
 
-Clone the repository and install the environment:
+## NeuroFlight: explore a mission
+
+NeuroFlight is a local interactive application built around the simulator. It lets you:
+
+1. **Design a mission**: choose a circle or combine several segments and preview the route in 3D.
+2. **Compare controllers**: simulate the same mission with a PD and the MLP, GRU and LSTM networks, then replay their trajectories.
+3. **Inspect the outcome**: use tracking errors, safety information and telemetry to understand what happened during the simulated flight.
+
+![Mission configuration and trajectory preview in NeuroFlight](docs/neuroflight-assets/mision.png)
+
+![An example of a multi-segment mission](docs/neuroflight-assets/composicion.png)
+
+These are screenshots of the real interface. New missions and the demo's regenerated models are distinct from the historical TFG results. NeuroFlight does not control a real drone or train networks from the interface.
+
+**Try it locally:** the [NeuroFlight guide](docs/neuroflight.md) (Spanish) covers model preparation, installation and a first mission. The application is on the `concurso-prototipos-eiiia-2026` branch. Its weights are not included in a clone and no public download is currently configured. The guide also describes the training route, which has not yet been validated end to end.
+
+## Explore the code and the thesis
+
+- [English thesis PDF](site/assets/reports/TFG_Report_en.pdf): methodology, experiments, findings and limitations.
+- [Project website](https://christiangonper.github.io/modelado-control-dron-v2/en/): an introduction to the academic work.
+- [Simulator documentation](docs/simulador/README.md) (Spanish): installation, scenarios and technical tools.
+- [NeuroFlight guide](docs/neuroflight.md) (Spanish): models, local setup and application walkthrough.
+
+To run the simulator from a terminal, install Python 3.13 or later and [uv](https://docs.astral.sh/uv/). From the repository root:
 
 ```powershell
-git clone https://github.com/ChristianGonper/modelado-control-dron-v2.git
-cd modelado-control-dron-v2
 uv sync
-```
-
-Run the test suite and an example simulation:
-
-```powershell
-uv run pytest
 uv run simulador-quad run scenarios\hover_clean.yaml --no-visualization
 ```
 
-Generate plots for the episode:
-
-```powershell
-uv run simulador-quad plot results\hover_clean\telemetry.json `
-  --metrics results\hover_clean\metrics.json `
-  --out results\hover_clean\figures
-```
-
-## Controllers
-
-### Classical PID
-
-The classical controller uses a cascaded architecture. The outer loop turns position error into a desired force in the world frame; the inner loop converts that reference into attitude, thrust, and rotor speeds. Gains, limits, and experimental conditions are defined in the YAML scenarios.
-
-### Neural imitation controller
-
-The `neural` controller retains the classical inner loop and replaces the outer loop with a network that predicts `desired_force_W_N[3]`. Supervised learning uses demonstrations generated by automatically selected PID experts. This separation makes it possible to compare tracking, robustness, and safety without delegating full vehicle stabilization to the network.
-
-The minimal training workflow is:
-
-```powershell
-uv run python tools\generate_outer_force_pid_bank.py `
-  --dataset data\classic_dataset\v1 `
-  --out data\outer_force_pid_bank\v1 `
-  --workers 8
-
-uv run python tools\generate_outer_force_dataset.py `
-  --source-dataset data\classic_dataset\v1 `
-  --pid-bank data\outer_force_pid_bank\v1 `
-  --out data\outer_force_dataset\v1
-
-uv run python tools\train_neural_controller.py `
-  --dataset data\outer_force_dataset\v1 `
-  --architecture mlp `
-  --feature-version outer_force_min_v1 `
-  --out data\neural_control\outer_force_mlp_min_v1 `
-  --device auto
-```
-
-An experimental `neural_position` mode is also available, in which the network schedules gain multipliers for the position controller.
-
-## Scenarios and outputs
-
-Reproducible scenarios are stored in [`scenarios/`](scenarios/). Each file configures the trajectory, controller, actuator dynamics, disturbances, and safety limits.
-
-A run can produce:
-
-- `telemetry.json`: time histories of the state, references, and control signals.
-- `metrics.json`: physical metrics and termination criteria.
-- PNG, SVG, or PDF plots using diagnostic or report profiles.
-- An interactive 3D HTML viewer.
-
-Run the complete experimental campaign with:
-
-```powershell
-uv run python tools\run_experimental_campaign.py --dry-run
-uv run python tools\run_experimental_campaign.py --rerun --workers 8 --device cuda
-```
-
-The `--dry-run` option lets you inspect every phase and command before starting an expensive campaign.
+This creates new telemetry and metrics in `results/hover_clean/`; it is not an aggregate result from the thesis. The application additionally requires its models and a built frontend; follow its guide for setup.
 
 ## Project structure
 
@@ -119,6 +64,8 @@ results/             Generated telemetry, metrics, and plots
 
 ## Validation
 
+A review on this machine reported four failing tests, including dependencies on generated PD files absent from Git and visualization outputs. A clean test suite in a fresh clone has not been established.
+
 The test suite covers the physical model, frame conventions, controllers, configuration, metrics, and primary execution workflows:
 
 ```powershell
@@ -131,5 +78,5 @@ Experimental comparisons distinguish between completing a mission (`mission_succ
 
 Christian González Pérez
 
-- University: [cgonzp08@estudiantes.unileon.es](mailto:cgonzp08@estudiantes.unileon.es)
-- Personal: [christian.gonzalez.perez@proton.me](mailto:christian.gonzalez.perez@proton.me)
+- [christian.gonzalez.perez@pm.me](mailto:christian.gonzalez.perez@pm.me)
+- [LinkedIn](https://www.linkedin.com/in/christiangonzalezperez/)

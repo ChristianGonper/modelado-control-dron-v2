@@ -2,134 +2,51 @@
 
 [Español](README.md) | [English](README.en.md)
 
-Simulador reproducible de dinámica 6DOF para estudiar el seguimiento de trayectorias de un cuadricóptero y comparar control clásico PID con control neuronal entrenado por imitación. El proyecto reúne el modelo físico, los controladores, los escenarios, las campañas experimentales y las herramientas de análisis en un único paquete de Python.
+Simulador reproducible de dinámica 6DOF para estudiar el seguimiento de trayectorias de un cuadricóptero y comparar control clásico con control neuronal entrenado por imitación. El proyecto reúne el modelo físico, los controladores, los escenarios, las campañas experimentales y las herramientas de análisis en un único paquete de Python.
 
 Desarrollado por Christian González Pérez como Trabajo de Fin de Grado (TFG) en la Universidad de León. [Visitar la página del proyecto](https://christiangonper.github.io/modelado-control-dron-v2/).
 
-## Características
+## La pregunta y el método
 
-- Dinámica de cuerpo rígido 6DOF con mundo ENU, cuerpo FRD y actitud mediante cuaterniones.
-- Integración RK4 con frecuencias independientes de física, control y telemetría.
-- Mixer de cuadricóptero y actuadores con saturación, retardo puro opcional y dinámica de primer orden.
-- Perturbaciones configurables: drag lineal, viento constante y ruido de observación.
-- Control PID clásico en cascada para posición y actitud.
-- Control neuronal híbrido: una red predice la fuerza deseada del lazo externo y el controlador clásico mantiene la estabilización de actitud.
-- Modelos MLP, GRU y LSTM implementados con PyTorch.
-- Trayectorias `hold`, `circle`, `lissajous`, `lemniscate`, `waypoint` y `composite`.
-- Escenarios YAML, telemetría y métricas JSON, figuras estáticas y visualización 3D interactiva.
-- Herramientas reproducibles para generar datasets, ajustar controladores, entrenar redes y ejecutar campañas comparativas.
+¿Puede una red neuronal sustituir varios controladores de posición especializados sin perder capacidad de seguimiento? El TFG construye un simulador de cuadricóptero de seis grados de libertad y compara controladores bajo trayectorias y perturbaciones reproducibles. Un PD calcula la fuerza deseada para seguir la referencia; MLP, GRU y LSTM aprenden a imitar esa fuerza a partir de demostraciones simuladas. El control de actitud y las protecciones siguen siendo clásicos.
 
-## Requisitos
+## Qué se observó en el TFG
 
-- Python 3.13 o posterior.
-- [`uv`](https://docs.astral.sh/uv/) para gestionar el entorno y las dependencias.
-- Una GPU compatible con CUDA es opcional; las simulaciones y el entrenamiento también pueden ejecutarse en CPU.
+En el conjunto de prueba conocido, GRU y LSTM imitaron mejor la fuerza del experto, pero MLP obtuvo menor error de seguimiento en círculo y Lissajous. En escenarios fuera de distribución, la respuesta dependió de la trayectoria: GRU obtuvo mejor resultado que MLP en las familias de lemniscata y composición, mientras que MLP siguió siendo competitivo en variantes de Lissajous y waypoint; aparecieron fallos y degradación. No se demuestra una superioridad general de una arquitectura. La memoria recoge 23 escenarios de prueba y 10 fuera de distribución, con 184 y 80 ejecuciones en total, respectivamente. En cada escenario se evaluaron ocho controladores: cuatro PD de familia, tres redes y un PD representativo. Véanse [resultados](TFG_Memoria/sections/07_resultados.tex) y [conclusiones y límites](TFG_Memoria/sections/09_conclusiones.tex).
 
-## Inicio rápido
+Son resultados **de simulación**, no pruebas de vuelo real. El modelo simplifica aerodinámica, viento y sensores; la muestra y las semillas son limitadas y no hay intervalos de confianza. La imitación puede heredar sesgos de los expertos. La [memoria completa en PDF](site/assets/reports/TFG_Memoria_es.pdf) explica el protocolo y sus límites; la [web académica](https://christiangonper.github.io/modelado-control-dron-v2/) ofrece una presentación del trabajo.
 
-Clona el repositorio e instala el entorno:
+## NeuroFlight: del experimento a una aplicación interactiva
+
+NeuroFlight lleva el simulador a una interfaz local para explorar cómo responde el cuadricóptero a distintas misiones. En una misma sesión puedes:
+
+1. **Diseñar una misión**: elegir, por ejemplo, un círculo o encadenar varios tramos y comprobar la ruta prevista en 3D.
+2. **Comparar controladores**: ejecutar la misma misión con un PD y las redes MLP, GRU y LSTM, y reproducir sus trayectorias.
+3. **Examinar los resultados**: consultar errores, protecciones y telemetría para entender qué ocurrió durante el vuelo simulado.
+
+![Una misión configurada y su trayectoria prevista en NeuroFlight](docs/neuroflight-assets/mision.png)
+
+![Ejemplo de composición de varios tramos en NeuroFlight](docs/neuroflight-assets/composicion.png)
+
+Las capturas muestran la interfaz real. Cada misión de la aplicación es una simulación nueva: sus resultados y los modelos regenerados de la demo no son los resultados históricos del TFG. NeuroFlight no controla un dron real ni reentrena las redes desde la interfaz.
+
+**¿Quieres probarlo?** La [guía de NeuroFlight](docs/neuroflight.md) explica cómo preparar los modelos, instalar la aplicación y recorrer una primera misión. La aplicación está en la rama `concurso-prototipos-eiiia-2026`; sus pesos no se incluyen en un clon y actualmente no hay una descarga pública configurada. La guía también describe la ruta de entrenamiento, todavía sin validar de principio a fin.
+
+## Explorar el código y la memoria
+
+- [Memoria del TFG en PDF](site/assets/reports/TFG_Memoria_es.pdf): metodología, experimentos, resultados y límites.
+- [Web del proyecto](https://christiangonper.github.io/modelado-control-dron-v2/): presentación del trabajo académico.
+- [Documentación del simulador](docs/simulador/README.md): instalación, escenarios, controladores y herramientas técnicas.
+- [Guía de NeuroFlight](docs/neuroflight.md): modelos, ejecución local y uso de la aplicación.
+
+Si quieres ejecutar el simulador desde la terminal, instala Python 3.13 o posterior y [uv](https://docs.astral.sh/uv/). Desde la raíz del repositorio:
 
 ```powershell
-git clone https://github.com/ChristianGonper/modelado-control-dron-v2.git
-cd modelado-control-dron-v2
 uv sync
-```
-
-Ejecuta las pruebas y una simulación de ejemplo:
-
-```powershell
-uv run pytest
 uv run simulador-quad run scenarios\hover_clean.yaml --no-visualization
 ```
 
-Genera las figuras del episodio:
-
-```powershell
-uv run simulador-quad plot results\hover_clean\telemetry.json `
-  --metrics results\hover_clean\metrics.json `
-  --out results\hover_clean\figures
-```
-
-## Controladores
-
-### PID clásico
-
-El controlador clásico utiliza una arquitectura en cascada. El lazo externo convierte el error de posición en una fuerza deseada en el marco mundo; el lazo interno transforma esa referencia en actitud, empuje y velocidades de rotor. Las ganancias, límites y condiciones experimentales se definen en los escenarios YAML.
-
-### Control neuronal por imitación
-
-El controlador `neural` conserva el lazo interno clásico y sustituye el lazo externo por una red que predice `desired_force_W_N[3]`. El aprendizaje supervisado utiliza demostraciones generadas por expertos PID seleccionados automáticamente. Esta separación permite comparar seguimiento, robustez y seguridad sin delegar la estabilización completa del vehículo a la red.
-
-El flujo mínimo de entrenamiento es:
-
-```powershell
-uv run python tools\generate_outer_force_pid_bank.py `
-  --dataset data\classic_dataset\v1 `
-  --out data\outer_force_pid_bank\v1 `
-  --workers 8
-
-uv run python tools\generate_outer_force_dataset.py `
-  --source-dataset data\classic_dataset\v1 `
-  --pid-bank data\outer_force_pid_bank\v1 `
-  --out data\outer_force_dataset\v1
-
-uv run python tools\train_neural_controller.py `
-  --dataset data\outer_force_dataset\v1 `
-  --architecture mlp `
-  --feature-version outer_force_min_v1 `
-  --out data\neural_control\outer_force_mlp_min_v1 `
-  --device auto
-```
-
-También existe el modo experimental `neural_position`, en el que la red programa multiplicadores de ganancias del controlador de posición.
-
-## Escenarios y resultados
-
-Los escenarios reproducibles se encuentran en [`scenarios/`](scenarios/). Cada archivo configura la trayectoria, el controlador, la dinámica de actuadores, las perturbaciones y los límites de seguridad.
-
-Una ejecución puede producir:
-
-- `telemetry.json`: evolución temporal del estado, referencias y señales de control.
-- `metrics.json`: métricas físicas y criterios de terminación.
-- Figuras PNG, SVG o PDF con perfiles de diagnóstico o informe.
-- Un visor HTML 3D interactivo.
-
-Para ejecutar la campaña experimental completa:
-
-```powershell
-uv run python tools\run_experimental_campaign.py --dry-run
-uv run python tools\run_experimental_campaign.py --rerun --workers 8 --device cuda
-```
-
-El modo `--dry-run` permite inspeccionar las fases y comandos antes de iniciar una campaña costosa.
-
-## NeuroFlight, demostración del concurso
-
-NeuroFlight es la aplicación que configura una misión, la previsualiza y la simula con el PD congelado y tres redes outer-force. No reentrena ni usa el dataset completo. El paquete local vive en `data/neuroflight_bundle/` y **no está en Git** (`data/` está ignorado). Un checkout limpio necesita ese paquete antes de comparar controladores.
-
-Si ya existe la regeneración local `data/regenerated_2026-09-23/` (cuatro PD en `classic_dataset/v1/pids/` y tres modelos `neural_control/outer_force_*_min_v1/`), se empaqueta así:
-
-```powershell
-uv run python tools\package_demo_artifacts.py
-```
-
-El script copia solo los cuatro PD, los tres checkpoints, sus `config.yaml` y `normalization.json`, y escribe `data/neuroflight_bundle/bundle_manifest.json` con el SHA-256 de cada archivo. En otra máquina se copia esa carpeta ya generada al mismo camino relativo. La aplicación no descarga pesos ni acepta la carpeta regenerada como sustituto: si el manifiesto falta, está vacío o un hash no coincide, `/api/health` lo indica y la simulación no arranca.
-
-Con el paquete en su sitio:
-
-```powershell
-uv run neuroflight
-```
-
-El servicio queda en `http://127.0.0.1:8000`. Si `frontend/dist/` existe, también sirve la interfaz. Para desarrollar el cliente:
-
-```powershell
-cd frontend
-npm install
-npm run dev
-```
-
-Vite usa `http://127.0.0.1:5173` y proxifica `/api` al servicio. Las corridas nuevas se guardan en `data/neuroflight_runs/<id>/`, separadas de `results/`. Cada `run_manifest.json` incluye la configuración, la semilla y los hashes del paquete usado.
+Se generarán telemetría y métricas en `results/hover_clean/`. Es una ejecución nueva, distinta de los resultados agregados de la memoria. La aplicación requiere además los modelos y el cliente compilado; sigue su guía para prepararlos.
 
 ## Estructura del proyecto
 
@@ -147,11 +64,13 @@ results/             Telemetría, métricas y figuras generadas
 
 ## Validación
 
-La batería de pruebas cubre el modelo físico, las convenciones de marcos, los controladores, la configuración, las métricas y los principales flujos de ejecución:
+La batería de pruebas está diseñada para cubrir el modelo físico, las convenciones de marcos, los controladores, la configuración, las métricas y los principales flujos de ejecución:
 
 ```powershell
 uv run pytest
 ```
+
+En una revisión en este equipo se observaron cuatro fallos: dos dependen de PD generados que no están en Git y dos de las pruebas del comparador de visualización. Otras pruebas requieren el paquete de NeuroFlight, también ausente en un clon limpio. La suite no se ha demostrado limpia en un clon nuevo.
 
 La comparación experimental distingue entre completar una misión (`mission_success`) y terminar sin fallo físico (`safety_success`). Alcanzar el límite temporal en una trayectoria finita no se considera una misión completada.
 
@@ -159,5 +78,5 @@ La comparación experimental distingue entre completar una misión (`mission_suc
 
 Christian González Pérez
 
-- Universidad: [cgonzp08@estudiantes.unileon.es](mailto:cgonzp08@estudiantes.unileon.es)
-- Personal: [christian.gonzalez.perez@proton.me](mailto:christian.gonzalez.perez@proton.me)
+- [christian.gonzalez.perez@pm.me](mailto:christian.gonzalez.perez@pm.me)
+- [LinkedIn](https://www.linkedin.com/in/christiangonzalezperez/)
