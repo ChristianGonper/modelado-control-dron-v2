@@ -10,11 +10,23 @@ Developed by Christian González Pérez as a Final Degree Project (TFG) at the U
 
 Can a neural network replace several specialised position controllers while retaining trajectory-tracking performance? This final degree project builds a six-degree-of-freedom quadcopter simulator and compares controllers on reproducible trajectories and disturbances. A PD controller computes the desired force for position tracking; MLP, GRU and LSTM networks learn to imitate that force from simulated demonstrations. Attitude control and safety protections remain classical.
 
+![Simulator and NeuroFlight architecture](docs/neuroflight-assets/arquitectura-en.svg)
+
+*Position control can be classical or neural; attitude control and the physical model are shared.*
+
 ## What the study found
 
 On the in-distribution test set, GRU and LSTM imitated the expert force more closely, while MLP achieved lower tracking error on circles and Lissajous trajectories. In out-of-distribution scenarios, performance depended on the trajectory: GRU performed better than MLP on lemniscate and composite families, while MLP remained competitive on Lissajous and waypoint variants. Failures and degradation occurred; no architecture was universally best.
 
 The study reports 23 test scenarios (184 runs) and 10 out-of-distribution scenarios (80 runs), each evaluated with four family PDs, three networks and a representative PD. These are **simulation results**, not flight tests. Aerodynamics, wind and sensors are simplified, and the sample and seeds are limited. The [English thesis PDF](site/assets/reports/TFG_Report_en.pdf) explains the protocol, results and limitations.
+
+### An example from the thesis
+
+In this fast out-of-distribution lemniscate scenario, the figure compares MLP and LSTM trajectories with the reference and shows position error over time. It illustrates one case, not an overall ranking of the architectures.
+
+![Trajectories and position error in a fast lemniscate](docs/neuroflight-assets/resultado-lemniscata.png)
+
+*Figure from the [thesis](TFG_Memoria/sections/07_resultados.tex), scenario `lemniscate_fast_center_yaw`; historical TFG results. Labels are in Spanish.*
 
 ## NeuroFlight: explore a mission
 
@@ -30,7 +42,7 @@ NeuroFlight is a local interactive application built around the simulator. It le
 
 These are screenshots of the real interface. New missions and the demo's regenerated models are distinct from the historical TFG results. NeuroFlight does not control a real drone or train networks from the interface.
 
-**Try it locally:** the [NeuroFlight guide](docs/neuroflight.md) (Spanish) covers model preparation, installation and a first mission. The application is on the `concurso-prototipos-eiiia-2026` branch. Its weights are not included in a clone and no public download is currently configured. The guide also describes the training route, which has not yet been validated end to end.
+**Try it locally:** the [NeuroFlight guide](docs/neuroflight.md) (Spanish) covers model preparation, installation and a first mission. The application is on the `concurso-prototipos-eiiia-2026` branch. The repository includes a bundle of regenerated models for trying it locally. The guide also describes the training route, which has not yet been validated end to end.
 
 ## Explore the code and the thesis
 
@@ -64,7 +76,7 @@ results/             Generated telemetry, metrics, and plots
 
 ## Validation
 
-A review on this machine reported four failing tests, including dependencies on generated PD files absent from Git and visualization outputs. A clean test suite in a fresh clone has not been established.
+Some tests require locally generated artefacts or the NeuroFlight bundle extracted into `data/neuroflight_bundle/`. A clean full test run in a fresh clone has not been established.
 
 The test suite covers the physical model, frame conventions, controllers, configuration, metrics, and primary execution workflows:
 

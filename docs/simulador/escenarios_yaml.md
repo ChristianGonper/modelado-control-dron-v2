@@ -1,6 +1,6 @@
 # Referencia de escenarios YAML
 
-Un escenario YAML es la descripcion reproducible de un experimento. Define vehiculo, estado inicial, trayectoria, controlador, perturbaciones, tiempos, condiciones de terminacion y salida.
+Un escenario reúne en un archivo los datos necesarios para repetir una simulación: vehículo, estado inicial, trayectoria, controlador, perturbaciones, tiempos, condiciones de parada y ubicación de los resultados. Esta referencia describe los campos que acepta el cargador.
 
 La estructura admitida por el cargador actual es:
 
@@ -305,31 +305,7 @@ controller:
 - `max_body_moments_Nm`: limites de momentos `[tau_x, tau_y, tau_z]` en FRD. Si falta, se usa `[10.0, 10.0, 2.0]`.
 - `device`: `"auto"`, `"cpu"` o `"cuda"`. Si falta, `auto` usa CUDA cuando PyTorch la detecta.
 
-La red predice `desired_force_W_N[3]` en mundo ENU. El lazo interno clasico devuelve el contrato final `collective_thrust_N` y `body_moments_Nm`. Cuando el clipping esta activo se limita la norma de fuerza a `mass_kg*gravity_m_s2*2.5`, la inclinacion solicitada y una componente vertical ascendente minima. GRU/LSTM mantienen memoria interna; el runner llama a `reset()` al inicio de cada simulacion. Los checkpoints anteriores de cuatro comandos finales o de seis salidas `neural_position` no se cargan como outer-force.
-
-### Controlador neuronal en lazo externo
-
-```yaml
-controller:
-  type: "neural_position"
-  architecture: "gru"
-  checkpoint_path: "data/neural_control/position_gru_v1/checkpoints/gru_best.pt"
-  normalization_path: "data/neural_control/position_gru_v1/normalization.json"
-  sequence_length: 20
-  base_Kp_pos: [2.0, 2.0, 5.0]
-  base_Kd_pos: [1.0, 1.0, 2.0]
-  multiplier_clip: [0.25, 4.0]
-  max_body_moments_Nm: [10.0, 10.0, 2.0]
-  device: "auto"
-```
-
-- `type`: `"neural_position"` para usar una red como programador de ganancias del lazo externo.
-- `architecture`, `checkpoint_path`, `normalization_path` y `sequence_length`: mismos criterios generales de carga; el checkpoint y su normalizacion deben corresponder especificamente al modo `neural_position`.
-- `base_Kp_pos` y `base_Kd_pos`: ganancias base sobre las que se aplican los multiplicadores predichos. Si faltan, se usan los defaults mostrados.
-- `multiplier_clip`: rango `[min, max]` aplicado a los multiplicadores tras `exp`. Si falta, se usa `[0.25, 4.0]`.
-- `device`: `"auto"`, `"cpu"` o `"cuda"`. Si falta, `auto` usa CUDA cuando PyTorch la detecta.
-
-En este modo la red no predice empuje ni momentos. Predice multiplicadores de `Kp_pos` y `Kd_pos`; el lazo interno de actitud sigue siendo clasico.
+La red predice `desired_force_W_N[3]` en mundo ENU. El lazo interno clasico devuelve el contrato final `collective_thrust_N` y `body_moments_Nm`. Cuando el clipping esta activo se limita la norma de fuerza a `mass_kg*gravity_m_s2*2.5`, la inclinacion solicitada y una componente vertical ascendente minima. GRU/LSTM mantienen memoria interna; el runner llama a `reset()` al inicio de cada simulacion. Los checkpoints deben corresponder a la variante de fuerza exterior.
 
 ## `perturbations`
 

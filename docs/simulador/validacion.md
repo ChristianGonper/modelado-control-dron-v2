@@ -1,8 +1,8 @@
-# Validacion de escenarios y resultados
+# Validación de escenarios y resultados
 
-Este documento define como usar los escenarios actuales como evidencia experimental del simulador. No sustituye a los YAML ni a las metricas exportadas: fija el papel de cada escenario, los criterios iniciales de aceptacion y las evidencias minimas que deben conservarse para la memoria del TFG.
+Esta página explica qué aporta cada escenario a la validación, qué criterios iniciales se utilizan y qué evidencias conviene conservar. Los archivos YAML y las métricas de cada ejecución contienen los datos concretos de la prueba.
 
-La validacion clasica y la neuronal deben separarse. Los escenarios oficiales clasicos siguen siendo la referencia de sanidad fisica y trazabilidad. El controlador neuronal se evalua en dos niveles: error supervisado sobre telemetria exportada y ejecucion en bucle cerrado dentro del simulador.
+La validación del control clásico y la del neuronal cumplen funciones distintas. Los escenarios clásicos comprueban la coherencia física y sirven de referencia; las redes se evalúan tanto por su error supervisado como por su comportamiento en bucle cerrado.
 
 ## Comandos oficiales
 
@@ -53,13 +53,9 @@ uv run simulador-quad run scenarios\composite_ood.yaml --no-visualization
 
 El directorio OOD debe usar `split=ood` en `manifest.csv`. No mezclar OOD con el split `test` del dataset clasico. La evaluacion supervisada requiere telemetria compatible con targets de fuerza; el batch `run_neural_outer_force_dataset.py` ejecuta el lazo cerrado. `composite_ood` inicia en `[0,0,1.0]` (primer `hold` e `initial_state` alineados). `data\neural_ood\battery_v1` se genera localmente y esta ignorado por git; para reproducir una evidencia, regenerar la bateria y las corridas desde el commit que se cite en `metrics.metadata`.
 
-Para construir las tablas comparativas y consolidar los resultados de la campaña:
+Para consultar el protocolo de comparación y los comandos con los que se generó la evidencia del TFG, revisa el [anejo de la memoria](../../TFG_Memoria/appendices/a_comandos.tex). Las salidas consolidadas distinguen la comparación principal del conjunto completo:
 
-```powershell
-uv run python tools\summarize_comparison.py --dataset-classic data\classic_dataset\v1 --dataset-neural data\outer_force_dataset\v1 --dataset-position data\position_gain_dataset\v1 --dataset-ood data\neural_ood\battery_v1 --out-dir results
-```
-
-Esto generará la evidencia consolidada:
+Archivos de resultados:
 - `results/comparison_all_runs.csv`: registro canónico comparable (`split=test` y `split=ood` únicamente), con `trajectory_type`, `termination_reason`, `mission_success`, `safety_success` y `coverage_group=comparable`.
 - `results/comparison_all_runs_full.csv`: registro completo de todos los splits encontrados (`train`, `val`, `test`, `ood`), incluyendo cobertura parcial (`coverage_group=baseline_partial`).
 - `results/comparison_summary.csv`: agregación por controlador, split y familia usando `mission_success_rate` y `safety_success_rate` sobre el subconjunto comparable.
@@ -226,9 +222,9 @@ Estos escenarios validan el simulador dentro del alcance actual:
 - cuerpo rigido 6DOF;
 - cuaterniones;
 - RK4;
-- control clasico, control `neural` de fuerza externa por imitacion y modo `neural_position`;
+- control clasico, control `neural` de fuerza externa por imitacion;
 - drag lineal simplificado;
 - viento constante y ruido de observacion simple;
 - actuadores simplificados con saturacion, retardo y lag.
 
-No validan vuelo real, aerodinamica formal, sensores realistas ni estimador onboard. El control neuronal queda validado solo dentro del alcance de imitacion supervisada y simulacion cerrada sobre este modelo 6DOF simplificado.
+No validan vuelo real, aerodinamica formal, sensores realistas ni estimador onboard. La evidencia del controlador neuronal de fuerza exterior se limita a la imitación supervisada y la simulación en bucle cerrado sobre este modelo 6DOF simplificado.

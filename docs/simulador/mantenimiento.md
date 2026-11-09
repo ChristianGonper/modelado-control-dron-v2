@@ -1,6 +1,6 @@
-# Mantenimiento documental
+# Mantenimiento de la documentación
 
-Esta carpeta debe actualizarse cuando cambie el comportamiento real del simulador. El objetivo es que siga siendo una fuente fiable para usar y explicar el sistema despues de refactors o cambios agresivos.
+Actualiza esta documentación cuando cambie el comportamiento del simulador. Las listas siguientes ayudan a localizar qué páginas revisar según el tipo de cambio; contrastar el texto con el código sigue siendo necesario.
 
 ## Cuando cambie el CLI
 

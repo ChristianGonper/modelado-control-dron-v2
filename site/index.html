@@ -50,10 +50,8 @@
     <section class="hero" aria-labelledby="project-title">
       <div class="hero-copy">
         <p class="eyebrow">Trabajo de Fin de Grado - Universidad de León</p>
-        <h1 id="project-title">Control híbrido en cascada de un cuadricóptero: sustitución neuronal de controladores
-          especializados del lazo externo</h1>
-        <p class="lead">Un Trabajo de Fin de Grado que construye un banco de ensayo reproducible y lo utiliza para
-          estudiar cuándo un controlador neuronal es competitivo frente al control clásico.</p>
+        <h1 id="project-title">¿Puede una red neuronal aprender a controlar un cuadricóptero?</h1>
+        <p class="lead">Un simulador, tres redes neuronales y una comparación con controladores clásicos para estudiar cómo sigue un dron distintas trayectorias.</p>
         <div class="actions">
           <a class="button button-primary" href="#informe">Leer el informe</a>
           <a class="button button-secondary" href="./presentacion/">Ver la presentación</a>
@@ -69,15 +67,15 @@
           </div>
           <div>
             <dt>Pregunta</dt>
-            <dd>¿Puede una red sustituir a los PD externos?</dd>
+            <dd>¿Puede una red aprender de varios controladores clásicos?</dd>
           </div>
           <div>
             <dt>Método</dt>
-            <dd>Modelo 6DOF - datos expertos - bucle cerrado</dd>
+            <dd>Simulación, aprendizaje por imitación y comparación</dd>
           </div>
           <div>
             <dt>Evidencia</dt>
-            <dd>Comparación ID/OOD y criterios de seguridad</dd>
+            <dd>Trayectorias conocidas y nuevas, error y seguridad</dd>
           </div>
         </dl>
       </aside>
@@ -86,26 +84,23 @@
     <section class="summary" aria-labelledby="summary-title">
       <div>
         <p class="section-number">01 / Proyecto</p>
-        <h2 id="summary-title">Un TFG de modelado, control y evaluación</h2>
+        <h2 id="summary-title">Del modelo al experimento</h2>
       </div>
       <div class="summary-copy">
-        <p>El trabajo formula una pregunta de control y construye el entorno necesario para responderla: un modelo de
-          cuerpo rígido 6DOF con actuadores, perturbaciones, trayectorias reproducibles y telemetría auditable.</p>
-        <p>La metodología ajusta expertos PD, genera demostraciones, entrena modelos MLP, GRU y LSTM, y compara sus
-          decisiones en bucle cerrado. La red sustituye el lazo externo; el lazo interno clásico conserva la
-          estabilización de actitud.</p>
+        <p>Para responder a esa pregunta construí un simulador de un cuadricóptero con seis grados de libertad. El modelo incluye actuadores, perturbaciones y trayectorias que pueden repetirse para comparar los resultados.</p>
+        <p>Primero ajusté controladores clásicos PD y generé ejemplos de su comportamiento. Después entrené tres tipos de redes —MLP, GRU y LSTM— para imitar la fuerza que esos expertos piden al dron. Las redes controlan la posición; un controlador clásico sigue estabilizando la actitud.</p>
       </div>
       <ul class="pillars" aria-label="Áreas principales">
         <li><strong>MODELO</strong><span>Dinámica, actuadores y perturbaciones</span></li>
         <li><strong>MÉTODO</strong><span>Expertos PD, imitación y tres arquitecturas</span></li>
-        <li><strong>EVIDENCIA</strong><span>Comparación ID/OOD, error y seguridad</span></li>
+        <li><strong>EVIDENCIA</strong><span>Trayectorias conocidas y nuevas, error y seguridad</span></li>
       </ul>
     </section>
 
     <section class="summary" aria-labelledby="results-title">
       <div><p class="section-number">02 / Resultados</p><h2 id="results-title">Qué se aprendió y hasta dónde llega</h2></div>
       <div class="summary-copy">
-        <p>GRU y LSTM imitaron mejor la fuerza del experto, pero MLP siguió mejor las trayectorias de círculo y Lissajous en la prueba conocida. Fuera de distribución, el comportamiento cambió según la trayectoria y aparecieron fallos. Ninguna arquitectura fue superior en todos los casos.</p>
+        <p>GRU y LSTM imitaron mejor la fuerza del experto, pero MLP siguió mejor las trayectorias de círculo y Lissajous en las trayectorias conocidas. En trayectorias diferentes de las usadas durante el entrenamiento, el comportamiento cambió según el caso y aparecieron fallos. Ninguna arquitectura fue superior en todos los casos.</p>
         <p>El estudio es simulado: simplifica aerodinámica, viento y sensores, y no demuestra comportamiento en un dron real. La memoria describe las 184 ejecuciones de prueba y 80 fuera de distribución, con ocho controladores por escenario: cuatro PD de familia, tres redes y un PD representativo. La memoria detalla los criterios y limitaciones.</p>
         <p><a href="https://github.com/ChristianGonper/modelado-control-dron-v2/blob/concurso-prototipos-eiiia-2026/docs/neuroflight.md">Conocer NeuroFlight y su guía local</a>. Sus simulaciones nuevas y modelos regenerados no son los resultados históricos del TFG.</p>
       </div>

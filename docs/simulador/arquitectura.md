@@ -1,8 +1,10 @@
-# Arquitectura actual
+# Arquitectura del simulador
 
-El simulador esta organizado como codigo cientifico simple. Las carpetas separan conceptos fisicos y experimentales, no capas abstractas.
+Esta página explica cómo se organiza el código y qué ocurre desde que se carga un escenario hasta que se guardan sus resultados. Los módulos agrupan el modelo físico, el control y las herramientas de análisis.
 
-## Flujo de simulacion
+![Arquitectura del simulador y NeuroFlight](../neuroflight-assets/arquitectura-es.svg)
+
+## Flujo de simulación
 
 1. `app.py` recibe `simulador-quad run <escenario.yaml>`.
 2. `scenarios.loader` lee y valida el YAML; despues instancia vehiculo, rotores, estado inicial, trayectoria, controlador, viento y ruido.
@@ -30,9 +32,9 @@ El simulador esta organizado como codigo cientifico simple. Las carpetas separan
 - `dynamics/perturbations.py`: drag lineal, viento constante y ruido de observacion.
 - `scenarios/schema.py`: validacion fisica simple de YAML antes de simular.
 - `trajectories/analytic.py`: referencias `hold`, `circle`, `lissajous` y `line` / `waypoint`. `line` y `waypoint` usan comportamiento `waypoint_stop`: perfil trapezoidal/triangular por tramo, parada en cada waypoint y avance condicionado por tolerancias y dwell.
-- `trajectories/composite.py`: clase `CompositeTrajectory` para secuenciar múltiples sub-trayectorias de forma continua. Inserta automáticamente transiciones lineales si la distancia entre el final de una trayectoria y el inicio de la siguiente supera los 5 cm. La transición lineal realiza un frenado completo en velocidad a cero al llegar al punto de inicio de la siguiente trayectoria (transición posicional con parada intermedia) para reducir discontinuidades de posición y reiniciar el siguiente tramo desde reposo.
+- `trajectories/composite.py`: encadena subtrayectorias. Si se configura una velocidad de transición y la distancia entre tramos supera 5 cm, inserta una trayectoria lineal hacia el inicio del siguiente tramo.
 - `control/classic.py`: controlador clasico en cascada; expone el calculo de fuerza externa y la conversion fuerza ENU a mando con lazo interno clasico.
-- `control/neural.py`: `NeuralOuterForceController` para `type: neural`, que predice fuerza externa, y `NeuralPositionController`, que programa ganancias externas.
+- `control/neural.py`: `NeuralOuterForceController` para `type: neural`, que predice fuerza externa.
 - `ml/`: carga de telemetria, normalizacion train-only, modelos MLP/GRU/LSTM, entrenamiento y evaluacion supervisada.
 - `datasets/classic.py`: definicion reproducible del dataset clasico, familias, perfiles, YAML generados, PID iniciales, manifiesto y filtros de aceptacion.
 - `runner.py`: orquestacion multi-rate, ZOH, telemetria y terminacion.
@@ -52,12 +54,7 @@ El simulador esta organizado como codigo cientifico simple. Las carpetas separan
 - `tools/train_neural_controller.py`: entrena MLP, GRU o LSTM por imitacion de `desired_force_W_N` desde el dataset `outer_force`.
 - `tools/evaluate_neural_controller.py`: evalua modelos entrenados sobre `train`/`val`/`test` y, opcionalmente, un dataset OOD.
 - `tools/run_neural_scenario.py`: ejecuta un escenario existente sustituyendo el controlador por un checkpoint neuronal sin modificar el YAML base.
-- `tools/train_neural_position_controller.py`: entrena una red que predice multiplicadores de `Kp_pos` y `Kd_pos`.
-- `tools/evaluate_neural_position_controller.py`: evalua fidelidad supervisada de ganancias externas.
-- `tools/run_neural_position_scenario.py`: ejecuta un escenario con red en el lazo externo y lazo interno clasico.
-- `tools/run_neural_position_dataset.py`: ejecuta escenarios de un manifiesto con un checkpoint `neural_position` y escribe un reporte especifico de esa arquitectura.
 - `tools/generate_pid_bank.py`: crea un banco inicial de PIDs por familia a partir de los PIDs actuales.
-- `tools/generate_position_gain_dataset_from_bank.py`: expande un dataset clasico usando el banco de PIDs para entrenar la red de ganancias.
 
 ## Contratos de datos
 
@@ -102,9 +99,8 @@ Para `trajectory.type: "composite"`, la validación comprueba de forma recursiva
 
 Para `controller.type: "classic"`, el YAML puede declarar `Kp_pos`, `Kd_pos`, `Kp_att`, `Kd_att` y `max_body_moments_Nm` como vectores de tres componentes no negativas. Si faltan ganancias, el controlador conserva sus defaults.
 
-Para `controller.type: "neural"`, el YAML debe declarar `architecture`, `checkpoint_path`, `normalization_path`, una `feature_version` `outer_force_*` y `max_desired_tilt_rad`. La red predice `desired_force_W_N[3]` en mundo ENU; un controlador clasico interno la convierte en empuje colectivo y momentos FRD. Las arquitecturas soportadas son `mlp`, `gru` y `lstm`; GRU/LSTM mantienen ventana interna y el runner llama a `reset()` al inicio. Con `clip_to_classic_limits: true`, la fuerza se limita por norma a `mass_kg*gravity_m_s2*2.5`, por inclinacion deseada y por una componente vertical ascendente minima; despues el PID interno aplica `max_body_moments_Nm`. Checkpoints antiguos de cuatro comandos finales o seis salidas de `neural_position` se rechazan expresamente.
+Para `controller.type: "neural"`, el YAML debe declarar `architecture`, `checkpoint_path`, `normalization_path`, una `feature_version` `outer_force_*` y `max_desired_tilt_rad`. La red predice `desired_force_W_N[3]` en mundo ENU; un controlador clasico interno la convierte en empuje colectivo y momentos FRD. Las arquitecturas soportadas son `mlp`, `gru` y `lstm`; GRU/LSTM mantienen ventana interna y el runner llama a `reset()` al inicio. Con `clip_to_classic_limits: true`, la fuerza se limita por norma a `mass_kg*gravity_m_s2*2.5`, por inclinacion deseada y por una componente vertical ascendente minima; despues el PID interno aplica `max_body_moments_Nm`. Se rechazan los checkpoints incompatibles con esta arquitectura.
 
-Para `controller.type: "neural_position"`, el YAML debe declarar `architecture`, `checkpoint_path` y `normalization_path`. La red predice 6 log-multiplicadores para `Kp_pos` y `Kd_pos`. Tras desnormalizar, el controlador aplica `exp`, limita con `multiplier_clip` y usa el lazo interno clasico para convertir fuerza deseada en actitud, empuje y momentos. Por defecto `base_Kp_pos = [2.0, 2.0, 5.0]`, `base_Kd_pos = [1.0, 1.0, 2.0]`, `multiplier_clip = [0.25, 4.0]` y `device = "auto"`. En los scripts de inferencia, si `--architecture` se omite, se toma de `config.yaml` junto al checkpoint.
 
 La evaluacion supervisada de `neural` se hace sobre telemetria del dataset `outer_force`: `train` calcula normalizacion, `val` selecciona checkpoint y `test` mide imitacion in-distribution en unidades de fuerza. OOD se evalua aparte con `--ood-dataset`, que debe contener `manifest.csv` y telemetria previamente generada; el evaluador no ejecuta escenarios por si mismo.
 
@@ -158,6 +154,5 @@ Las metricas no sustituyen a la inspeccion de telemetria. Para explicar un resul
 - El ruido de observacion afecta solo a posicion y velocidad.
 - La visualización es postproceso y automática tras cada ejecución exitosa.
 - El controlador `neural` aprende por imitacion supervisada de fuerza externa solicitada por un PID experto seleccionado; no optimiza directamente una funcion de coste en bucle cerrado.
-- El controlador `neural_position` aprende por imitacion de ganancias externas; mejora la estabilidad estructural al conservar el lazo interno clasico, pero su calidad final tambien debe medirse en bucle cerrado.
 - La evaluacion `train`/`val`/`test` del dataset clasico mide desempeno in-distribution. La generalizacion debe evaluarse con datasets o escenarios OOD separados.
 - Las metricas supervisadas de `neural` miden error de fuerza; los porcentajes de clipping y las metricas fisicas de trayectoria deben verificarse en ejecucion cerrada.

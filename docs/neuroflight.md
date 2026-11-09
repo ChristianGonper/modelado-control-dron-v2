@@ -2,15 +2,21 @@
 
 NeuroFlight es una aplicación que permite experimentar con el simulador del TFG desde el navegador. Puedes diseñar una trayectoria, compararla con un controlador PD y tres redes neuronales, reproducir los vuelos y examinar métricas y señales. Todo se ejecuta en tu ordenador: no controla un dron real y no entrena redes desde la interfaz.
 
-Esta guía separa tres recorridos: [preparar los modelos](#1-preparar-los-modelos), [instalar y arrancar la aplicación](#2-instalar-y-arrancar-neuroflight) y [explorar una misión](#3-recorrer-una-misión). Al final se describe la [ruta de entrenamiento](#entrenar-desde-cero).
+Esta guía separa tres recorridos: [preparar los modelos](#1-preparar-los-modelos), [instalar y arrancar la aplicación](#2-instalar-y-arrancar-neuroflight) y [explorar una misión](#3-recorrer-una-misión). Al final se describe la [ruta de entrenamiento](#entrenar-los-modelos-desde-cero).
 
 ## 1. Preparar los modelos
 
-**Un clon del repositorio no incluye los pesos necesarios para NeuroFlight.** Antes de iniciar una comparación necesitas un paquete completo en `data/neuroflight_bundle/`. Puedes obtenerlo de alguien que ya lo tenga; actualmente no hay una descarga pública configurada. Sin el paquete, la aplicación no puede simular. Si no dispones de él, consulta [entrenar desde cero](#entrenar-desde-cero): esa ruta es técnica y aún no se ha verificado de principio a fin.
+El repositorio incluye un [paquete de modelos para la demostración](neuroflight-assets/modelos-neuroflight.zip). Contiene cuatro controladores PD y tres redes de fuerza exterior regenerados el 23 de septiembre de 2026. Son modelos nuevos, no los pesos históricos de la memoria. Sus datos de entrenamiento proceden de simulaciones y demostraciones de expertos PD, no de vuelos reales.
 
-El paquete de este equipo contiene cuatro controladores PD y tres redes de fuerza exterior regenerados el 23 de septiembre de 2026; no son los pesos históricos de la memoria. Los datos de entrenamiento proceden de simulaciones y demostraciones de expertos PD, no de vuelos reales. El manifiesto permite verificar la integridad del paquete; los experimentos nuevos no son resultados agregados del TFG. Para conocer el protocolo académico, consulta la [memoria](../site/assets/reports/TFG_Memoria_es.pdf).
+Después de clonar el repositorio, descomprime el archivo desde la raíz del proyecto. En PowerShell:
 
-Si ya tienes la carpeta `data/regenerated_2026-09-23/`, después de instalar las dependencias puedes crear el paquete con `uv run python tools\package_demo_artifacts.py`. El comando escribe en el destino: conserva antes cualquier paquete que necesites.
+```powershell
+Expand-Archive -LiteralPath docs\neuroflight-assets\modelos-neuroflight.zip -DestinationPath data\neuroflight_bundle
+```
+
+El destino debe contener directamente `bundle_manifest.json`, `pids/` y `neural_control/`. Si ya existe un paquete en esa carpeta, consérvalo o utiliza otra copia del proyecto antes de descomprimir. El manifiesto permite comprobar la integridad de los archivos al arrancar. Las misiones nuevas no son resultados agregados del TFG; consulta la [memoria](../site/assets/reports/TFG_Memoria_es.pdf) para el protocolo académico.
+
+También puedes [entrenar modelos desde cero](#entrenar-los-modelos-desde-cero). Esa ruta requiere muchos más recursos y no se ha validado de principio a fin desde un clon limpio.
 
 ## 2. Instalar y arrancar NeuroFlight
 
@@ -26,7 +32,7 @@ npm run build
 cd ..
 ```
 
-Coloca el paquete completo en `data/neuroflight_bundle/` y arranca el servidor desde la raíz del repositorio:
+Prepara el paquete como se indica en el apartado anterior y arranca el servidor desde la raíz del repositorio:
 
 ```powershell
 uv run neuroflight
@@ -56,34 +62,71 @@ En **Análisis** examina los errores de seguimiento, las protecciones y la telem
 
 Las ejecuciones nuevas se guardan en `data/neuroflight_runs/`, junto con su configuración y los hashes del paquete. No modifican los resultados históricos del TFG.
 
-## Entrenar desde cero
+## Entrenar los modelos desde cero
 
-Esta es una ruta técnica parcial, no una receta validada de extremo a extremo para obtener un paquete listo para la aplicación.
+Este recorrido explica cómo generar modelos nuevos de la misma familia que utiliza NeuroFlight. Requiere una GPU NVIDIA compatible con CUDA para el entrenamiento y puede necesitar mucho tiempo y espacio. Las simulaciones y el ajuste de los controladores clásicos utilizan CPU. No hemos ejecutado toda esta cadena desde un clon limpio: los comandos siguen la memoria y los scripts actuales, pero no podemos garantizar todavía una reproducción completa. Entrenar de nuevo tampoco recupera los pesos históricos ni garantiza las mismas cifras.
 
-El repositorio incluye herramientas para generar escenarios, ajustar PD, generar demostraciones y entrenar redes. El siguiente comando **solo muestra** las fases y comandos sin ejecutarlos:
+### Qué red se entrena
+
+En el TFG, las redes MLP, GRU y LSTM evaluadas para el control de posición aprenden a predecir la **fuerza del lazo externo** a partir de ejemplos de controladores PD. El nombre técnico de esa variante en el código es `outer_force_min_v1`. NeuroFlight carga estas tres arquitecturas y cuatro PD de referencia. Consulta el [anejo de comandos de la memoria](../TFG_Memoria/appendices/a_comandos.tex) para el protocolo del TFG.
+
+### 1. Preparar el entorno y comprobar la GPU
+
+Trabaja en una copia separada y con un directorio `data/` nuevo: la generación y el ajuste escriben archivos y algunas opciones los sobrescriben. Instala las dependencias siguiendo la sección anterior. En PowerShell, desde la raíz, comprueba que PyTorch detecta CUDA:
 
 ```powershell
-uv run python tools\run_experimental_campaign.py --phase 2-5 --workers 2 --device cpu --dry-run
+uv run python -c "import torch; print('CUDA disponible:', torch.cuda.is_available()); print('GPU:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'no detectada')"
 ```
 
-Para ejecutarlas, retira `--dry-run` solo después de revisar los comandos y las advertencias de escritura. Las fases 2–5 generan el dataset clásico, ajustan los PD y generan datos de fuerza. La fase 7 de la campaña también entrena otra variante y depende de la fase 6; por ello no se presenta aquí como ruta mínima. Los comandos concretos para las tres redes outer-force y su evaluación están en el anejo de comandos de la [memoria PDF](../site/assets/reports/TFG_Memoria_es.pdf) ([fuente](../TFG_Memoria/appendices/a_comandos.tex)). El proceso completo puede consumir mucho tiempo, CPU, almacenamiento y memoria; CUDA es opcional. No se ha medido aquí una duración ni ejecutado el entrenamiento completo. Las fases escriben en `data/` y algunas regeneran archivos: usa un checkout y directorio de datos separados para no sobrescribir trabajo existente.
+Si aparece `False`, resuelve primero la instalación compatible de PyTorch y los controladores de NVIDIA. En los comandos de entrenamiento y evaluación de redes, `--device cuda` exige una GPU disponible y no cambia silenciosamente a CPU. La generación de datos de las fases 2 a 5 utiliza CPU. Las dependencias del proyecto seleccionan su índice de PyTorch; consulta `pyproject.toml` si tu equipo necesita otra configuración.
 
-Para entrenar las tres redes outer-force una vez generados los datos de las fases 2–5, ejecuta para cada arquitectura el comando del anejo, por ejemplo en PowerShell:
+### 2. Generar escenarios y ejemplos de expertos
+
+Las fases 2 a 5 de la campaña preparan escenarios clásicos, ajustan y fijan los PD, ejecutan la base clásica y generan los ejemplos de fuerza. Primero puedes ver los comandos sin ejecutarlos:
+
+```powershell
+uv run python tools\run_experimental_campaign.py --phase 2-5 --workers 4 --dry-run
+```
+
+Para iniciar realmente la generación, retira `--dry-run`:
+
+```powershell
+uv run python tools\run_experimental_campaign.py --phase 2-5 --workers 4
+```
+
+Estas fases usan principalmente CPU. `--workers 4` limita los procesos paralelos; puedes ajustarlo a tu equipo. El resultado necesario para el entrenamiento es `data/outer_force_dataset/v1/`. Comprueba que la campaña termine sin errores antes de continuar.
+
+### 3. Entrenar MLP, GRU y LSTM en GPU
+
+El siguiente bucle sigue el comando del anejo para cada arquitectura y guarda cada modelo en una carpeta propia:
 
 ```powershell
 foreach ($arquitectura in @('mlp', 'gru', 'lstm')) {
   uv run python tools\train_neural_controller.py --dataset data\outer_force_dataset\v1 `
     --architecture $arquitectura --feature-version outer_force_min_v1 `
-    --out "data\neural_control\outer_force_${arquitectura}_min_v1" --device auto
+    --out "data\neural_control\outer_force_${arquitectura}_min_v1" --device cuda
+  if ($LASTEXITCODE -ne 0) { throw "Ha fallado el entrenamiento de $arquitectura" }
 }
 ```
 
-Si la campaña ha producido los cuatro PD en `data/classic_dataset/v1/pids/` y los tres modelos con checkpoint, configuración y normalización en las rutas anteriores, el empaquetador acepta `data/` como raíz. El destino se escribe o sobrescribe: guarda primero cualquier paquete que necesites conservar.
+Cada salida incluye el mejor checkpoint, la configuración y la normalización; deben mantenerse juntos. Para evaluar la predicción supervisada, ejecuta para cada arquitectura:
+
+```powershell
+foreach ($arquitectura in @('mlp', 'gru', 'lstm')) {
+  uv run python tools\evaluate_neural_controller.py --dataset data\outer_force_dataset\v1 `
+    --run "data\neural_control\outer_force_${arquitectura}_min_v1" --device cuda
+  if ($LASTEXITCODE -ne 0) { throw "Ha fallado la evaluación de $arquitectura" }
+}
+```
+
+Esa evaluación por sí sola no reproduce la comparación completa del TFG: también se necesitan los experimentos de seguimiento en bucle cerrado, los escenarios fuera de distribución y su consolidación. El [anejo de la memoria](../TFG_Memoria/appendices/a_comandos.tex) recoge esos pasos.
+
+### 4. Preparar el paquete para la aplicación
+
+Si la generación ha producido los cuatro PD en `data/classic_dataset/v1/pids/` y los tres modelos con sus checkpoints, configuraciones y normalizaciones en las rutas anteriores, el empaquetador puede usar `data/` como raíz. Escribe en el destino: guarda antes cualquier paquete que quieras conservar.
 
 ```powershell
 uv run python -c "from pathlib import Path; from tools.package_demo_artifacts import package_bundle; package_bundle(Path('data'), Path('data/neuroflight_bundle'))"
 ```
 
-Se ha comprobado la función de empaquetado con los artefactos regenerados existentes en una carpeta temporal; no se ha comprobado esta cadena completa con modelos recién entrenados. Arranca NeuroFlight y comprueba `/api/health` para verificar los hashes del paquete resultante.
-
-El empaquetador usa por defecto `data/regenerated_2026-09-23/`, mientras que la campaña escribe en `data/classic_dataset/` y `data/neural_control/`. Por tanto, entrenar no instala automáticamente los modelos en NeuroFlight. El comando anterior indica explícitamente esa raíz alternativa al [empaquetador](../tools/package_demo_artifacts.py). Esta ruta no se ha validado de extremo a extremo desde cero; nuevos entrenamientos no garantizan reproducir los pesos ni las cifras históricas.
+El empaquetado se ha comprobado con artefactos regenerados existentes, no con un entrenamiento nuevo completo. Tras crear el paquete, vuelve a [instalar y arrancar NeuroFlight](#2-instalar-y-arrancar-neuroflight) y revisa `/api/health`: `bundle.valid` debe ser `true`. El empaquetador predeterminado busca `data/regenerated_2026-09-23/`; el comando anterior indica expresamente la raíz alternativa `data/`.

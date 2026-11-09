@@ -1,6 +1,6 @@
-# Control neuronal por imitacion
+# Control neuronal por imitación
 
-Este documento describe los dos modos neuronales implementados. El modo principal de la comparacion versionada es `controller.type: "neural"`, que sustituye solo el lazo externo de posicion por una red de fuerza. El modo `neural_position` se conserva como alternativa que programa ganancias del PID externo.
+En la comparación principal del TFG, `controller.type: "neural"` usa una red para calcular la fuerza del lazo de posición. La estabilización de actitud sigue a cargo del controlador clásico.
 
 ## Controlador `neural` outer-force
 
@@ -136,7 +136,7 @@ controller:
 
 Con `clip_to_classic_limits: true`, el controlador limita la norma de fuerza a `mass_kg * gravity_m_s2 * 2.5`, restringe la inclinacion solicitada a `max_desired_tilt_rad` y mantiene una componente ascendente minima antes de ejecutar el PID interno. El wrapper `run_neural_scenario.py` usa `0.52 rad` si ese limite no esta registrado en la configuracion del entrenamiento.
 
-Un checkpoint legacy que produce cuatro comandos finales o un checkpoint `neural_position` de seis salidas se rechaza al cargarse como `neural`. Por tanto, los modelos anteriores no deben reutilizarse como outer-force sin regenerar dataset y entrenar de nuevo.
+Los checkpoints incompatibles con la arquitectura y las entradas de fuerza exterior se rechazan al cargarse. Por tanto, los modelos anteriores no deben reutilizarse como outer-force sin regenerar dataset y entrenar de nuevo.
 
 ## Arquitecturas outer-force comparadas
 
@@ -147,17 +147,6 @@ el efecto de incorporar una ventana temporal con memoria recurrente. Las tres
 arquitecturas deben evaluarse con métricas supervisadas y en bucle cerrado bajo
 las mismas condiciones `test` y OOD. El entrenamiento con las 31 entradas de
 `outer_force_full_v1` queda fuera de esta comparación por ahora.
-
-## Modo conservado `neural_position`
-
-`controller.type: "neural_position"` permanece separado. Entrenamiento e inferencia usan la **observacion** del controlador (no el estado verdadero), alineado con bucle cerrado bajo ruido. Telemetria historica sin bloque `observation` cae en `state` y puede desalinear train/inferencia: regenerar `position_gain_dataset` si aplica. Su red predice seis log-multiplicadores para `Kp_pos[3]` y `Kd_pos[3]`; tras aplicar `exp` y `multiplier_clip`, el controlador clasico calcula fuerza y estabiliza actitud. Sus scripts siguen siendo:
-
-```powershell
-uv run python tools\generate_pid_bank.py --dataset data\classic_dataset\v1 --out data\pid_bank\v1
-uv run python tools\generate_position_gain_dataset_from_bank.py --source-dataset data\classic_dataset\v1 --pid-bank data\pid_bank\v1 --out data\position_gain_dataset\v1
-uv run python tools\train_neural_position_controller.py --dataset data\position_gain_dataset\v1 --architecture gru --out data\neural_control\position_gru_v1 --device auto
-uv run python tools\run_neural_position_scenario.py --scenario scenarios\neural_ood_lemniscate.yaml --checkpoint data\neural_control\position_gru_v1\checkpoints\gru_best.pt --normalization data\neural_control\position_gru_v1\normalization.json --device auto --no-visualization
-```
 
 ## Alcance
 

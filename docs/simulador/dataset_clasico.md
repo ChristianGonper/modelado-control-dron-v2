@@ -1,8 +1,8 @@
-# Dataset clasico
+# Datos del controlador clásico
 
-Este documento describe el estado implementado de la generacion de datos clasicos. El objetivo es producir episodios reproducibles con el controlador clasico y usarlos como dataset experto para imitacion neuronal.
+El conjunto de datos clásico reúne episodios reproducibles ejecutados con controladores clásicos. Sirve para comparar su comportamiento y para preparar los ejemplos que utilizará el aprendizaje por imitación.
 
-La generacion del dataset sigue siendo clasica: no entrena redes ni ejecuta control neuronal. Para `neural` outer-force, su `manifest.csv` define las condiciones y splits desde los que se ejecuta un banco adicional de PIDs externos; los targets finales proceden de la telemetria del experto seleccionado, no de copiar directamente los comandos del dataset clasico.
+Generar este conjunto no entrena ni ejecuta redes. Para la variante de fuerza exterior, el manifiesto define los escenarios y sus divisiones; sobre ellos se prueba un banco adicional de PD. Los valores que aprende la red proceden de la telemetría del experto seleccionado en cada escenario.
 
 ## Alcance
 
@@ -100,7 +100,7 @@ Si el directorio existe, el comando falla para no sobrescribir datasets versiona
 uv run python tools\generate_classic_dataset.py --version v1 --out data\classic_dataset\v1 --overwrite
 ```
 
-Tuneo reproducible de PID base (recomendado; diagnostica todas las familias sobre train, retunea solo las necesarias segun filtros duros o RMSE medio; usa busqueda progresiva determinista con semilla 1042):
+Tuneo reproducible de PID base (recomendado; diagnostica cada familia sobre escenarios de entrenamiento con los perfiles P0 nominal, P2 de viento este y P5 combinado; vuelve a ajustar solo las que no cumplen los criterios; usa busqueda progresiva determinista con semilla 1042):
 
 ```powershell
 uv run python tools\tune_classic_pid.py --dataset data\classic_dataset\v1 --out data\classic_dataset\v1\pids --workers 8
@@ -108,7 +108,7 @@ uv run python tools\tune_classic_pid.py --dataset data\classic_dataset\v1 --out 
 uv run python tools\tune_classic_pid.py --dataset data\classic_dataset\v1 --out data\classic_dataset\v1\pids --force --rmse-hold 0.20 --workers 8
 ```
 
-`--workers` reparte candidatos PID independientes entre procesos CPU; cada candidato conserva sus casos diagnosticos en serie y los resultados se agregan en orden determinista. Los PIDs resultantes (frozen) se guardan en `pids/pid_<f>_v1.yaml` con `source`, configuracion de busqueda, diagnostico usado y motivo. Regenerar escenarios clasicos (fase 4 de campana o generacion con `--overwrite`) reutiliza los congelados en lugar de defaults. Los bancos `neural_position` y `outer_force` parten de esos PID base y solo varian ganancias externas. Los valores por defecto vigentes estan en las ayudas CLI y en `tools/run_experimental_campaign.py`; `docs/plans/archived/` es solo historico.
+`--workers` reparte candidatos PID independientes entre procesos CPU; cada candidato conserva sus casos diagnosticos en serie y los resultados se agregan en orden determinista. Los PIDs resultantes (frozen) se guardan en `pids/pid_<f>_v1.yaml` con `source`, configuracion de busqueda, diagnostico usado y motivo. Regenerar escenarios clasicos (fase 4 de campana o generacion con `--overwrite`) reutiliza los congelados en lugar de defaults. El banco `outer_force` parte de esos PID base y solo varía las ganancias externas. Los valores por defecto vigentes estan en las ayudas CLI y en `tools/run_experimental_campaign.py`; `docs/plans/archived/` es solo historico.
 
 El runner ejecuta el controlador embebido en cada YAML, no carga ganancias dinamicamente desde `pids/`. Antes de ejecutar comprueba que ambos coincidan y falla con una instruccion de regeneracion si los escenarios quedaron desactualizados tras un tuneo.
 
@@ -165,7 +165,7 @@ El consolidador `summarize_comparison.py` lee los reportes de simulación clási
 `results/comparison_summary.csv`, además de tablas LaTeX para la memoria.
 
 Los informes de transferencia se pueden refrescar sin re-simular con:
-`uv run python tools/run_classic_transfer_dataset.py --dataset <ds> --refresh-report-only ...`
+`uv run python tools/run_classic_transfer_dataset.py --dataset data/classic_dataset/v1 --refresh-report-only`
 
 Para comparar el controlador clásico y el neuronal, no basta con las métricas supervisadas de fuerza. Estas comparan la fuerza de la red con `desired_force_W_N` del experto PID seleccionado. La comparación experimental principal se realiza con ejecuciones en bucle cerrado y métricas comunes de simulación (incluyendo las matrices cruzadas completas en test e OOD y el baseline representativo), usando `position_rmse_m` como métrica principal y reportando también error máximo, terminación, saturación y clipping de fuerza.
 

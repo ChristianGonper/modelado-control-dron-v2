@@ -10,11 +10,23 @@ Desarrollado por Christian González Pérez como Trabajo de Fin de Grado (TFG) e
 
 ¿Puede una red neuronal sustituir varios controladores de posición especializados sin perder capacidad de seguimiento? El TFG construye un simulador de cuadricóptero de seis grados de libertad y compara controladores bajo trayectorias y perturbaciones reproducibles. Un PD calcula la fuerza deseada para seguir la referencia; MLP, GRU y LSTM aprenden a imitar esa fuerza a partir de demostraciones simuladas. El control de actitud y las protecciones siguen siendo clásicos.
 
+![Esquema del simulador y de NeuroFlight](docs/neuroflight-assets/arquitectura-es.svg)
+
+*El control de posición puede ser clásico o neuronal; el control de actitud y el modelo físico son comunes.*
+
 ## Qué se observó en el TFG
 
 En el conjunto de prueba conocido, GRU y LSTM imitaron mejor la fuerza del experto, pero MLP obtuvo menor error de seguimiento en círculo y Lissajous. En escenarios fuera de distribución, la respuesta dependió de la trayectoria: GRU obtuvo mejor resultado que MLP en las familias de lemniscata y composición, mientras que MLP siguió siendo competitivo en variantes de Lissajous y waypoint; aparecieron fallos y degradación. No se demuestra una superioridad general de una arquitectura. La memoria recoge 23 escenarios de prueba y 10 fuera de distribución, con 184 y 80 ejecuciones en total, respectivamente. En cada escenario se evaluaron ocho controladores: cuatro PD de familia, tres redes y un PD representativo. Véanse [resultados](TFG_Memoria/sections/07_resultados.tex) y [conclusiones y límites](TFG_Memoria/sections/09_conclusiones.tex).
 
 Son resultados **de simulación**, no pruebas de vuelo real. El modelo simplifica aerodinámica, viento y sensores; la muestra y las semillas son limitadas y no hay intervalos de confianza. La imitación puede heredar sesgos de los expertos. La [memoria completa en PDF](site/assets/reports/TFG_Memoria_es.pdf) explica el protocolo y sus límites; la [web académica](https://christiangonper.github.io/modelado-control-dron-v2/) ofrece una presentación del trabajo.
+
+### Un ejemplo de las figuras de la memoria
+
+En el escenario de lemniscata rápida fuera de distribución, esta figura compara las trayectorias de MLP y LSTM con la referencia y muestra cómo evoluciona el error de posición. Ilustra un caso concreto: no basta por sí sola para ordenar las arquitecturas en todos los escenarios.
+
+![Trayectorias y error de posición en una lemniscata rápida](docs/neuroflight-assets/resultado-lemniscata.png)
+
+*Figura de la [memoria](TFG_Memoria/sections/07_resultados.tex), escenario `lemniscate_fast_center_yaw`; resultados históricos del TFG.*
 
 ## NeuroFlight: del experimento a una aplicación interactiva
 
@@ -30,7 +42,7 @@ NeuroFlight lleva el simulador a una interfaz local para explorar cómo responde
 
 Las capturas muestran la interfaz real. Cada misión de la aplicación es una simulación nueva: sus resultados y los modelos regenerados de la demo no son los resultados históricos del TFG. NeuroFlight no controla un dron real ni reentrena las redes desde la interfaz.
 
-**¿Quieres probarlo?** La [guía de NeuroFlight](docs/neuroflight.md) explica cómo preparar los modelos, instalar la aplicación y recorrer una primera misión. La aplicación está en la rama `concurso-prototipos-eiiia-2026`; sus pesos no se incluyen en un clon y actualmente no hay una descarga pública configurada. La guía también describe la ruta de entrenamiento, todavía sin validar de principio a fin.
+**¿Quieres probarlo?** La [guía de NeuroFlight](docs/neuroflight.md) explica cómo preparar los modelos, instalar la aplicación y recorrer una primera misión. La aplicación está en la rama `concurso-prototipos-eiiia-2026`; el repositorio incluye un paquete de modelos regenerados para probarla. La guía también describe la ruta de entrenamiento, todavía sin validar de principio a fin.
 
 ## Explorar el código y la memoria
 
@@ -70,7 +82,7 @@ La batería de pruebas está diseñada para cubrir el modelo físico, las conven
 uv run pytest
 ```
 
-En una revisión en este equipo se observaron cuatro fallos: dos dependen de PD generados que no están en Git y dos de las pruebas del comparador de visualización. Otras pruebas requieren el paquete de NeuroFlight, también ausente en un clon limpio. La suite no se ha demostrado limpia en un clon nuevo.
+Algunas pruebas requieren artefactos generados localmente o el paquete de NeuroFlight extraído en `data/neuroflight_bundle/`. La batería completa no se ha demostrado limpia en un clon nuevo.
 
 La comparación experimental distingue entre completar una misión (`mission_success`) y terminar sin fallo físico (`safety_success`). Alcanzar el límite temporal en una trayectoria finita no se considera una misión completada.
 
