@@ -2,7 +2,9 @@
 
 Un escenario reúne en un archivo los datos necesarios para repetir una simulación: vehículo, estado inicial, trayectoria, controlador, perturbaciones, tiempos, condiciones de parada y ubicación de los resultados. Esta referencia describe los campos que acepta el cargador.
 
-La estructura admitida por el cargador actual es:
+Si es la primera vez que editas un escenario, copia [hover_clean.yaml](../../scenarios/hover_clean.yaml), cambia un valor de `trajectory.position_W_m` y ejecuta la copia siguiendo la [guía de uso](guia_uso.md). Los cambios en el archivo solo afectan a las ejecuciones nuevas.
+
+La siguiente estructura muestra las secciones principales; los objetos vacíos son marcadores, no un escenario ejecutable:
 
 ```yaml
 name: "Nombre del escenario"
@@ -19,15 +21,15 @@ termination: {}
 output: {}
 ```
 
-Al ejecutar un escenario con `uv run simulador-quad run <fichero.yaml>`, el YAML se valida antes de instanciar la simulacion. Si un parametro fisico es invalido, el cargador falla temprano con un `ValueError` que indica el campo afectado. Si la configuracion es valida, se generan automaticamente la telemetria, las metricas, figuras PNG y un visor 3D interactivo, a menos que se use `--no-visualization`.
+Antes de iniciar la simulación, el cargador valida el YAML. Si encuentra un parámetro físico inválido, devuelve un error que identifica el campo. Una ejecución válida genera telemetría y métricas; también crea figuras PNG y un visor 3D salvo que se indique `--no-visualization`.
 
-## Convenciones fisicas
+## Convenciones físicas
 
 - Mundo `W`: ENU, con `X_W` Este, `Y_W` Norte y `Z_W` arriba.
 - Cuerpo `B`: FRD, con `X_B` delante, `Y_B` derecha y `Z_B` abajo.
-- El empuje sustentador de los rotores actua en direccion `-Z_B`.
-- Las posiciones y velocidades lineales se expresan en mundo ENU.
-- Las velocidades angulares y momentos se expresan en cuerpo FRD.
+- El empuje sustentador de los rotores actúa en dirección `-Z_B`.
+- Las posiciones y velocidades lineales se expresan en el marco del mundo ENU.
+- Las velocidades angulares y los momentos se expresan en el marco del cuerpo FRD.
 - Los cuaterniones usan formato `[w, x, y, z]`.
 
 ## Campos globales

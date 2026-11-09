@@ -4,9 +4,9 @@ Esta página explica qué aporta cada escenario a la validación, qué criterios
 
 La validación del control clásico y la del neuronal cumplen funciones distintas. Los escenarios clásicos comprueban la coherencia física y sirven de referencia; las redes se evalúan tanto por su error supervisado como por su comportamiento en bucle cerrado.
 
-## Comandos oficiales
+## Ejecutar los escenarios de referencia
 
-Ejecutar desde la raiz del repositorio:
+Los comandos de esta sección se ejecutan desde la raíz del repositorio. Cada escenario produce una nueva ejecución local; para iniciarte y localizar sus salidas, consulta primero la [guía de uso](guia_uso.md):
 
 ```powershell
 uv run simulador-quad run scenarios\hover_clean.yaml --no-visualization
@@ -16,13 +16,13 @@ uv run simulador-quad run scenarios\lissajous_clean.yaml --no-visualization
 uv run simulador-quad run scenarios\waypoint_clean.yaml --no-visualization
 ```
 
-Para generar figuras despues de una ejecucion:
+Para generar las figuras a partir de una ejecución:
 
 ```powershell
 uv run simulador-quad plot results\hover_clean\telemetry.json --metrics results\hover_clean\metrics.json --out results\hover_clean\figures
 ```
 
-Para el dataset clasico versionado:
+Para generar y ejecutar el conjunto clásico —un proceso más largo que una simulación individual—:
 
 ```powershell
 uv run python tools\generate_classic_dataset.py --version v1 --out data\classic_dataset\v1
@@ -30,7 +30,7 @@ uv run python tools\run_classic_dataset.py --dataset data\classic_dataset\v1 --n
 uv run python tools\summarize_classic_dataset.py --dataset data\classic_dataset\v1
 ```
 
-Para entrenamiento y evaluacion neuronal:
+Los siguientes comandos preparan demostraciones de expertos, entrenan una MLP y la evalúan. Requieren el conjunto clásico generado en el paso anterior. Para las tres arquitecturas y el uso de GPU, consulta la [guía de NeuroFlight](../neuroflight.md):
 
 ```powershell
 uv run python tools\generate_outer_force_pid_bank.py --dataset data\classic_dataset\v1 --out data\outer_force_pid_bank\v1 --workers 8
@@ -40,7 +40,7 @@ uv run python tools\evaluate_neural_controller.py --dataset data\outer_force_dat
 uv run python tools\run_neural_scenario.py --scenario scenarios\neural_ood_lemniscate.yaml --checkpoint data\neural_control\outer_force_mlp_min_v1\checkpoints\mlp_best.pt --normalization data\neural_control\outer_force_mlp_min_v1\normalization.json --device auto --no-visualization
 ```
 
-Para generar la bateria OOD y evaluarla:
+Para generar la batería de escenarios fuera de distribución (OOD) y probar el controlador entrenado en bucle cerrado:
 
 ```powershell
 uv run python tools\generate_ood_battery.py --out data\neural_ood\battery_v1 --overwrite
@@ -51,7 +51,7 @@ uv run python tools\run_neural_outer_force_dataset.py --dataset data\neural_ood\
 uv run simulador-quad run scenarios\composite_ood.yaml --no-visualization
 ```
 
-El directorio OOD debe usar `split=ood` en `manifest.csv`. No mezclar OOD con el split `test` del dataset clasico. La evaluacion supervisada requiere telemetria compatible con targets de fuerza; el batch `run_neural_outer_force_dataset.py` ejecuta el lazo cerrado. `composite_ood` inicia en `[0,0,1.0]` (primer `hold` e `initial_state` alineados). `data\neural_ood\battery_v1` se genera localmente y esta ignorado por git; para reproducir una evidencia, regenerar la bateria y las corridas desde el commit que se cite en `metrics.metadata`.
+El manifiesto de la batería debe identificar sus escenarios con `split=ood`; no deben mezclarse con el conjunto de prueba `test`. La evaluación supervisada necesita, además, telemetría de expertos compatible: la batería de escenarios por sí sola no la contiene. En cambio, `run_neural_outer_force_dataset.py` ejecuta esos escenarios en bucle cerrado. `composite_ood` comienza en `[0, 0, 1]`, alineado con su primer tramo. Para reproducir una evidencia, conserva la versión del código, la configuración y los artefactos de cada ejecución.
 
 Para consultar el protocolo de comparación y los comandos con los que se generó la evidencia del TFG, revisa el [anejo de la memoria](../../TFG_Memoria/appendices/a_comandos.tex). Las salidas consolidadas distinguen la comparación principal del conjunto completo:
 
@@ -67,7 +67,7 @@ Contrato de éxito:
 
 ## Criterios generales
 
-Un escenario se considera valido como evidencia de la version clasica si cumple:
+Para utilizar una ejecución como evidencia del control clásico, comprueba lo siguiente:
 
 - El YAML usado esta versionado en `scenarios/`.
 - La ejecucion termina por la causa esperada.
@@ -76,7 +76,7 @@ Un escenario se considera valido como evidencia de la version clasica si cumple:
 - Las saturaciones y degradaciones se reportan, no se ocultan.
 - Las figuras se generan desde la telemetria exportada, no desde datos editados manualmente.
 
-Los umbrales numericos de RMSE y error maximo son iniciales. Deben revisarse cuando cambie el modelo fisico, el controlador o la lista de escenarios oficiales.
+Los umbrales de RMSE y error máximo de la tabla son criterios iniciales. Hay que revisarlos si cambian el modelo físico, el controlador o los escenarios de referencia.
 
 ## Escenarios oficiales
 
@@ -99,7 +99,7 @@ Ese snapshot fue incorporado en el commit `fe2e075` el 2026-06-10. El manifiesto
 Motivos:
 
 - Los artefactos generados antes de la metadata fuerte no registraban commit, estado del arbol, comando exacto ni hash de `uv.lock`.
-- Los agregados no incluyen la telemetria pesada ni los checkpoints, que permanecen en `data/` ignorado por Git.
+- Los agregados no incluyen la telemetría completa ni los checkpoints históricos, que se generan en `data/` y no están versionados. El ZIP de NeuroFlight distribuye modelos regenerados para la demostración, distintos de esos pesos históricos.
 - Otros resultados locales pueden proceder de versiones anteriores de escenarios o codigo.
 - Por ejemplo, la duración registrada en resultados históricos puede no coincidir con el YAML actual (especialmente en trayectorias finitas como `waypoint`).
 

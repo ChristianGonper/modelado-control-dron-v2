@@ -6,22 +6,16 @@ Esta página explica cómo se organiza el código y qué ocurre desde que se car
 
 ## Flujo de simulación
 
-1. `app.py` recibe `simulador-quad run <escenario.yaml>`.
-2. `scenarios.loader` lee y valida el YAML; despues instancia vehiculo, rotores, estado inicial, trayectoria, controlador, viento y ruido.
-3. `SimulationRunner` inicializa tiempos de fisica, control y telemetria. Antes del primer paso fisico, el comando y los actuadores se inicializan en hover (`mass_kg * gravity_m_s2`) para evitar que un episodio nivelado empiece con los rotores a cero.
-4. En cada ciclo:
-   - obtiene la referencia de trayectoria para `time_s`; si la trayectoria implementa `get_reference_for_state`, tambien recibe el estado actual para generar referencias state-aware;
-   - genera la observacion, con ruido si aplica;
-   - llama al controlador cuando toca `control_dt_s`;
-   - convierte empuje/momentos a comandos de rotor mediante el mezclador;
-   - aplica retardo, lag y saturacion en actuadores;
-   - guarda telemetria cuando toca `telemetry_dt_s`;
-   - avanza el estado con RK4 usando `physics_dt_s`.
-5. El episodio termina por límite de tiempo, por una condición de seguridad/validez o por haber llegado al final de una trayectoria finita (`line` / `waypoint`). En trayectorias state-aware, la terminación normal puede estar gobernada por `check_completion`.
-6. Se exportan `telemetry.json` y `metrics.json`.
-7. Se generan automáticamente figuras PNG y el visor interactivo `visualization_3d.html`.
+1. La interfaz de comandos recibe `simulador-quad run <escenario.yaml>`.
+2. El cargador lee y valida el YAML y construye el vehículo, el estado inicial, la trayectoria, el controlador y las perturbaciones.
+3. `SimulationRunner` prepara los ritmos de física, control y telemetría. Inicializa los actuadores con un comando de vuelo estacionario para evitar que un episodio nivelado comience con los rotores a cero.
+4. Durante la ejecución obtiene la referencia, genera la observación —con ruido cuando corresponde— y llama al controlador en cada instante de control. El mezclador convierte el empuje y los momentos en órdenes para los rotores; los actuadores aplican retardo, dinámica y saturación. El integrador RK4 avanza el estado y se guardan muestras de telemetría con su propio intervalo.
+5. El episodio termina al alcanzar su límite de tiempo, completar una trayectoria finita o activar una condición de seguridad. Se guardan `telemetry.json` y `metrics.json`.
+6. Si la visualización está activada, se generan figuras PNG y el visor `visualization_3d.html`. La opción `--no-visualization` omite este paso.
 
-## Modulos principales
+Los intervalos de física, control y telemetría pueden ser distintos. Por eso, una muestra exportada no representa necesariamente cada paso del integrador.
+
+## Módulos principales
 
 - `core/contracts.py`: dataclasses de estado, parametros, referencias, comandos, rotores y telemetria.
 - `core/attitude.py`: operaciones de cuaterniones y rotacion entre cuerpo y mundo.
@@ -46,7 +40,7 @@ Esta página explica cómo se organiza el código y qué ocurre desde que se car
 - `visualization/export.py`: exportación PNG/PDF a 300 dpi.
 - `visualization/three_d.py`: visor interactivo HTML 3D basado en Plotly.
 - `tools/generate_classic_dataset.py`: genera estructura `data/classic_dataset/<version>/` con `manifest.csv`, `pids/` y escenarios YAML.
-- `tools/tune_classic_pid.py`: ajusta un PID clasico por familia en el perfil nominal con drag y actuadores.
+- `tools/tune_classic_pid.py`: diagnostica y, si es necesario, ajusta un PID por familia con escenarios de entrenamiento y los perfiles P0, P2 y P5.
 - `tools/run_classic_dataset.py`: ejecuta episodios del manifiesto, opcionalmente en varios procesos, y escribe `run_report.csv`.
 - `tools/summarize_classic_dataset.py`: resume resultados del dataset en `summary.csv`.
 - `tools/generate_outer_force_pid_bank.py`: ejecuta variantes del PID externo por escenario fuente conservando la configuracion interna y los limites originales.
@@ -56,7 +50,7 @@ Esta página explica cómo se organiza el código y qué ocurre desde que se car
 - `tools/run_neural_scenario.py`: ejecuta un escenario existente sustituyendo el controlador por un checkpoint neuronal sin modificar el YAML base.
 - `tools/generate_pid_bank.py`: crea un banco inicial de PIDs por familia a partir de los PIDs actuales.
 
-## Contratos de datos
+## Datos intercambiados entre módulos
 
 Los contratos relevantes para interpretar resultados son:
 
@@ -71,7 +65,7 @@ La telemetria distingue comando solicitado, comando objetivo de rotor y estado a
 
 Las trayectorias analiticas (`hold`, `circle`, `lissajous`) dependen solo de `time_s`. Las trayectorias `line` / `waypoint` son state-aware: mantienen fase interna de mision y generan la referencia del siguiente waypoint usando el estado actual para comprobar asentamiento. El campo legacy `times` puede aparecer en YAML, pero no controla el avance entre waypoints. Las trayectorias compuestas (`composite`) combinan secuencialmente ambos tipos de trayectorias, realizando un seguimiento temporal de cada sub-trayectoria (usando el campo `duration` en las analíticas) y controlando la transición a la siguiente mediante la comprobación de completitud (`check_completion`).
 
-## Telemetria
+## Telemetría
 
 Cada muestra de `telemetry.json` contiene:
 
@@ -85,7 +79,7 @@ Cada muestra de `telemetry.json` contiene:
 
 `state` es el estado verdadero del simulador. `observation` es lo que vio el controlador; puede diferir por ruido. `reference` es la trayectoria deseada. `control` es la salida del controlador. `rotors` separa objetivo y aplicado.
 
-## Validacion de escenarios
+## Validación de escenarios
 
 Antes de ejecutar o instanciar un escenario, `validate_scenario_config` comprueba los parametros fisicos que afectan directamente a la validez del resultado: masa, gravedad, inercia, drag, rotores, tiempos, limites opcionales de terminacion y estado inicial. Los errores incluyen la ruta del campo, por ejemplo `vehicle.rotors[0].omega_max_rad_s`.
 
@@ -104,7 +98,7 @@ Para `controller.type: "neural"`, el YAML debe declarar `architecture`, `checkpo
 
 La evaluacion supervisada de `neural` se hace sobre telemetria del dataset `outer_force`: `train` calcula normalizacion, `val` selecciona checkpoint y `test` mide imitacion in-distribution en unidades de fuerza. OOD se evalua aparte con `--ood-dataset`, que debe contener `manifest.csv` y telemetria previamente generada; el evaluador no ejecuta escenarios por si mismo.
 
-## Dataset clasico
+## Conjunto de datos clásico
 
 La capa `datasets/classic.py` define el dataset clasico versionado previo a la fase neuronal. No entrena redes ni carga tensores de ML: genera escenarios YAML reproducibles para ejecutar el controlador clasico.
 
@@ -115,7 +109,7 @@ La version `v1` contiene 150 episodios:
 - `lissajous`: 48 episodios.
 - `waypoint`: 36 episodios.
 
-Cada familia usa un PID congelado identificado como `pid_<family>_<version>`. El perfil nominal de ajuste incluye drag lineal y dinamica de actuadores; no incluye viento ni ruido. Las variantes del dataset cambian geometria, viento, ruido, drag y actuadores sin reajustar el PID.
+Cada familia usa un PID identificado como `pid_<family>_<version>`. El diagnóstico y ajuste se apoyan en escenarios de entrenamiento con los perfiles P0 nominal, P2 de viento este y P5 combinado. Las ganancias elegidas se fijan antes de evaluar las demás variantes de geometría y perturbaciones.
 
 Los escenarios generados inicializan el estado desde la referencia de la trayectoria en `t = 0`: posicion y yaw coinciden con la referencia inicial, velocidad lineal y angular empiezan a cero y `orientation_WB` queda como `null` para que el cargador genere una actitud nivelada ENU/FRD. Asi el dataset mide seguimiento de trayectoria, no captura desde una posicion arbitrariamente alejada.
 

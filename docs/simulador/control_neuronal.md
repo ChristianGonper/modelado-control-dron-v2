@@ -2,66 +2,66 @@
 
 En la comparación principal del TFG, `controller.type: "neural"` usa una red para calcular la fuerza del lazo de posición. La estabilización de actitud sigue a cargo del controlador clásico.
 
-## Controlador `neural` outer-force
+## Qué aprende la red
 
-El flujo de inferencia es:
+En el modo `neural`, una red calcula la fuerza que el cuadricóptero necesita para seguir la trayectoria. El resto del control convierte esa fuerza en órdenes para el vehículo:
 
 ```text
-observacion + referencia
+observación + referencia
         |
         v
 MLP / GRU / LSTM -> desired_force_W_N[3]
         |
         v
-limites de fuerza e inclinacion
+límites de fuerza e inclinación
         |
         v
-conversion clasica fuerza-actitud + PID clasico de actitud
+conversión clásica fuerza-actitud + PID clásico de actitud
         |
         v
 collective_thrust_N + body_moments_Nm
 ```
 
-La salida aprendida es una fuerza deseada expresada en mundo ENU y en N:
+La salida contiene los tres componentes de la fuerza deseada, expresados en newtons en el marco del mundo ENU:
 
 - `force_x_W_N`
 - `force_y_W_N`
 - `force_z_W_N`
 
-El lazo interno no se aprende. Utiliza las ganancias de actitud y limites del controlador clasico para convertir la fuerza y el yaw de referencia en empuje colectivo y momentos FRD. Esto separa la decision de traslacion neuronal de la estabilizacion angular.
+El lazo interno no se aprende: utiliza las ganancias y límites del controlador clásico para convertir la fuerza y la orientación de referencia en empuje colectivo y momentos en el marco del cuerpo FRD. Así, la red participa en el control de posición y el controlador clásico mantiene la estabilización de actitud.
 
-## Features y targets
+## Entradas y salida de entrenamiento
 
-`outer_force_min_v1` es la configuracion inicial recomendada para MLP. Tiene 9 entradas obtenidas de la observacion del controlador, no del estado verdadero:
+La comparación principal usa `outer_force_min_v1` en MLP, GRU y LSTM. Sus nueve entradas se calculan a partir de la observación disponible para el controlador, no directamente del estado verdadero:
 
-- error de posicion ENU `[3]`;
+- error de posición ENU `[3]`;
 - error de velocidad ENU `[3]`;
-- aceleracion de referencia ENU `[3]`.
+- aceleración de referencia ENU `[3]`.
 
 `outer_force_full_v1` tiene 31 entradas e incorpora estado observado, referencia, errores y representación continua del yaw. Esta variante está implementada, pero queda fuera del alcance experimental principal por ahora.
 
-El target `desired_force_W_v1` se calcula con el mismo metodo del controlador clasico, `compute_desired_force_W(...)`, aplicado a la observacion y a las ganancias del experto seleccionado. La normalizacion de entradas y targets se ajusta exclusivamente con el split `train`.
+La salida objetivo, `desired_force_W_v1`, se obtiene con el método `compute_desired_force_W(...)` del controlador clásico, usando la observación y las ganancias del experto seleccionado. La normalización de entradas y salidas se ajusta únicamente con el conjunto de entrenamiento (`train`).
 
-## Construccion del dataset experto
+## Preparar las demostraciones
 
-El dataset clasico es la fuente de escenarios, splits y condiciones, pero no se usa directamente como dataset final del modo outer-force. El flujo implementado es:
+El conjunto de datos clásico aporta escenarios, divisiones y condiciones; para entrenar la red se prepara después un conjunto específico de fuerza exterior. El proceso selecciona un experto PD para cada escenario:
 
-1. Para cada fila del `manifest.csv` clasico, ejecutar variantes de PID externo con `tools\generate_outer_force_pid_bank.py`.
-2. Mantener sin cambios el PID interno (`Kp_att`, `Kd_att`), los limites, la trayectoria, las perturbaciones, la semilla y los parametros del vehiculo del YAML fuente.
-3. Excluir variantes que fallen `passes_hard_filters`.
-4. Elegir un experto por escenario: menor `position_rmse_m`; entre candidatos dentro del 5% del mejor RMSE, menor esfuerzo de control; ante empate real de esfuerzo, variante mas conservadora.
-5. Copiar la telemetria del experto elegido y escribir el YAML de salida con sus `Kp_pos` y `Kd_pos` exactas.
+1. Para cada fila del `manifest.csv` clásico, se ejecutan variantes del controlador externo con `tools\generate_outer_force_pid_bank.py`.
+2. Se mantienen sin cambios el PID interno (`Kp_att`, `Kd_att`), los limites, la trayectoria, las perturbaciones, la semilla y los parametros del vehiculo del YAML fuente.
+3. Se excluyen las variantes que no superan `passes_hard_filters`.
+4. Se elige un experto por escenario: se busca el menor `position_rmse_m`; entre candidatos a menos del 5 % del mejor error se prefiere el de menor esfuerzo y, en caso de empate, la variante más conservadora.
+5. Se copia la telemetría del experto elegido y se escriben sus ganancias `Kp_pos` y `Kd_pos` en el YAML de salida.
 
-Si ningun candidato de un escenario pasa los filtros de seguridad, la generacion falla de forma explicita. No se fabrica una demostracion valida.
+Si ningún candidato supera los filtros de seguridad, la generación falla: no se crea una demostración válida para ese escenario.
 
 ```powershell
 uv run python tools\generate_outer_force_pid_bank.py --dataset data\classic_dataset\v1 --out data\outer_force_pid_bank\v1 --workers 8
 uv run python tools\generate_outer_force_dataset.py --source-dataset data\classic_dataset\v1 --pid-bank data\outer_force_pid_bank\v1 --out data\outer_force_dataset\v1
 ```
 
-## Entrenamiento y evaluacion
+## Entrenamiento y evaluación
 
-La primera configuracion a defender es una MLP con features minimas:
+Los siguientes comandos entrenan y evalúan una MLP. Requieren haber generado antes el conjunto de fuerza exterior:
 
 ```powershell
 uv run python tools\train_neural_controller.py --dataset data\outer_force_dataset\v1 --architecture mlp --feature-version outer_force_min_v1 --out data\neural_control\outer_force_mlp_min_v1 --device auto
@@ -70,21 +70,21 @@ uv run python tools\evaluate_neural_controller.py --dataset data\outer_force_dat
 
 El script también soporta `gru` y `lstm`, que forman parte de la comparación principal con control de fuerza. El entrenamiento produce `config.yaml`, `normalization.json` y checkpoints. La evaluación outer-force escribe métricas de error de fuerza por split bajo `metrics/*_force_metrics.json`.
 
-Estas metricas miden fidelidad de imitacion del experto, no seguimiento de trayectoria. La comparacion de control exige una ejecucion cerrada:
+Estas métricas miden cuánto se parece la fuerza predicha a la del experto. Para evaluar el seguimiento de la trayectoria hay que ejecutar el controlador en bucle cerrado:
 
 ```powershell
 uv run python tools\run_neural_scenario.py --scenario scenarios\neural_ood_lemniscate.yaml --checkpoint data\neural_control\outer_force_mlp_min_v1\checkpoints\mlp_best.pt --normalization data\neural_control\outer_force_mlp_min_v1\normalization.json --device auto --no-visualization
 uv run python tools\run_neural_outer_force_dataset.py --dataset data\outer_force_dataset\v1 --split test --checkpoint data\neural_control\outer_force_mlp_min_v1\checkpoints\mlp_best.pt --normalization data\neural_control\outer_force_mlp_min_v1\normalization.json --device auto --no-visualization --limit 2
 ```
 
-OOD con `data\neural_ood\battery_v1` (solo escenarios YAML, sin telemetria de experto; directorio generado localmente e ignorado por git):
+Para probar el seguimiento fuera de distribución, puedes generar una batería de escenarios y ejecutarla en bucle cerrado. `data/neural_ood/battery_v1` es un directorio local con escenarios YAML; no contiene telemetría de expertos:
 
 ```powershell
 uv run python tools\generate_ood_battery.py --out data\neural_ood\battery_v1 --overwrite
 uv run python tools\run_neural_outer_force_dataset.py --dataset data\neural_ood\battery_v1 --split ood --checkpoint data\neural_control\outer_force_mlp_min_v1\checkpoints\mlp_best.pt --normalization data\neural_control\outer_force_mlp_min_v1\normalization.json --no-visualization
 ```
 
-### Sensibilidad de hiperparametros
+### Sensibilidad a los hiperparámetros
 
 El estudio de sensibilidad de `outer_force_min_v1` se ejecuta sobre artefactos
 ya generados y no sobrescribe los resultados base. Las variantes usan sufijos en
@@ -96,28 +96,24 @@ uv run python tools\run_neural_sensitivity_study.py --device auto --workers 1
 uv run python tools\summarize_neural_sensitivity.py
 ```
 
-El resumen queda en `results/neural_sensitivity/`. El informe tecnico
+El resumen se guarda en `results/neural_sensitivity/`. El informe técnico
 `docs/reviews/archived/annexes/estudio_sensibilidad_neuronal_outer_force_2026-06-25.md` documenta
-la campana ejecutada para `hidden_dim=128`, ventanas `L=10/40` y semillas
+la campaña ejecutada para `hidden_dim=128`, ventanas `L=10/40` y semillas
 adicionales.
 
-Evaluacion supervisada OOD (requiere telemetria con targets de fuerza bajo `result_dir`, manifest `split=ood`):
+### Evaluación supervisada fuera de distribución
 
-```powershell
-# Tras generar telemetria OOD (p. ej. copiar experto desde escenarios de battery_v1):
-# uv run python tools\generate_outer_force_dataset.py --source-dataset data\neural_ood\battery_v1 --pid-bank data\outer_force_pid_bank\v1 --out data\neural_ood\outer_force_v1
-uv run python tools\evaluate_neural_controller.py --dataset data\outer_force_dataset\v1 --run data\neural_control\outer_force_mlp_min_v1 --ood-dataset data\neural_ood\outer_force_v1 --splits ood --device auto
-```
+La batería `battery_v1` contiene escenarios, pero no las demostraciones de fuerza necesarias para evaluar la imitación. Para una evaluación supervisada OOD se necesita un conjunto con telemetría de expertos compatible y un manifiesto con `split=ood`. El banco de expertos debe corresponder a esos mismos escenarios: el banco generado para el conjunto de entrenamiento no se puede reutilizar automáticamente para escenarios OOD distintos.
 
-`battery_v1` no sirve para `evaluate_neural_controller.py --ood-dataset` (falla con error explicito). El evaluador usa `split=ood` en el manifiesto OOD; no remapea OOD a `train`. Sin `--ood-dataset`, el split `ood` falla de forma explicita.
+Una vez preparado ese conjunto, el evaluador acepta su ruta mediante `--ood-dataset` y selecciona las filas marcadas como `ood`. Sin esos datos no debe interpretarse la batería de escenarios como una evaluación supervisada. La evaluación en bucle cerrado descrita antes sí puede ejecutarse con la batería de escenarios.
 
-En bucle cerrado se deben informar `position_rmse_m`, `position_mae_m`, `position_max_err_m`, `termination_reason`, `saturation_percentage`, `degradation_percentage`, `force_norm_clip_percentage` y `force_tilt_clip_percentage`. La telemetria exporta `desired_force_W_N` (salida de red, **pre-clip**), `desired_force_clipped_W_N` (fuerza enviada al PID interno) y `perturbation.wind_W_m_s` por muestra cuando aplica.
+Al presentar los resultados en bucle cerrado, incluye el error de posición (`position_rmse_m`, `position_mae_m` y `position_max_err_m`), la causa de terminación, la saturación y la degradación. Las métricas `force_norm_clip_percentage` y `force_tilt_clip_percentage` indican cuándo actúan los límites de fuerza. La telemetría distingue `desired_force_W_N` —salida de la red antes de los límites— de `desired_force_clipped_W_N`, la fuerza enviada al lazo interno; también registra el viento cuando corresponde.
 
-Instruccion operativa: al preparar evidencia de memoria, regenerar `battery_v1`, ejecutar el batch cerrado y construir la tabla comparativa en la misma revision de codigo. No usar `battery_v1` por si solo como resultado: es una lista de escenarios, no una corrida experimental.
+Para preparar una comparación reproducible, genera la batería, ejecuta las simulaciones y construye las tablas con una misma versión del código. `battery_v1` por sí sola es una lista de escenarios, no un resultado experimental.
 
-## Configuracion y seguridad
+## Configuración y protecciones
 
-Un escenario `neural` debe indicar el checkpoint, la normalizacion, las features outer-force y el limite de inclinacion:
+Un escenario `neural` debe indicar el checkpoint, la normalización, la versión de las entradas y el límite de inclinación. Por ejemplo:
 
 ```yaml
 controller:
@@ -134,20 +130,14 @@ controller:
   device: "auto"
 ```
 
-Con `clip_to_classic_limits: true`, el controlador limita la norma de fuerza a `mass_kg * gravity_m_s2 * 2.5`, restringe la inclinacion solicitada a `max_desired_tilt_rad` y mantiene una componente ascendente minima antes de ejecutar el PID interno. El wrapper `run_neural_scenario.py` usa `0.52 rad` si ese limite no esta registrado en la configuracion del entrenamiento.
+Con `clip_to_classic_limits: true`, el controlador limita la norma de la fuerza a `mass_kg * gravity_m_s2 * 2.5`, restringe la inclinación solicitada a `max_desired_tilt_rad` y mantiene una componente ascendente mínima antes del PID interno. El script `run_neural_scenario.py` usa `0.52 rad` si ese límite no figura en la configuración del entrenamiento.
 
 Los checkpoints incompatibles con la arquitectura y las entradas de fuerza exterior se rechazan al cargarse. Por tanto, los modelos anteriores no deben reutilizarse como outer-force sin regenerar dataset y entrenar de nuevo.
 
-## Arquitecturas outer-force comparadas
+## Arquitecturas comparadas
 
-La comparación experimental principal incluye MLP, GRU y LSTM entrenadas con el
-pipeline outer-force y las features seleccionadas para el trabajo. La MLP actúa
-como referencia de menor complejidad, mientras que GRU y LSTM permiten estudiar
-el efecto de incorporar una ventana temporal con memoria recurrente. Las tres
-arquitecturas deben evaluarse con métricas supervisadas y en bucle cerrado bajo
-las mismas condiciones `test` y OOD. El entrenamiento con las 31 entradas de
-`outer_force_full_v1` queda fuera de esta comparación por ahora.
+La comparación principal incluye MLP, GRU y LSTM con las entradas de fuerza exterior seleccionadas para el TFG. La MLP sirve como referencia de menor complejidad; GRU y LSTM incorporan una ventana temporal y memoria recurrente. Para compararlas, se utilizan métricas supervisadas y simulaciones en bucle cerrado bajo las mismas condiciones `test` y OOD. La variante de 31 entradas `outer_force_full_v1` no forma parte de esa comparación.
 
 ## Alcance
 
-El codigo implementa el pipeline y sus protecciones, pero no aporta por si mismo un modelo entrenado ni resultados finales para la memoria. Las conclusiones experimentales solo son validas tras regenerar los datasets, entrenar checkpoints identificables y ejecutar los mismos escenarios para baseline, experto y controlador neuronal.
+La [memoria del TFG](../../site/assets/reports/TFG_Memoria_es.pdf) recoge los resultados académicos. Para probar NeuroFlight, el repositorio también incluye un paquete de modelos regenerados: consulta su [guía](../neuroflight.md). Una ejecución nueva debe identificarse por separado y compararse bajo condiciones equivalentes.

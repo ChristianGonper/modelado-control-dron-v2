@@ -2,25 +2,25 @@
 
 Actualiza esta documentación cuando cambie el comportamiento del simulador. Las listas siguientes ayudan a localizar qué páginas revisar según el tipo de cambio; contrastar el texto con el código sigue siendo necesario.
 
-## Cuando cambie el CLI
+## Si cambia la interfaz de comandos
 
 Revisar:
 
 - `docs/simulador/README.md`
 - `docs/simulador/guia_uso.md`
 
-Actualizar comandos, argumentos, nombres de subcomandos y ejemplos. Ejecutar los comandos documentados antes de cerrar el cambio.
+Comprueba los nombres de los subcomandos, sus argumentos y ejemplos. Ejecuta los comandos documentados que se vean afectados antes de dar por terminado el cambio.
 
-## Cuando cambie el YAML de escenarios
+## Si cambia el formato de escenarios
 
 Revisar:
 
 - `docs/simulador/escenarios_yaml.md`
 - ejemplos en `docs/simulador/guia_uso.md`
 
-Comprobar que cada campo documentado existe en `src/simulador_quad/scenarios/loader.py` y, si afecta a validez fisica, en `src/simulador_quad/scenarios/schema.py`; si no existe, declararlo explicitamente como limite/futuro. No documentar campos aspiracionales como si ya estuvieran implementados.
+Comprueba los campos en `src/simulador_quad/scenarios/loader.py` y, cuando afecten a la validez física, en `src/simulador_quad/scenarios/schema.py`. Distingue las capacidades existentes de las que estén previstas pero aún no implementadas.
 
-## Cuando cambien trayectorias
+## Si cambian las trayectorias
 
 Revisar:
 
@@ -28,9 +28,9 @@ Revisar:
 - figuras de trayectoria en `docs/simulador/guia_uso.md`;
 - pruebas en `tests/test_trajectories.py`.
 
-Cada trayectoria documentada debe indicar posicion, velocidad, aceleracion y yaw que devuelve, ademas de unidades y marco de referencia.
+Explica qué posición, velocidad, aceleración y orientación devuelve cada trayectoria, junto con sus unidades y marco de referencia.
 
-## Cuando cambien telemetria o metricas
+## Si cambian la telemetría o las métricas
 
 Revisar:
 
@@ -39,11 +39,11 @@ Revisar:
 - `src/simulador_quad/visualization/plots.py`;
 - pruebas de metricas y visualizacion.
 
-Si se renombra un campo de `telemetry.json`, actualizar tambien la visualizacion. Si se añade una metrica nueva, explicar su significado fisico y sus unidades.
+Si se renombra un campo de `telemetry.json`, revisa también las visualizaciones que lo usan. Para cada métrica nueva, explica su significado físico y sus unidades.
 
-Actualizar tambien `tests/test_model_regressions.py` si cambia el esquema minimo esperado de `metrics.json` o `telemetry.json`.
+Revisa `tests/test_model_regressions.py` si cambia el esquema mínimo esperado de `metrics.json` o `telemetry.json`.
 
-## Cuando cambie el dataset clasico
+## Si cambia el conjunto de datos clásico
 
 Revisar:
 
@@ -52,7 +52,7 @@ Revisar:
 - `docs/simulador/trazabilidad.md`
 - `README.md`
 
-Actualizar familias, perfiles, conteos, splits, nombres de PID, campos de `manifest.csv`, comandos de `tools/` y criterios de validez. Si cambia el YAML generado, revisar tambien `docs/simulador/escenarios_yaml.md`.
+Actualiza las familias, perfiles, recuentos, divisiones, nombres de PID, campos del manifiesto, comandos y criterios que se vean afectados. Si cambia el YAML generado, revisa también la referencia de escenarios.
 
 Ejecutar al menos:
 
@@ -60,7 +60,7 @@ Ejecutar al menos:
 uv run pytest tests\test_classic_controller_config.py tests\test_classic_dataset_generation.py tests\test_classic_dataset_scripts.py tests\test_classic_pid_selection.py
 ```
 
-## Cuando cambie el control neuronal
+## Si cambia el control neuronal
 
 Revisar:
 
@@ -71,7 +71,7 @@ Revisar:
 - `docs/simulador/trazabilidad.md`
 - `README.md`
 
-Actualizar features, targets, normalizacion, artefactos (`config.yaml`, `normalization.json`, checkpoints, metricas), comandos de `tools/`, limites de clipping y criterios OOD. Para `neural` outer-force, revisar tambien la seleccion del experto, la preservacion del PID interno, los limites del escenario fuente y las metricas `force_norm_clip_percentage` / `force_tilt_clip_percentage`. Si cambia la evaluacion OOD, dejar claro si el comando ejecuta escenarios o consume telemetria ya generada.
+Revisa las entradas y salidas de la red, la normalización, los artefactos, los comandos, las protecciones y los criterios OOD. Para el control de fuerza exterior, comprueba también la selección del experto, las ganancias del lazo interno y las métricas de limitación de fuerza e inclinación. Distingue los comandos que ejecutan escenarios de los que consumen telemetría ya generada.
 
 Ejecutar al menos:
 
@@ -79,7 +79,7 @@ Ejecutar al menos:
 uv run pytest tests\test_neural_dataset.py tests\test_neural_models.py tests\test_neural_training.py tests\test_neural_evaluation.py tests\test_neural_controller.py tests\test_neural_outer_force.py tests\test_outer_force_generation_integration.py
 ```
 
-## Cuando cambie el modelo fisico
+## Si cambia el modelo físico
 
 Revisar:
 
@@ -97,7 +97,7 @@ Ejemplos que obligan a documentar con cuidado:
 - aerodinamica formal;
 - cambios en el contrato del controlador neuronal, sus targets de fuerza o el reparto entre lazo externo e interno.
 
-## Checklist antes de cerrar una actualizacion
+## Comprobaciones antes de terminar
 
 ```powershell
 uv run pytest
@@ -108,13 +108,13 @@ uv run python tools\generate_classic_dataset.py --version test_v1 --out $env:TEM
 uv run pytest tests\test_neural_dataset.py tests\test_neural_models.py tests\test_neural_training.py tests\test_neural_evaluation.py tests\test_neural_controller.py tests\test_neural_outer_force.py tests\test_outer_force_generation_integration.py
 ```
 
-Despues de ejecutar:
+Después de ejecutar las comprobaciones, revisa que:
 
 - `telemetry.json` y `metrics.json` existen para los escenarios ejecutados.
 - Las ocho figuras PNG base existen y tienen contenido; las figuras neuronales y de perturbaciones aparecen cuando la telemetria aporta esos campos.
-- La documentacion no contradice `loader.py`, `export.py`, `report.py` ni el CLI.
-- La validacion de escenarios no contradice `schema.py`.
-- La documentacion del dataset no contradice `src/simulador_quad/datasets/classic.py` ni los scripts en `tools/`.
-- La documentacion neuronal no contradice `src/simulador_quad/ml/`, `src/simulador_quad/control/neural.py` ni los scripts neuronales en `tools/`.
-- OOD queda documentado como evaluacion separada y no se mezcla con `test`.
-- Los documentos normativos no se han modificado salvo decision explicita.
+- La documentación no contradiga `loader.py`, `export.py`, `report.py` ni el CLI.
+- La validación de escenarios no contradiga `schema.py`.
+- La documentación del conjunto de datos no contradiga `src/simulador_quad/datasets/classic.py` ni los scripts en `tools/`.
+- La documentación neuronal no contradiga `src/simulador_quad/ml/`, `src/simulador_quad/control/neural.py` ni los scripts neuronales en `tools/`.
+- OOD quede documentado como evaluación separada y no se mezcla con `test`.
+- Los documentos normativos solo se hayan modificado si existe una decisión explícita.

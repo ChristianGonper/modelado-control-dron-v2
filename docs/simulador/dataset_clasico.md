@@ -6,7 +6,7 @@ Generar este conjunto no entrena ni ejecuta redes. Para la variante de fuerza ex
 
 ## Alcance
 
-La version inicial del dataset es `v1` y contiene 150 episodios:
+La versión `v1` contiene 150 episodios, distribuidos en cuatro familias de trayectorias:
 
 | Familia | Episodios | PID |
 | --- | ---: | --- |
@@ -15,16 +15,16 @@ La version inicial del dataset es `v1` y contiene 150 episodios:
 | `lissajous` | 48 | `pid_lissajous_v1` |
 | `waypoint` | 36 | `pid_waypoint_v1` |
 
-Cada familia tiene un PID propio. El PID se ajusta solo en el perfil nominal de esa familia y despues se congela para variantes geometricas y perturbadas.
+Cada familia tiene un PID propio. El diagnóstico y ajuste utilizan escenarios de entrenamiento con los perfiles P0 nominal, P2 de viento este y P5 combinado; después se conservan las ganancias seleccionadas para evaluar las variantes de esa familia.
 
-En este repo, nominal significa:
+En este proyecto, «nominal» describe las siguientes condiciones:
 
-- drag lineal nominal activo;
-- dinamica de actuadores activa;
+- resistencia aerodinámica lineal nominal activa;
+- dinámica de actuadores activa;
 - sin viento;
-- sin ruido de observacion.
+- sin ruido de observación.
 
-Por tanto, los episodios perturbados del dataset son ensayos reproducibles bajo condiciones mas exigentes, no trayectorias expertas perfectas. En el pipeline `outer_force`, cada condicion se vuelve a ejecutar con variantes del PID externo y se conserva solo una demostracion segura elegida por criterio documentado. La metrica supervisada mide fidelidad de fuerza; el seguimiento de trayectoria debe medirse despues en bucle cerrado con `position_rmse_m`, `position_mae_m` y `position_max_err_m`.
+Los episodios perturbados permiten estudiar condiciones más exigentes de manera reproducible; no representan trayectorias perfectas. Para preparar los datos de fuerza exterior se vuelve a ejecutar cada escenario con variantes del PD externo y se selecciona una demostración que cumpla los filtros. La evaluación supervisada mide la fidelidad a la fuerza del experto; el seguimiento de la trayectoria se mide después en bucle cerrado con `position_rmse_m`, `position_mae_m` y `position_max_err_m`.
 
 ## Perfiles de entorno
 
@@ -77,24 +77,24 @@ data/classic_dataset/v1/
 - `scenario_path`
 - `result_dir`
 
-Los splits se asignan de forma estratificada por familia:
+Las divisiones de entrenamiento, validación y prueba se asignan por familia:
 
 - `hold`: 12 train, 3 val, 3 test.
 - `circle`: 34 train, 7 val, 7 test.
 - `lissajous`: 34 train, 7 val, 7 test.
 - `waypoint`: 25 train, 5 val, 6 test.
 
-Estos splits son adecuados para entrenamiento supervisado y evaluacion in-distribution, pero no constituyen por si solos una prueba fuerte de generalizacion geometrica. Las mismas familias, geometrias y perturbaciones aparecen repartidas entre splits, aunque no se repiten pares exactos `geometry_id + perturbation_id`. Para estudiar generalizacion debe generarse o aportar un dataset OOD separado y evaluarlo con `tools\evaluate_neural_controller.py --ood-dataset`.
+Estas divisiones permiten entrenar y evaluar en condiciones conocidas, pero no demuestran por sí solas generalización a geometrías nuevas. Las mismas familias, geometrías y perturbaciones aparecen entre divisiones, aunque no se repiten pares exactos `geometry_id + perturbation_id`. Para estudiar condiciones fuera de distribución se necesita una evaluación OOD separada; la [documentación neuronal](control_neuronal.md) distingue la evaluación supervisada de la simulación en bucle cerrado.
 
 ## Comandos
 
-Generar estructura, PIDs iniciales y escenarios YAML:
+Para generar la estructura, los PD iniciales y los escenarios YAML:
 
 ```powershell
 uv run python tools\generate_classic_dataset.py --version v1 --out data\classic_dataset\v1
 ```
 
-Si el directorio existe, el comando falla para no sobrescribir datasets versionados. Para regenerar en desarrollo:
+Si el directorio ya existe, el comando falla para evitar sobrescribirlo. Para regenerarlo en una copia de trabajo cuyos datos puedas sustituir:
 
 ```powershell
 uv run python tools\generate_classic_dataset.py --version v1 --out data\classic_dataset\v1 --overwrite
@@ -118,7 +118,7 @@ Ejecutar episodios:
 uv run python tools\run_classic_dataset.py --dataset data\classic_dataset\v1 --no-visualization --workers 4
 ```
 
-Opciones utiles:
+Opciones útiles:
 
 - `--family hold`: ejecuta solo una familia.
 - `--scenario-id hold_g01_P0_nominal_s1042`: ejecuta un escenario concreto.
